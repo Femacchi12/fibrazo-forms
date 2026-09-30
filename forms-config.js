@@ -1,4 +1,8 @@
-window.FIBRAZO_PENDING = [\n  {id:"email-copy",title:"Enviar copia por correo",description:"Enviar automáticamente un resumen del formulario al correo de quien lo completó.",status:"Pendiente"}\n];\n\nwindow.FIBRAZO_FORMS = {
+window.FIBRAZO_PENDING = [
+  {id:"email-copy",title:"Enviar copia por correo",description:"Enviar automáticamente un resumen del formulario al correo de quien lo completó.",status:"Pendiente"}
+];
+
+window.FIBRAZO_FORMS = {
   CHURN: {
     id: "CHURN",
     name: "Visita clientes churn",
