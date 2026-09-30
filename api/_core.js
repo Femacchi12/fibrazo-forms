@@ -149,22 +149,40 @@ function validateSubmission(formId,payload){
   const d=payload.data||{};
   const text=(v,max=500)=>String(v??"").trim().slice(0,max);
   const digits=(v,max=12)=>/^\d+$/.test(String(v??""))&&String(v).length<=max;
+  const one=(v,allowed,code)=>{if(v!==""&&v!=null&&!allowed.includes(v))throw httpError(code,400);};
+  const short=(v,max,code)=>{if(String(v??"").length>max)throw httpError(code,400);};
+
   if(formId==="CHURN"){
+    const motivos=["Inconformidad con el servicio","Precio","Se pasó a otro operador","TV","Mudanza","No usa / no necesita el servicio","Problemas de recarga / pago","Otro"];
     if(!["Sincelejo","Montería"].includes(d.ciudad)) throw httpError("INVALID_CITY",400);
     if(!digits(d.cliente_id,20)) throw httpError("INVALID_CLIENT_ID",400);
     if(!/^\d{4}-\d{2}-\d{2}$/.test(text(d.fecha_visita,10))) throw httpError("INVALID_DATE",400);
-    if(!text(d.motivo_principal,100)) throw httpError("MISSING_REASON",400);
+    if(!motivos.includes(d.motivo_principal)) throw httpError("INVALID_REASON",400);
     if(!["Sí","No"].includes(d.tiene_servicio_actual)) throw httpError("INVALID_CURRENT_SERVICE",400);
+    one(d.incluye_tv,["Sí","No"],"INVALID_TV");
+    one(d.tecnologia_tv,["Coaxial","Digital / App","TV Box","Otro"],"INVALID_TV_TECH");
+    one(d.tiene_disney,["Sí","No","No sabe"],"INVALID_DISNEY");
+    one(d.tiene_deportes,["Sí","No","No sabe"],"INVALID_SPORTS");
+    one(d.volveria,["Sí","No","Tal vez"],"INVALID_RETURN");
     for(const key of ["precio_actual","velocidad_actual","tv_coaxial","tv_box"]){
       if(d[key]!==""&&d[key]!=null&&!digits(d[key],12)) throw httpError("INVALID_NUMBER_"+key.toUpperCase(),400);
     }
+    const incAllowed=["Mantenimiento no realizado","Demora en mantenimiento","Lentitud","Intermitencia","Demora en mudanza","Atención al cliente","Otro"];
+    if(Array.isArray(d.inconformidad_tipo)&&d.inconformidad_tipo.some(v=>!incAllowed.includes(v))) throw httpError("INVALID_DISSATISFACTION",400);
+    short(d.operador_actual,100,"TEXT_TOO_LONG");short(d.canales_destacados,1000,"TEXT_TOO_LONG");short(d.cambio_para_volver,1500,"TEXT_TOO_LONG");short(d.comentario,2000,"TEXT_TOO_LONG");
   }else if(formId==="EXPLORACION"){
     if(!text(d.ciudad,100)) throw httpError("MISSING_CITY",400);
     if(!digits(d.anio,4)) throw httpError("INVALID_YEAR",400);
-    if(!payload.location||!Number.isFinite(Number(payload.location.lat))||!Number.isFinite(Number(payload.location.lng))) throw httpError("GPS_REQUIRED",400);
+    const lat=Number(payload.location?.lat),lng=Number(payload.location?.lng),acc=Number(payload.location?.accuracy);
+    if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat<-90||lat>90||lng<-180||lng>180) throw httpError("GPS_REQUIRED",400);
+    if(Number.isFinite(acc)&&acc<0) throw httpError("INVALID_GPS",400);
     for(const key of ["e_postes","s_postes"]){
       if(d[key]!==""&&d[key]!=null&&!digits(d[key],8)) throw httpError("INVALID_NUMBER_"+key.toUpperCase(),400);
     }
+    const network=["Sí","No","No validado"];
+    for(const key of ["tigo_hfc","tigo_ftth","claro_hfc","claro_ftth","movistar"]) one(d[key],network,"INVALID_NETWORK_VALUE");
+    for(const key of ["ciudad","sector_barrio","isp_1","isp_2","isp_3","isp_4"]) short(d[key],120,"TEXT_TOO_LONG");
+    short(d.nota,2000,"TEXT_TOO_LONG");
   }else{
     throw httpError("INVALID_FORM",400);
   }
