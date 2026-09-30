@@ -28,6 +28,15 @@
       ],
       "fields": [
         {
+          "key": "coordenadas",
+          "section": "identificacion",
+          "type": "gps",
+          "required": true,
+          "options": [],
+          "showWhen": null,
+          "label": "Ubicación de la visita"
+        },
+        {
           "key": "ciudad",
           "section": "identificacion",
           "type": "select",
