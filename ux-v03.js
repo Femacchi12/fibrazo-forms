@@ -56,7 +56,7 @@
     $("dynamicFields").innerHTML="";
     form.fields.forEach(field=>$("dynamicFields").appendChild(renderField(field)));
     $("formWorkspace").hidden=false;$("reviewWorkspace").hidden=true;$("successWorkspace").hidden=true;
-    clearValidation();renderSection();window.scrollTo({top:0,behavior:"smooth"});
+    clearValidation();renderSection();\n    if(form.id==="CHURN") setTimeout(captureChurnGpsAutomatically,250);\n    window.scrollTo({top:0,behavior:"smooth"});
   }
   window.FIBRAZO_UX_OPEN_FORM=openForm;
 
