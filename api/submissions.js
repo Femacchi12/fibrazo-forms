@@ -2,7 +2,7 @@ const {google}=require("googleapis");
 const {Readable}=require("stream");
 const {
   gauth,verifyUser,loadForms,isAdmin,canAccess,checkPublicRate,logSecurity,
-  validatePublicGuards,validatePhotos,validateSubmission,httpError,SHEET_ID
+  validatePublicGuards,validatePhotos,validateSubmission,httpError,SHEET_ID,DEFAULT_DOMAIN,EXCEPTION
 }=require("./_core");
 
 const runtime={
@@ -58,7 +58,7 @@ function buildRow(form,p,id,links,email){
 async function readRows(auth,requested,limit,user,adminFlag){
   const forms=await loadForms(auth);
   const selected=requested==="all"?forms:forms.filter(form=>form.id===requested);
-  const allowed=selected.filter(form=>canAccess(form,user,adminFlag));
+  const email=String(user?.email||"").toLowerCase();\n  const internal=email===EXCEPTION||email.endsWith(DEFAULT_DOMAIN);\n  const allowed=selected.filter(form=>adminFlag||(form.access==="PUBLICO"?internal:canAccess(form,user,false)));
   const sheets=google.sheets({version:"v4",auth});
   const out=[];
   for(const form of allowed){
