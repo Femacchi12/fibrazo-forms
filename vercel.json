@@ -1,1 +1,1 @@
-{"cleanUrls":true,"functions":{"api/submissions.js":{"maxDuration":30}}}
+{"cleanUrls":true,"rewrites":[{"source":"/","destination":"/v2.html"}],"functions":{"api/submissions.js":{"maxDuration":30}}}
