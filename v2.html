@@ -57,7 +57,8 @@
         <div><span>NAVEGACIÓN</span><h2>Centro de formularios</h2></div>
         <div class="view-switch" role="tablist">
           <button class="active" data-view="forms">Formularios</button>
-          <button data-view="results">Resultados</button>\n          <button id="adminNavButton" data-view="admin" hidden>Administrar</button>
+          <button data-view="results">Resultados</button>
+          <button id="adminNavButton" data-view="admin" hidden>Administrar</button>
         </div>
       </div>
     </section>
@@ -190,6 +191,27 @@
         <div id="resultsEmpty" class="empty-state">Todavía no hay respuestas registradas.</div>
       </section>
     </section>
+  
+    <section id="adminView" hidden>
+      <section class="panel admin-panel">
+        <div class="section-title admin-head">
+          <div>
+            <span>ADMINISTRACIÓN</span>
+            <h2>Formularios y permisos</h2>
+            <p>Configura quién puede acceder a cada formulario sin modificar el código.</p>
+          </div>
+          <a class="secondary-button compact admin-map-link" href="https://app.diagrams.net/?mode=github#HFemacchi12%2Ffibrazo-forms%2Fmain%2Fdocs%2FFIBRAZO_Forms_Flujos.drawio" target="_blank" rel="noopener">↗ Ver mapa en draw.io</a>
+        </div>
+        <div class="admin-access-legend">
+          <span><b>Privado</b> solo administradores</span>
+          <span><b>Correos específicos</b> lista autorizada</span>
+          <span><b>Dominio FIBRAZO</b> usuarios del dominio</span>
+          <span><b>Público</b> enlace directo sin login</span>
+        </div>
+        <div id="adminForms" class="admin-forms"></div>
+        <div id="adminStatus" class="save-status"></div>
+      </section>
+    </section>
   </main>
 
   <footer>FIBRAZO · Growth <span>Forms v0.3 · 2026</span></footer>
@@ -198,5 +220,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="forms-config.js?v=2026.09.30.8"></script>
   <script src="app.js?v=2026.09.30.8"></script>
-  <script src="access-v03.js?v=2026.09.30.8"></script>\n  <script src="ux-v03.js?v=2026.09.30.8"></script>\n  <script src="admin-v03.js?v=2026.09.30.8"></script>\n</body>
+  <script src="access-v03.js?v=2026.09.30.8"></script>
+  <script src="ux-v03.js?v=2026.09.30.8"></script>
+  <script src="admin-v03.js?v=2026.09.30.8"></script>
+</body>
 </html>
