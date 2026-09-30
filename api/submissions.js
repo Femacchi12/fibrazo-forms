@@ -1,1 +1,162 @@
-const {google}=require("googleapis");const admin=require("firebase-admin");const {Readable}=require("stream");const PROJECT=process.env.FIREBASE_PROJECT_ID||"dashboards-fibrazo",EXCEPTION=(process.env.ALLOWED_EMAIL_EXCEPTION||"fernandoemacchi@gmail.com").toLowerCase(),DOMAIN=(process.env.ALLOWED_EMAIL_DOMAIN||"@fibrazo.com").toLowerCase();if(!admin.apps.length)admin.initializeApp({projectId:PROJECT});function gauth(){return new google.auth.JWT({email:process.env.GOOGLE_CLIENT_EMAIL,key:(process.env.GOOGLE_PRIVATE_KEY||"").replace(/\\n/g,"\n"),scopes:["https://www.googleapis.com/auth/spreadsheets","https://www.googleapis.com/auth/drive"]})}async function userFrom(req){const h=req.headers.authorization||"";if(!h.startsWith("Bearer "))throw new Error("AUTH_REQUIRED");const d=await admin.auth().verifyIdToken(h.slice(7)),email=(d.email||"").toLowerCase();if(!d.email_verified||!(email===EXCEPTION||email.endsWith(DOMAIN)))throw new Error("NOT_ALLOWED");return{email}}const cfg={CHURN:{sheet:"RESP_CHURN",folder:"DRIVE_CHURN_FOLDER_ID"},EXPLORACION:{sheet:"RESP_EXPLORACION",folder:"DRIVE_EXPLORACION_FOLDER_ID"}};const idFor=f=>`${f}-${Date.now()}-${Math.random().toString(36).slice(2,7).toUpperCase()}`;async function photos(auth,form,id,list){if(!Array.isArray(list)||!list.length)return[];const folderId=process.env[cfg[form].folder];if(!folderId)throw new Error("PHOTO_FOLDER_NOT_CONFIGURED");const drive=google.drive({version:"v3",auth}),links=[];for(let i=0;i<Math.min(3,list.length);i++){const m=String(list[i].data||"").match(/^data:(image\/[^;]+);base64,(.+)$/);if(!m)continue;const f=await drive.files.create({requestBody:{name:`${id}_foto_${i+1}.jpg`,parents:[folderId]},media:{mimeType:m[1],body:Readable.from(Buffer.from(m[2],"base64"))},fields:"id,webViewLink"});links.push(f.data.webViewLink||`https://drive.google.com/file/d/${f.data.id}/view`)}return links}function row(form,p,id,links,user){const d=p.data||{},l=p.location||{},now=new Date().toISOString();if(form==="CHURN")return[now,id,d.ciudad||"",d.cliente_id||"",d.fecha_visita||"",d.motivo_principal||"",Array.isArray(d.inconformidad_tipo)?d.inconformidad_tipo.join(" | "):d.inconformidad_tipo||"",d.tiene_servicio_actual||"",d.operador_actual||"",d.precio_actual||"",d.velocidad_actual||"",d.incluye_tv||"",d.tecnologia_tv||"",d.tv_coaxial||"",d.tv_box||"",d.tiene_disney||"",d.tiene_deportes||"",d.canales_destacados||"",d.volveria||"",d.cambio_para_volver||"",d.comentario||"",l.lat||"",l.lng||"",l.accuracy||"",links.join(" | "),user.email];const maps=l.lat&&l.lng?`https://www.google.com/maps?q=${l.lat},${l.lng}`:"";return[now,id,d.ciudad||"",d.sector_barrio||"",d.anio||"",d.e_postes||"",d.s_postes||"",d.tigo_hfc||"",d.tigo_ftth||"",d.claro_hfc||"",d.claro_ftth||"",d.movistar||"",d.isp_1||"",d.isp_2||"",d.isp_3||"",d.isp_4||"",d.nota||"",l.lat||"",l.lng||"",l.accuracy||"",maps,links[0]||"",links[1]||"",links[2]||"",user.email,"0.1"]}async function readRows(auth,form,limit){const sheets=google.sheets({version:"v4",auth}),ids=form==="all"?["CHURN","EXPLORACION"]:[form],out=[];for(const id of ids){if(!cfg[id])continue;const r=await sheets.spreadsheets.values.get({spreadsheetId:process.env.GOOGLE_SHEET_ID,range:`${cfg[id].sheet}!A2:Z`});for(const x of (r.data.values||[]).slice(-limit).reverse()){if(id==="CHURN")out.push({formId:id,timestamp:x[0],id:x[1],data:{ciudad:x[2],cliente_id:x[3],motivo_principal:x[5]},user:x[25]||""});else out.push({formId:id,timestamp:x[0],id:x[1],data:{ciudad:x[2],sector_barrio:x[3],tigo_hfc:x[7],claro_hfc:x[9],movistar:x[11]},user:x[24]||""})}}return out.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).slice(0,limit)}module.exports=async(req,res)=>{res.setHeader("Cache-Control","no-store");try{const user=await userFrom(req),auth=gauth();if(req.method==="GET"){const form=String(req.query.form||"all").toUpperCase(),limit=Math.min(Number(req.query.limit)||100,250);return res.status(200).json({rows:await readRows(auth,form==="ALL"?"all":form,limit)})}if(req.method!=="POST")return res.status(405).json({error:"Method not allowed"});const p=req.body||{},form=String(p.formId||"").toUpperCase();if(!cfg[form])return res.status(400).json({error:"Formulario inválido"});const id=idFor(form),links=await photos(auth,form,id,p.photos||[]),sheets=google.sheets({version:"v4",auth});await sheets.spreadsheets.values.append({spreadsheetId:process.env.GOOGLE_SHEET_ID,range:`${cfg[form].sheet}!A:Z`,valueInputOption:"RAW",insertDataOption:"INSERT_ROWS",requestBody:{values:[row(form,p,id,links,user)]}});res.status(200).json({ok:true,id,photos:links})}catch(e){const code=e.message==="AUTH_REQUIRED"?401:e.message==="NOT_ALLOWED"?403:500;res.status(code).json({error:code===500?"No se pudo guardar la respuesta.":e.message})}};
+const {google}=require("googleapis");
+const {Readable}=require("stream");
+const {
+  gauth,verifyUser,loadForms,isAdmin,canAccess,checkPublicRate,logSecurity,
+  validatePublicGuards,validatePhotos,validateSubmission,httpError,SHEET_ID
+}=require("./_core");
+
+const runtime={
+  CHURN:{folder:"DRIVE_CHURN_FOLDER_ID"},
+  EXPLORACION:{folder:"DRIVE_EXPLORACION_FOLDER_ID"}
+};
+
+const idFor=form=>`${form}-${Date.now()}-${Math.random().toString(36).slice(2,7).toUpperCase()}`;
+
+async function uploadPhotos(auth,form,id,list){
+  const photos=Array.isArray(list)?list:[];
+  if(!photos.length) return [];
+  const folderId=process.env[runtime[form.id]?.folder];
+  if(!folderId) throw httpError("PHOTO_FOLDER_NOT_CONFIGURED",500);
+  const drive=google.drive({version:"v3",auth});
+  const links=[];
+  for(let i=0;i<photos.length;i++){
+    const match=String(photos[i].data||"").match(/^data:(image\/(?:jpeg|jpg|png|webp));base64,(.+)$/i);
+    if(!match) throw httpError("INVALID_PHOTO",400);
+    const ext=match[1].toLowerCase().includes("png")?"png":match[1].toLowerCase().includes("webp")?"webp":"jpg";
+    const created=await drive.files.create({
+      requestBody:{name:`${id}_foto_${i+1}.${ext}`,parents:[folderId]},
+      media:{mimeType:match[1],body:Readable.from(Buffer.from(match[2],"base64"))},
+      fields:"id,webViewLink"
+    });
+    links.push(created.data.webViewLink||`https://drive.google.com/file/d/${created.data.id}/view`);
+  }
+  return links;
+}
+
+function buildRow(form,p,id,links,email){
+  const d=p.data||{},l=p.location||{},now=new Date().toISOString();
+  if(form.id==="CHURN"){
+    return [
+      now,id,d.ciudad||"",d.cliente_id||"",d.fecha_visita||"",d.motivo_principal||"",
+      Array.isArray(d.inconformidad_tipo)?d.inconformidad_tipo.join(" | "):d.inconformidad_tipo||"",
+      d.tiene_servicio_actual||"",d.operador_actual||"",d.precio_actual||"",d.velocidad_actual||"",
+      d.incluye_tv||"",d.tecnologia_tv||"",d.tv_coaxial||"",d.tv_box||"",d.tiene_disney||"",
+      d.tiene_deportes||"",d.canales_destacados||"",d.volveria||"",d.cambio_para_volver||"",
+      d.comentario||"",l.lat||"",l.lng||"",l.accuracy||"",links.join(" | "),email||"PUBLICO"
+    ];
+  }
+  const maps=l.lat&&l.lng?`https://www.google.com/maps?q=${l.lat},${l.lng}`:"";
+  return [
+    now,id,d.ciudad||"",d.sector_barrio||"",d.anio||"",d.e_postes||"",d.s_postes||"",
+    d.tigo_hfc||"",d.tigo_ftth||"",d.claro_hfc||"",d.claro_ftth||"",d.movistar||"",
+    d.isp_1||"",d.isp_2||"",d.isp_3||"",d.isp_4||"",d.nota||"",
+    l.lat||"",l.lng||"",l.accuracy||"",maps,links[0]||"",links[1]||"",links[2]||"",
+    email||"PUBLICO","0.3"
+  ];
+}
+
+async function readRows(auth,requested,limit,user,adminFlag){
+  const forms=await loadForms(auth);
+  const selected=requested==="all"?forms:forms.filter(form=>form.id===requested);
+  const allowed=selected.filter(form=>canAccess(form,user,adminFlag));
+  const sheets=google.sheets({version:"v4",auth});
+  const out=[];
+  for(const form of allowed){
+    const r=await sheets.spreadsheets.values.get({
+      spreadsheetId:SHEET_ID,
+      range:`${form.sheet}!A2:Z`
+    });
+    for(const row of (r.data.values||[]).slice(-limit).reverse()){
+      if(form.id==="CHURN"){
+        out.push({
+          formId:form.id,timestamp:row[0],id:row[1],
+          data:{ciudad:row[2],cliente_id:row[3],motivo_principal:row[5]},
+          user:row[25]||""
+        });
+      }else if(form.id==="EXPLORACION"){
+        out.push({
+          formId:form.id,timestamp:row[0],id:row[1],
+          data:{ciudad:row[2],sector_barrio:row[3],tigo_hfc:row[7],claro_hfc:row[9],movistar:row[11]},
+          user:row[24]||""
+        });
+      }
+    }
+  }
+  return out.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).slice(0,limit);
+}
+
+module.exports=async(req,res)=>{
+  res.setHeader("Cache-Control","no-store");
+  let auth;
+  let publicContext=null;
+  try{
+    auth=gauth();
+
+    if(req.method==="GET"){
+      const user=await verifyUser(req);
+      const adminFlag=await isAdmin(auth,user.email);
+      const requested=String(req.query.form||"all").toUpperCase();
+      const limit=Math.min(Number(req.query.limit)||100,250);
+      return res.status(200).json({
+        rows:await readRows(auth,requested==="ALL"?"all":requested,limit,user,adminFlag)
+      });
+    }
+
+    if(req.method!=="POST") return res.status(405).json({error:"Method not allowed"});
+
+    const payload=req.body||{};
+    const formId=String(payload.formId||"").toUpperCase();
+    const forms=await loadForms(auth);
+    const form=forms.find(item=>item.id===formId);
+    if(!form||!runtime[formId]) throw httpError("INVALID_FORM",400);
+
+    let user=null;
+    let adminFlag=false;
+
+    if(form.access==="PUBLICO"){
+      user=await verifyUser(req,{required:false});
+      validatePublicGuards(payload);
+      publicContext={ipHash:await checkPublicRate(auth,form,req)};
+    }else{
+      user=await verifyUser(req);
+      adminFlag=await isAdmin(auth,user.email);
+      if(!canAccess(form,user,adminFlag)) throw httpError("FORM_ACCESS_DENIED",403);
+    }
+
+    validateSubmission(formId,payload);
+    validatePhotos(payload.photos||[],form);
+
+    const id=idFor(formId);
+    const links=await uploadPhotos(auth,form,id,payload.photos||[]);
+    const sheets=google.sheets({version:"v4",auth});
+    await sheets.spreadsheets.values.append({
+      spreadsheetId:SHEET_ID,
+      range:`${form.sheet}!A:Z`,
+      valueInputOption:"RAW",
+      insertDataOption:"INSERT_ROWS",
+      requestBody:{values:[buildRow(form,payload,id,links,user?.email||"PUBLICO")]}
+    });
+
+    if(publicContext){
+      await logSecurity(auth,{
+        formId,ipHash:publicContext.ipHash,event:"PUBLIC_SUBMIT",result:"ACEPTADO",detail:id,req
+      });
+    }
+
+    return res.status(200).json({ok:true,id,photos:links});
+  }catch(error){
+    if(publicContext?.ipHash&&auth){
+      try{
+        await logSecurity(auth,{
+          formId:String(req.body?.formId||"").toUpperCase(),
+          ipHash:publicContext.ipHash,event:"PUBLIC_SUBMIT",result:"RECHAZADO",
+          detail:error.message,req
+        });
+      }catch(_){}
+    }
+    const status=error.status||500;
+    return res.status(status).json({
+      error:status===500?"No se pudo guardar la respuesta.":error.message
+    });
+  }
+};
