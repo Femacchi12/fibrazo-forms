@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <title>FIBRAZO · Forms</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=2026.09.30.2">
+</head>
+<body class="auth-pending">
+  <section id="authGate" class="auth-gate" aria-live="polite">
+    <div class="auth-card">
+      <div class="auth-brand">FIBRAZO · Growth</div>
+      <h1>FIBRAZO Forms</h1>
+      <p id="authMessage">Inicia sesión con tu cuenta de Google para continuar.</p>
+      <button id="googleSignIn" class="primary-button" type="button">Continuar con Google</button>
+      <button id="changeAccount" class="secondary-button" type="button" hidden>Cambiar de cuenta</button>
+      <p id="authError" class="auth-error"></p>
+    </div>
+  </section>
+
+  <main>
+    <header class="hero-header">
+      <div class="hero-copy">
+        <div class="hero-brand"><span>fibrazo</span><i></i><b>GROWTH</b></div>
+        <h1>FIBRAZO Forms</h1>
+        <p>Formularios, relevamientos y resultados en un único espacio.</p>
+      </div>
+      <div class="update-cards">
+        <article><span>Versión</span><b>0.1 · MVP</b></article>
+        <article><span>Formularios activos</span><b id="activeFormsCount">2</b></article>
+      </div>
+      <div id="authSession" class="auth-session" hidden>
+        <span id="signedInEmail"></span>
+        <button id="signOutButton" type="button">Cerrar sesión</button>
+      </div>
+    </header>
+
+    <section class="panel app-nav">
+      <div class="section-title">
+        <div><span>NAVEGACIÓN</span><h2>Centro de formularios</h2></div>
+        <div class="view-switch" role="tablist">
+          <button class="active" data-view="forms">Formularios</button>
+          <button data-view="results">Resultados</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="formsView">
+      <section class="panel intro-panel">
+        <div class="section-title">
+          <div><span>FORMULARIOS</span><h2>Selecciona un relevamiento</h2></div>
+          <div id="previewBadge" class="status-badge" hidden>Vista previa GitHub</div>
+        </div>
+        <p class="support-copy">Los formularios se adaptan al celular y guardan cada respuesta estructurada para análisis posterior.</p>
+        <div id="formCards" class="form-cards"></div>
+      </section>
+
+      <section id="formWorkspace" class="panel form-workspace" hidden>
+        <div class="section-title workspace-head">
+          <div>
+            <span id="formEyebrow">FORMULARIO</span>
+            <h2 id="formTitle"></h2>
+            <p id="formDescription"></p>
+          </div>
+          <button id="closeForm" class="secondary-button compact" type="button">← Volver</button>
+        </div>
+        <form id="dynamicForm" novalidate>
+          <div id="dynamicFields" class="form-grid"></div>
+          <div class="form-actions">
+            <div id="saveStatus" class="save-status"></div>
+            <button id="submitForm" class="primary-button" type="submit">Guardar respuesta</button>
+          </div>
+        </form>
+      </section>
+    </section>
+
+    <section id="resultsView" hidden>
+      <section class="kpis">
+        <article class="kpi"><span>RESPUESTAS CHURN</span><strong id="churnCount">0</strong><small>registros</small></article>
+        <article class="kpi"><span>RESPUESTAS EXPLORACIÓN</span><strong id="explorationCount">0</strong><small>registros</small></article>
+        <article class="kpi"><span>TOTAL</span><strong id="totalCount">0</strong><small>respuestas</small></article>
+        <article class="kpi"><span>ESTADO</span><strong class="status-value" id="backendState">LISTO</strong><small id="backendDetail">sincronización</small></article>
+      </section>
+      <section class="panel records">
+        <div class="section-title records-head">
+          <div><span>BASE DETALLADA</span><h2>Últimas respuestas</h2></div>
+          <div class="result-controls">
+            <select id="resultFormFilter">
+              <option value="all">Todos los formularios</option>
+              <option value="CHURN">Churn</option>
+              <option value="EXPLORACION">Exploración</option>
+            </select>
+            <button id="refreshResults" class="secondary-button compact" type="button">↻ Actualizar</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Formulario</th><th>Ciudad</th><th>Referencia</th><th>Detalle</th><th>Usuario</th></tr></thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+        <div id="resultsEmpty" class="empty-state">Todavía no hay respuestas registradas.</div>
+      </section>
+    </section>
+  </main>
+
+  <footer>FIBRAZO · Growth <span>Forms MVP · 2026</span></footer>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="forms-config.js?v=2026.09.30.2"></script>
+  <script src="app.js?v=2026.09.30.2"></script>
+</body>
+</html>
