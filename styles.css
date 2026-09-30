@@ -104,3 +104,23 @@ body.form-mode main{width:min(1180px,96%);padding-top:14px}
   .form-actions .primary-button{flex:1}
   .success-meta{grid-template-columns:1fr}
 }
+
+
+/* Pendientes de desarrollo */
+.pending-hub{position:fixed;top:14px;right:16px;z-index:90}
+.pending-toggle{position:relative;width:42px;height:42px;border:1px solid var(--fz-border-strong);border-radius:11px;background:var(--fz-surface-raised);display:grid;place-items:center;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+.pending-toggle:hover{border-color:var(--fz-green-border);background:var(--fz-surface-hover)}
+.pending-emoji{font-size:19px;line-height:1}
+.pending-count{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--fz-green);color:#001a10;display:grid;place-items:center;font-size:9px;font-weight:800;border:2px solid #000}
+.pending-popover{position:absolute;top:50px;right:0;width:min(390px,calc(100vw - 28px));padding:14px;border:1px solid var(--fz-border-strong);border-radius:13px;background:var(--fz-surface);box-shadow:0 18px 50px rgba(0,0,0,.48)}
+.pending-popover-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding-bottom:10px;border-bottom:1px solid var(--fz-border)}
+.pending-popover-head span{font-size:9px;letter-spacing:.13em;color:var(--fz-green);font-weight:800}
+.pending-popover-head h3{font-size:16px;margin:4px 0 0}
+.pending-popover-head button{border:0;background:transparent;color:var(--fz-muted);font-size:22px;line-height:1;padding:0 3px}
+.pending-list{display:grid;gap:8px;margin-top:10px}
+.pending-item{display:grid;grid-template-columns:1fr auto;gap:12px;padding:12px;border:1px solid var(--fz-border);border-radius:10px;background:var(--fz-surface-raised)}
+.pending-item strong{display:block;font-size:11px}
+.pending-item p{margin:5px 0 0;color:var(--fz-muted);font-size:10px;line-height:1.45}
+.pending-item>span{align-self:start;padding:5px 7px;border:1px solid #a47516;border-radius:999px;background:rgba(245,177,27,.08);color:#ffc85c;font-size:9px;font-weight:800}
+.pending-empty{padding:16px;text-align:center;color:var(--fz-muted);font-size:11px}
+@media(max-width:560px){.pending-hub{top:10px;right:10px}.pending-toggle{width:39px;height:39px}}
