@@ -1,1 +1,1 @@
-{"cleanUrls":true,"rewrites":[{"source":"/","destination":"/v2.html"},{"source":"/f/:slug","destination":"/public.html"}],"functions":{"api/submissions.js":{"maxDuration":30},"api/admin.js":{"maxDuration":30},"api/public.js":{"maxDuration":30},"api/access.js":{"maxDuration":30}}}
+{"cleanUrls":true,"rewrites":[{"source":"/f/:slug","destination":"/public.html"}],"functions":{"api/submissions.js":{"maxDuration":30},"api/admin.js":{"maxDuration":30},"api/public.js":{"maxDuration":30},"api/access.js":{"maxDuration":30}}}
