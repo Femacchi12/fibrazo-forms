@@ -1,7 +1,41 @@
 (() => {
   const forms = window.FIBRAZO_FORMS || {};
   const $ = (id) => document.getElementById(id);
-  const state = { form:null, sectionIndex:0, gps:null, photos:[] };
+  const state = { form:null, sectionIndex:0, gps:null, photos:[] };\n  const pendingItems = window.FIBRAZO_PENDING || [];
+
+  function renderPendingItems() {
+    const count = $("pendingCount");
+    const list = $("pendingList");
+    if (!count || !list) return;
+    count.textContent = String(pendingItems.length);
+    list.innerHTML = pendingItems.length
+      ? pendingItems.map((item) =>
+          '<article class="pending-item"><div><strong>' + escapeHtml(item.title) +
+          '</strong><p>' + escapeHtml(item.description || "") +
+          '</p></div><span>' + escapeHtml(item.status || "Pendiente") + '</span></article>'
+        ).join("")
+      : '<div class="pending-empty">No hay pendientes registrados.</div>';
+  }
+
+  function togglePending(force) {
+    const pop = $("pendingPopover");
+    const button = $("pendingToggle");
+    if (!pop || !button) return;
+    const nextHidden = typeof force === "boolean" ? !force : !pop.hidden;
+    pop.hidden = nextHidden;
+    button.setAttribute("aria-expanded", String(!nextHidden));
+  }
+
+  $("pendingToggle")?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    togglePending();
+  });
+  $("pendingClose")?.addEventListener("click", () => togglePending(false));
+  document.addEventListener("click", (event) => {
+    const hub = event.target.closest(".pending-hub");
+    if (!hub) togglePending(false);
+  });
+  renderPendingItems();
 
   function user() {
     return window.firebase?.auth?.().currentUser || null;
@@ -332,7 +366,7 @@
     });
 
     $("prevSection").hidden = state.sectionIndex === 0;
-    const last = state.sectionIndex === state.form.sections.length - 1;
+    const last = state.sectionIndex === activeSections().length - 1;
     $("nextSection").hidden = last;
     $("reviewForm").hidden = !last;
     clearValidation();
@@ -398,11 +432,11 @@
   }
 
   function validateAll() {
-    return state.form.sections.flatMap((_,index) => validateSection(index,false));
+    return activeSections().flatMap((_,index) => validateSection(index,false));
   }
 
   function validateSection(index, paint=true) {
-    const section = state.form.sections[index];
+    const section = activeSections()[index];
     const errors = [];
     state.form.fields.filter((field) => field.section === section.id && conditionMet(field)).forEach((field) => {
       const message = validateField(field);
@@ -465,7 +499,7 @@
   function buildReview() {
     const host = $("reviewContent");
     host.innerHTML = "";
-    state.form.sections.forEach((section) => {
+    activeSections().forEach((section) => {
       const visible = state.form.fields.filter((field) => field.section === section.id && conditionMet(field));
       if (!visible.length) return;
       const card = document.createElement("section");
