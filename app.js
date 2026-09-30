@@ -77,7 +77,7 @@
     }
     if (!isAllowed(user)) {
       await auth.signOut();
-      showGate("Usa una cuenta autorizada de FIBRAZO.", true);
+      showGate("Esta cuenta no tiene acceso habilitado.", true);
       return;
     }
     showDashboard(user);
