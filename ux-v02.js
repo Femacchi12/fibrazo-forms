@@ -1,7 +1,7 @@
 (() => {
   const forms = window.FIBRAZO_FORMS || {};
   const $ = (id) => document.getElementById(id);
-  const state = { form:null, sectionIndex:0, gps:null, photos:[] };\n  const pendingItems = window.FIBRAZO_PENDING || [];
+  const state = { form:null, sectionIndex:0, gps:null, photos:[], startedAt:0 };\n  const isPublicMode = document.body.classList.contains("public-mode");\n  const pendingItems = window.FIBRAZO_PENDING || [];
 
   function renderPendingItems() {
     const count = $("pendingCount");
@@ -84,7 +84,7 @@
     state.form = form;
     state.sectionIndex = 0;
     state.gps = null;
-    state.photos = [];
+    state.photos = [];\n    state.startedAt = Date.now();
 
     document.body.classList.add("form-mode");
     $("formTitle").textContent = form.name;
@@ -548,7 +548,7 @@
 
     try {
       let result;
-      if (location.hostname.endsWith("github.io")) {
+      if (isPublicMode) {\n        const response = await fetch("/api/submissions", {\n          method:"POST",\n          headers:{ "Content-Type":"application/json" },\n          body:JSON.stringify(payload)\n        });\n        result = await response.json();\n        if (!response.ok) throw new Error(result.error || "No se pudo guardar la respuesta.");\n      } else if (location.hostname.endsWith("github.io")) {
         const id = "PREVIEW-" + Date.now();
         const saved = JSON.parse(localStorage.getItem("fibrazoFormsPreview") || "[]");
         saved.unshift({ id, ...payload });
@@ -568,7 +568,7 @@
       $("formWorkspace").hidden = true;
       $("successWorkspace").hidden = false;
       $("successId").textContent = result.id || "—";
-      $("successEmail").textContent = currentUser.email || "";
+      $("successEmail").textContent = currentUser?.email || "Formulario público";
       window.scrollTo({ top:0, behavior:"smooth" });
     } catch (error) {
       setSaveStatus(error.message || "No se pudo guardar la respuesta.","error");
