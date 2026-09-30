@@ -17,7 +17,7 @@ window.FIBRAZO_FORMS = {
       { id: "cierre", title: "Cierre de la visita", description: "Registra posibilidad de retorno y observaciones finales." }
     ],
     fields: [
-      {key:"ciudad",section:"identificacion",label:"Ciudad",type:"select",required:true,options:["Sincelejo","Montería"],help:"Selecciona la ciudad donde se realiza la visita."},
+      {key:"coordenadas",section:"identificacion",label:"Ubicación de la visita",type:"gps",required:true,full:true,auto:true,help:"Se toma automáticamente al abrir el formulario. Puedes actualizarla si te moviste."},\n      {key:"ciudad",section:"identificacion",label:"Ciudad",type:"select",required:true,options:["Sincelejo","Montería"],help:"Se completa automáticamente con el GPS y puedes corregirla manualmente si hace falta."},
       {key:"cliente_id",section:"identificacion",label:"N.º de cliente",type:"numeric",required:true,help:"Ingresa únicamente el número de cliente registrado en FIBRAZO."},
       {key:"fecha_visita",section:"identificacion",label:"Fecha de visita",type:"date-flex",required:true,help:"Puedes elegirla en el calendario o escribirla como DD/MM/AAAA."},
 
