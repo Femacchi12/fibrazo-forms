@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <title>FIBRAZO · Formulario</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css?v=2026.09.30.7">
+</head>
+<body class="public-mode form-mode">
+  <main class="public-main">
+    <section id="publicLoading" class="panel public-loading">
+      <div class="auth-brand">FIBRAZO · Growth</div>
+      <h1>Cargando formulario…</h1>
+      <p>Validando el enlace y la configuración de acceso.</p>
+    </section>
+
+    <section id="publicError" class="panel public-loading" hidden>
+      <div class="auth-brand">FIBRAZO · Growth</div>
+      <h1>Formulario no disponible</h1>
+      <p id="publicErrorText">Este enlace no está habilitado actualmente.</p>
+    </section>
+
+    <section id="formWorkspace" class="panel form-workspace" hidden>
+      <div class="workspace-topbar">
+        <span class="public-brand">fibrazo <b>GROWTH</b></span>
+        <span id="formStepCounter" class="step-counter"></span>
+      </div>
+      <div class="workspace-hero">
+        <div>
+          <span id="formEyebrow">FORMULARIO</span>
+          <h1 id="formTitle"></h1>
+          <p id="formDescription"></p>
+        </div>
+        <div class="form-user-card">
+          <span>ACCESO</span>
+          <strong id="formUserEmail">Formulario público</strong>
+          <small>No necesitas iniciar sesión para responder.</small>
+        </div>
+      </div>
+      <div id="sectionStepper" class="section-stepper"></div>
+      <form id="dynamicForm" novalidate>
+        <input id="publicWebsite" class="spam-field" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <div class="section-heading">
+          <span id="sectionEyebrow">SECCIÓN</span>
+          <h2 id="sectionTitle"></h2>
+          <p id="sectionDescription"></p>
+        </div>
+        <div id="dynamicFields" class="form-grid"></div>
+        <div id="validationSummary" class="validation-summary" hidden>
+          <strong>Revisa los siguientes campos:</strong>
+          <ul id="validationList"></ul>
+        </div>
+        <div class="form-actions">
+          <button id="prevSection" class="secondary-button" type="button">← Anterior</button>
+          <div class="action-spacer"></div>
+          <button id="nextSection" class="primary-button" type="button">Continuar →</button>
+          <button id="reviewForm" class="primary-button" type="button" hidden>Revisar respuestas →</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="reviewWorkspace" class="panel review-workspace" hidden>
+      <div class="workspace-topbar">
+        <button id="editForm" class="secondary-button compact" type="button">← Editar respuestas</button>
+        <span class="step-counter">Revisión final</span>
+      </div>
+      <div class="workspace-hero review-hero">
+        <div>
+          <span>REVISIÓN</span>
+          <h1>Confirma la información</h1>
+          <p>La respuesta se enviará únicamente cuando presiones confirmar.</p>
+        </div>
+        <div class="form-user-card"><span>ACCESO</span><strong id="reviewUserEmail">Formulario público</strong></div>
+      </div>
+      <div id="reviewContent" class="review-content"></div>
+      <div id="saveStatus" class="save-status"></div>
+      <div class="form-actions review-actions">
+        <button id="editFormBottom" class="secondary-button" type="button">← Volver a editar</button>
+        <div class="action-spacer"></div>
+        <button id="confirmSubmit" class="primary-button" type="button">Confirmar y guardar</button>
+      </div>
+    </section>
+
+    <section id="successWorkspace" class="panel success-workspace" hidden>
+      <div class="success-icon">✓</div>
+      <span>RESPUESTA REGISTRADA</span>
+      <h1>Formulario completado con éxito</h1>
+      <p>La información fue guardada correctamente.</p>
+      <div class="success-meta">
+        <div><span>ID de respuesta</span><strong id="successId"></strong></div>
+        <div><span>Acceso</span><strong id="successEmail">Formulario público</strong></div>
+      </div>
+      <div class="success-actions">
+        <button id="newResponse" class="primary-button" type="button">Completar otra respuesta</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>FIBRAZO · Growth <span>Formulario público seguro · v0.3</span></footer>
+  <script src="/forms-config.js?v=2026.09.30.7"></script>
+  <script src="/ux-v02.js?v=2026.09.30.7"></script>
+  <script src="/public-v03.js?v=2026.09.30.7"></script>
+</body>
+</html>
