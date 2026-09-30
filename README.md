@@ -31,7 +31,30 @@ Para habilitar escritura real:
 4. Validar una respuesta de Churn y una de Exploración desde celular.
 
 ## Estado
-- Frontend: preparado.
+- Frontend: v0.3 con permisos y formularios públicos.
 - GitHub Pages: requiere activación inicial del repositorio.
 - Backend: preparado para Vercel.
 - Google Sheets / Drive: estructuras creadas.
+
+
+## Flujos draw.io
+El mapa maestro vive versionado junto al código:
+
+`docs/FIBRAZO_Forms_Flujos.drawio`
+
+Abrir/editar directamente en diagrams.net:
+
+`https://app.diagrams.net/?mode=github#HFemacchi12%2Ffibrazo-forms%2Fmain%2Fdocs%2FFIBRAZO_Forms_Flujos.drawio`
+
+Cada formulario debe conservar su propia página dentro del archivo y actualizarse en el mismo cambio que modifique su lógica.
+
+## Seguridad por formulario
+La configuración se administra desde **Administrar → Formularios → Permisos** y se persiste en la hoja `FORMULARIOS`.
+
+Modos:
+- `PRIVADO`: solo administradores.
+- `CORREOS`: lista explícita de correos.
+- `DOMINIO`: dominio autorizado.
+- `PUBLICO`: acceso directo mediante `/f/<slug>` sin exponer dashboard ni resultados.
+
+Los formularios públicos aplican validación del backend, honeypot, ventana mínima de llenado, rate limit por huella de IP, límites de cantidad/tamaño de fotos y registro en `SECURITY_LOG`.
