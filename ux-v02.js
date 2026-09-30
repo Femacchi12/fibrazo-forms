@@ -325,12 +325,12 @@
     const preview = document.createElement("div");
     preview.className = "photo-preview";
     input.addEventListener("change", async () => {
-      const selected = Array.from(input.files || []).slice(0,3);
+      const photoLimit = isPublicMode ? Math.max(0,Math.min(3,Number(window.FIBRAZO_PUBLIC_POLICY?.maxPhotos ?? 3))) : 3;\n      const selected = Array.from(input.files || []).slice(0,photoLimit);
       state.photos = [];
       preview.innerHTML = "";
       for (const file of selected) {
         try {
-          const compressed = await compressImage(file,1280,.72);
+          const compressed = await compressImage(file,1280,isPublicMode?.68:.72);
           state.photos.push({ name:file.name || "foto.jpg", data:compressed });
           const image = document.createElement("img");
           image.src = compressed;
