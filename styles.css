@@ -124,3 +124,65 @@ body.form-mode main{width:min(1180px,96%);padding-top:14px}
 .pending-item>span{align-self:start;padding:5px 7px;border:1px solid #a47516;border-radius:999px;background:rgba(245,177,27,.08);color:#ffc85c;font-size:9px;font-weight:800}
 .pending-empty{padding:16px;text-align:center;color:var(--fz-muted);font-size:11px}
 @media(max-width:560px){.pending-hub{top:10px;right:10px}.pending-toggle{width:39px;height:39px}}
+
+
+/* FIBRAZO Forms v0.3 · permisos y público */
+.form-card-locked{opacity:.58}
+.form-card-locked:hover{transform:none}
+.form-card-locked button{cursor:not-allowed!important;filter:none!important}
+
+.admin-panel{padding:20px;margin-bottom:14px}
+.admin-head{align-items:flex-start}
+.admin-head p{margin:6px 0 0;color:var(--fz-muted);font-size:11px}
+.admin-map-link{text-decoration:none;display:inline-flex;align-items:center}
+.admin-access-legend{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0}
+.admin-access-legend span{padding:10px;border:1px solid var(--fz-border);border-radius:9px;background:var(--fz-surface-raised);color:var(--fz-muted);font-size:10px;line-height:1.35}
+.admin-access-legend b{display:block;color:#fff;margin-bottom:3px;font-size:10px}
+.admin-forms{display:grid;gap:12px}
+.admin-form-card{padding:16px;border:1px solid var(--fz-border-strong);border-radius:12px;background:var(--fz-surface-raised)}
+.admin-form-title{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;padding-bottom:13px;border-bottom:1px solid var(--fz-border)}
+.admin-form-title>div:first-child>span{font-size:9px;letter-spacing:.13em;color:var(--fz-green);font-weight:800}
+.admin-form-title h3{margin:5px 0 5px;font-size:16px}
+.admin-form-title p{margin:0;color:var(--fz-muted);font-size:10px}
+.access-pill{white-space:nowrap;border-radius:999px;padding:6px 9px;font-size:9px;font-weight:800;border:1px solid var(--fz-border)}
+.access-publico{color:var(--fz-green);border-color:var(--fz-green-border);background:var(--fz-green-soft)}
+.access-dominio{color:#b7dcff;border-color:#35698e;background:rgba(53,105,142,.12)}
+.access-correos{color:#ffd57c;border-color:#8f6c2e;background:rgba(143,108,46,.12)}
+.access-privado{color:#ff9b9b;border-color:#8f4646;background:rgba(143,70,70,.12)}
+.admin-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+.admin-grid label{display:block}
+.admin-grid label.full{grid-column:1/-1}
+.admin-grid label>span,.admin-public-link>span{display:block;margin-bottom:6px;color:var(--fz-muted);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.admin-grid input,.admin-grid select,.admin-grid textarea,.admin-public-link input{width:100%;min-height:39px;padding:9px 10px;border:1px solid var(--fz-border-strong);border-radius:8px;background:var(--fz-control);color:#fff;outline:none}
+.admin-grid textarea{min-height:70px}
+.admin-grid small{display:block;margin-top:5px;color:var(--fz-muted);font-size:9px}
+.admin-public-link{margin-top:12px;padding:12px;border:1px solid var(--fz-green-border);border-radius:10px;background:var(--fz-green-soft)}
+.admin-public-link>div{display:grid;grid-template-columns:1fr auto;gap:8px}
+.admin-card-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding-top:12px;border-top:1px solid var(--fz-border)}
+.admin-card-actions small{color:var(--fz-muted);font-size:9px}
+
+.public-main{width:min(1050px,calc(100% - 24px));margin:14px auto 0}
+.public-loading{padding:40px;text-align:center}
+.public-loading h1{font-size:24px;margin:12px 0 8px}
+.public-loading p{color:var(--fz-muted);margin:0}
+.public-brand{color:var(--fz-green);font-size:18px;font-weight:800;letter-spacing:-.03em}
+.public-brand b{margin-left:8px;color:#fff;font-size:9px;letter-spacing:.17em}
+.public-mode .pending-hub{display:none}
+.public-mode .form-user-card{border-color:var(--fz-green-border)}
+.spam-field{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important}
+
+@media(max-width:850px){
+  .admin-access-legend{grid-template-columns:1fr 1fr}
+  .admin-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:560px){
+  .admin-head{display:block}
+  .admin-map-link{margin-top:12px}
+  .admin-access-legend,.admin-grid{grid-template-columns:1fr}
+  .admin-grid label.full{grid-column:auto}
+  .admin-form-title{display:block}
+  .access-pill{display:inline-block;margin-top:10px}
+  .admin-card-actions{align-items:stretch;flex-direction:column}
+  .admin-card-actions .primary-button{width:100%}
+  .admin-public-link>div{grid-template-columns:1fr}
+}
