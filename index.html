@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=2026.09.30.2">
+  <link rel="stylesheet" href="styles.css?v=2026.09.30.3">
 </head>
 <body class="auth-pending">
   <section id="authGate" class="auth-gate" aria-live="polite">
@@ -30,7 +30,7 @@
         <p>Formularios, relevamientos y resultados en un único espacio.</p>
       </div>
       <div class="update-cards">
-        <article><span>Versión</span><b>0.1 · MVP</b></article>
+        <article><span>Versión</span><b>0.2 · UX</b></article>
         <article><span>Formularios activos</span><b id="activeFormsCount">2</b></article>
       </div>
       <div id="authSession" class="auth-session" hidden>
@@ -55,26 +55,96 @@
           <div><span>FORMULARIOS</span><h2>Selecciona un relevamiento</h2></div>
           <div id="previewBadge" class="status-badge" hidden>Vista previa GitHub</div>
         </div>
-        <p class="support-copy">Los formularios se adaptan al celular y guardan cada respuesta estructurada para análisis posterior.</p>
+        <p class="support-copy">Los formularios se adaptan al celular, se completan por secciones y permiten revisar las respuestas antes de confirmar.</p>
         <div id="formCards" class="form-cards"></div>
       </section>
 
       <section id="formWorkspace" class="panel form-workspace" hidden>
-        <div class="section-title workspace-head">
+        <div class="workspace-topbar">
+          <button id="closeForm" class="secondary-button compact" type="button">← Volver a formularios</button>
+          <span id="formStepCounter" class="step-counter"></span>
+        </div>
+
+        <div class="workspace-hero">
           <div>
             <span id="formEyebrow">FORMULARIO</span>
-            <h2 id="formTitle"></h2>
+            <h1 id="formTitle"></h1>
             <p id="formDescription"></p>
           </div>
-          <button id="closeForm" class="secondary-button compact" type="button">← Volver</button>
+          <div class="form-user-card">
+            <span>COMPLETANDO COMO</span>
+            <strong id="formUserEmail"></strong>
+            <small>Este correo quedará asociado automáticamente a la respuesta.</small>
+          </div>
         </div>
+
+        <div id="sectionStepper" class="section-stepper"></div>
+
         <form id="dynamicForm" novalidate>
+          <div class="section-heading">
+            <span id="sectionEyebrow">SECCIÓN</span>
+            <h2 id="sectionTitle"></h2>
+            <p id="sectionDescription"></p>
+          </div>
+
           <div id="dynamicFields" class="form-grid"></div>
+
+          <div id="validationSummary" class="validation-summary" hidden>
+            <strong>Revisa los siguientes campos:</strong>
+            <ul id="validationList"></ul>
+          </div>
+
           <div class="form-actions">
-            <div id="saveStatus" class="save-status"></div>
-            <button id="submitForm" class="primary-button" type="submit">Guardar respuesta</button>
+            <button id="prevSection" class="secondary-button" type="button">← Anterior</button>
+            <div class="action-spacer"></div>
+            <button id="nextSection" class="primary-button" type="button">Continuar →</button>
+            <button id="reviewForm" class="primary-button" type="button" hidden>Revisar respuestas →</button>
           </div>
         </form>
+      </section>
+
+      <section id="reviewWorkspace" class="panel review-workspace" hidden>
+        <div class="workspace-topbar">
+          <button id="editForm" class="secondary-button compact" type="button">← Editar respuestas</button>
+          <span class="step-counter">Revisión final</span>
+        </div>
+
+        <div class="workspace-hero review-hero">
+          <div>
+            <span>REVISIÓN</span>
+            <h1>Confirma la información</h1>
+            <p>Revisa todo antes de guardar. La respuesta se enviará únicamente cuando presiones confirmar.</p>
+          </div>
+          <div class="form-user-card">
+            <span>USUARIO</span>
+            <strong id="reviewUserEmail"></strong>
+          </div>
+        </div>
+
+        <div id="reviewContent" class="review-content"></div>
+
+        <div id="saveStatus" class="save-status"></div>
+
+        <div class="form-actions review-actions">
+          <button id="editFormBottom" class="secondary-button" type="button">← Volver a editar</button>
+          <div class="action-spacer"></div>
+          <button id="confirmSubmit" class="primary-button" type="button">Confirmar y guardar</button>
+        </div>
+      </section>
+
+      <section id="successWorkspace" class="panel success-workspace" hidden>
+        <div class="success-icon">✓</div>
+        <span>RESPUESTA REGISTRADA</span>
+        <h1>Formulario completado con éxito</h1>
+        <p>La información fue guardada correctamente.</p>
+        <div class="success-meta">
+          <div><span>ID de respuesta</span><strong id="successId"></strong></div>
+          <div><span>Completado por</span><strong id="successEmail"></strong></div>
+        </div>
+        <div class="success-actions">
+          <button id="newResponse" class="primary-button" type="button">Completar otra respuesta</button>
+          <button id="backToForms" class="secondary-button" type="button">Volver a formularios</button>
+        </div>
       </section>
     </section>
 
@@ -85,6 +155,7 @@
         <article class="kpi"><span>TOTAL</span><strong id="totalCount">0</strong><small>respuestas</small></article>
         <article class="kpi"><span>ESTADO</span><strong class="status-value" id="backendState">LISTO</strong><small id="backendDetail">sincronización</small></article>
       </section>
+
       <section class="panel records">
         <div class="section-title records-head">
           <div><span>BASE DETALLADA</span><h2>Últimas respuestas</h2></div>
@@ -108,11 +179,11 @@
     </section>
   </main>
 
-  <footer>FIBRAZO · Growth <span>Forms MVP · 2026</span></footer>
+  <footer>FIBRAZO · Growth <span>Forms v0.2 · 2026</span></footer>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-  <script src="forms-config.js?v=2026.09.30.2"></script>
-  <script src="app.js?v=2026.09.30.2"></script>
+  <script src="forms-config.js?v=2026.09.30.3"></script>
+  <script src="app.js?v=2026.09.30.3"></script>
 </body>
 </html>
