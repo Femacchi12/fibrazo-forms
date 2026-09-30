@@ -1,4 +1,4 @@
-window.FIBRAZO_FORMS = {
+window.FIBRAZO_PENDING = [\n  {id:"email-copy",title:"Enviar copia por correo",description:"Enviar automáticamente un resumen del formulario al correo de quien lo completó.",status:"Pendiente"}\n];\n\nwindow.FIBRAZO_FORMS = {
   CHURN: {
     id: "CHURN",
     name: "Visita clientes churn",
@@ -25,7 +25,7 @@ window.FIBRAZO_FORMS = {
       {key:"precio_actual",section:"servicio",label:"Precio mensual actual",type:"currency",showWhen:{field:"tiene_servicio_actual",equals:"Sí"},help:"Ingresa solamente el valor mensual que paga."},
       {key:"velocidad_actual",section:"servicio",label:"Velocidad contratada",type:"numeric",suffix:"Mbps",showWhen:{field:"tiene_servicio_actual",equals:"Sí"},help:"Ingresa únicamente la velocidad contratada."},
 
-      {key:"incluye_tv",section:"tv",label:"¿Incluye TV?",type:"radio",options:["Sí","No"],showWhen:{field:"tiene_servicio_actual",equals:"Sí"},help:"Indica si el plan actual incluye televisión."},
+      {key:"incluye_tv",section:"servicio",label:"¿El servicio actual incluye TV?",type:"radio",options:["Sí","No"],showWhen:{field:"tiene_servicio_actual",equals:"Sí"},help:"Si respondes No, la sección de TV se omitirá automáticamente."},
       {key:"tecnologia_tv",section:"tv",label:"Tecnología de TV",type:"select",options:["Coaxial","Digital / App","TV Box","Otro"],showWhen:{field:"incluye_tv",equals:"Sí"},help:"Selecciona cómo recibe el servicio de TV."},
       {key:"tv_coaxial",section:"tv",label:"TV conectados por coaxial",type:"numeric",showWhen:{field:"incluye_tv",equals:"Sí"},help:"Cantidad de televisores conectados por coaxial."},
       {key:"tv_box",section:"tv",label:"Cantidad de TV Box",type:"numeric",showWhen:{field:"incluye_tv",equals:"Sí"},help:"Cantidad de TV Box entregados o instalados."},
