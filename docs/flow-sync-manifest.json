@@ -1,0 +1,476 @@
+{
+  "schemaVersion": 1,
+  "diagram": "docs/FIBRAZO_Forms_Flujos.drawio",
+  "forms": {
+    "CHURN": {
+      "page": "Churn",
+      "sections": [
+        {
+          "id": "identificacion",
+          "title": "Identificación"
+        },
+        {
+          "id": "motivo",
+          "title": "Motivo del churn"
+        },
+        {
+          "id": "servicio",
+          "title": "Servicio actual"
+        },
+        {
+          "id": "tv",
+          "title": "TV y contenidos"
+        },
+        {
+          "id": "cierre",
+          "title": "Cierre de la visita"
+        }
+      ],
+      "fields": [
+        {
+          "key": "ciudad",
+          "section": "identificacion",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Sincelejo",
+            "Montería"
+          ],
+          "showWhen": null,
+          "label": "Ciudad"
+        },
+        {
+          "key": "cliente_id",
+          "section": "identificacion",
+          "type": "numeric",
+          "required": true,
+          "options": [],
+          "showWhen": null,
+          "label": "N.º de cliente"
+        },
+        {
+          "key": "fecha_visita",
+          "section": "identificacion",
+          "type": "date-flex",
+          "required": true,
+          "options": [],
+          "showWhen": null,
+          "label": "Fecha de visita"
+        },
+        {
+          "key": "motivo_principal",
+          "section": "motivo",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Inconformidad con el servicio",
+            "Precio",
+            "Se pasó a otro operador",
+            "TV",
+            "Mudanza",
+            "No usa / no necesita el servicio",
+            "Problemas de recarga / pago",
+            "Otro"
+          ],
+          "showWhen": null,
+          "label": "Motivo por el cual dejó de recargar"
+        },
+        {
+          "key": "inconformidad_tipo",
+          "section": "motivo",
+          "type": "checkbox",
+          "required": false,
+          "options": [
+            "Mantenimiento no realizado",
+            "Demora en mantenimiento",
+            "Lentitud",
+            "Intermitencia",
+            "Demora en mudanza",
+            "Atención al cliente",
+            "Otro"
+          ],
+          "showWhen": {
+            "field": "motivo_principal",
+            "equals": "Inconformidad con el servicio"
+          },
+          "label": "¿Qué sucedió con el servicio?"
+        },
+        {
+          "key": "tiene_servicio_actual",
+          "section": "servicio",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sí",
+            "No"
+          ],
+          "showWhen": null,
+          "label": "¿Actualmente tiene servicio de internet?"
+        },
+        {
+          "key": "operador_actual",
+          "section": "servicio",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "showWhen": {
+            "field": "tiene_servicio_actual",
+            "equals": "Sí"
+          },
+          "label": "Operador actual"
+        },
+        {
+          "key": "precio_actual",
+          "section": "servicio",
+          "type": "currency",
+          "required": false,
+          "options": [],
+          "showWhen": {
+            "field": "tiene_servicio_actual",
+            "equals": "Sí"
+          },
+          "label": "Precio mensual actual"
+        },
+        {
+          "key": "velocidad_actual",
+          "section": "servicio",
+          "type": "numeric",
+          "required": false,
+          "options": [],
+          "showWhen": {
+            "field": "tiene_servicio_actual",
+            "equals": "Sí"
+          },
+          "label": "Velocidad contratada"
+        },
+        {
+          "key": "incluye_tv",
+          "section": "servicio",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Sí",
+            "No"
+          ],
+          "showWhen": {
+            "field": "tiene_servicio_actual",
+            "equals": "Sí"
+          },
+          "label": "¿El servicio actual incluye TV?"
+        },
+        {
+          "key": "tecnologia_tv",
+          "section": "tv",
+          "type": "select",
+          "required": false,
+          "options": [
+            "Coaxial",
+            "Digital / App",
+            "TV Box",
+            "Otro"
+          ],
+          "showWhen": {
+            "field": "incluye_tv",
+            "equals": "Sí"
+          },
+          "label": "Tecnología de TV"
+        },
+        {
+          "key": "tv_coaxial",
+          "section": "tv",
+          "type": "numeric",
+          "required": false,
+          "options": [],
+          "showWhen": {
+            "field": "incluye_tv",
+            "equals": "Sí"
+          },
+          "label": "TV conectados por coaxial"
+        },
+        {
+          "key": "tv_box",
+          "section": "tv",
+          "type": "numeric",
+          "required": false,
+          "options": [],
+          "showWhen": {
+            "field": "incluye_tv",
+            "equals": "Sí"
+          },
+          "label": "Cantidad de TV Box"
+        },
+        {
+          "key": "tiene_disney",
+          "section": "tv",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Sí",
+            "No",
+            "No sabe"
+          ],
+          "showWhen": {
+            "field": "incluye_tv",
+            "equals": "Sí"
+          },
+          "label": "¿Tiene Disney?"
+        },
+        {
+          "key": "tiene_deportes",
+          "section": "tv",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Sí",
+            "No",
+            "No sabe"
+          ],
+          "showWhen": {
+            "field": "incluye_tv",
+            "equals": "Sí"
+          },
+          "label": "¿Tiene canales de deportes?"
+        },
+        {
+          "key": "canales_destacados",
+          "section": "tv",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "showWhen": {
+            "field": "incluye_tv",
+            "equals": "Sí"
+          },
+          "label": "Canales o contenidos destacados"
+        },
+        {
+          "key": "volveria",
+          "section": "cierre",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Sí",
+            "No",
+            "Tal vez"
+          ],
+          "showWhen": null,
+          "label": "¿Volvería a FIBRAZO?"
+        },
+        {
+          "key": "cambio_para_volver",
+          "section": "cierre",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "showWhen": null,
+          "label": "¿Qué tendría que cambiar para volver?"
+        },
+        {
+          "key": "comentario",
+          "section": "cierre",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "showWhen": null,
+          "label": "Notas de la visita"
+        }
+      ]
+    },
+    "EXPLORACION": {
+      "page": "Exploración",
+      "sections": [
+        {
+          "id": "ubicacion",
+          "title": "Ubicación"
+        },
+        {
+          "id": "infraestructura",
+          "title": "Infraestructura"
+        },
+        {
+          "id": "operadores",
+          "title": "Operadores"
+        },
+        {
+          "id": "evidencia",
+          "title": "Evidencia"
+        }
+      ],
+      "fields": [
+        {
+          "key": "ciudad",
+          "section": "ubicacion",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "showWhen": null,
+          "label": "Ciudad"
+        },
+        {
+          "key": "sector_barrio",
+          "section": "ubicacion",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "showWhen": null,
+          "label": "Sector / barrio"
+        },
+        {
+          "key": "anio",
+          "section": "ubicacion",
+          "type": "numeric",
+          "required": true,
+          "options": [],
+          "showWhen": null,
+          "label": "Año"
+        },
+        {
+          "key": "coordenadas",
+          "section": "ubicacion",
+          "type": "gps",
+          "required": true,
+          "options": [],
+          "showWhen": null,
+          "label": "Ubicación actual"
+        },
+        {
+          "key": "e_postes",
+          "section": "infraestructura",
+          "type": "numeric",
+          "required": false,
+          "options": [],
+          "showWhen": null,
+          "label": "E. Postes"
+        },
+        {
+          "key": "s_postes",
+          "section": "infraestructura",
+          "type": "numeric",
+          "required": false,
+          "options": [],
+          "showWhen": null,
+          "label": "S. Postes"
+        },
+        {
+          "key": "tigo_hfc",
+          "section": "operadores",
+          "type": "select",
+          "required": false,
+          "options": [
+            "Sí",
+            "No",
+            "No validado"
+          ],
+          "showWhen": null,
+          "label": "TIGO HFC"
+        },
+        {
+          "key": "tigo_ftth",
+          "section": "operadores",
+          "type": "select",
+          "required": false,
+          "options": [
+            "Sí",
+            "No",
+            "No validado"
+          ],
+          "showWhen": null,
+          "label": "TIGO FTTH"
+        },
+        {
+          "key": "claro_hfc",
+          "section": "operadores",
+          "type": "select",
+          "required": false,
+          "options": [
+            "Sí",
+            "No",
+            "No validado"
+          ],
+          "showWhen": null,
+          "label": "CLARO HFC"
+        },
+        {
+          "key": "claro_ftth",
+          "section": "operadores",
+          "type": "select",
+          "required": false,
+          "options": [
+            "Sí",
+            "No",
+            "No validado"
+          ],
+          "showWhen": null,
+          "label": "CLARO FTTH"
+        },
+        {
+          "key": "movistar",
+          "section": "operadores",
+          "type": "select",
+          "required": false,
+          "options": [
+            "Sí",
+            "No",
+            "No validado"
+          ],
+          "showWhen": null,
+          "label": "Movistar"
+        },
+        {
+          "key": "isp_1",
+          "section": "operadores",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "showWhen": null,
+          "label": "ISP 1"
+        },
+        {
+          "key": "isp_2",
+          "section": "operadores",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "showWhen": null,
+          "label": "ISP 2"
+        },
+        {
+          "key": "isp_3",
+          "section": "operadores",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "showWhen": null,
+          "label": "ISP 3"
+        },
+        {
+          "key": "isp_4",
+          "section": "operadores",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "showWhen": null,
+          "label": "ISP 4"
+        },
+        {
+          "key": "nota",
+          "section": "evidencia",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "showWhen": null,
+          "label": "Nota"
+        },
+        {
+          "key": "fotos",
+          "section": "evidencia",
+          "type": "photos",
+          "required": false,
+          "options": [],
+          "showWhen": null,
+          "label": "Fotos"
+        }
+      ]
+    }
+  }
+}
