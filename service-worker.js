@@ -1,4 +1,4 @@
-const CACHE="fibrazo-forms-v0.4-20260930-2";
+const CACHE="fibrazo-forms-v0.4-20260930-3";
 const APP_SHELL=[
   "/","/index.html","/public.html","/styles.css","/forms-config.js","/app.js","/access-v03.js",
   "/ux-v04.js","/offline-v04.js","/admin-v03.js","/public-v03.js","/manifest.webmanifest","/icon.svg"
@@ -48,16 +48,7 @@ self.addEventListener("fetch",event=>{
 
   event.respondWith((async()=>{
     const cached=await caches.match(request,{ignoreSearch:true});
-    if(cached){
-      event.waitUntil((async()=>{
-        try{
-          const fresh=await fetch(request);
-          const cache=await caches.open(CACHE);
-          await cache.put(request,fresh.clone());
-        }catch(_){}
-      })());
-      return cached;
-    }
+    if(cached) return cached;
     try{
       const fresh=await fetch(request);
       const cache=await caches.open(CACHE);
