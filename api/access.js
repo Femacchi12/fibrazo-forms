@@ -1,4 +1,4 @@
-const {gauth,verifyUser,loadForms,isAdmin,canAccess}=require("./_core");
+const {gauth,verifyUser,loadForms,isAdmin,canUseDashboard,canAccess,httpError}=require("./_core");
 
 module.exports=async(req,res)=>{
   res.setHeader("Cache-Control","no-store");
@@ -7,6 +7,7 @@ module.exports=async(req,res)=>{
     const auth=gauth();
     const user=await verifyUser(req);
     const adminFlag=await isAdmin(auth,user.email);
+    if(!canUseDashboard(user,adminFlag)) throw httpError("DASHBOARD_ACCESS_DENIED",403);
     const forms=await loadForms(auth);
     return res.status(200).json({
       admin:adminFlag,

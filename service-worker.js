@@ -1,6 +1,6 @@
-const CACHE="fibrazo-forms-v0.4.4-20261001";
+const CACHE="fibrazo-forms-v0.4.5-20261001";
 const APP_SHELL=[
-  "/","/index.html","/public.html","/styles.css","/forms-config.js","/app.js","/access-v03.js",
+  "/","/index.html","/public","/styles.css","/forms-config.js","/app.js","/access-v03.js",
   "/ux-v04.js","/offline-v04.js","/admin-v03.js","/public-v03.js","/manifest.webmanifest","/icon.svg"
 ];
 const REMOTE_SHELL=[
@@ -39,7 +39,7 @@ self.addEventListener("fetch",event=>{
         cache.put("/index.html",fresh.clone());
         return fresh;
       }catch(_){
-        if(url.pathname.startsWith("/f/")) return (await caches.match("/public.html")) || Response.error();
+        if(url.pathname.startsWith("/f/")) return (await caches.match("/public")) || Response.error();
         return (await caches.match("/index.html")) || (await caches.match("/"));
       }
     })());

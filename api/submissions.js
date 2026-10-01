@@ -1,7 +1,7 @@
 const {google}=require("googleapis");
 const {Readable}=require("stream");
 const {
-  gauth,verifyUser,loadForms,isAdmin,canAccess,checkPublicRate,logSecurity,
+  gauth,verifyUser,loadForms,isAdmin,canUseDashboard,canAccess,checkPublicRate,logSecurity,
   validatePublicGuards,validatePhotos,validateSubmission,httpError,SHEET_ID,DEFAULT_DOMAIN,EXCEPTION
 }=require("./_core");
 
@@ -123,6 +123,7 @@ module.exports=async(req,res)=>{
     if(req.method==="GET"){
       const user=await verifyUser(req);
       const adminFlag=await isAdmin(auth,user.email);
+      if(!canUseDashboard(user,adminFlag)) throw httpError("DASHBOARD_ACCESS_DENIED",403);
       const requested=String(req.query.form||"all").toUpperCase();
       const limit=Math.min(Number(req.query.limit)||100,250);
       return res.status(200).json({
@@ -148,6 +149,7 @@ module.exports=async(req,res)=>{
     }else{
       user=await verifyUser(req);
       adminFlag=await isAdmin(auth,user.email);
+      if(!canUseDashboard(user,adminFlag)) throw httpError("DASHBOARD_ACCESS_DENIED",403);
       if(!canAccess(form,user,adminFlag)) throw httpError("FORM_ACCESS_DENIED",403);
     }
 

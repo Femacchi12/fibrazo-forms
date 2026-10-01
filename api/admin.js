@@ -1,5 +1,5 @@
 const {google}=require("googleapis");
-const {gauth,verifyUser,loadForms,isAdmin,sanitizeForm,httpError,splitEmails,clampInt,clampNum,SHEET_ID}=require("./_core");
+const {gauth,verifyUser,loadForms,isAdmin,sanitizeForm,httpError,splitEmails,splitDomains,clampInt,clampNum,SHEET_ID}=require("./_core");
 
 module.exports=async(req,res)=>{
   res.setHeader("Cache-Control","no-store");
@@ -27,8 +27,10 @@ module.exports=async(req,res)=>{
     const allowedEmails=splitEmails(body.allowedEmails||"");
     if(access==="CORREOS"&&!allowedEmails.length) throw httpError("EMAILS_REQUIRED",400);
 
-    let domain=String(body.domain||form.domain||"@fibrazo.com").trim().toLowerCase();
-    if(domain&&!domain.startsWith("@")) domain="@"+domain;
+    const domains=splitDomains(body.domains?.length?body.domains:(body.domain||form.domains||form.domain||"@fibrazo.com"));
+    if(domains.length>10) throw httpError("TOO_MANY_DOMAINS",400);
+    if(domains.some(d=>!/^@[a-z0-9.-]+\.[a-z]{2,}$/i.test(d))) throw httpError("INVALID_DOMAIN",400);
+    if(access==="DOMINIO"&&!domains.length) throw httpError("DOMAINS_REQUIRED",400);
 
     const rateLimit=clampInt(body.rateLimit,1,100,form.rateLimit||5);
     const maxPhotos=clampInt(body.maxPhotos,0,3,form.maxPhotos||0);
@@ -43,7 +45,7 @@ module.exports=async(req,res)=>{
       requestBody:{values:[[
         access,
         allowedEmails.join(", "),
-        domain,
+        domains.join(", "),
         rateLimit,
         maxPhotos,
         maxPhotoMb,

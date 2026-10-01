@@ -81,7 +81,30 @@
   }
 
   function isAllowed(user) {
-    return !!(user && user.emailVerified && user.email);
+    const email=String(user?.email||"").trim().toLowerCase();
+    return !!(user && user.emailVerified && email && (email===allowedException || email.endsWith(allowedDomain)));
+  }
+
+  function setView(view="forms") {
+    const target=["forms","results","admin"].includes(view)?view:"forms";
+    document.querySelectorAll("[data-view]").forEach((b)=>b.classList.toggle("active",b.dataset.view===target));
+    if ($("formsView")) $("formsView").hidden=target!=="forms";
+    if ($("resultsView")) $("resultsView").hidden=target!=="results";
+    if ($("adminView")) $("adminView").hidden=target!=="admin";
+    if (target==="results" && state.user) loadResults();
+  }
+  window.FIBRAZO_SET_VIEW=setView;
+
+  function resetPrivateUi() {
+    setView("forms");
+    if ($("adminNavButton")) $("adminNavButton").hidden=true;
+    if ($("adminView")) $("adminView").hidden=true;
+    if ($("adminForms")) $("adminForms").innerHTML="";
+    if ($("adminStatus")) $("adminStatus").textContent="";
+    if ($("formWorkspace")) $("formWorkspace").hidden=true;
+    if ($("reviewWorkspace")) $("reviewWorkspace").hidden=true;
+    if ($("successWorkspace")) $("successWorkspace").hidden=true;
+    state.currentForm=null;
   }
 
   function showDashboard(user) {
@@ -99,6 +122,8 @@
   }
 
   function showGate(message, denied) {
+    resetPrivateUi();
+    state.user=null;
     document.body.classList.add("auth-pending");
     $("authGate").hidden = false;
     $("authSession").hidden = true;
@@ -110,7 +135,10 @@
   $("googleSignIn").addEventListener("click", () => startGoogleSignIn(false));
   $("changeAccount").addEventListener("click", () => startGoogleSignIn(true));
 
-  $("signOutButton").addEventListener("click", () => auth.signOut());
+  $("signOutButton").addEventListener("click", async () => {
+    resetPrivateUi();
+    try{await auth.signOut();}catch(_){}
+  });
 
   auth.getRedirectResult().catch((error) => {
     $("authError").textContent = error.message || "No se pudo completar el acceso con Google.";
@@ -131,13 +159,7 @@
   });
 
   document.querySelectorAll("[data-view]").forEach((button) => {
-    button.addEventListener("click", () => {
-      document.querySelectorAll("[data-view]").forEach((b) => b.classList.toggle("active", b === button));
-      const view = button.dataset.view;
-      $("formsView").hidden = view !== "forms";
-      $("resultsView").hidden = view !== "results";
-      if (view === "results") loadResults();
-    });
+    button.addEventListener("click", () => setView(button.dataset.view));
   });
 
   function renderCards() {
