@@ -1,7 +1,7 @@
-const CACHE="fibrazo-forms-v0.4-20260930";
+const CACHE="fibrazo-forms-v0.4-20260930-2";
 const APP_SHELL=[
-  "/","/index.html","/styles.css","/forms-config.js","/app.js","/access-v03.js",
-  "/ux-v04.js","/offline-v04.js","/admin-v03.js","/manifest.webmanifest","/icon.svg"
+  "/","/index.html","/public.html","/styles.css","/forms-config.js","/app.js","/access-v03.js",
+  "/ux-v04.js","/offline-v04.js","/admin-v03.js","/public-v03.js","/manifest.webmanifest","/icon.svg"
 ];
 const REMOTE_SHELL=[
   "https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js",
@@ -39,6 +39,7 @@ self.addEventListener("fetch",event=>{
         cache.put("/index.html",fresh.clone());
         return fresh;
       }catch(_){
+        if(url.pathname.startsWith("/f/")) return (await caches.match("/public.html")) || Response.error();
         return (await caches.match("/index.html")) || (await caches.match("/"));
       }
     })());
