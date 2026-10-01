@@ -44,52 +44,40 @@
     return mobileUa || standalone;
   }
 
-  function popupWithTimeout(ms = 6500) {
-    return Promise.race([
-      auth.signInWithPopup(provider),
-      new Promise((_, reject) => setTimeout(() => {
-        const error = new Error("POPUP_TIMEOUT");
-        error.code = "auth/popup-timeout";
-        reject(error);
-      }, ms))
-    ]);
-  }
-
-  async function startGoogleSignIn(changeAccount = false) {
+  function startGoogleSignIn(changeAccount = false) {
     if (authInFlight) return;
     setAuthInFlight(true);
     $("authError").textContent = "";
 
-    try {
-      await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-      if (changeAccount) await auth.signOut();
-
-      if (prefersRedirectAuth()) {
-        await auth.signInWithRedirect(provider);
-        return;
-      }
-
-      await popupWithTimeout();
-    } catch (error) {
-      const code = String(error && error.code || "");
-
-      if (code === "auth/popup-blocked" || code === "auth/popup-timeout") {
-        try {
-          await auth.signInWithRedirect(provider);
-          return;
-        } catch (redirectError) {
-          $("authError").textContent = redirectError.message || "No se pudo iniciar sesión.";
-        }
-      } else if (code === "auth/cancelled-popup-request") {
-        $("authError").textContent = "Ya había un acceso de Google en curso. Cierra cualquier ventana de Google abierta y toca Continuar una sola vez.";
-      } else if (code === "auth/popup-closed-by-user") {
-        $("authError").textContent = "Se cerró el acceso de Google antes de terminar. Puedes intentarlo nuevamente.";
-      } else {
+    // Do not await anything before starting Google auth.
+    // Desktop popup must be triggered directly from the user's click.
+    if (prefersRedirectAuth()) {
+      auth.signInWithRedirect(provider).catch((error) => {
         $("authError").textContent = error.message || "No se pudo iniciar sesión.";
-      }
-    } finally {
-      setAuthInFlight(false);
+        setAuthInFlight(false);
+      });
+      return;
     }
+
+    auth.signInWithPopup(provider)
+      .catch((error) => {
+        const code = String(error && error.code || "");
+
+        if (code === "auth/popup-blocked") {
+          return auth.signInWithRedirect(provider).catch((redirectError) => {
+            $("authError").textContent = redirectError.message || "No se pudo iniciar sesión.";
+          });
+        }
+
+        if (code === "auth/cancelled-popup-request") {
+          $("authError").textContent = "Ya había un acceso de Google en curso. Cierra cualquier ventana de Google abierta y vuelve a intentarlo.";
+        } else if (code === "auth/popup-closed-by-user") {
+          $("authError").textContent = "Se cerró el acceso de Google antes de terminar. Puedes intentarlo nuevamente.";
+        } else {
+          $("authError").textContent = error.message || "No se pudo iniciar sesión.";
+        }
+      })
+      .finally(() => setAuthInFlight(false));
   }
 
   function isAllowed(user) {
