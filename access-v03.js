@@ -49,6 +49,10 @@
   async function load(){
     const user=current();
     if(!user)return;
+    const email=String(user.email||"").toLowerCase();
+    if(window.FIBRAZO_ACCESS_BOOTSTRAPPED_EMAIL===email&&Object.keys(window.FIBRAZO_ACCESS||{}).length){
+      annotate();return;
+    }
     loadCached();
     if(!navigator.onLine)return;
     try{
@@ -86,6 +90,7 @@
   const host=document.getElementById("formCards");
   if(host)observer.observe(host,{childList:true});
 
+  window.addEventListener("fibrazo:access-ready",()=>annotate());
   window.addEventListener("online",()=>setTimeout(load,100));
   window.firebase?.auth?.().onAuthStateChanged(user=>{
     if(user){
@@ -93,6 +98,7 @@
       setTimeout(load,120);
     }else{
       window.FIBRAZO_ACCESS={};
+      window.FIBRAZO_ACCESS_BOOTSTRAPPED_EMAIL="";
     }
   });
 })();

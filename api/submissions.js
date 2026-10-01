@@ -81,8 +81,7 @@ async function submissionExists(auth,form,id){
   return (r.data.values||[]).some(row=>String(row[0]||"")===id);
 }
 
-async function readRows(auth,requested,limit,user,adminFlag){
-  const forms=await loadForms(auth);
+async function readRows(auth,forms,requested,limit,user,adminFlag){
   const selected=requested==="all"?forms:forms.filter(form=>form.id===requested);
   const email=String(user?.email||"").toLowerCase();
   const internal=email===EXCEPTION||email.endsWith(DEFAULT_DOMAIN);
@@ -123,11 +122,12 @@ module.exports=async(req,res)=>{
     if(req.method==="GET"){
       const user=await verifyUser(req);
       const adminFlag=await isAdmin(auth,user.email);
-      if(!canUseDashboard(user,adminFlag)) throw httpError("DASHBOARD_ACCESS_DENIED",403);
+      const forms=await loadForms(auth);
+      if(!canUseDashboard(user,adminFlag,forms)) throw httpError("DASHBOARD_ACCESS_DENIED",403);
       const requested=String(req.query.form||"all").toUpperCase();
       const limit=Math.min(Number(req.query.limit)||100,250);
       return res.status(200).json({
-        rows:await readRows(auth,requested==="ALL"?"all":requested,limit,user,adminFlag)
+        rows:await readRows(auth,forms,requested==="ALL"?"all":requested,limit,user,adminFlag)
       });
     }
 
@@ -149,7 +149,7 @@ module.exports=async(req,res)=>{
     }else{
       user=await verifyUser(req);
       adminFlag=await isAdmin(auth,user.email);
-      if(!canUseDashboard(user,adminFlag)) throw httpError("DASHBOARD_ACCESS_DENIED",403);
+      if(!canUseDashboard(user,adminFlag,forms)) throw httpError("DASHBOARD_ACCESS_DENIED",403);
       if(!canAccess(form,user,adminFlag)) throw httpError("FORM_ACCESS_DENIED",403);
     }
 

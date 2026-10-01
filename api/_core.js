@@ -75,10 +75,17 @@ async function isAdmin(auth,email){
   return users.some(u=>u.email===email.toLowerCase()&&u.role==="ADMIN"&&u.status==="ACTIVO");
 }
 
-function canUseDashboard(user,adminFlag=false){
+function canUseDashboard(user,adminFlag=false,forms=[]){
   if(adminFlag)return true;
   const email=String(user?.email||"").trim().toLowerCase();
-  return !!email&&email.endsWith(DEFAULT_DOMAIN);
+  if(!email)return false;
+  if(email.endsWith(DEFAULT_DOMAIN))return true;
+  return (forms||[]).some(form=>{
+    if(String(form.status).toLowerCase()!=="activo")return false;
+    if(form.access==="CORREOS")return form.allowedEmails.includes(email);
+    if(form.access==="DOMINIO")return (form.domains||[]).some(domain=>email.endsWith(domain));
+    return false;
+  });
 }
 
 function canAccess(form,user,adminFlag=false){

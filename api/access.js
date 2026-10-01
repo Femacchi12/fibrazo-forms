@@ -7,8 +7,8 @@ module.exports=async(req,res)=>{
     const auth=gauth();
     const user=await verifyUser(req);
     const adminFlag=await isAdmin(auth,user.email);
-    if(!canUseDashboard(user,adminFlag)) throw httpError("DASHBOARD_ACCESS_DENIED",403);
     const forms=await loadForms(auth);
+    if(!canUseDashboard(user,adminFlag,forms)) throw httpError("DASHBOARD_ACCESS_DENIED",403);
     return res.status(200).json({
       admin:adminFlag,
       forms:forms.map(form=>({

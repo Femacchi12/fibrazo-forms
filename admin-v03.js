@@ -5,9 +5,9 @@
   const labels={PRIVADO:"Privado",CORREOS:"Correos específicos",DOMINIO:"Dominios",PUBLICO:"Público"};
   const descriptions={
     PRIVADO:"Solo los administradores pueden abrir y responder este formulario.",
-    CORREOS:"Solo los administradores y los correos que agregues aquí pueden abrirlo desde el dashboard.",
-    DOMINIO:"Solo los administradores y usuarios de los dominios configurados pueden abrirlo desde el dashboard.",
-    PUBLICO:"Cualquier persona que tenga el enlace puede responder sin iniciar sesión. Los resultados siguen siendo privados."
+    CORREOS:"Solo los administradores y los correos que agregues aquí pueden entrar al dashboard para este formulario.",
+    DOMINIO:"Los usuarios de los dominios configurados pueden entrar al dashboard y ver este formulario. Puedes agregar más de un dominio.",
+    PUBLICO:"Cualquier persona con el enlace puede responder sin login. Este modo no da acceso al dashboard ni a los resultados."
   };
   const current=()=>window.firebase?.auth?.().currentUser||null;
   async function tok(){const u=current();if(!u)throw new Error("AUTH_REQUIRED");return u.getIdToken();}

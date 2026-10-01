@@ -81,8 +81,40 @@
   }
 
   function isAllowed(user) {
-    const email=String(user?.email||"").trim().toLowerCase();
-    return !!(user && user.emailVerified && email && (email===allowedException || email.endsWith(allowedDomain)));
+    return !!(user && user.emailVerified && user.email);
+  }
+
+  function cachedAccessFor(email){
+    try{
+      const cached=JSON.parse(localStorage.getItem("fibrazoFormsAccessCache")||"null");
+      return cached&&cached.email===String(email||"").toLowerCase()&&cached.access?cached:null;
+    }catch(_){return null;}
+  }
+
+  async function authorizeDashboard(user){
+    const email=String(user?.email||"").toLowerCase();
+    try{
+      const token=await user.getIdToken();
+      const response=await fetch("/api/access",{headers:{Authorization:"Bearer "+token},cache:"no-store"});
+      const result=await response.json();
+      if(!response.ok)return {ok:false,denied:response.status===403};
+      const access=Object.fromEntries((result.forms||[]).map(item=>[item.id,item.canAccess]));
+      window.FIBRAZO_ACCESS=access;
+      window.FIBRAZO_ACCESS_META={admin:!!result.admin,email};
+      window.FIBRAZO_ACCESS_BOOTSTRAPPED_EMAIL=email;
+      try{localStorage.setItem("fibrazoFormsAccessCache",JSON.stringify({email,access,updatedAt:Date.now()}));}catch(_){}
+      return {ok:true};
+    }catch(_){
+      if(!navigator.onLine){
+        const cached=cachedAccessFor(email);
+        if(cached){
+          window.FIBRAZO_ACCESS=cached.access;
+          window.FIBRAZO_ACCESS_BOOTSTRAPPED_EMAIL=email;
+          return {ok:true,offline:true};
+        }
+      }
+      return {ok:false,network:true};
+    }
   }
 
   function setView(view="forms") {
@@ -115,6 +147,7 @@
     $("authSession").hidden = false;
     $("authError").textContent = "";
     renderCards();
+    window.dispatchEvent(new CustomEvent("fibrazo:access-ready"));
     if (isGitHubPreview) {
       $("backendState").textContent = "PREVIEW";
       $("backendDetail").textContent = "datos locales";
@@ -153,6 +186,17 @@
     if (!isAllowed(user)) {
       await auth.signOut();
       showGate("Esta cuenta no tiene acceso habilitado.", true);
+      return;
+    }
+    const authorization=await authorizeDashboard(user);
+    if(!authorization.ok){
+      await auth.signOut();
+      showGate(
+        authorization.denied
+          ? "Esta cuenta no tiene acceso habilitado al dashboard."
+          : "No se pudo validar el acceso. Revisa la conexión e inténtalo nuevamente.",
+        true
+      );
       return;
     }
     showDashboard(user);
