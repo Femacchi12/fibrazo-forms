@@ -481,5 +481,21 @@
         }
       ]
     }
+  },
+  "offline": {
+    "version": "0.4",
+    "storage": "IndexedDB",
+    "store": "queue",
+    "pwa": true,
+    "serviceWorker": "/service-worker.js",
+    "idempotencyKey": "clientSubmissionId",
+    "autoSync": [
+      "online",
+      "auth-ready",
+      "visibility-visible"
+    ],
+    "manualSync": true,
+    "scope": "authenticated-internal-forms",
+    "publicFormsOffline": false
   }
 }
