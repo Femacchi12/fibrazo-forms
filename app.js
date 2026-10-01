@@ -37,6 +37,24 @@
     if (change) change.disabled = authInFlight;
   }
 
+  function prefersRedirectAuth() {
+    const ua = navigator.userAgent || "";
+    const mobileUa = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+    const standalone = window.matchMedia?.("(display-mode: standalone)")?.matches || navigator.standalone === true;
+    return mobileUa || standalone;
+  }
+
+  function popupWithTimeout(ms = 6500) {
+    return Promise.race([
+      auth.signInWithPopup(provider),
+      new Promise((_, reject) => setTimeout(() => {
+        const error = new Error("POPUP_TIMEOUT");
+        error.code = "auth/popup-timeout";
+        reject(error);
+      }, ms))
+    ]);
+  }
+
   async function startGoogleSignIn(changeAccount = false) {
     if (authInFlight) return;
     setAuthInFlight(true);
@@ -45,10 +63,17 @@
     try {
       await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
       if (changeAccount) await auth.signOut();
-      await auth.signInWithPopup(provider);
+
+      if (prefersRedirectAuth()) {
+        await auth.signInWithRedirect(provider);
+        return;
+      }
+
+      await popupWithTimeout();
     } catch (error) {
       const code = String(error && error.code || "");
-      if (code === "auth/popup-blocked") {
+
+      if (code === "auth/popup-blocked" || code === "auth/popup-timeout") {
         try {
           await auth.signInWithRedirect(provider);
           return;
