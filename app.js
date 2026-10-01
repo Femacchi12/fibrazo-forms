@@ -26,8 +26,7 @@
   provider.setCustomParameters({ prompt: "select_account" });
 
   function isAllowed(user) {
-    const email = String((user && user.email) || "").trim().toLowerCase();
-    return !!(user && user.emailVerified && (email === allowedException || email.endsWith(allowedDomain)));
+    return !!(user && user.emailVerified && user.email);
   }
 
   function showDashboard(user) {
