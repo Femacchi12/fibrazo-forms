@@ -186,3 +186,48 @@ body.form-mode main{width:min(1180px,96%);padding-top:14px}
   .admin-card-actions .primary-button{width:100%}
   .admin-public-link>div{grid-template-columns:1fr}
 }
+
+
+/* FIBRAZO Forms v0.4 · Offline */
+.network-hub{position:relative;z-index:91;flex:0 0 auto}
+.network-toggle{min-height:32px;padding:6px 9px;border:1px solid var(--fz-border-strong);border-radius:8px;background:var(--fz-control);color:var(--fz-text);display:flex;align-items:center;gap:6px;font-size:9px;font-weight:700}
+.network-toggle:hover{background:var(--fz-control-hover);border-color:#65716b}
+.network-dot{width:8px;height:8px;border-radius:50%;background:var(--fz-green);box-shadow:0 0 0 3px rgba(0,242,154,.08)}
+.network-toggle.offline .network-dot{background:#ff9f43;box-shadow:0 0 0 3px rgba(255,159,67,.09)}
+.network-toggle.has-pending:not(.offline) .network-dot{background:#ffc85c;box-shadow:0 0 0 3px rgba(255,200,92,.09)}
+.network-count{min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--fz-green);color:#001a10;display:grid;place-items:center;font-size:8px;font-weight:800}
+.network-toggle.offline .network-count{background:#ff9f43;color:#211000}
+.network-popover{position:absolute;top:40px;right:0;width:min(430px,calc(100vw - 28px));padding:14px;border:1px solid var(--fz-border-strong);border-radius:13px;background:var(--fz-surface);box-shadow:0 18px 50px rgba(0,0,0,.52)}
+.network-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0;padding:10px 12px;border:1px solid var(--fz-border);border-radius:9px;background:var(--fz-surface-raised)}
+.network-summary span{color:var(--fz-muted);font-size:9px;text-transform:uppercase;letter-spacing:.08em}
+.network-summary strong{font-size:10px}
+.offline-queue-list{display:grid;gap:7px;max-height:310px;overflow:auto}
+.offline-item{display:grid;grid-template-columns:1fr auto;gap:10px;padding:10px 11px;border:1px solid var(--fz-border);border-radius:9px;background:var(--fz-surface-raised)}
+.offline-item.error{border-color:rgba(255,141,141,.52);background:rgba(255,141,141,.045)}
+.offline-item strong{display:block;font-size:10px;color:#fff}
+.offline-item p{margin:4px 0 3px;color:var(--fz-muted);font-size:9px;line-height:1.4}
+.offline-item small{font-size:8px;color:#718079}
+.offline-item>span{align-self:start;padding:4px 6px;border:1px solid #8f6c2e;border-radius:999px;color:#ffd57c;font-size:8px;font-weight:800}
+.offline-item.error>span{border-color:#8f4646;color:#ff9b9b}
+.offline-error{grid-column:1/-1;color:#ff9b9b!important}
+.network-actions{display:flex;gap:8px;margin-top:11px}
+.network-actions button{flex:1;min-height:35px;padding:8px 10px}
+.sync-message{min-height:16px;margin-top:8px;color:var(--fz-muted);font-size:9px;line-height:1.4}
+.workspace-status{display:flex;align-items:center;gap:10px}
+.form-network-status{font-size:9px;color:var(--fz-muted);font-weight:700;white-space:nowrap}
+.success-workspace.offline-saved .success-icon{border-color:#ffc85c;background:rgba(255,200,92,.08);color:#ffc85c}
+
+@media(max-width:850px){
+  .auth-session{gap:7px}
+  .network-toggle #networkLabel{display:none}
+  .network-popover{right:-62px}
+}
+@media(max-width:560px){
+  .network-toggle{width:32px;padding:0;justify-content:center}
+  .network-toggle #networkLabel{display:none}
+  .network-count{position:absolute;top:-6px;right:-6px;border:2px solid var(--fz-surface)}
+  .network-popover{position:fixed;top:82px;left:12px;right:12px;width:auto}
+  .workspace-status{gap:7px}
+  .form-network-status{font-size:8px}
+  .network-actions{flex-direction:column}
+}
