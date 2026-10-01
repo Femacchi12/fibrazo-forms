@@ -1,6 +1,6 @@
 (() => {
   const forms=window.FIBRAZO_FORMS||{};
-  window.FIBRAZO_ACCESS={};
+  window.FIBRAZO_ACCESS={};\n  const ACCESS_CACHE_KEY="fibrazoFormsAccessCache";
 
   function current(){return window.firebase?.auth?.().currentUser||null;}
   function annotate(){
@@ -23,6 +23,7 @@
       const r=await fetch("/api/access",{headers:{Authorization:"Bearer "+token}});
       const j=await r.json();if(!r.ok)return;
       window.FIBRAZO_ACCESS=Object.fromEntries((j.forms||[]).map(item=>[item.id,item.canAccess]));
+      try{localStorage.setItem(ACCESS_CACHE_KEY,JSON.stringify({email:String(user.email||"").toLowerCase(),access:window.FIBRAZO_ACCESS,updatedAt:Date.now()}));}catch(_){}
       setTimeout(annotate,50);
       setTimeout(annotate,500);
     }catch(_){}
@@ -39,5 +40,5 @@
 
   const observer=new MutationObserver(()=>annotate());
   const host=document.getElementById("formCards");if(host)observer.observe(host,{childList:true});
-  window.firebase?.auth?.().onAuthStateChanged(user=>{if(user)setTimeout(load,120);});
+  window.firebase?.auth?.().onAuthStateChanged(user=>{if(user){loadCached();setTimeout(load,120);}});
 })();
