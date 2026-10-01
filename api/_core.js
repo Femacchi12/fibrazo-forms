@@ -154,7 +154,19 @@ function validateSubmission(formId,payload){
 
   if(formId==="CHURN"){
     const motivos=["Inconformidad con el servicio","Precio","Se pasó a otro operador","TV","Mudanza","No usa / no necesita el servicio","Problemas de recarga / pago","Otro"];
-    if(!["Sincelejo","Montería"].includes(d.ciudad)) throw httpError("INVALID_CITY",400);
+    const configuredCities=["Sincelejo","Montería"];
+    const lat=Number(payload.location?.lat),lng=Number(payload.location?.lng),acc=Number(payload.location?.accuracy);
+    const citySource=text(payload.location?.citySource,20);
+    const cityDetected=text(payload.location?.cityDetected,100);
+    const city=text(d.ciudad,100);
+    const norm=v=>String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
+    if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat<-90||lat>90||lng<-180||lng>180) throw httpError("GPS_REQUIRED",400);
+    if(Number.isFinite(acc)&&acc<0) throw httpError("INVALID_GPS",400);
+    if(!city) throw httpError("INVALID_CITY",400);
+    if(citySource&&!["gps","manual"].includes(citySource)) throw httpError("INVALID_CITY_SOURCE",400);
+    if(citySource==="manual"&&!configuredCities.includes(city)) throw httpError("INVALID_CITY",400);
+    if(citySource==="gps"&&cityDetected&&norm(city)!==norm(cityDetected)) throw httpError("INVALID_GPS_CITY",400);
+    if(!citySource&&!configuredCities.includes(city)) throw httpError("INVALID_CITY",400);
     if(!digits(d.cliente_id,20)) throw httpError("INVALID_CLIENT_ID",400);
     if(!/^\d{4}-\d{2}-\d{2}$/.test(text(d.fecha_visita,10))) throw httpError("INVALID_DATE",400);
     if(!motivos.includes(d.motivo_principal)) throw httpError("INVALID_REASON",400);

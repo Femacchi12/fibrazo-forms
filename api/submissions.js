@@ -54,7 +54,7 @@ function buildRow(form,p,id,links,email){
       d.tiene_servicio_actual||"",d.operador_actual||"",d.precio_actual||"",d.velocidad_actual||"",
       d.incluye_tv||"",d.tecnologia_tv||"",d.tv_coaxial||"",d.tv_box||"",d.tiene_disney||"",
       d.tiene_deportes||"",d.canales_destacados||"",d.volveria||"",d.cambio_para_volver||"",
-      d.comentario||"",l.lat||"",l.lng||"",l.accuracy||"",links.join(" | "),email||"PUBLICO"
+      d.comentario||"",l.lat||"",l.lng||"",l.accuracy||"",links.join(" | "),email||"PUBLICO",l.cityDetected||"",l.citySource||""
     ];
   }
   const maps=l.lat&&l.lng?`https://www.google.com/maps?q=${l.lat},${l.lng}`:"";
@@ -162,7 +162,7 @@ module.exports=async(req,res)=>{
     const sheets=google.sheets({version:"v4",auth});
     await sheets.spreadsheets.values.append({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!A:Z`,
+      range:`${form.sheet}!A:AB`,
       valueInputOption:"RAW",
       insertDataOption:"INSERT_ROWS",
       requestBody:{values:[buildRow(form,payload,id,links,user?.email||"PUBLICO")]}

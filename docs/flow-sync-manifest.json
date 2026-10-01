@@ -497,5 +497,20 @@
     "manualSync": true,
     "scope": "authenticated-internal-forms",
     "publicFormsOffline": false
+  },
+  "churnCityDetection": {
+    "version": "0.4.1",
+    "gpsCityVisible": true,
+    "manualOptions": [
+      "Sincelejo",
+      "Montería"
+    ],
+    "reverseGeocoder": "BigDataCloud free client-side reverse geocode",
+    "vercelFunctionUsage": false,
+    "offlineFallback": "Configured cities can be detected locally; other cities require connectivity for name resolution.",
+    "auditFields": [
+      "location.cityDetected",
+      "location.citySource"
+    ]
   }
 }

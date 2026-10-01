@@ -2,7 +2,7 @@
   const forms=window.FIBRAZO_FORMS||{};
   const $=id=>document.getElementById(id);
   const publicMode=document.body.classList.contains("public-mode");
-  const state={form:null,sectionIndex:0,gps:null,photos:[],startedAt:0};
+  const state={form:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:""};
   const pending=window.FIBRAZO_PENDING||[];
 
   function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
@@ -45,7 +45,7 @@
   function openForm(id){
     const form=forms[id];if(!form)return;
     if(!publicMode&&window.FIBRAZO_ACCESS&&window.FIBRAZO_ACCESS[id]===false)return;
-    state.form=form;state.sectionIndex=0;state.gps=null;state.photos=[];state.startedAt=Date.now();
+    state.form=form;state.sectionIndex=0;state.gps=null;state.photos=[];state.startedAt=Date.now();state.detectedCity="";state.citySource="";
     document.body.classList.add("form-mode");
     $("formTitle").textContent=form.name;
     $("formDescription").textContent=form.description||"";
@@ -66,7 +66,7 @@
     if(publicMode){location.reload();return;}
     document.body.classList.remove("form-mode");
     $("formWorkspace").hidden=true;$("reviewWorkspace").hidden=true;$("successWorkspace").hidden=true;
-    state.form=null;state.gps=null;state.photos=[];window.scrollTo({top:0,behavior:"smooth"});
+    state.form=null;state.gps=null;state.photos=[];state.detectedCity="";state.citySource="";window.scrollTo({top:0,behavior:"smooth"});
   }
 
   function renderField(field){
@@ -110,7 +110,13 @@
   function selectInput(field){
     const s=document.createElement("select");s.name=field.key;const first=document.createElement("option");first.value="";first.textContent="Seleccionar…";s.appendChild(first);
     (field.options||[]).forEach(o=>{const x=document.createElement("option");x.value=o;x.textContent=o;s.appendChild(x);});
-    s.addEventListener("change",()=>{clearError(field.key);updateVisibility();});return s;
+    s.addEventListener("change",()=>{
+      if(state.form?.id==="CHURN"&&field.key==="ciudad"&&s.dataset.autoGps!=="1"){
+        state.citySource="manual";
+        if(state.gps)state.gps.citySource="manual";
+      }
+      clearError(field.key);updateVisibility();
+    });return s;
   }
   function choiceInput(field){
     const grid=document.createElement("div");grid.className="choice-grid";
@@ -118,7 +124,13 @@
   }
   function gpsInput(field){
     const box=document.createElement("div");box.className="gps-box";const value=document.createElement("div");value.className="gps-value";value.textContent="Ubicación pendiente";
-    const btn=document.createElement("button");btn.type="button";btn.className="secondary-button";btn.textContent="Tomar coordenadas";btn.addEventListener("click",()=>captureGps(value,btn,field.key));box.append(value,btn);return box;
+    const btn=document.createElement("button");btn.type="button";btn.className="secondary-button";btn.textContent="Tomar coordenadas";btn.addEventListener("click",()=>captureGps(value,btn,field.key));
+    box.append(value,btn);
+    if(state.form?.id==="CHURN"&&field.key==="coordenadas"){
+      const city=document.createElement("div");city.className="gps-city";city.dataset.gpsCityFor=field.key;city.textContent="Ciudad GPS: pendiente";
+      box.appendChild(city);
+    }
+    return box;
   }
   function photoInput(field){
     const holder=document.createElement("div"),input=document.createElement("input"),preview=document.createElement("div");input.type="file";input.accept="image/*";input.multiple=true;input.capture="environment";input.className="photo-input";preview.className="photo-preview";
@@ -189,7 +201,7 @@
     activeSections().forEach(section=>{const visible=state.form.fields.filter(f=>f.section===section.id&&conditionMet(f));if(!visible.length)return;const card=document.createElement("section");card.className="review-section";const rows=visible.map(f=>'<div class="review-row"><span>'+esc(f.label)+'</span><strong>'+esc(reviewValue(f))+'</strong></div>').join("");card.innerHTML='<div class="review-section-head"><span>SECCIÓN</span><h2>'+esc(section.title)+"</h2></div>"+rows;host.appendChild(card);});
   }
   function reviewValue(field){
-    if(field.type==="gps")return state.gps?state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+" · ±"+Math.round(state.gps.accuracy)+" m":"—";
+    if(field.type==="gps")return state.gps?state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+" · ±"+Math.round(state.gps.accuracy)+" m"+(state.gps.cityDetected?" · "+state.gps.cityDetected:""):"—";
     if(field.type==="photos")return state.photos.length?state.photos.length+" foto"+(state.photos.length===1?"":"s"):"—";
     const v=fieldValue(field.key);if(Array.isArray(v))return v.length?v.join(", "):"—";if(!v)return"—";if(field.type==="currency")return"$ "+Number(v).toLocaleString("es-CO");if(field.type==="date-flex")return isoToDmy(v);if(field.suffix)return v+" "+field.suffix;return String(v);
   }
@@ -262,17 +274,20 @@
   function captureGps(value,btn,key){
     if(!navigator.geolocation){value.textContent="GPS no disponible en este navegador.";return;}
     btn.disabled=true;btn.textContent="Obteniendo…";
-    navigator.geolocation.getCurrentPosition(p=>{
-      state.gps={lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy};
-      let detected="";
+    navigator.geolocation.getCurrentPosition(async p=>{
+      state.gps={lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy,cityDetected:"",citySource:""};
+      value.textContent=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+" · ±"+Math.round(state.gps.accuracy)+" m";
       if(state.form?.id==="CHURN"&&key==="coordenadas"){
-        detected=detectChurnCity(state.gps.lat,state.gps.lng);
-        if(detected){
-          const city=document.querySelector('[name="ciudad"]');
-          if(city){city.value=detected;city.dispatchEvent(new Event("change",{bubbles:true}));}
+        const fallback=detectConfiguredCityOffline(state.gps.lat,state.gps.lng);
+        if(fallback)applyDetectedCity(fallback);
+        const cityStatus=document.querySelector('[data-gps-city-for="coordenadas"]');
+        if(cityStatus&&!fallback)cityStatus.textContent=navigator.onLine?"Ciudad GPS: identificando…":"Ciudad GPS: sin conexión · selección manual disponible";
+        if(navigator.onLine){
+          const resolved=await reverseGeocodeCity(state.gps.lat,state.gps.lng);
+          if(resolved)applyDetectedCity(resolved);
+          else if(cityStatus&&!fallback)cityStatus.textContent="Ciudad GPS: no se pudo identificar · selección manual disponible";
         }
       }
-      value.textContent=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+" · ±"+Math.round(state.gps.accuracy)+" m"+(state.form?.id==="CHURN"?(detected?" · Ciudad: "+detected:" · Ciudad no identificada"):"");
       btn.disabled=false;btn.textContent="Actualizar ubicación";clearError(key);
     },()=>{
       value.textContent="No se pudo obtener la ubicación. Revisa el permiso del navegador.";
@@ -280,10 +295,51 @@
     },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
   }
 
-  function detectChurnCity(lat,lng){
+  function normalizeCityName(value){
+    return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
+  }
+
+  function applyDetectedCity(cityName){
+    const city=String(cityName||"").trim();
+    if(!city)return;
+    state.detectedCity=city;state.citySource="gps";
+    if(state.gps){state.gps.cityDetected=city;state.gps.citySource="gps";}
+    const status=document.querySelector('[data-gps-city-for="coordenadas"]');
+    if(status)status.textContent="Ciudad GPS: "+city;
+    const select=document.querySelector('[name="ciudad"]');
+    if(!select)return;
+    select.querySelectorAll('[data-gps-detected="1"]').forEach(o=>o.remove());
+    const configured=state.form?.fields?.find(f=>f.key==="ciudad")?.options||[];
+    const match=configured.find(item=>normalizeCityName(item)===normalizeCityName(city));
+    select.dataset.autoGps="1";
+    if(match){
+      select.value=match;
+    }else{
+      const opt=document.createElement("option");
+      opt.value=city;opt.textContent=city+" · detectada por GPS";opt.disabled=true;opt.selected=true;opt.dataset.gpsDetected="1";
+      select.insertBefore(opt,select.options[1]||null);
+    }
+    delete select.dataset.autoGps;
+    clearError("ciudad");
+  }
+
+  async function reverseGeocodeCity(lat,lng){
+    if(!navigator.onLine)return"";
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),5500);
+    try{
+      const url="https://api.bigdatacloud.net/data/reverse-geocode-client?latitude="+encodeURIComponent(lat)+"&longitude="+encodeURIComponent(lng)+"&localityLanguage=es";
+      const response=await fetch(url,{signal:controller.signal});
+      if(!response.ok)return"";
+      const data=await response.json();
+      return String(data.city||data.locality||"").trim();
+    }catch(_){return"";}
+    finally{clearTimeout(timer);}
+  }
+
+  function detectConfiguredCityOffline(lat,lng){
     const cities=[
-      {name:"Sincelejo",lat:9.3047,lng:-75.3978,maxKm:50},
-      {name:"Montería",lat:8.7479,lng:-75.8814,maxKm:50}
+      {name:"Sincelejo",lat:9.3047,lng:-75.3978,maxKm:15},
+      {name:"Montería",lat:8.7479,lng:-75.8814,maxKm:15}
     ];
     let best=null;
     for(const city of cities){
