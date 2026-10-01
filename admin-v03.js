@@ -102,7 +102,7 @@
           '<b class="accordion-chevron">⌄</b>'+
         '</button>'+
         '<div class="admin-accordion-body compact-body" hidden>'+
-          '<div class="form-status-control"><div><span>ESTADO</span><strong>Formulario '+(isActive?"activo":"inactivo")+'</strong><small>'+(isActive?"Acepta respuestas según los permisos configurados.":"Bloqueado para todos: usuarios, enlace público y administradores.")+'</small></div><span class="switch status-switch"><input type="checkbox" data-field="formActive" '+(isActive?"checked":"")+'><i></i></span></div>'+
+          '<div class="form-status-control"><div><span>ESTADO</span><strong>Formulario '+(isActive?"activo":"inactivo")+'</strong><small>'+(isActive?"Acepta respuestas según los permisos configurados.":"Bloqueado para todos: usuarios, enlace público y administradores.")+'</small></div><label class="switch status-switch" title="Activar o desactivar formulario"><input type="checkbox" data-field="formActive" '+(isActive?"checked":"")+'><i></i></label></div>'+
           '<details class="admin-compact-section">'+
             '<summary><div><span>ACCESOS</span><strong>Dominios y correos autorizados</strong></div><b data-access-summary>'+esc(accessSummary(f).replace(" · público",""))+'</b></summary>'+
             '<div class="compact-section-body access-columns">'+

@@ -482,3 +482,7 @@ body.form-mode main{width:min(1180px,96%);padding-top:14px}
   .compact-head h3{font-size:15px}
   .admin-person-row strong,.compact-box-head strong,.compact-toggle-row strong,.form-status-control strong{font-size:11px}
 }
+
+/* v0.7.1 · Estado clickeable */
+.status-switch{cursor:pointer}
+.status-switch i{cursor:pointer}
