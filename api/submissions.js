@@ -23,8 +23,20 @@ async function uploadPhotos(auth,form,id,list){
     const match=String(photos[i].data||"").match(/^data:(image\/(?:jpeg|jpg|png|webp));base64,(.+)$/i);
     if(!match) throw httpError("INVALID_PHOTO",400);
     const ext=match[1].toLowerCase().includes("png")?"png":match[1].toLowerCase().includes("webp")?"webp":"jpg";
+    const name=`${id}_foto_${i+1}.${ext}`;
+    const escaped=name.replace(/'/g,"\\'");
+    const existing=await drive.files.list({
+      q:`'${folderId}' in parents and name = '${escaped}' and trashed = false`,
+      fields:"files(id,webViewLink)",
+      pageSize:1
+    });
+    if(existing.data.files?.length){
+      const file=existing.data.files[0];
+      links.push(file.webViewLink||`https://drive.google.com/file/d/${file.id}/view`);
+      continue;
+    }
     const created=await drive.files.create({
-      requestBody:{name:`${id}_foto_${i+1}.${ext}`,parents:[folderId]},
+      requestBody:{name,parents:[folderId]},
       media:{mimeType:match[1],body:Readable.from(Buffer.from(match[2],"base64"))},
       fields:"id,webViewLink"
     });
@@ -51,8 +63,22 @@ function buildRow(form,p,id,links,email){
     d.tigo_hfc||"",d.tigo_ftth||"",d.claro_hfc||"",d.claro_ftth||"",d.movistar||"",
     d.isp_1||"",d.isp_2||"",d.isp_3||"",d.isp_4||"",d.nota||"",
     l.lat||"",l.lng||"",l.accuracy||"",maps,links[0]||"",links[1]||"",links[2]||"",
-    email||"PUBLICO","0.3"
+    email||"PUBLICO","0.4"
   ];
+}
+
+function resolveSubmissionId(payload,formId){
+  const supplied=String(payload.clientSubmissionId||"").trim();
+  if(!supplied) return idFor(formId);
+  if(!/^LOCAL-(CHURN|EXPLORACION)-\\d{10,}-[A-Z0-9]{4,20}$/.test(supplied)) throw httpError("INVALID_CLIENT_SUBMISSION_ID",400);
+  if(!supplied.startsWith("LOCAL-"+formId+"-")) throw httpError("INVALID_CLIENT_SUBMISSION_ID",400);
+  return supplied;
+}
+
+async function submissionExists(auth,form,id){
+  const sheets=google.sheets({version:"v4",auth});
+  const r=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!B2:B`});
+  return (r.data.values||[]).some(row=>String(row[0]||"")===id);
 }
 
 async function readRows(auth,requested,limit,user,adminFlag){
@@ -128,7 +154,10 @@ module.exports=async(req,res)=>{
     validateSubmission(formId,payload);
     validatePhotos(payload.photos||[],form);
 
-    const id=idFor(formId);
+    const id=resolveSubmissionId(payload,formId);
+    if(await submissionExists(auth,form,id)){
+      return res.status(200).json({ok:true,id,duplicate:true,photos:[]});
+    }
     const links=await uploadPhotos(auth,form,id,payload.photos||[]);
     const sheets=google.sheets({version:"v4",auth});
     await sheets.spreadsheets.values.append({
