@@ -31,7 +31,7 @@ Para habilitar escritura real:
 4. Validar una respuesta de Churn y una de Exploración desde celular.
 
 ## Estado
-- Frontend: v0.3 con permisos y formularios públicos.
+- Frontend: v0.4 con PWA, cola offline y sincronización segura.
 - GitHub Pages: requiere activación inicial del repositorio.
 - Backend: preparado para Vercel.
 - Google Sheets / Drive: estructuras creadas.
@@ -58,3 +58,21 @@ Modos:
 - `PUBLICO`: acceso directo mediante `/f/<slug>` sin exponer dashboard ni resultados.
 
 Los formularios públicos aplican validación del backend, honeypot, ventana mínima de llenado, rate limit por huella de IP, límites de cantidad/tamaño de fotos y registro en `SECURITY_LOG`.
+
+
+## Modo offline v0.4
+Los formularios internos autenticados pueden seguir utilizándose con señal inestable una vez que la app fue abierta con conexión.
+
+- PWA instalable mediante `manifest.webmanifest` y `service-worker.js`.
+- App shell cacheado para volver a abrir el dashboard.
+- Cola local persistente en IndexedDB.
+- Respuestas, GPS y fotos se almacenan localmente cuando no hay conexión o existe un error temporal.
+- Cada respuesta recibe `clientSubmissionId` antes del primer intento.
+- El backend usa ese ID como clave idempotente para evitar duplicados.
+- Las fotos reutilizan el mismo nombre por ID para evitar cargas duplicadas en reintentos.
+- Sincronización automática al recuperar conexión, volver a primer plano o recuperar la sesión.
+- Botón manual **Sincronizar ahora**.
+- La cola se separa por correo del usuario que creó la respuesta.
+- Los formularios públicos permanecen online-only por seguridad.
+
+Si la app se cerró mientras estaba sin conexión, la sincronización ocurre al próximo inicio con conexión y con la misma cuenta activa.
