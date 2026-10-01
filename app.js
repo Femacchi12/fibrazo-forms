@@ -24,6 +24,48 @@
   const auth = firebase.auth();
   const provider = new firebase.auth.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
+  let authInFlight = false;
+
+  function setAuthInFlight(value) {
+    authInFlight = !!value;
+    const signIn = $("googleSignIn");
+    const change = $("changeAccount");
+    if (signIn) {
+      signIn.disabled = authInFlight;
+      signIn.textContent = authInFlight ? "Abriendo Google…" : "Continuar con Google";
+    }
+    if (change) change.disabled = authInFlight;
+  }
+
+  async function startGoogleSignIn(changeAccount = false) {
+    if (authInFlight) return;
+    setAuthInFlight(true);
+    $("authError").textContent = "";
+
+    try {
+      await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      if (changeAccount) await auth.signOut();
+      await auth.signInWithPopup(provider);
+    } catch (error) {
+      const code = String(error && error.code || "");
+      if (code === "auth/popup-blocked") {
+        try {
+          await auth.signInWithRedirect(provider);
+          return;
+        } catch (redirectError) {
+          $("authError").textContent = redirectError.message || "No se pudo iniciar sesión.";
+        }
+      } else if (code === "auth/cancelled-popup-request") {
+        $("authError").textContent = "Ya había un acceso de Google en curso. Cierra cualquier ventana de Google abierta y toca Continuar una sola vez.";
+      } else if (code === "auth/popup-closed-by-user") {
+        $("authError").textContent = "Se cerró el acceso de Google antes de terminar. Puedes intentarlo nuevamente.";
+      } else {
+        $("authError").textContent = error.message || "No se pudo iniciar sesión.";
+      }
+    } finally {
+      setAuthInFlight(false);
+    }
+  }
 
   function isAllowed(user) {
     return !!(user && user.emailVerified && user.email);
@@ -52,22 +94,15 @@
     $("changeAccount").hidden = !denied;
   }
 
-  $("googleSignIn").addEventListener("click", async () => {
-    try {
-      await auth.signInWithPopup(provider);
-    } catch (error) {
-      $("authError").textContent = error.message || "No se pudo iniciar sesión.";
-    }
-  });
-
-  $("changeAccount").addEventListener("click", async () => {
-    try {
-      await auth.signOut();
-      await auth.signInWithPopup(provider);
-    } catch (_) {}
-  });
+  $("googleSignIn").addEventListener("click", () => startGoogleSignIn(false));
+  $("changeAccount").addEventListener("click", () => startGoogleSignIn(true));
 
   $("signOutButton").addEventListener("click", () => auth.signOut());
+
+  auth.getRedirectResult().catch((error) => {
+    $("authError").textContent = error.message || "No se pudo completar el acceso con Google.";
+    setAuthInFlight(false);
+  });
 
   auth.onAuthStateChanged(async (user) => {
     if (!user) {
