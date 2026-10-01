@@ -4,11 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#000000">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FIBRAZO Forms">
+  <link rel="manifest" href="/manifest.webmanifest">
   <title>FIBRAZO · Forms</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=2026.09.30.13">
+  <link rel="stylesheet" href="styles.css?v=2026.09.30.14">
 </head>
 <body class="auth-pending">
   <section id="authGate" class="auth-gate" aria-live="polite">
@@ -30,11 +35,34 @@
         <p>Formularios, relevamientos y resultados en un único espacio.</p>
       </div>
       <div class="update-cards">
-        <article><span>Versión</span><b>0.3.1 · GPS</b></article>
+        <article><span>Versión</span><b>0.4 · Offline</b></article>
         <article><span>Formularios activos</span><b id="activeFormsCount">2</b></article>
       </div>
       <div id="authSession" class="auth-session" hidden>
         <span id="signedInEmail"></span>
+        <div class="network-hub">
+          <button id="networkToggle" class="network-toggle" type="button" aria-expanded="false" title="Estado de sincronización">
+            <span class="network-dot"></span>
+            <span id="networkLabel">En línea</span>
+            <span id="networkCount" class="network-count" hidden>0</span>
+          </button>
+          <div id="networkPopover" class="network-popover" hidden>
+            <div class="pending-popover-head">
+              <div><span>SINCRONIZACIÓN</span><h3>Trabajo sin conexión</h3></div>
+              <button id="networkClose" type="button" aria-label="Cerrar">×</button>
+            </div>
+            <div class="network-summary">
+              <span>Estado</span>
+              <strong id="syncState">Con conexión</strong>
+            </div>
+            <div id="offlineQueueList" class="offline-queue-list"></div>
+            <div id="syncMessage" class="sync-message"></div>
+            <div class="network-actions">
+              <button id="syncNowButton" class="primary-button" type="button">Sincronizar ahora</button>
+              <button id="installAppButton" class="secondary-button" type="button" hidden>Instalar app</button>
+            </div>
+          </div>
+        </div>
         <div class="pending-hub">
           <button id="pendingToggle" class="pending-toggle" type="button" aria-expanded="false" title="Pendientes de desarrollo">
             <span class="pending-emoji">⚠️</span>
@@ -76,7 +104,10 @@
       <section id="formWorkspace" class="panel form-workspace" hidden>
         <div class="workspace-topbar">
           <button id="closeForm" class="secondary-button compact" type="button">← Volver a formularios</button>
-          <span id="formStepCounter" class="step-counter"></span>
+          <div class="workspace-status">
+            <span id="formNetworkStatus" class="form-network-status">🟢 En línea</span>
+            <span id="formStepCounter" class="step-counter"></span>
+          </div>
         </div>
 
         <div class="workspace-hero">
@@ -149,8 +180,8 @@
       <section id="successWorkspace" class="panel success-workspace" hidden>
         <div class="success-icon">✓</div>
         <span>RESPUESTA REGISTRADA</span>
-        <h1>Formulario completado con éxito</h1>
-        <p>La información fue guardada correctamente.</p>
+        <h1 id="successTitle">Formulario completado con éxito</h1>
+        <p id="successMessage">La información fue guardada correctamente.</p>
         <div class="success-meta">
           <div><span>ID de respuesta</span><strong id="successId"></strong></div>
           <div><span>Completado por</span><strong id="successEmail"></strong></div>
@@ -214,14 +245,15 @@
     </section>
   </main>
 
-  <footer>FIBRAZO · Growth <span>Forms v0.3 · 2026</span></footer>
+  <footer>FIBRAZO · Growth <span>Forms v0.4 · Offline · 2026</span></footer>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-  <script src="forms-config.js?v=2026.09.30.13"></script>
-  <script src="app.js?v=2026.09.30.13"></script>
-  <script src="access-v03.js?v=2026.09.30.13"></script>
-  <script src="ux-v03.js?v=2026.09.30.13"></script>
-  <script src="admin-v03.js?v=2026.09.30.13"></script>
+  <script src="forms-config.js?v=2026.09.30.14"></script>
+  <script src="app.js?v=2026.09.30.14"></script>
+  <script src="access-v03.js?v=2026.09.30.14"></script>
+  <script src="offline-v04.js?v=2026.09.30.14"></script>
+  <script src="ux-v04.js?v=2026.09.30.14"></script>
+  <script src="admin-v03.js?v=2026.09.30.14"></script>
 </body>
 </html>
