@@ -2,7 +2,7 @@
   const forms=window.FIBRAZO_FORMS||{};
   const $=id=>document.getElementById(id);
   const publicMode=document.body.classList.contains("public-mode");
-  const state={form:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:""};
+  const state={form:null,policy:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:""};
   const pending=window.FIBRAZO_PENDING||[];
 
   function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
@@ -42,22 +42,63 @@
   $("confirmSubmit")?.addEventListener("click",submit);
   $("newResponse")?.addEventListener("click",()=>{if(state.form)openForm(state.form.id);});
 
+  function policyFor(id){
+    return publicMode?(window.FIBRAZO_PUBLIC_POLICY||{}):(window.FIBRAZO_FORM_POLICIES?.[id]||{});
+  }
+  function shuffledFields(form,enabled){
+    if(!enabled)return [...form.fields];
+    const out=[];
+    for(const section of (form.sections||[])){
+      const fields=form.fields.filter(f=>f.section===section.id);
+      const byParent=new Map();
+      fields.filter(f=>f.showWhen).forEach(f=>{
+        const key=f.showWhen.field;if(!byParent.has(key))byParent.set(key,[]);byParent.get(key).push(f);
+      });
+      const roots=fields.filter(f=>!f.showWhen);
+      const groups=roots.map(root=>{
+        const group=[root],seen=new Set([root.key]);
+        const addChildren=key=>{
+          for(const child of (byParent.get(key)||[])){
+            if(seen.has(child.key))continue;seen.add(child.key);group.push(child);addChildren(child.key);
+          }
+        };
+        addChildren(root.key);return group;
+      });
+      for(let i=groups.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[groups[i],groups[j]]=[groups[j],groups[i]];}
+      groups.flat().forEach(f=>out.push(f));
+      fields.filter(f=>!out.includes(f)).forEach(f=>out.push(f));
+    }
+    return out;
+  }
   function openForm(id){
     const form=forms[id];if(!form)return;
     if(!publicMode&&window.FIBRAZO_ACCESS&&window.FIBRAZO_ACCESS[id]===false)return;
-    state.form=form;state.sectionIndex=0;state.gps=null;state.photos=[];state.startedAt=Date.now();state.detectedCity="";state.citySource="";
+    const policy=policyFor(id);
+    state.form=form;state.policy=policy;state.sectionIndex=0;state.gps=null;state.photos=[];state.startedAt=Date.now();state.detectedCity="";state.citySource="";
     document.body.classList.add("form-mode");
     $("formTitle").textContent=form.name;
     $("formDescription").textContent=form.description||"";
     $("formEyebrow").textContent=form.eyebrow||"FORMULARIO";
-    const who=currentUser()?.email||(publicMode?"Formulario público":"");
+
+    const collect=policy.collectEmail!==false;
+    const email=String(currentUser()?.email||"").trim();
+    const who=collect?(email||"Correo pendiente"):"Respuesta anónima";
     if($("formUserEmail"))$("formUserEmail").textContent=who;
     if($("reviewUserEmail"))$("reviewUserEmail").textContent=who;
+    if($("formIdentityBadge"))$("formIdentityBadge").textContent=collect?(email?"✉ "+email:"✉ Correo pendiente"):"◌ Respuesta anónima";
+    if($("successEmail"))$("successEmail").textContent=who;
+
+    const intro=$("formIntroMessage");
+    if(intro){intro.textContent=policy.introMessage||"";intro.hidden=!policy.introMessage;}
+
     $("dynamicFields").innerHTML="";
-    form.fields.forEach(field=>$("dynamicFields").appendChild(renderField(field)));
+    shuffledFields(form,!!policy.shuffleQuestions).forEach(field=>$("dynamicFields").appendChild(renderField(field)));
     $("formWorkspace").hidden=false;$("reviewWorkspace").hidden=true;$("successWorkspace").hidden=true;
+    const stepper=$("sectionStepper"),counter=$("formStepCounter");
+    if(stepper)stepper.hidden=policy.showProgress===false;
+    if(counter)counter.hidden=policy.showProgress===false;
     clearValidation();renderSection();
-    if(form.id==="CHURN") setTimeout(captureChurnGpsAutomatically,250);
+    if(form.id==="CHURN")setTimeout(captureChurnGpsAutomatically,250);
     window.scrollTo({top:0,behavior:"smooth"});
   }
   window.FIBRAZO_UX_OPEN_FORM=openForm;
@@ -66,7 +107,7 @@
     if(publicMode){location.reload();return;}
     document.body.classList.remove("form-mode");
     $("formWorkspace").hidden=true;$("reviewWorkspace").hidden=true;$("successWorkspace").hidden=true;
-    state.form=null;state.gps=null;state.photos=[];state.detectedCity="";state.citySource="";window.scrollTo({top:0,behavior:"smooth"});
+    state.form=null;state.policy=null;state.gps=null;state.photos=[];state.detectedCity="";state.citySource="";window.scrollTo({top:0,behavior:"smooth"});
   }
 
   function renderField(field){
@@ -166,6 +207,8 @@
     $("sectionTitle").textContent=section.title;$("sectionDescription").textContent=section.description||"";$("sectionEyebrow").textContent="SECCIÓN "+(state.sectionIndex+1);$("formStepCounter").textContent=(state.sectionIndex+1)+" de "+sections.length;
     const stepper=$("sectionStepper");stepper.innerHTML="";
     sections.forEach((s,i)=>{const x=document.createElement("div");x.className="step"+(i===state.sectionIndex?" active":i<state.sectionIndex?" complete":"");x.innerHTML="<span>"+(i+1)+"</span><small>"+esc(s.title)+"</small>";stepper.appendChild(x);});
+    stepper.hidden=state.policy?.showProgress===false;
+    $("formStepCounter").hidden=state.policy?.showProgress===false;
     $("prevSection").hidden=state.sectionIndex===0;const last=state.sectionIndex===sections.length-1;$("nextSection").hidden=last;$("reviewForm").hidden=!last;
     clearValidation();updateVisibility();window.scrollTo({top:0,behavior:"smooth"});
   }
@@ -222,9 +265,14 @@
     try{
       let result;
       if(publicMode){
-        const r=await fetch("/api/submissions",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+        const headers={"Content-Type":"application/json"};
+        if(state.policy?.collectEmail!==false&&u?.getIdToken)headers.Authorization="Bearer "+await u.getIdToken();
+        const r=await fetch("/api/submissions",{method:"POST",headers,body:JSON.stringify(payload)});
         result=await r.json();
-        if(!r.ok)throw new Error(result.error||"No se pudo guardar la respuesta.");
+        if(!r.ok){
+          const message=result.error==="ALREADY_RESPONDED"?"Esta cuenta ya respondió este formulario.":result.error||"No se pudo guardar la respuesta.";
+          throw new Error(message);
+        }
       }else if(location.hostname.endsWith("github.io")){
         const id="PREVIEW-"+Date.now(),saved=JSON.parse(localStorage.getItem("fibrazoFormsPreview")||"[]");
         saved.unshift({id,...payload});localStorage.setItem("fibrazoFormsPreview",JSON.stringify(saved.slice(0,100)));result={id,queued:false};
@@ -240,7 +288,8 @@
 
       $("reviewWorkspace").hidden=true;$("formWorkspace").hidden=true;$("successWorkspace").hidden=false;
       $("successId").textContent=result.id||"—";
-      $("successEmail").textContent=u?.email||(publicMode?"Formulario público":"");
+      const recordedWho=state.policy?.collectEmail===false?"Respuesta anónima":(u?.email||"—");
+      $("successEmail").textContent=recordedWho;
       const title=$("successTitle"),message=$("successMessage"),icon=document.querySelector(".success-icon");
       if(result.queued){
         if(title)title.textContent="Guardado para sincronizar";
@@ -248,7 +297,7 @@
         if(icon)icon.textContent="↻";
       }else{
         if(title)title.textContent="Formulario completado con éxito";
-        if(message)message.textContent="La información fue guardada correctamente.";
+        if(message)message.textContent=state.policy?.completionMessage||"La información fue guardada correctamente.";
         if(icon)icon.textContent="✓";
       }
       window.FIBRAZO_OFFLINE?.refreshUi?.();

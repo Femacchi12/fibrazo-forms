@@ -54,7 +54,7 @@ function buildRow(form,p,id,links,email){
       d.tiene_servicio_actual||"",d.operador_actual||"",d.precio_actual||"",d.velocidad_actual||"",
       d.incluye_tv||"",d.tecnologia_tv||"",d.tv_coaxial||"",d.tv_box||"",d.tiene_disney||"",
       d.tiene_deportes||"",d.canales_destacados||"",d.volveria||"",d.cambio_para_volver||"",
-      d.comentario||"",l.lat||"",l.lng||"",l.accuracy||"",links.join(" | "),email||"PUBLICO",l.cityDetected||"",l.citySource||""
+      d.comentario||"",l.lat||"",l.lng||"",l.accuracy||"",links.join(" | "),email||"ANONIMO",l.cityDetected||"",l.citySource||""
     ];
   }
   const maps=l.lat&&l.lng?`https://www.google.com/maps?q=${l.lat},${l.lng}`:"";
@@ -63,7 +63,7 @@ function buildRow(form,p,id,links,email){
     d.tigo_hfc||"",d.tigo_ftth||"",d.claro_hfc||"",d.claro_ftth||"",d.movistar||"",
     d.isp_1||"",d.isp_2||"",d.isp_3||"",d.isp_4||"",d.nota||"",
     l.lat||"",l.lng||"",l.accuracy||"",maps,links[0]||"",links[1]||"",links[2]||"",
-    email||"PUBLICO","0.4"
+    email||"ANONIMO","0.5"
   ];
 }
 
@@ -79,6 +79,15 @@ async function submissionExists(auth,form,id){
   const sheets=google.sheets({version:"v4",auth});
   const r=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!B2:B`});
   return (r.data.values||[]).some(row=>String(row[0]||"")===id);
+}
+
+async function hasExistingResponseForEmail(auth,form,email){
+  if(!form.collectEmail||form.allowMultipleResponses||!email)return false;
+  const sheets=google.sheets({version:"v4",auth});
+  const column=form.id==="CHURN"?"Z":"Y";
+  const r=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!${column}2:${column}`});
+  const target=String(email).trim().toLowerCase();
+  return (r.data.values||[]).some(row=>String(row[0]||"").trim().toLowerCase()===target);
 }
 
 async function readRows(auth,forms,requested,limit,user,adminFlag){
@@ -142,8 +151,8 @@ module.exports=async(req,res)=>{
     let user=null;
     let adminFlag=false;
 
-    if(form.access==="PUBLICO"){
-      user=await verifyUser(req,{required:false});
+    if(form.publicEnabled){
+      user=form.collectEmail?await verifyUser(req):await verifyUser(req,{required:false});
       validatePublicGuards(payload);
       publicContext={ipHash:await checkPublicRate(auth,form,req)};
     }else{
@@ -160,6 +169,11 @@ module.exports=async(req,res)=>{
     if(await submissionExists(auth,form,id)){
       return res.status(200).json({ok:true,id,duplicate:true,photos:[]});
     }
+
+    const recordedEmail=form.collectEmail?String(user?.email||"").trim().toLowerCase():"ANONIMO";
+    if(form.collectEmail&&!recordedEmail) throw httpError("EMAIL_REQUIRED",401);
+    if(await hasExistingResponseForEmail(auth,form,recordedEmail)) throw httpError("ALREADY_RESPONDED",409);
+
     const links=await uploadPhotos(auth,form,id,payload.photos||[]);
     const sheets=google.sheets({version:"v4",auth});
     await sheets.spreadsheets.values.append({
@@ -167,7 +181,7 @@ module.exports=async(req,res)=>{
       range:`${form.sheet}!A:AB`,
       valueInputOption:"RAW",
       insertDataOption:"INSERT_ROWS",
-      requestBody:{values:[buildRow(form,payload,id,links,user?.email||"PUBLICO")]}
+      requestBody:{values:[buildRow(form,payload,id,links,recordedEmail)]}
     });
 
     if(publicContext){

@@ -98,17 +98,21 @@
       const response=await fetch("/api/access",{headers:{Authorization:"Bearer "+token},cache:"no-store"});
       const result=await response.json();
       if(!response.ok)return {ok:false,denied:response.status===403};
-      const access=Object.fromEntries((result.forms||[]).map(item=>[item.id,item.canAccess]));
+      const items=result.forms||[];
+      const access=Object.fromEntries(items.map(item=>[item.id,item.canAccess]));
+      const policies=Object.fromEntries(items.map(item=>[item.id,item]));
       window.FIBRAZO_ACCESS=access;
+      window.FIBRAZO_FORM_POLICIES=policies;
       window.FIBRAZO_ACCESS_META={admin:!!result.admin,email};
       window.FIBRAZO_ACCESS_BOOTSTRAPPED_EMAIL=email;
-      try{localStorage.setItem("fibrazoFormsAccessCache",JSON.stringify({email,access,updatedAt:Date.now()}));}catch(_){}
+      try{localStorage.setItem("fibrazoFormsAccessCache",JSON.stringify({email,access,policies,updatedAt:Date.now()}));}catch(_){}
       return {ok:true};
     }catch(_){
       if(!navigator.onLine){
         const cached=cachedAccessFor(email);
         if(cached){
           window.FIBRAZO_ACCESS=cached.access;
+          window.FIBRAZO_FORM_POLICIES=cached.policies||{};
           window.FIBRAZO_ACCESS_BOOTSTRAPPED_EMAIL=email;
           return {ok:true,offline:true};
         }

@@ -36,27 +36,23 @@ async function verifyUser(req,{required=true}={}){
 
 async function loadForms(auth){
   const sheets=google.sheets({version:"v4",auth});
-  const r=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"FORMULARIOS!A2:P"});
-  return (r.data.values||[]).filter(row=>row[0]).map((row,index)=>({
-    row:index+2,
-    id:String(row[0]||"").toUpperCase(),
-    name:String(row[1]||""),
-    description:String(row[2]||""),
-    status:String(row[3]||""),
-    slug:String(row[4]||""),
-    sheet:String(row[5]||""),
-    allowsGps:toBool(row[6]),
-    allowsPhotos:toBool(row[7]),
-    access:String(row[8]||"DOMINIO").toUpperCase(),
-    allowedEmails:splitEmails(row[9]),
-    domains:splitDomains(row[10]||DEFAULT_DOMAIN),
-    domain:splitDomains(row[10]||DEFAULT_DOMAIN)[0]||DEFAULT_DOMAIN,
-    rateLimit:clampInt(row[11],1,100,5),
-    maxPhotos:clampInt(row[12],0,3,0),
-    maxPhotoMb:clampNum(row[13],0.25,2,1.5),
-    updatedBy:String(row[14]||""),
-    updatedAt:String(row[15]||"")
-  }));
+  const r=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"FORMULARIOS!A2:Y"});
+  return (r.data.values||[]).filter(row=>row[0]).map((row,index)=>{
+    const legacyAccess=String(row[8]||"PRIVADO").toUpperCase();
+    const domains=splitDomains(row[10]||"");
+    const boolAt=(idx,fallback)=>row[idx]===undefined||row[idx]===""?fallback:toBool(row[idx]);
+    return {
+      row:index+2,id:String(row[0]||"").toUpperCase(),name:String(row[1]||""),description:String(row[2]||""),
+      status:String(row[3]||""),slug:String(row[4]||""),sheet:String(row[5]||""),
+      allowsGps:toBool(row[6]),allowsPhotos:toBool(row[7]),access:legacyAccess,
+      allowedEmails:splitEmails(row[9]),domains,domain:domains[0]||"",
+      rateLimit:clampInt(row[11],1,100,5),maxPhotos:clampInt(row[12],0,3,0),maxPhotoMb:clampNum(row[13],0.25,2,1.5),
+      updatedBy:String(row[14]||""),updatedAt:String(row[15]||""),
+      publicEnabled:boolAt(16,legacyAccess==="PUBLICO"),domainsEnabled:boolAt(17,legacyAccess==="DOMINIO"),emailsEnabled:boolAt(18,legacyAccess==="CORREOS"),
+      introMessage:String(row[19]||"").slice(0,2000),completionMessage:String(row[20]||"").slice(0,2000),
+      collectEmail:boolAt(21,true),shuffleQuestions:boolAt(22,false),showProgress:boolAt(23,true),allowMultipleResponses:boolAt(24,true)
+    };
+  });
 }
 
 async function loadUsers(auth){
@@ -75,39 +71,45 @@ async function isAdmin(auth,email){
   return users.some(u=>u.email===email.toLowerCase()&&u.role==="ADMIN"&&u.status==="ACTIVO");
 }
 
+function isInternalEmail(email){return !!email&&String(email).toLowerCase().endsWith(DEFAULT_DOMAIN);}
+
 function canUseDashboard(user,adminFlag=false,forms=[]){
   if(adminFlag)return true;
   const email=String(user?.email||"").trim().toLowerCase();
   if(!email)return false;
-  if(email.endsWith(DEFAULT_DOMAIN))return true;
+  if(isInternalEmail(email))return true;
   return (forms||[]).some(form=>{
     if(String(form.status).toLowerCase()!=="activo")return false;
-    if(form.access==="CORREOS")return form.allowedEmails.includes(email);
-    if(form.access==="DOMINIO")return (form.domains||[]).some(domain=>email.endsWith(domain));
+    if(form.emailsEnabled&&form.allowedEmails.includes(email))return true;
+    if(form.domainsEnabled&&form.domains.some(domain=>email.endsWith(domain)))return true;
     return false;
   });
 }
 
 function canAccess(form,user,adminFlag=false){
-  if(!form||String(form.status).toLowerCase()!=="activo") return false;
-  if(adminFlag) return true;
-  const email=String(user?.email||"").toLowerCase();
-  switch(form.access){
-    case "PUBLICO": return true;
-    case "PRIVADO": return false;
-    case "CORREOS": return !!email&&form.allowedEmails.includes(email);
-    case "DOMINIO": return !!email&&(form.domains||[form.domain||DEFAULT_DOMAIN]).some(domain=>email.endsWith(domain));
-    default: return false;
-  }
+  if(!form||String(form.status).toLowerCase()!=="activo")return false;
+  if(adminFlag)return true;
+  const email=String(user?.email||"").trim().toLowerCase();
+  if(!email)return false;
+  if(isInternalEmail(email))return true;
+  if(form.emailsEnabled&&form.allowedEmails.includes(email))return true;
+  if(form.domainsEnabled&&form.domains.some(domain=>email.endsWith(domain)))return true;
+  return false;
+}
+
+function runtimePolicy(form){
+  return {
+    id:form.id,name:form.name,description:form.description,status:form.status,slug:form.slug,
+    publicEnabled:!!form.publicEnabled,introMessage:form.introMessage||"",completionMessage:form.completionMessage||"",
+    collectEmail:!!form.collectEmail,shuffleQuestions:!!form.shuffleQuestions,showProgress:!!form.showProgress,
+    allowMultipleResponses:!!form.allowMultipleResponses,rateLimit:form.rateLimit,maxPhotos:form.maxPhotos,maxPhotoMb:form.maxPhotoMb,
+    allowsGps:form.allowsGps,allowsPhotos:form.allowsPhotos
+  };
 }
 
 function sanitizeForm(form){
-  return {
-    id:form.id,name:form.name,description:form.description,status:form.status,slug:form.slug,
-    access:form.access,allowedEmails:form.allowedEmails,domains:form.domains||[form.domain].filter(Boolean),domain:form.domain,
-    rateLimit:form.rateLimit,maxPhotos:form.maxPhotos,maxPhotoMb:form.maxPhotoMb,
-    allowsGps:form.allowsGps,allowsPhotos:form.allowsPhotos,updatedBy:form.updatedBy,updatedAt:form.updatedAt
-  };
+  return {...runtimePolicy(form),access:form.access,allowedEmails:form.allowedEmails,domains:form.domains,
+    emailsEnabled:!!form.emailsEnabled,domainsEnabled:!!form.domainsEnabled,updatedBy:form.updatedBy,updatedAt:form.updatedAt};
 }
 
 function clientIp(req){
@@ -229,4 +231,4 @@ function toBool(v){return v===true||String(v).toUpperCase()==="TRUE";}
 function clampInt(v,min,max,fallback){const n=parseInt(v,10);return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;}
 function clampNum(v,min,max,fallback){const n=Number(String(v??"").replace(",","."));return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;}
 
-module.exports={PROJECT,SHEET_ID,DEFAULT_DOMAIN,EXCEPTION,gauth,verifyUser,loadForms,loadUsers,isAdmin,canUseDashboard,canAccess,sanitizeForm,hashIp,checkPublicRate,logSecurity,validatePublicGuards,validatePhotos,validateSubmission,httpError,splitEmails,splitDomains,clampInt,clampNum};
+module.exports={PROJECT,SHEET_ID,DEFAULT_DOMAIN,EXCEPTION,gauth,verifyUser,loadForms,loadUsers,isAdmin,isInternalEmail,canUseDashboard,canAccess,runtimePolicy,sanitizeForm,hashIp,checkPublicRate,logSecurity,validatePublicGuards,validatePhotos,validateSubmission,httpError,splitEmails,splitDomains,clampInt,clampNum};

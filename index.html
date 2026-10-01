@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=2026.10.01.6">
+  <link rel="stylesheet" href="styles.css?v=2026.10.01.7">
 </head>
 <body class="auth-pending">
   <section id="authGate" class="auth-gate" aria-live="polite">
@@ -35,7 +35,7 @@
         <p>Formularios, relevamientos y resultados en un único espacio.</p>
       </div>
       <div class="update-cards">
-        <article><span>Versión</span><b>0.4.6 · Accesos + Permisos</b></article>
+        <article><span>Versión</span><b>0.5 · Formularios configurables</b></article>
         <article><span>Formularios activos</span><b id="activeFormsCount">2</b></article>
       </div>
       <div id="authSession" class="auth-session" hidden>
@@ -105,6 +105,7 @@
         <div class="workspace-topbar">
           <button id="closeForm" class="secondary-button compact" type="button">← Volver a formularios</button>
           <div class="workspace-status">
+            <span id="formIdentityBadge" class="form-identity-badge"></span>
             <span id="formNetworkStatus" class="form-network-status">🟢 En línea</span>
             <span id="formStepCounter" class="step-counter"></span>
           </div>
@@ -122,6 +123,7 @@
             <small>Este correo quedará asociado automáticamente a la respuesta.</small>
           </div>
         </div>
+        <div id="formIntroMessage" class="form-intro-message" hidden></div>
 
         <div id="sectionStepper" class="section-stepper"></div>
 
@@ -233,11 +235,9 @@
           </div>
           <a class="secondary-button compact admin-map-link" href="https://app.diagrams.net/?mode=github#HFemacchi12%2Ffibrazo-forms%2Fmain%2Fdocs%2FFIBRAZO_Forms_Flujos.drawio" target="_blank" rel="noopener">↗ Ver mapa en draw.io</a>
         </div>
-        <div class="admin-access-legend">
-          <span><b>Privado</b> solo administradores</span>
-          <span><b>Correos específicos</b> lista autorizada</span>
-          <span><b>Dominios</b> uno o varios dominios autorizados</span>
-          <span><b>Público</b> enlace activo sin login</span>
+        <div class="admin-access-note">
+          <strong>Acceso base</strong>
+          <span>Administradores y usuarios @fibrazo.com siempre pueden usar todos los formularios activos. Aquí agregas accesos externos y configuras la experiencia de cada encuesta.</span>
         </div>
         <div id="adminForms" class="admin-forms"></div>
         <div id="adminStatus" class="save-status"></div>
@@ -245,15 +245,15 @@
     </section>
   </main>
 
-  <footer>FIBRAZO · Growth <span>Forms v0.4.6 · Accesos + Permisos · 2026</span></footer>
+  <footer>FIBRAZO · Growth <span>Forms v0.5 · Formularios configurables · 2026</span></footer>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-  <script src="forms-config.js?v=2026.10.01.6"></script>
-  <script src="app.js?v=2026.10.01.6"></script>
-  <script src="access-v03.js?v=2026.10.01.6"></script>
-  <script src="offline-v04.js?v=2026.10.01.6"></script>
-  <script src="ux-v04.js?v=2026.10.01.6"></script>
-  <script src="admin-v03.js?v=2026.10.01.6"></script>
+  <script src="forms-config.js?v=2026.10.01.7"></script>
+  <script src="app.js?v=2026.10.01.7"></script>
+  <script src="access-v03.js?v=2026.10.01.7"></script>
+  <script src="offline-v04.js?v=2026.10.01.7"></script>
+  <script src="ux-v04.js?v=2026.10.01.7"></script>
+  <script src="admin-v03.js?v=2026.10.01.7"></script>
 </body>
 </html>

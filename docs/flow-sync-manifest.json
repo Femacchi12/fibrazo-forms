@@ -512,5 +512,30 @@
       "location.cityDetected",
       "location.citySource"
     ]
+  },
+  "formConfiguration": {
+    "version": "0.5",
+    "baselineAccess": [
+      "active admins",
+      "@fibrazo.com users"
+    ],
+    "additiveAccess": [
+      "public link",
+      "additional domains",
+      "specific emails"
+    ],
+    "settings": [
+      "introMessage",
+      "completionMessage",
+      "collectEmail",
+      "shuffleQuestions",
+      "showProgress",
+      "allowMultipleResponses",
+      "rateLimit",
+      "maxPhotos",
+      "maxPhotoMb"
+    ],
+    "publicEmailBehavior": "collectEmail=true requires Google sign-in; collectEmail=false stores anonymous response",
+    "adminUi": "accordion; one form expanded at a time"
   }
 }

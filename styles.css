@@ -264,3 +264,65 @@ body.form-mode main{width:min(1180px,96%);padding-top:14px}
 .admin-public-link button:disabled{opacity:.45;cursor:not-allowed}
 .admin-form-card.dirty [data-save]{box-shadow:0 0 0 2px rgba(255,209,102,.18)}
 @media(max-width:560px){.domain-add{grid-template-columns:1fr}.public-link-head{flex-direction:column}}
+
+
+/* v0.5 · Formularios configurables y administración en acordeón */
+.workspace-topbar{position:sticky;top:8px;z-index:24;padding:8px 10px;border:1px solid rgba(65,77,71,.72);border-radius:10px;background:rgba(9,13,11,.94);backdrop-filter:blur(10px)}
+.form-identity-badge{display:inline-flex;align-items:center;max-width:310px;padding:6px 8px;border:1px solid var(--fz-green-border);border-radius:999px;background:var(--fz-green-soft);color:#dff9ee;font-size:9px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.form-intro-message{margin:12px 0;padding:13px 15px;border-left:3px solid var(--fz-green);border-radius:8px;background:rgba(0,242,154,.055);color:#dfe9e4;font-size:11px;line-height:1.55}
+.public-auth{width:min(620px,100%);margin:16vh auto 0}
+.public-auth .primary-button{width:min(320px,100%);margin-top:18px}
+.admin-access-note{display:flex;gap:12px;align-items:flex-start;margin:14px 0;padding:12px 14px;border:1px solid var(--fz-green-border);border-radius:10px;background:var(--fz-green-soft)}
+.admin-access-note strong{font-size:10px;white-space:nowrap}
+.admin-access-note span{color:var(--fz-muted);font-size:10px;line-height:1.5}
+.admin-form-card.accordion{padding:0;overflow:hidden}
+.admin-accordion-head{width:100%;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px;border:0;background:transparent;color:#fff;text-align:left;cursor:pointer}
+.admin-accordion-head>div>span{font-size:9px;letter-spacing:.13em;color:var(--fz-green);font-weight:800}
+.admin-accordion-head h3{margin:5px 0 4px;font-size:16px}
+.admin-accordion-head p{margin:0;color:var(--fz-muted);font-size:10px}
+.accordion-chevron{font-size:24px;color:var(--fz-muted);transition:transform .18s ease}
+.admin-form-card.open .accordion-chevron{transform:rotate(180deg);color:var(--fz-green)}
+.admin-summary-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.admin-summary-chips span{padding:4px 7px;border:1px solid var(--fz-border);border-radius:999px;background:var(--fz-surface-inner);color:#c9d3ce;font-size:8px;font-weight:700}
+.admin-accordion-body{padding:0 16px 16px;border-top:1px solid var(--fz-border)}
+.admin-config-section{padding:16px 0;border-bottom:1px solid var(--fz-border)}
+.admin-config-title>span{font-size:9px;letter-spacing:.12em;color:var(--fz-green);font-weight:800}
+.admin-config-title h4{margin:4px 0 4px;font-size:14px}
+.admin-config-title p{margin:0 0 12px;color:var(--fz-muted);font-size:10px;line-height:1.45}
+.permission-stack{display:grid;gap:8px}
+.permission-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:11px 12px;border:1px solid var(--fz-border);border-radius:10px;background:var(--fz-surface-inner)}
+.permission-row>div strong{display:block;font-size:10px}
+.permission-row>div small{display:block;margin-top:4px;color:var(--fz-muted);font-size:9px;line-height:1.4}
+.permission-row.locked{opacity:.78}
+.permission-row.not-applicable{opacity:.48}
+.switch{position:relative;flex:0 0 auto;width:38px;height:22px}
+.switch input{position:absolute;opacity:0;pointer-events:none}
+.switch i{position:absolute;inset:0;border:1px solid var(--fz-border-strong);border-radius:999px;background:#202824;transition:.18s}
+.switch i:after{content:"";position:absolute;width:16px;height:16px;left:2px;top:2px;border-radius:50%;background:#839089;transition:.18s}
+.switch input:checked+i{background:rgba(0,242,154,.18);border-color:var(--fz-green)}
+.switch input:checked+i:after{transform:translateX(16px);background:var(--fz-green)}
+.permission-extra{margin:-1px 0 4px 18px;padding:11px;border-left:2px solid var(--fz-border);background:rgba(255,255,255,.01)}
+.permission-extra textarea,.message-grid textarea,.permission-extra input,.inline-setting input{width:100%;min-height:40px;padding:9px 10px;border:1px solid var(--fz-border-strong);border-radius:8px;background:var(--fz-control);color:#fff}
+.email-extra textarea,.message-grid textarea{min-height:84px;resize:vertical}
+.permission-extra small{display:block;margin-top:5px;color:var(--fz-muted);font-size:9px}
+.public-link-state{display:flex;align-items:center;gap:8px;margin-bottom:9px;padding:8px 10px;border-radius:8px;background:var(--fz-surface-raised)}
+.public-link-state b{font-size:8px}
+.public-link-state span{color:var(--fz-muted);font-size:9px}
+.public-link-state.active b{color:var(--fz-green)}
+.public-link-state.inactive b{color:#aab4af}
+.admin-public-link{margin:0;padding:0;border:0;background:transparent}
+.inline-setting{display:grid;grid-template-columns:1fr 120px;align-items:center;gap:10px;margin-top:9px}
+.inline-setting span{color:var(--fz-muted);font-size:9px;font-weight:700}
+.message-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.message-grid label>span{display:block;margin-bottom:6px;color:var(--fz-muted);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.compact-stack{margin-top:12px}
+.limits-grid{grid-template-columns:1fr 1fr}
+.admin-form-card.dirty .admin-accordion-head{box-shadow:inset 3px 0 0 #ffd166}
+@media(max-width:700px){
+  .message-grid,.limits-grid{grid-template-columns:1fr}
+  .admin-access-note{display:block}
+  .admin-access-note strong{display:block;margin-bottom:5px}
+  .inline-setting{grid-template-columns:1fr}
+  .workspace-status{flex-wrap:wrap;justify-content:flex-end}
+  .form-identity-badge{max-width:220px}
+}

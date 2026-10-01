@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=2026.10.01.5">
+  <link rel="stylesheet" href="/styles.css?v=2026.10.01.7">
 </head>
 <body class="public-mode form-mode">
   <main class="public-main">
@@ -16,6 +16,14 @@
       <div class="auth-brand">FIBRAZO · Growth</div>
       <h1>Cargando formulario…</h1>
       <p>Validando el enlace y la configuración de acceso.</p>
+    </section>
+
+    <section id="publicAuth" class="panel public-loading public-auth" hidden>
+      <div class="auth-brand">FIBRAZO · Growth</div>
+      <h1>Identifica tu respuesta</h1>
+      <p id="publicAuthText">Este formulario recopila correo verificado.</p>
+      <button id="publicGoogleSignIn" class="primary-button" type="button">Continuar con Google</button>
+      <p id="publicAuthError" class="auth-error"></p>
     </section>
 
     <section id="publicError" class="panel public-loading" hidden>
@@ -27,7 +35,10 @@
     <section id="formWorkspace" class="panel form-workspace" hidden>
       <div class="workspace-topbar">
         <span class="public-brand">fibrazo <b>GROWTH</b></span>
-        <span id="formStepCounter" class="step-counter"></span>
+        <div class="workspace-status">
+          <span id="formIdentityBadge" class="form-identity-badge"></span>
+          <span id="formStepCounter" class="step-counter"></span>
+        </div>
       </div>
       <div class="workspace-hero">
         <div>
@@ -37,10 +48,11 @@
         </div>
         <div class="form-user-card">
           <span>ACCESO</span>
-          <strong id="formUserEmail">Formulario público</strong>
-          <small>No necesitas iniciar sesión para responder.</small>
+          <strong id="formUserEmail"></strong>
+          <small>La configuración de esta encuesta define si la respuesta guarda correo o queda anónima.</small>
         </div>
       </div>
+      <div id="formIntroMessage" class="form-intro-message" hidden></div>
       <div id="sectionStepper" class="section-stepper"></div>
       <form id="dynamicForm" novalidate>
         <input id="publicWebsite" class="spam-field" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
@@ -74,7 +86,7 @@
           <h1>Confirma la información</h1>
           <p>La respuesta se enviará únicamente cuando presiones confirmar.</p>
         </div>
-        <div class="form-user-card"><span>ACCESO</span><strong id="reviewUserEmail">Formulario público</strong></div>
+        <div class="form-user-card"><span>RESPUESTA</span><strong id="reviewUserEmail"></strong></div>
       </div>
       <div id="reviewContent" class="review-content"></div>
       <div id="saveStatus" class="save-status"></div>
@@ -92,7 +104,7 @@
       <p id="successMessage">La información fue guardada correctamente.</p>
       <div class="success-meta">
         <div><span>ID de respuesta</span><strong id="successId"></strong></div>
-        <div><span>Acceso</span><strong id="successEmail">Formulario público</strong></div>
+        <div><span>Respondiente</span><strong id="successEmail"></strong></div>
       </div>
       <div class="success-actions">
         <button id="newResponse" class="primary-button" type="button">Completar otra respuesta</button>
@@ -100,9 +112,11 @@
     </section>
   </main>
 
-  <footer>FIBRAZO · Growth <span>Formulario público seguro · v0.4.5</span></footer>
-  <script src="/forms-config.js?v=2026.10.01.5"></script>
-  <script src="/ux-v04.js?v=2026.10.01.5"></script>
-  <script src="/public-v03.js?v=2026.10.01.5"></script>
+  <footer>FIBRAZO · Growth <span>Formulario configurable · v0.5</span></footer>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="/forms-config.js?v=2026.10.01.7"></script>
+  <script src="/ux-v04.js?v=2026.10.01.7"></script>
+  <script src="/public-v05.js?v=2026.10.01.7"></script>
 </body>
 </html>
