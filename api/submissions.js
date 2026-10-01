@@ -151,7 +151,9 @@ module.exports=async(req,res)=>{
     let user=null;
     let adminFlag=false;
 
-    if(form.publicEnabled){
+    const isPublicRequest=payload.publicMode===true||(!req.headers.authorization&&form.publicEnabled);
+    if(isPublicRequest){
+      if(!form.publicEnabled) throw httpError("FORM_NOT_PUBLIC",403);
       user=form.collectEmail?await verifyUser(req):await verifyUser(req,{required:false});
       validatePublicGuards(payload);
       publicContext={ipHash:await checkPublicRate(auth,form,req)};

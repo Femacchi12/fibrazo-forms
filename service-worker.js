@@ -1,4 +1,4 @@
-const CACHE="fibrazo-forms-v0.5-20261001";
+const CACHE="fibrazo-forms-v0.5.1-20261001";
 const APP_SHELL=[
   "/","/index.html","/public","/styles.css","/forms-config.js","/app.js","/access-v03.js",
   "/ux-v04.js","/offline-v04.js","/admin-v03.js","/public-v05.js","/manifest.webmanifest","/icon.svg"

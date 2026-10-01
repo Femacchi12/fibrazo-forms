@@ -120,13 +120,14 @@
   function refresh(card){
     const val=k=>!!card.querySelector('[data-field="'+k+'"]')?.checked;
     const publicOn=val("publicEnabled"),domainsOn=val("domainsEnabled"),emailsOn=val("emailsEnabled"),collect=val("collectEmail");
-    card.querySelector(".public-extra").hidden=!publicOn;
+    const saved=card.dataset.savedPublic==="true",state=card.querySelector(".public-link-state");
+    card.querySelector(".public-extra").hidden=!(publicOn||saved);
     card.querySelector(".domain-extra").hidden=!domainsOn;
     card.querySelector(".email-extra").hidden=!emailsOn;
-    const saved=card.dataset.savedPublic==="true",state=card.querySelector(".public-link-state");
     state.className="public-link-state "+(saved?"active":"inactive");
-    if(saved)state.innerHTML='<b>● ENLACE PÚBLICO ACTIVO</b><span>El enlace guardado acepta respuestas.</span>';
-    else if(publicOn)state.innerHTML='<b>○ PENDIENTE DE ACTIVAR</b><span>Presiona Guardar configuración para habilitar el enlace.</span>';
+    if(saved&&publicOn)state.innerHTML='<b>● ENLACE PÚBLICO ACTIVO</b><span>El enlace guardado acepta respuestas.</span>';
+    else if(saved&&!publicOn)state.innerHTML='<b>● ACTIVO ACTUALMENTE · PENDIENTE DE DESACTIVAR</b><span>Seguirá aceptando respuestas hasta que guardes este cambio.</span>';
+    else if(!saved&&publicOn)state.innerHTML='<b>○ PENDIENTE DE ACTIVAR</b><span>Presiona Guardar configuración para habilitar el enlace.</span>';
     else state.innerHTML='<b>○ ENLACE PÚBLICO DESACTIVADO</b><span>El enlace no acepta respuestas.</span>';
     card.querySelector("[data-copy]").disabled=!saved;
     const multiple=card.querySelector('[data-field="allowMultipleResponses"]');

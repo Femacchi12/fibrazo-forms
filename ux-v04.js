@@ -260,7 +260,8 @@
       user:{email:u?.email||""},
       clientTimestamp:new Date().toISOString(),
       startedAt:state.startedAt,
-      website:$("publicWebsite")?.value||""
+      website:$("publicWebsite")?.value||"",
+      publicMode
     };
     try{
       let result;
