@@ -45,7 +45,7 @@ module.exports=async(req,res)=>{
     const showProgress=toBool(body.showProgress,form.showProgress);
     const allowMultipleResponses=toBool(body.allowMultipleResponses,form.allowMultipleResponses);
     const rateLimit=clampInt(body.rateLimit,1,100,form.rateLimit||5);
-    const maxPhotos=clampInt(body.maxPhotos,0,3,form.maxPhotos||0);
+    const maxPhotos=clampInt(body.maxPhotos,0,3,Number.isFinite(form.maxPhotos)?form.maxPhotos:3);
     const maxPhotoMb=clampNum(body.maxPhotoMb,0.25,2,form.maxPhotoMb||1.5);
     const legacyAccess=publicEnabled?"PUBLICO":domainsEnabled?"DOMINIO":emailsEnabled?"CORREOS":"PRIVADO";
     const now=new Date().toISOString();

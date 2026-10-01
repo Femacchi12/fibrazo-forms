@@ -69,9 +69,9 @@
               switchRow("allowMultipleResponses","Permitir múltiples respuestas","Si se recopila correo, permite que una misma cuenta responda más de una vez.",!!f.allowMultipleResponses)+
             '</div>'+
           '</section>'+
-          '<section class="admin-config-section"><div class="admin-config-title"><span>EVIDENCIA</span><h4>Límites de archivos</h4></div><div class="admin-grid limits-grid">'+
-            '<label><span>Máximo de fotos</span><input data-field="maxPhotos" type="number" min="0" max="3" value="'+esc(f.maxPhotos)+'"></label>'+
-            '<label><span>Máximo por foto (MB)</span><input data-field="maxPhotoMb" type="number" min=".25" max="2" step=".25" value="'+esc(f.maxPhotoMb)+'"></label>'+
+          '<section class="admin-config-section"><div class="admin-config-title"><span>EVIDENCIA</span><h4>Límites de archivos</h4><p data-photo-state></p></div><div class="admin-grid limits-grid">'+
+            '<label><span>Máximo de fotos</span><input data-field="maxPhotos" type="number" min="0" max="3" value="'+esc(Number.isFinite(f.maxPhotos)?f.maxPhotos:3)+'"><small>Por defecto: 3 fotos. Usa 0 para desactivar fotografías.</small></label>'+
+            '<label data-photo-size><span>Máximo por foto (MB)</span><input data-field="maxPhotoMb" type="number" min=".25" max="2" step=".25" value="'+esc(f.maxPhotoMb)+'"></label>'+
           '</div></section>'+
           '<div class="admin-card-actions"><small>Última configuración guardada: '+esc(f.updatedAt||"—")+(f.updatedBy?" · "+esc(f.updatedBy):"")+'</small><button type="button" class="primary-button" data-save>Guardar configuración</button></div>'+
         '</div>';
@@ -132,6 +132,17 @@
     card.querySelector("[data-copy]").disabled=!saved;
     const multiple=card.querySelector('[data-field="allowMultipleResponses"]');
     if(multiple)multiple.closest(".permission-row").classList.toggle("not-applicable",!collect);
+
+    const photoInput=card.querySelector('[data-field="maxPhotos"]');
+    const photoSize=card.querySelector('[data-photo-size]');
+    const photoState=card.querySelector('[data-photo-state]');
+    const photoCount=Math.max(0,Math.min(3,Number(photoInput?.value||0)));
+    if(photoSize)photoSize.hidden=photoCount===0;
+    if(photoState){
+      photoState.textContent=photoCount===0
+        ?"Fotos desactivadas para este formulario."
+        :"Se podrán adjuntar hasta "+photoCount+" foto"+(photoCount===1?"":"s")+".";
+    }
   }
 
   async function copyLink(card){

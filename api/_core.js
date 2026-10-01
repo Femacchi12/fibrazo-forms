@@ -46,7 +46,7 @@ async function loadForms(auth){
       status:String(row[3]||""),slug:String(row[4]||""),sheet:String(row[5]||""),
       allowsGps:toBool(row[6]),allowsPhotos:toBool(row[7]),access:legacyAccess,
       allowedEmails:splitEmails(row[9]),domains,domain:domains[0]||"",
-      rateLimit:clampInt(row[11],1,100,5),maxPhotos:clampInt(row[12],0,3,0),maxPhotoMb:clampNum(row[13],0.25,2,1.5),
+      rateLimit:clampInt(row[11],1,100,5),maxPhotos:clampInt(row[12],0,3,3),maxPhotoMb:clampNum(row[13],0.25,2,1.5),
       updatedBy:String(row[14]||""),updatedAt:String(row[15]||""),
       publicEnabled:boolAt(16,legacyAccess==="PUBLICO"),domainsEnabled:boolAt(17,legacyAccess==="DOMINIO"),emailsEnabled:boolAt(18,legacyAccess==="CORREOS"),
       introMessage:String(row[19]||"").slice(0,2000),completionMessage:String(row[20]||"").slice(0,2000),
