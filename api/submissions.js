@@ -147,6 +147,7 @@ module.exports=async(req,res)=>{
     const forms=await loadForms(auth);
     const form=forms.find(item=>item.id===formId);
     if(!form||!runtime[formId]) throw httpError("INVALID_FORM",400);
+    if(String(form.status).toLowerCase()!=="activo") throw httpError("FORM_INACTIVE",403);
 
     let user=null;
     let adminFlag=false;

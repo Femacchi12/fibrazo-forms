@@ -402,3 +402,83 @@ body.form-mode main{width:min(1180px,96%);padding-top:14px}
   .admin-system-card>summary,.admin-compact-section>summary{align-items:flex-start}
   .admin-compact-section>summary>b{max-width:45%;text-align:right}
 }
+
+/* v0.7 · Jerarquía tipográfica Impacto Social + estados */
+:root{
+  --fz-type-base:14px;
+  --fz-type-section:17px;
+  --fz-type-card:16px;
+  --fz-type-label:12px;
+  --fz-type-help:11px;
+  --fz-type-micro:9px;
+}
+.admin-system-card>summary span,
+.admin-compact-section>summary span,
+.admin-status-group>summary span{font-size:var(--fz-type-micro)}
+.admin-system-card>summary strong,
+.admin-compact-section>summary strong,
+.admin-status-group>summary strong{font-size:var(--fz-type-label)}
+.summary-right b,
+.admin-compact-section>summary>b,
+.admin-status-group>summary>b{font-size:10px}
+.admin-person-row strong,
+.compact-box-head strong,
+.compact-toggle-row strong,
+.form-status-control strong{font-size:var(--fz-type-label)}
+.admin-person-row small,
+.compact-box-head small,
+.compact-toggle-row small,
+.form-status-control small,
+.admin-system-body>small,
+.evidence-row small,
+.compact-public-row label span{font-size:var(--fz-type-help)}
+.compact-head h3{font-size:var(--fz-type-card)}
+.compact-head>div>span{font-size:var(--fz-type-micro)}
+.compact-head .admin-summary-chips span{font-size:10px;padding:4px 7px}
+.compact-add-row input,
+.compact-public-row>input,
+.compact-public-row label input,
+.evidence-row input,
+.compact-messages textarea,
+.secondary-button.compact,
+.compact-save{font-size:var(--fz-type-label)}
+.domain-chip,.compact-list .domain-chip{font-size:10px}
+.evidence-row label span{font-size:var(--fz-type-label)}
+.admin-card-actions small,.compact-actions small{font-size:var(--fz-type-help)}
+.public-link-state,.compact-state{font-size:var(--fz-type-help)}
+.field-help,.form-user-card small,.step small{font-size:var(--fz-type-help)}
+
+.admin-status-group{margin:9px 0;border:1px solid var(--fz-border);border-radius:10px;background:var(--fz-surface)}
+.admin-status-group>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;cursor:pointer}
+.admin-status-group>summary::-webkit-details-marker{display:none}
+.admin-status-group>summary>div{display:grid;gap:2px}
+.admin-status-group>summary span{letter-spacing:.12em;color:var(--fz-green);font-weight:800}
+.admin-status-group>summary>b{color:var(--fz-muted)}
+.inactive-group>summary span{color:#ff7b7b}
+.admin-status-list{padding:8px;border-top:1px solid var(--fz-border)}
+.admin-status-list:empty::after{content:"No hay formularios en este estado.";display:block;padding:10px;color:var(--fz-muted);font-size:var(--fz-type-help)}
+
+.form-status-control{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:9px 10px;margin-bottom:8px;border:1px solid var(--fz-green-border);border-radius:8px;background:var(--fz-green-soft)}
+.form-status-control>div>span{display:block;color:var(--fz-green);font-size:var(--fz-type-micro);font-weight:800;letter-spacing:.1em}
+.form-status-control strong{display:block;margin-top:2px}
+.form-status-control small{display:block;margin-top:2px;color:var(--fz-muted)}
+.form-status-control.inactive{border-color:rgba(239,98,98,.6);background:rgba(239,98,98,.06)}
+.form-status-control.inactive>div>span{color:#ff7b7b}
+
+.form-status-chip.active{color:var(--fz-green)!important;border-color:var(--fz-green-border)!important;background:var(--fz-green-soft)!important}
+.form-status-chip.inactive{color:#ff8585!important;border-color:rgba(239,98,98,.55)!important;background:rgba(239,98,98,.07)!important}
+
+/* OFF visible en rojo: publicación y estado */
+.public-section .switch input:not(:checked)+i,
+.status-switch input:not(:checked)+i{
+  background:rgba(239,98,98,.13);
+  border-color:rgba(239,98,98,.72);
+}
+.public-section .switch input:not(:checked)+i:after,
+.status-switch input:not(:checked)+i:after{background:#ef6262}
+.section-status.inactive{color:#ff8585!important;background:rgba(239,98,98,.07);border:1px solid rgba(239,98,98,.38)}
+
+@media(max-width:700px){
+  .compact-head h3{font-size:15px}
+  .admin-person-row strong,.compact-box-head strong,.compact-toggle-row strong,.form-status-control strong{font-size:11px}
+}

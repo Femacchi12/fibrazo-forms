@@ -82,6 +82,9 @@ module.exports=async(req,res)=>{
     const form=forms.find(item=>item.id===formId);
     if(!form)throw httpError("FORM_NOT_FOUND",404);
 
+    const requestedStatus=String(body.status??form.status??"Activo").trim().toUpperCase();
+    if(!["ACTIVO","INACTIVO"].includes(requestedStatus))throw httpError("INVALID_FORM_STATUS",400);
+    const status=requestedStatus==="ACTIVO"?"Activo":"Inactivo";
     const publicEnabled=toBool(body.publicEnabled,form.publicEnabled);
     const allowedEmails=splitEmails(body.allowedEmails||"");
     const domains=splitDomains(body.domains||"");
@@ -105,13 +108,18 @@ module.exports=async(req,res)=>{
     const now=new Date().toISOString();
 
     const sheets=google.sheets({version:"v4",auth});
-    await sheets.spreadsheets.values.update({
-      spreadsheetId:SHEET_ID,range:`FORMULARIOS!I${form.row}:Y${form.row}`,
-      valueInputOption:"RAW",
-      requestBody:{values:[[
-        legacyAccess,allowedEmails.join(", "),domains.join(", "),rateLimit,maxPhotos,maxPhotoMb,user.email,now,
-        publicEnabled,domainsEnabled,emailsEnabled,introMessage,completionMessage,collectEmail,shuffleQuestions,showProgress,allowMultipleResponses
-      ]]}
+    await sheets.spreadsheets.values.batchUpdate({
+      spreadsheetId:SHEET_ID,
+      requestBody:{
+        valueInputOption:"RAW",
+        data:[
+          {range:`FORMULARIOS!D${form.row}`,values:[[status]]},
+          {range:`FORMULARIOS!I${form.row}:Y${form.row}`,values:[[
+            legacyAccess,allowedEmails.join(", "),domains.join(", "),rateLimit,maxPhotos,maxPhotoMb,user.email,now,
+            publicEnabled,domainsEnabled,emailsEnabled,introMessage,completionMessage,collectEmail,shuffleQuestions,showProgress,allowMultipleResponses
+          ]]}
+        ]
+      }
     });
 
     const updated=(await loadForms(auth)).find(item=>item.id===formId);

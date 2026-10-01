@@ -554,5 +554,23 @@
       "public link"
     ],
     "adminUi": "compact accordion with nested collapsible sections"
+  },
+  "formLifecycle": {
+    "version": "0.7",
+    "states": [
+      "Activo",
+      "Inactivo"
+    ],
+    "inactiveBehavior": "reject all submissions including admins and public links; hidden from respondent dashboard",
+    "adminGrouping": "collapsible active and inactive lists",
+    "publicDefault": false
+  },
+  "typography": {
+    "reference": "Dashboard Impacto Social",
+    "basePx": 14,
+    "sectionTitlePx": 17,
+    "labelPx": 12,
+    "helpPx": 11,
+    "microPx": 9
   }
 }

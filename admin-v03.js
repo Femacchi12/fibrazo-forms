@@ -80,17 +80,29 @@
   }
 
   function renderForms(){
-    host.innerHTML="";
+    host.innerHTML=
+      '<details class="admin-status-group active-group" open><summary><div><span>FORMULARIOS</span><strong>Activos</strong></div><b data-active-count></b></summary><div class="admin-status-list" data-active-list></div></details>'+
+      '<details class="admin-status-group inactive-group"><summary><div><span>FORMULARIOS</span><strong>Inactivos</strong></div><b data-inactive-count></b></summary><div class="admin-status-list" data-inactive-list></div></details>';
+    const activeList=host.querySelector("[data-active-list]");
+    const inactiveList=host.querySelector("[data-inactive-list]");
+    const activeItems=items.filter(f=>String(f.status).toLowerCase()==="activo");
+    const inactiveItems=items.filter(f=>String(f.status).toLowerCase()!=="activo");
+    host.querySelector("[data-active-count]").textContent=activeItems.length+" activo"+(activeItems.length===1?"":"s");
+    host.querySelector("[data-inactive-count]").textContent=inactiveItems.length+" inactivo"+(inactiveItems.length===1?"":"s");
+
     items.forEach(f=>{
       const card=document.createElement("article");card.className="admin-form-card accordion compact";card.dataset.formId=f.id;
       card._domains=[...(f.domains||[])];card._emails=[...(f.allowedEmails||[])];card.dataset.savedPublic=String(!!f.publicEnabled);
       const publicUrl=location.origin+"/f/"+f.slug;
+      const isActive=String(f.status).toLowerCase()==="activo";
+      card.dataset.savedStatus=isActive?"activo":"inactivo";
       card.innerHTML=
         '<button type="button" class="admin-accordion-head compact-head" data-toggle>'+
-          '<div><span>'+esc(f.id)+'</span><h3>'+esc(f.name)+'</h3><div class="admin-summary-chips"><span>'+esc(accessSummary(f))+'</span><span>'+esc(experienceSummary(f))+'</span></div></div>'+
+          '<div><span>'+esc(f.id)+'</span><h3>'+esc(f.name)+'</h3><div class="admin-summary-chips"><span class="form-status-chip '+(isActive?"active":"inactive")+'">'+(isActive?"Activo":"Inactivo")+'</span><span>'+esc(accessSummary(f))+'</span><span>'+esc(experienceSummary(f))+'</span></div></div>'+
           '<b class="accordion-chevron">⌄</b>'+
         '</button>'+
         '<div class="admin-accordion-body compact-body" hidden>'+
+          '<div class="form-status-control"><div><span>ESTADO</span><strong>Formulario '+(isActive?"activo":"inactivo")+'</strong><small>'+(isActive?"Acepta respuestas según los permisos configurados.":"Bloqueado para todos: usuarios, enlace público y administradores.")+'</small></div><span class="switch status-switch"><input type="checkbox" data-field="formActive" '+(isActive?"checked":"")+'><i></i></span></div>'+
           '<details class="admin-compact-section">'+
             '<summary><div><span>ACCESOS</span><strong>Dominios y correos autorizados</strong></div><b data-access-summary>'+esc(accessSummary(f).replace(" · público",""))+'</b></summary>'+
             '<div class="compact-section-body access-columns">'+
@@ -138,8 +150,12 @@
       card.querySelector("[data-email-input]").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addEmail(card);}});
       card.querySelector("[data-copy]").addEventListener("click",()=>copyLink(card));
       card.querySelector("[data-save]").addEventListener("click",()=>save(card));
-      renderDomains(card);renderEmails(card);refresh(card);host.appendChild(card);
-      if(openId===f.id)openCard(card);
+      renderDomains(card);renderEmails(card);refresh(card);
+      (isActive?activeList:inactiveList).appendChild(card);
+      if(openId===f.id){
+        openCard(card);
+        (isActive?host.querySelector(".active-group"):host.querySelector(".inactive-group")).open=true;
+      }
     });
   }
 
@@ -195,17 +211,35 @@
   function markDirty(card){card.classList.add("dirty");}
 
   function refresh(card){
+    const activeNow=!!card.querySelector('[data-field="formActive"]')?.checked;
+    const savedActive=card.dataset.savedStatus==="activo";
+    const statusBox=card.querySelector(".form-status-control");
+    if(statusBox){
+      statusBox.classList.toggle("inactive",!activeNow);
+      const strong=statusBox.querySelector("strong"),small=statusBox.querySelector("small");
+      if(strong)strong.textContent=activeNow?"Formulario activo":"Formulario inactivo";
+      if(small)small.textContent=activeNow
+        ?(savedActive?"Acepta respuestas según los permisos configurados.":"Se activará cuando guardes los cambios.")
+        :(savedActive?"Seguirá activo hasta que guardes este cambio.":"Bloqueado para todos: usuarios, enlace público y administradores.");
+    }
+
     const publicOn=!!card.querySelector('[data-field="publicEnabled"]')?.checked;
     const saved=card.dataset.savedPublic==="true";
     const statusEl=card.querySelector("[data-public-status]");
     const state=card.querySelector(".public-link-state");
     const details=card.querySelector("[data-public-details]");
     if(statusEl){
-      statusEl.textContent=saved?(publicOn?"Activo":"Activo · cambio pendiente"):(publicOn?"Pendiente":"Desactivado");
-      statusEl.className="section-status "+(saved?"active":publicOn?"pending":"");
+      if(!activeNow){
+        statusEl.textContent=publicOn?"Configurado · formulario inactivo":"Desactivado";
+        statusEl.className="section-status inactive";
+      }else{
+        statusEl.textContent=saved?(publicOn?"Activo":"Activo · cambio pendiente"):(publicOn?"Pendiente":"Desactivado");
+        statusEl.className="section-status "+(saved?"active":publicOn?"pending":"");
+      }
     }
     if(state){
-      if(saved&&publicOn)state.textContent="El enlace está activo y acepta respuestas.";
+      if(!activeNow&&publicOn)state.textContent="El enlace está configurado, pero no acepta respuestas mientras el formulario esté inactivo.";
+      else if(saved&&publicOn)state.textContent="El enlace está activo y acepta respuestas.";
       else if(saved&&!publicOn)state.textContent="El enlace sigue activo hasta que guardes este cambio.";
       else if(!saved&&publicOn)state.textContent="El enlace se activará al guardar.";
       else state.textContent="El enlace público está desactivado.";
@@ -248,7 +282,7 @@
     const btn=card.querySelector("[data-save]");btn.disabled=true;msg("Guardando configuración…");
     try{
       const r=await fetch("/api/admin",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await tok()},body:JSON.stringify({
-        formId:card.dataset.formId,publicEnabled:checkbox("publicEnabled"),domains:card._domains,allowedEmails:card._emails,
+        formId:card.dataset.formId,status:checkbox("formActive")?"Activo":"Inactivo",publicEnabled:checkbox("publicEnabled"),domains:card._domains,allowedEmails:card._emails,
         introMessage:value("introMessage"),completionMessage:value("completionMessage"),collectEmail:checkbox("collectEmail"),
         shuffleQuestions:checkbox("shuffleQuestions"),showProgress:checkbox("showProgress"),allowMultipleResponses:checkbox("allowMultipleResponses"),
         rateLimit:value("rateLimit"),maxPhotos:value("maxPhotos"),maxPhotoMb:value("maxPhotoMb")

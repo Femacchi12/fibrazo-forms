@@ -44,12 +44,12 @@ async function loadForms(auth){
     const boolAt=(idx,fallback)=>row[idx]===undefined||row[idx]===""?fallback:toBool(row[idx]);
     return {
       row:index+2,id:String(row[0]||"").toUpperCase(),name:String(row[1]||""),description:String(row[2]||""),
-      status:String(row[3]||""),slug:String(row[4]||""),sheet:String(row[5]||""),
+      status:String(row[3]||"Activo"),slug:String(row[4]||""),sheet:String(row[5]||""),
       allowsGps:toBool(row[6]),allowsPhotos:toBool(row[7]),access:legacyAccess,
       allowedEmails:splitEmails(row[9]),domains,domain:domains[0]||"",
       rateLimit:clampInt(row[11],1,100,5),maxPhotos:clampInt(row[12],0,3,3),maxPhotoMb:clampNum(row[13],0.25,2,1.5),
       updatedBy:String(row[14]||""),updatedAt:String(row[15]||""),
-      publicEnabled:boolAt(16,legacyAccess==="PUBLICO"),domainsEnabled:boolAt(17,legacyAccess==="DOMINIO"),emailsEnabled:boolAt(18,legacyAccess==="CORREOS"),
+      publicEnabled:boolAt(16,false),domainsEnabled:boolAt(17,legacyAccess==="DOMINIO"),emailsEnabled:boolAt(18,legacyAccess==="CORREOS"),
       introMessage:String(row[19]||"").slice(0,2000),completionMessage:String(row[20]||"").slice(0,2000),
       collectEmail:boolAt(21,true),shuffleQuestions:boolAt(22,false),showProgress:boolAt(23,true),allowMultipleResponses:boolAt(24,true)
     };
