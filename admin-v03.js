@@ -1,14 +1,17 @@
 (() => {
-  const $=id=>document.getElementById(id),nav=$("adminNavButton"),view=$("adminView"),host=$("adminForms"),status=$("adminStatus");
-  let items=[],openId=null;
+  const $=id=>document.getElementById(id);
+  const nav=$("adminNavButton"),view=$("adminView"),host=$("adminForms"),globalHost=$("adminGlobal"),status=$("adminStatus");
+  let items=[],admins=[],openId=null;
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
   const current=()=>window.firebase?.auth?.().currentUser||null;
   async function tok(){const u=current();if(!u)throw new Error("AUTH_REQUIRED");return u.getIdToken();}
   function msg(t,type=""){status.textContent=t;status.className="save-status"+(type?" "+type:"");}
   function normalizeDomain(v){let d=String(v||"").trim().toLowerCase();if(!d)return"";return d.startsWith("@")?d:"@"+d;}
+  function validEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v||"").trim());}
 
   function forceForms(){
-    nav.hidden=true;view.hidden=true;host.innerHTML="";items=[];openId=null;
+    nav.hidden=true;view.hidden=true;host.innerHTML="";if(globalHost)globalHost.innerHTML="";
+    items=[];admins=[];openId=null;
     if(window.FIBRAZO_SET_VIEW)window.FIBRAZO_SET_VIEW("forms");
   }
 
@@ -17,63 +20,113 @@
       const r=await fetch("/api/admin",{headers:{Authorization:"Bearer "+await tok()},cache:"no-store"});
       if(r.status===403){forceForms();return;}
       const j=await r.json();if(!r.ok)throw new Error(j.error||"No se pudo cargar administración.");
-      nav.hidden=false;items=j.forms||[];render();
+      nav.hidden=false;items=j.forms||[];admins=j.admins||[];renderGlobal();renderForms();
     }catch(_){forceForms();}
   }
 
-  function switchRow(key,title,copy,checked,locked=false){
-    return '<label class="permission-row '+(locked?"locked":"")+'"><div><strong>'+esc(title)+'</strong><small>'+esc(copy)+'</small></div>'+
-      '<span class="switch"><input type="checkbox" data-field="'+key+'" '+(checked?"checked ":"")+(locked?"disabled ":"")+'><i></i></span></label>';
+  function renderGlobal(){
+    if(!globalHost)return;
+    const rows=admins.map(a=>
+      '<div class="admin-person-row"><div><strong>'+esc(a.email)+'</strong><small>'+(a.base?'Administrador base':'Administrador agregado')+'</small></div>'+
+      (a.base?'<span class="base-badge">BASE</span>':'<button type="button" class="icon-action danger" data-remove-admin="'+esc(a.email)+'">Quitar</button>')+
+      '</div>'
+    ).join("");
+    globalHost.innerHTML=
+      '<details class="admin-system-card">'+
+        '<summary><div><span>ADMINISTRADORES</span><strong>Administradores del sistema</strong></div><div class="summary-right"><b>'+admins.length+' activos</b><i>⌄</i></div></summary>'+
+        '<div class="admin-system-body">'+
+          '<div class="admin-list-compact">'+rows+'</div>'+
+          '<div class="compact-add-row"><input id="newAdminEmail" type="email" placeholder="nuevo.admin@empresa.com"><button id="addAdminButton" type="button" class="secondary-button compact">Agregar administrador</button></div>'+
+          '<small>Los administradores base están protegidos. Los administradores agregados tienen acceso total a formularios, resultados y configuración.</small>'+
+        '</div>'+
+      '</details>';
+
+    globalHost.querySelector("#addAdminButton")?.addEventListener("click",addAdmin);
+    globalHost.querySelector("#newAdminEmail")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addAdmin();}});
+    globalHost.querySelectorAll("[data-remove-admin]").forEach(btn=>btn.addEventListener("click",()=>removeAdmin(btn.dataset.removeAdmin)));
   }
 
-  function summaryChips(f){
-    const chips=['Interno FIBRAZO'];
-    if(f.publicEnabled)chips.push('Público');
-    if(f.domainsEnabled)chips.push((f.domains||[]).length+' dominio'+((f.domains||[]).length===1?'':'s'));
-    if(f.emailsEnabled)chips.push((f.allowedEmails||[]).length+' correo'+((f.allowedEmails||[]).length===1?'':'s'));
-    chips.push(f.collectEmail?'Correo verificado':'Anónimo');
-    return chips.map(x=>'<span>'+esc(x)+'</span>').join("");
+  async function adminMutation(action,email){
+    const r=await fetch("/api/admin",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await tok()},body:JSON.stringify({adminAction:action,email})});
+    const j=await r.json();if(!r.ok)throw new Error(j.error||"No se pudo actualizar administradores.");
+    admins=j.admins||[];renderGlobal();
+  }
+  async function addAdmin(){
+    const input=globalHost?.querySelector("#newAdminEmail"),email=String(input?.value||"").trim().toLowerCase();
+    if(!validEmail(email)){msg("Ingresa un correo válido para el nuevo administrador.","error");return;}
+    msg("Agregando administrador…");
+    try{await adminMutation("add",email);msg("Administrador agregado correctamente.","success");}
+    catch(e){msg(e.message||"No se pudo agregar.","error");}
+  }
+  async function removeAdmin(email){
+    msg("Actualizando administradores…");
+    try{await adminMutation("remove",email);msg("Administrador desactivado.","success");}
+    catch(e){msg(e.message||"No se pudo quitar.","error");}
   }
 
-  function render(){
+  function accessSummary(f){
+    const parts=[];
+    if(f.domains?.length)parts.push(f.domains.length+" dominio"+(f.domains.length===1?"":"s"));
+    if(f.allowedEmails?.length)parts.push(f.allowedEmails.length+" correo"+(f.allowedEmails.length===1?"":"s"));
+    if(f.publicEnabled)parts.push("público");
+    if(!parts.length)parts.push("solo administradores");
+    return parts.join(" · ");
+  }
+  function experienceSummary(f){
+    const parts=[f.collectEmail?"correo verificado":"anónimo"];
+    if(f.shuffleQuestions)parts.push("orden aleatorio");
+    if(f.showProgress)parts.push("progreso");
+    return parts.join(" · ");
+  }
+
+  function renderForms(){
     host.innerHTML="";
     items.forEach(f=>{
-      const card=document.createElement("article");card.className="admin-form-card accordion";card.dataset.formId=f.id;
-      card._domains=[...(f.domains||[])];card.dataset.savedPublic=String(!!f.publicEnabled);
+      const card=document.createElement("article");card.className="admin-form-card accordion compact";card.dataset.formId=f.id;
+      card._domains=[...(f.domains||[])];card._emails=[...(f.allowedEmails||[])];card.dataset.savedPublic=String(!!f.publicEnabled);
       const publicUrl=location.origin+"/f/"+f.slug;
       card.innerHTML=
-        '<button type="button" class="admin-accordion-head" data-toggle>'+
-          '<div><span>'+esc(f.id)+'</span><h3>'+esc(f.name)+'</h3><p>'+esc(f.description)+'</p><div class="admin-summary-chips">'+summaryChips(f)+'</div></div>'+
+        '<button type="button" class="admin-accordion-head compact-head" data-toggle>'+
+          '<div><span>'+esc(f.id)+'</span><h3>'+esc(f.name)+'</h3><div class="admin-summary-chips"><span>'+esc(accessSummary(f))+'</span><span>'+esc(experienceSummary(f))+'</span></div></div>'+
           '<b class="accordion-chevron">⌄</b>'+
         '</button>'+
-        '<div class="admin-accordion-body" hidden>'+
-          '<section class="admin-config-section"><div class="admin-config-title"><span>ACCESO</span><h4>Quién puede completar este formulario</h4><p>El equipo FIBRAZO y los administradores siempre tienen acceso. Activa solo los accesos externos que necesites.</p></div>'+
-            '<div class="permission-stack">'+
-              switchRow("admins","Administradores","Acceso total y configuración. Siempre activo.",true,true)+
-              switchRow("internal","Equipo FIBRAZO","Todos los usuarios @fibrazo.com pueden entrar al dashboard y completar el formulario.",true,true)+
-              switchRow("publicEnabled","Enlace público","Permite responder desde el enlace directo. Puede ser anónimo o pedir correo, según la configuración inferior.",!!f.publicEnabled)+
-              '<div class="permission-extra public-extra"><div class="public-link-state"></div><div class="admin-public-link"><input readonly value="'+esc(publicUrl)+'"><button type="button" class="secondary-button compact" data-copy>Copiar enlace</button></div><label class="inline-setting"><span>Límite por IP / 10 min</span><input data-field="rateLimit" type="number" min="1" max="100" value="'+esc(f.rateLimit)+'"></label></div>'+
-              switchRow("domainsEnabled","Dominios adicionales","Da acceso al dashboard y a este formulario a usuarios de otros dominios.",!!f.domainsEnabled)+
-              '<div class="permission-extra domain-extra"><div class="domain-list" data-domain-list></div><div class="domain-add"><input data-domain-input type="text" placeholder="@empresa.com"><button type="button" class="secondary-button compact" data-add-domain>Agregar dominio</button></div></div>'+
-              switchRow("emailsEnabled","Correos específicos","Da acceso a este formulario a personas concretas fuera de FIBRAZO.",!!f.emailsEnabled)+
-              '<div class="permission-extra email-extra"><textarea data-field="allowedEmails" placeholder="persona@empresa.com">'+esc((f.allowedEmails||[]).join("\n"))+'</textarea><small>Un correo por línea o separados por comas.</small></div>'+
+        '<div class="admin-accordion-body compact-body" hidden>'+
+          '<details class="admin-compact-section">'+
+            '<summary><div><span>ACCESOS</span><strong>Dominios y correos autorizados</strong></div><b data-access-summary>'+esc(accessSummary(f).replace(" · público",""))+'</b></summary>'+
+            '<div class="compact-section-body access-columns">'+
+              '<div class="compact-permission-box"><div class="compact-box-head"><div><strong>Dominios autorizados</strong><small>Quien tenga un correo de estos dominios podrá entrar al dashboard y a este formulario.</small></div><span class="count-badge" data-domain-count>'+card._domains.length+'</span></div><div class="domain-list compact-list" data-domain-list></div><div class="compact-add-row"><input data-domain-input type="text" placeholder="@fibrazo.com"><button type="button" class="secondary-button compact" data-add-domain>Agregar</button></div></div>'+
+              '<div class="compact-permission-box"><div class="compact-box-head"><div><strong>Correos específicos</strong><small>Autoriza personas puntuales sin habilitar todo su dominio.</small></div><span class="count-badge" data-email-count>'+card._emails.length+'</span></div><div class="email-chip-list compact-list" data-email-list></div><div class="compact-add-row"><input data-email-input type="email" placeholder="persona@empresa.com"><button type="button" class="secondary-button compact" data-add-email>Agregar</button></div></div>'+
             '</div>'+
-          '</section>'+
-          '<section class="admin-config-section"><div class="admin-config-title"><span>EXPERIENCIA</span><h4>Presentación y comportamiento</h4><p>Estas opciones afectan cómo ve y completa la encuesta cada persona.</p></div>'+
-            '<div class="message-grid"><label><span>Mensaje inicial</span><textarea data-field="introMessage" placeholder="Mensaje opcional al iniciar la encuesta">'+esc(f.introMessage||"")+'</textarea></label>'+
-            '<label><span>Mensaje final</span><textarea data-field="completionMessage" placeholder="Mensaje después de enviar">'+esc(f.completionMessage||"")+'</textarea></label></div>'+
-            '<div class="permission-stack compact-stack">'+
-              switchRow("collectEmail","Recopilar correo verificado","Si está activo, el correo de Google se muestra durante la encuesta y se guarda con la respuesta. Si está apagado, la respuesta es anónima.",!!f.collectEmail)+
-              switchRow("shuffleQuestions","Aleatorizar preguntas","Cambia el orden de las preguntas dentro de cada sección, manteniendo juntas las preguntas condicionales.",!!f.shuffleQuestions)+
-              switchRow("showProgress","Mostrar progreso","Muestra secciones y avance durante la encuesta.",!!f.showProgress)+
-              switchRow("allowMultipleResponses","Permitir múltiples respuestas","Si se recopila correo, permite que una misma cuenta responda más de una vez.",!!f.allowMultipleResponses)+
+          '</details>'+
+
+          '<details class="admin-compact-section public-section">'+
+            '<summary><div><span>PUBLICACIÓN</span><strong>Enlace público</strong></div><b class="section-status" data-public-status></b></summary>'+
+            '<div class="compact-section-body">'+
+              '<label class="compact-toggle-row"><div><strong>Permitir acceso por enlace</strong><small>Cualquier persona con el enlace podrá abrir el formulario. La recopilación de correo se define en Experiencia.</small></div><span class="switch"><input type="checkbox" data-field="publicEnabled" '+(f.publicEnabled?"checked":"")+'><i></i></span></label>'+
+              '<div class="compact-public-row" data-public-details><input readonly value="'+esc(publicUrl)+'"><button type="button" class="secondary-button compact" data-copy>Copiar</button><label><span>Límite / 10 min</span><input data-field="rateLimit" type="number" min="1" max="100" value="'+esc(f.rateLimit)+'"></label></div>'+
+              '<div class="public-link-state compact-state"></div>'+
             '</div>'+
-          '</section>'+
-          '<section class="admin-config-section"><div class="admin-config-title"><span>EVIDENCIA</span><h4>Límites de archivos</h4><p data-photo-state></p></div><div class="admin-grid limits-grid">'+
-            '<label><span>Máximo de fotos</span><input data-field="maxPhotos" type="number" min="0" max="3" value="'+esc(Number.isFinite(f.maxPhotos)?f.maxPhotos:3)+'"><small>Por defecto: 3 fotos. Usa 0 para desactivar fotografías.</small></label>'+
-            '<label data-photo-size><span>Máximo por foto (MB)</span><input data-field="maxPhotoMb" type="number" min=".25" max="2" step=".25" value="'+esc(f.maxPhotoMb)+'"></label>'+
-          '</div></section>'+
-          '<div class="admin-card-actions"><small>Última configuración guardada: '+esc(f.updatedAt||"—")+(f.updatedBy?" · "+esc(f.updatedBy):"")+'</small><button type="button" class="primary-button" data-save>Guardar configuración</button></div>'+
+          '</details>'+
+
+          '<details class="admin-compact-section">'+
+            '<summary><div><span>EXPERIENCIA</span><strong>Presentación y comportamiento</strong></div><b>'+esc(experienceSummary(f))+'</b></summary>'+
+            '<div class="compact-section-body">'+
+              '<details class="nested-config"><summary>Mensajes de la encuesta</summary><div class="message-grid compact-messages"><label><span>Mensaje inicial</span><textarea data-field="introMessage" placeholder="Mensaje opcional al iniciar">'+esc(f.introMessage||"")+'</textarea></label><label><span>Mensaje final</span><textarea data-field="completionMessage" placeholder="Mensaje después de enviar">'+esc(f.completionMessage||"")+'</textarea></label></div></details>'+
+              '<div class="compact-toggle-grid">'+
+                toggleRow("collectEmail","Recopilar correo verificado","Muestra y guarda el correo de Google.",!!f.collectEmail)+
+                toggleRow("shuffleQuestions","Aleatorizar preguntas","Cambia el orden dentro de cada sección.",!!f.shuffleQuestions)+
+                toggleRow("showProgress","Mostrar progreso","Muestra etapas y avance.",!!f.showProgress)+
+                toggleRow("allowMultipleResponses","Múltiples respuestas","Permite responder más de una vez con la misma cuenta.",!!f.allowMultipleResponses)+
+              '</div>'+
+            '</div>'+
+          '</details>'+
+
+          '<details class="admin-compact-section">'+
+            '<summary><div><span>EVIDENCIA</span><strong>Fotos y archivos</strong></div><b data-evidence-summary>'+photoSummary(f.maxPhotos,f.maxPhotoMb)+'</b></summary>'+
+            '<div class="compact-section-body evidence-row"><label><span>Máximo de fotos</span><input data-field="maxPhotos" type="number" min="0" max="3" value="'+esc(Number.isFinite(f.maxPhotos)?f.maxPhotos:3)+'"><small data-photo-state></small></label><label data-photo-size><span>Máximo por foto (MB)</span><input data-field="maxPhotoMb" type="number" min=".25" max="2" step=".25" value="'+esc(f.maxPhotoMb)+'"></label></div>'+
+          '</details>'+
+
+          '<div class="admin-card-actions compact-actions"><small>Última actualización: '+esc(f.updatedAt||"—")+(f.updatedBy?" · "+esc(f.updatedBy):"")+'</small><button type="button" class="primary-button compact-save" data-save>Guardar cambios</button></div>'+
         '</div>';
 
       card.querySelector("[data-toggle]").addEventListener("click",()=>toggleCard(card));
@@ -81,13 +134,21 @@
       card.querySelectorAll('input[type="checkbox"][data-field]').forEach(el=>el.addEventListener("change",()=>{markDirty(card);refresh(card);}));
       card.querySelector("[data-add-domain]").addEventListener("click",()=>addDomain(card));
       card.querySelector("[data-domain-input]").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addDomain(card);}});
+      card.querySelector("[data-add-email]").addEventListener("click",()=>addEmail(card));
+      card.querySelector("[data-email-input]").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addEmail(card);}});
       card.querySelector("[data-copy]").addEventListener("click",()=>copyLink(card));
       card.querySelector("[data-save]").addEventListener("click",()=>save(card));
-      renderDomains(card);refresh(card);host.appendChild(card);
+      renderDomains(card);renderEmails(card);refresh(card);host.appendChild(card);
       if(openId===f.id)openCard(card);
     });
   }
 
+  function toggleRow(key,title,copy,checked){
+    return '<label class="compact-toggle-row"><div><strong>'+esc(title)+'</strong><small>'+esc(copy)+'</small></div><span class="switch"><input type="checkbox" data-field="'+key+'" '+(checked?"checked":"")+'><i></i></span></label>';
+  }
+  function photoSummary(count,mb){
+    const n=Number(count||0);return n===0?"Fotos desactivadas":n+" foto"+(n===1?"":"s")+" · "+String(mb||1.5).replace(".",",")+" MB";
+  }
   function toggleCard(card){
     const isOpen=!card.querySelector(".admin-accordion-body").hidden;
     document.querySelectorAll(".admin-form-card.accordion").forEach(closeCard);
@@ -98,56 +159,85 @@
 
   function renderDomains(card){
     const list=card.querySelector("[data-domain-list]");list.innerHTML="";
-    (card._domains||[]).forEach(domain=>{
+    card._domains.forEach(domain=>{
       const chip=document.createElement("span");chip.className="domain-chip";
       chip.innerHTML='<b>'+esc(domain)+'</b><button type="button" aria-label="Quitar '+esc(domain)+'">×</button>';
-      chip.querySelector("button").addEventListener("click",()=>{card._domains=card._domains.filter(d=>d!==domain);renderDomains(card);markDirty(card);});
+      chip.querySelector("button").addEventListener("click",()=>{card._domains=card._domains.filter(d=>d!==domain);renderDomains(card);markDirty(card);refresh(card);});
       list.appendChild(chip);
     });
-    if(!(card._domains||[]).length)list.innerHTML='<span class="domain-empty">Sin dominios adicionales.</span>';
+    if(!card._domains.length)list.innerHTML='<span class="domain-empty">Sin dominios autorizados.</span>';
+    const count=card.querySelector("[data-domain-count]");if(count)count.textContent=String(card._domains.length);
   }
-
+  function renderEmails(card){
+    const list=card.querySelector("[data-email-list]");list.innerHTML="";
+    card._emails.forEach(email=>{
+      const chip=document.createElement("span");chip.className="domain-chip email-chip";
+      chip.innerHTML='<b>'+esc(email)+'</b><button type="button" aria-label="Quitar '+esc(email)+'">×</button>';
+      chip.querySelector("button").addEventListener("click",()=>{card._emails=card._emails.filter(v=>v!==email);renderEmails(card);markDirty(card);refresh(card);});
+      list.appendChild(chip);
+    });
+    if(!card._emails.length)list.innerHTML='<span class="domain-empty">Sin correos específicos.</span>';
+    const count=card.querySelector("[data-email-count]");if(count)count.textContent=String(card._emails.length);
+  }
   function addDomain(card){
     const input=card.querySelector("[data-domain-input]"),d=normalizeDomain(input.value);
     if(!d)return;
-    if(!/^@[a-z0-9.-]+\.[a-z]{2,}$/i.test(d)){msg("Ingresa un dominio válido, por ejemplo @empresa.com.","error");return;}
+    if(!/^@[a-z0-9.-]+\.[a-z]{2,}$/i.test(d)){msg("Ingresa un dominio válido, por ejemplo @fibrazo.com.","error");return;}
     if(!card._domains.includes(d))card._domains.push(d);
-    input.value="";renderDomains(card);markDirty(card);
+    input.value="";renderDomains(card);markDirty(card);refresh(card);
   }
-
+  function addEmail(card){
+    const input=card.querySelector("[data-email-input]"),email=String(input.value||"").trim().toLowerCase();
+    if(!validEmail(email)){msg("Ingresa un correo válido.","error");return;}
+    if(!card._emails.includes(email))card._emails.push(email);
+    input.value="";renderEmails(card);markDirty(card);refresh(card);
+  }
   function markDirty(card){card.classList.add("dirty");}
 
   function refresh(card){
-    const val=k=>!!card.querySelector('[data-field="'+k+'"]')?.checked;
-    const publicOn=val("publicEnabled"),domainsOn=val("domainsEnabled"),emailsOn=val("emailsEnabled"),collect=val("collectEmail");
-    const saved=card.dataset.savedPublic==="true",state=card.querySelector(".public-link-state");
-    card.querySelector(".public-extra").hidden=!(publicOn||saved);
-    card.querySelector(".domain-extra").hidden=!domainsOn;
-    card.querySelector(".email-extra").hidden=!emailsOn;
-    state.className="public-link-state "+(saved?"active":"inactive");
-    if(saved&&publicOn)state.innerHTML='<b>● ENLACE PÚBLICO ACTIVO</b><span>El enlace guardado acepta respuestas.</span>';
-    else if(saved&&!publicOn)state.innerHTML='<b>● ACTIVO ACTUALMENTE · PENDIENTE DE DESACTIVAR</b><span>Seguirá aceptando respuestas hasta que guardes este cambio.</span>';
-    else if(!saved&&publicOn)state.innerHTML='<b>○ PENDIENTE DE ACTIVAR</b><span>Presiona Guardar configuración para habilitar el enlace.</span>';
-    else state.innerHTML='<b>○ ENLACE PÚBLICO DESACTIVADO</b><span>El enlace no acepta respuestas.</span>';
+    const publicOn=!!card.querySelector('[data-field="publicEnabled"]')?.checked;
+    const saved=card.dataset.savedPublic==="true";
+    const statusEl=card.querySelector("[data-public-status]");
+    const state=card.querySelector(".public-link-state");
+    const details=card.querySelector("[data-public-details]");
+    if(statusEl){
+      statusEl.textContent=saved?(publicOn?"Activo":"Activo · cambio pendiente"):(publicOn?"Pendiente":"Desactivado");
+      statusEl.className="section-status "+(saved?"active":publicOn?"pending":"");
+    }
+    if(state){
+      if(saved&&publicOn)state.textContent="El enlace está activo y acepta respuestas.";
+      else if(saved&&!publicOn)state.textContent="El enlace sigue activo hasta que guardes este cambio.";
+      else if(!saved&&publicOn)state.textContent="El enlace se activará al guardar.";
+      else state.textContent="El enlace público está desactivado.";
+    }
+    if(details)details.classList.toggle("muted",!saved&&!publicOn);
     card.querySelector("[data-copy]").disabled=!saved;
+
+    const access=card.querySelector("[data-access-summary]");
+    if(access){
+      const p=[];if(card._domains.length)p.push(card._domains.length+" dominio"+(card._domains.length===1?"":"s"));
+      if(card._emails.length)p.push(card._emails.length+" correo"+(card._emails.length===1?"":"s"));
+      access.textContent=p.length?p.join(" · "):"Sin accesos autorizados";
+    }
+
+    const collect=!!card.querySelector('[data-field="collectEmail"]')?.checked;
     const multiple=card.querySelector('[data-field="allowMultipleResponses"]');
-    if(multiple)multiple.closest(".permission-row").classList.toggle("not-applicable",!collect);
+    if(multiple)multiple.closest(".compact-toggle-row").classList.toggle("not-applicable",!collect);
 
     const photoInput=card.querySelector('[data-field="maxPhotos"]');
-    const photoSize=card.querySelector('[data-photo-size]');
-    const photoState=card.querySelector('[data-photo-state]');
-    const photoCount=Math.max(0,Math.min(3,Number(photoInput?.value||0)));
-    if(photoSize)photoSize.hidden=photoCount===0;
-    if(photoState){
-      photoState.textContent=photoCount===0
-        ?"Fotos desactivadas para este formulario."
-        :"Se podrán adjuntar hasta "+photoCount+" foto"+(photoCount===1?"":"s")+".";
-    }
+    const photoSize=card.querySelector("[data-photo-size]");
+    const photoState=card.querySelector("[data-photo-state]");
+    const evidence=card.querySelector("[data-evidence-summary]");
+    const count=Math.max(0,Math.min(3,Number(photoInput?.value||0)));
+    const mb=card.querySelector('[data-field="maxPhotoMb"]')?.value||1.5;
+    if(photoSize)photoSize.hidden=count===0;
+    if(photoState)photoState.textContent=count===0?"Fotos desactivadas.":"Hasta "+count+" foto"+(count===1?"":"s")+".";
+    if(evidence)evidence.textContent=photoSummary(count,mb);
   }
 
   async function copyLink(card){
     if(card.dataset.savedPublic!=="true")return;
-    const input=card.querySelector(".admin-public-link input");
+    const input=card.querySelector(".compact-public-row input");
     try{await navigator.clipboard.writeText(input.value);msg("Enlace público copiado.","success");}
     catch(_){input.select();document.execCommand("copy");}
   }
@@ -155,19 +245,17 @@
   async function save(card){
     const checkbox=k=>!!card.querySelector('[data-field="'+k+'"]')?.checked;
     const value=k=>card.querySelector('[data-field="'+k+'"]')?.value??"";
-    if(checkbox("domainsEnabled")&&!card._domains.length){msg("Agrega al menos un dominio adicional o desactiva esa opción.","error");return;}
-    if(checkbox("emailsEnabled")&&!value("allowedEmails").trim()){msg("Agrega al menos un correo específico o desactiva esa opción.","error");return;}
     const btn=card.querySelector("[data-save]");btn.disabled=true;msg("Guardando configuración…");
     try{
       const r=await fetch("/api/admin",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await tok()},body:JSON.stringify({
-        formId:card.dataset.formId,publicEnabled:checkbox("publicEnabled"),domainsEnabled:checkbox("domainsEnabled"),emailsEnabled:checkbox("emailsEnabled"),
-        domains:card._domains,allowedEmails:value("allowedEmails"),introMessage:value("introMessage"),completionMessage:value("completionMessage"),
-        collectEmail:checkbox("collectEmail"),shuffleQuestions:checkbox("shuffleQuestions"),showProgress:checkbox("showProgress"),
-        allowMultipleResponses:checkbox("allowMultipleResponses"),rateLimit:value("rateLimit"),maxPhotos:value("maxPhotos"),maxPhotoMb:value("maxPhotoMb")
+        formId:card.dataset.formId,publicEnabled:checkbox("publicEnabled"),domains:card._domains,allowedEmails:card._emails,
+        introMessage:value("introMessage"),completionMessage:value("completionMessage"),collectEmail:checkbox("collectEmail"),
+        shuffleQuestions:checkbox("shuffleQuestions"),showProgress:checkbox("showProgress"),allowMultipleResponses:checkbox("allowMultipleResponses"),
+        rateLimit:value("rateLimit"),maxPhotos:value("maxPhotos"),maxPhotoMb:value("maxPhotoMb")
       })});
       const j=await r.json();if(!r.ok)throw new Error(j.error||"No se pudo guardar.");
       const i=items.findIndex(x=>x.id===j.form.id);if(i>=0)items[i]=j.form;
-      openId=card.dataset.formId;render();msg("Configuración guardada correctamente.","success");
+      openId=card.dataset.formId;renderForms();msg("Configuración guardada correctamente.","success");
     }catch(e){msg(e.message||"No se pudo guardar.","error");}
     finally{btn.disabled=false;}
   }

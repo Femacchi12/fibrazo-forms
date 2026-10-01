@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=2026.10.01.8">
+  <link rel="stylesheet" href="styles.css?v=2026.10.01.9">
 </head>
 <body class="auth-pending">
   <section id="authGate" class="auth-gate" aria-live="polite">
@@ -35,7 +35,7 @@
         <p>Formularios, relevamientos y resultados en un único espacio.</p>
       </div>
       <div class="update-cards">
-        <article><span>Versión</span><b>0.5.2 · Fotos por defecto</b></article>
+        <article><span>Versión</span><b>0.6 · Administración compacta</b></article>
         <article><span>Formularios activos</span><b id="activeFormsCount">2</b></article>
       </div>
       <div id="authSession" class="auth-session" hidden>
@@ -231,13 +231,14 @@
           <div>
             <span>ADMINISTRACIÓN</span>
             <h2>Formularios y permisos</h2>
-            <p>Configura quién puede acceder a cada formulario sin modificar el código.</p>
+            <p>Administra accesos, publicación y comportamiento de cada formulario.</p>
           </div>
           <a class="secondary-button compact admin-map-link" href="https://app.diagrams.net/?mode=github#HFemacchi12%2Ffibrazo-forms%2Fmain%2Fdocs%2FFIBRAZO_Forms_Flujos.drawio" target="_blank" rel="noopener">↗ Ver mapa en draw.io</a>
         </div>
-        <div class="admin-access-note">
-          <strong>Acceso base</strong>
-          <span>Administradores y usuarios @fibrazo.com siempre pueden usar todos los formularios activos. Aquí agregas accesos externos y configuras la experiencia de cada encuesta.</span>
+        <div id="adminGlobal" class="admin-global"></div>
+        <div class="admin-access-note compact-note">
+          <strong>Regla de acceso</strong>
+          <span>Solo los administradores tienen acceso global. Para cada formulario puedes autorizar dominios, correos específicos y/o un enlace público.</span>
         </div>
         <div id="adminForms" class="admin-forms"></div>
         <div id="adminStatus" class="save-status"></div>
@@ -245,15 +246,15 @@
     </section>
   </main>
 
-  <footer>FIBRAZO · Growth <span>Forms v0.5.2 · Fotos por defecto · 2026</span></footer>
+  <footer>FIBRAZO · Growth <span>Forms v0.6 · Administración compacta · 2026</span></footer>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-  <script src="forms-config.js?v=2026.10.01.8"></script>
-  <script src="app.js?v=2026.10.01.8"></script>
-  <script src="access-v03.js?v=2026.10.01.8"></script>
-  <script src="offline-v04.js?v=2026.10.01.8"></script>
-  <script src="ux-v04.js?v=2026.10.01.8"></script>
-  <script src="admin-v03.js?v=2026.10.01.8"></script>
+  <script src="forms-config.js?v=2026.10.01.9"></script>
+  <script src="app.js?v=2026.10.01.9"></script>
+  <script src="access-v03.js?v=2026.10.01.9"></script>
+  <script src="offline-v04.js?v=2026.10.01.9"></script>
+  <script src="ux-v04.js?v=2026.10.01.9"></script>
+  <script src="admin-v03.js?v=2026.10.01.9"></script>
 </body>
 </html>

@@ -537,5 +537,22 @@
     ],
     "publicEmailBehavior": "collectEmail=true requires Google sign-in; collectEmail=false stores anonymous response",
     "adminUi": "accordion; one form expanded at a time"
+  },
+  "accessAdministration": {
+    "version": "0.6",
+    "globalAdmins": {
+      "base": [
+        "eduardo@fibrazo.com",
+        "fernandoemacchi@gmail.com"
+      ],
+      "additionalAdmins": "managed in USUARIOS; removable unless base"
+    },
+    "defaultDomainAccess": false,
+    "formAccess": [
+      "authorized domains",
+      "specific emails",
+      "public link"
+    ],
+    "adminUi": "compact accordion with nested collapsible sections"
   }
 }

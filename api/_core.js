@@ -6,6 +6,7 @@ const PROJECT=process.env.FIREBASE_PROJECT_ID||"dashboards-fibrazo";
 const SHEET_ID=process.env.GOOGLE_SHEET_ID;
 const DEFAULT_DOMAIN=(process.env.ALLOWED_EMAIL_DOMAIN||"@fibrazo.com").toLowerCase();
 const EXCEPTION=(process.env.ALLOWED_EMAIL_EXCEPTION||"fernandoemacchi@gmail.com").toLowerCase();
+const BASE_ADMINS=[...new Set(["eduardo@fibrazo.com",EXCEPTION].map(v=>String(v).trim().toLowerCase()))];
 
 if(!admin.apps.length) admin.initializeApp({projectId:PROJECT});
 
@@ -58,26 +59,30 @@ async function loadForms(auth){
 async function loadUsers(auth){
   const sheets=google.sheets({version:"v4",auth});
   const r=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"USUARIOS!A2:D"});
-  return (r.data.values||[]).filter(row=>row[0]).map(row=>({
+  return (r.data.values||[]).filter(row=>row[0]).map((row,index)=>({
+    row:index+2,
     email:String(row[0]||"").trim().toLowerCase(),
     role:String(row[1]||"").toUpperCase(),
-    status:String(row[2]||"").toUpperCase()
+    status:String(row[2]||"").toUpperCase(),
+    notes:String(row[3]||"")
   }));
 }
 
-async function isAdmin(auth,email){
-  if(!email) return false;
-  const users=await loadUsers(auth);
-  return users.some(u=>u.email===email.toLowerCase()&&u.role==="ADMIN"&&u.status==="ACTIVO");
+function isBaseAdmin(email){
+  return BASE_ADMINS.includes(String(email||"").trim().toLowerCase());
 }
 
-function isInternalEmail(email){return !!email&&String(email).toLowerCase().endsWith(DEFAULT_DOMAIN);}
+async function isAdmin(auth,email){
+  if(!email)return false;
+  if(isBaseAdmin(email))return true;
+  const users=await loadUsers(auth);
+  return users.some(u=>u.email===String(email).toLowerCase()&&u.role==="ADMIN"&&u.status==="ACTIVO");
+}
 
 function canUseDashboard(user,adminFlag=false,forms=[]){
   if(adminFlag)return true;
   const email=String(user?.email||"").trim().toLowerCase();
   if(!email)return false;
-  if(isInternalEmail(email))return true;
   return (forms||[]).some(form=>{
     if(String(form.status).toLowerCase()!=="activo")return false;
     if(form.emailsEnabled&&form.allowedEmails.includes(email))return true;
@@ -91,7 +96,6 @@ function canAccess(form,user,adminFlag=false){
   if(adminFlag)return true;
   const email=String(user?.email||"").trim().toLowerCase();
   if(!email)return false;
-  if(isInternalEmail(email))return true;
   if(form.emailsEnabled&&form.allowedEmails.includes(email))return true;
   if(form.domainsEnabled&&form.domains.some(domain=>email.endsWith(domain)))return true;
   return false;
@@ -231,4 +235,4 @@ function toBool(v){return v===true||String(v).toUpperCase()==="TRUE";}
 function clampInt(v,min,max,fallback){const n=parseInt(v,10);return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;}
 function clampNum(v,min,max,fallback){const n=Number(String(v??"").replace(",","."));return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;}
 
-module.exports={PROJECT,SHEET_ID,DEFAULT_DOMAIN,EXCEPTION,gauth,verifyUser,loadForms,loadUsers,isAdmin,isInternalEmail,canUseDashboard,canAccess,runtimePolicy,sanitizeForm,hashIp,checkPublicRate,logSecurity,validatePublicGuards,validatePhotos,validateSubmission,httpError,splitEmails,splitDomains,clampInt,clampNum};
+module.exports={PROJECT,SHEET_ID,DEFAULT_DOMAIN,EXCEPTION,BASE_ADMINS,gauth,verifyUser,loadForms,loadUsers,isBaseAdmin,isAdmin,canUseDashboard,canAccess,runtimePolicy,sanitizeForm,hashIp,checkPublicRate,logSecurity,validatePublicGuards,validatePhotos,validateSubmission,httpError,splitEmails,splitDomains,clampInt,clampNum};
