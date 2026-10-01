@@ -248,6 +248,17 @@
   function collectData(){const d={};state.form.fields.forEach(f=>{if(f.type==="gps"||f.type==="photos"||!conditionMet(f))return;d[f.key]=fieldValue(f.key);});return d;}
   function setStatus(m,t){if(!$("saveStatus"))return;$("saveStatus").textContent=m;$("saveStatus").className="save-status"+(t?" "+t:"");}
 
+  function captureChurnGpsAutomatically(){
+    if(state.form?.id!=="CHURN"||state.gps)return;
+    const field=document.querySelector('[data-key="coordenadas"]');
+    const value=field?.querySelector(".gps-value");
+    const btn=field?.querySelector("button");
+    if(value&&btn){
+      value.textContent="Obteniendo ubicación automáticamente…";
+      captureGps(value,btn,"coordenadas");
+    }
+  }
+
   function captureGps(value,btn,key){
     if(!navigator.geolocation){value.textContent="GPS no disponible en este navegador.";return;}
     btn.disabled=true;btn.textContent="Obteniendo…";
