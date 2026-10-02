@@ -77,8 +77,12 @@
     let body={};
     try{body=await response.json();}catch(_){}
     if(!response.ok){
-      const error=new Error(body.error||"No se pudo enviar la respuesta.");
+      const storageUnavailable=body.error==="PHOTO_STORAGE_TEMPORARILY_UNAVAILABLE";
+      const error=new Error(storageUnavailable
+        ?"La foto quedó pendiente de sincronización porque el almacenamiento de evidencias no está disponible temporalmente."
+        :(body.error||"No se pudo enviar la respuesta."));
       error.httpStatus=response.status;
+      error.code=storageUnavailable?"PHOTO_STORAGE_TEMPORARILY_UNAVAILABLE":"";
       throw error;
     }
     return body;

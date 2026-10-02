@@ -204,9 +204,13 @@ module.exports=async(req,res)=>{
         });
       }catch(_){}
     }
-    const status=error.status||500;
+    const rawMessage=String(error?.message||"");
+    const driveQuota=/Service Accounts do not have storage quota|storage quota|shared drives|OAuth delegation/i.test(rawMessage);
+    const status=driveQuota?503:(error.status||500);
     return res.status(status).json({
-      error:status===500?"No se pudo guardar la respuesta.":error.message
+      error:driveQuota
+        ?"PHOTO_STORAGE_TEMPORARILY_UNAVAILABLE"
+        :(status===500?"No se pudo guardar la respuesta.":error.message)
     });
   }
 };

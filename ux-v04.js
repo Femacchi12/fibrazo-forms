@@ -323,7 +323,7 @@
       const title=$("successTitle"),message=$("successMessage"),icon=document.querySelector(".success-icon");
       if(result.queued){
         if(title)title.textContent="Guardado para sincronizar";
-        if(message)message.textContent="La respuesta quedó segura en este dispositivo. Se enviará automáticamente cuando vuelva la conexión.";
+        if(message)message.textContent="La respuesta, el GPS y las fotos quedaron seguros en este dispositivo. Se sincronizarán automáticamente cuando el almacenamiento y la conexión estén disponibles.";
         if(icon)icon.textContent="↻";
       }else{
         if(title)title.textContent="Formulario completado con éxito";
