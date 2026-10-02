@@ -46,37 +46,70 @@ window.FIBRAZO_FORMS = {
 
   EXPLORACION: {
     id: "EXPLORACION",
-    name: "Exploración de operadores",
-    description: "Registra infraestructura, presencia de operadores, ubicación GPS y evidencia fotográfica del sector.",
+    name: "Exploración virtual",
+    description: "Relevamiento virtual desde Google Street View para registrar infraestructura, operadores y evidencia del sector.",
     eyebrow: "EXPANSIÓN",
-    meta: ["GPS", "Fotos", "Operadores / infraestructura"],
+    meta: ["Street View", "Coordenadas manuales", "Operadores / infraestructura"],
     sections: [
-      { id: "ubicacion", title: "Ubicación", description: "Identifica el sector y registra la posición del relevamiento." },
-      { id: "infraestructura", title: "Infraestructura", description: "Registra la información observada de postería." },
-      { id: "operadores", title: "Operadores", description: "Marca la presencia de redes y operadores identificados." },
-      { id: "evidencia", title: "Evidencia", description: "Agrega notas y fotografías del relevamiento." }
+      { id: "ubicacion", title: "Ubicación", description: "Pega la coordenada observada y valida el municipio detectado." },
+      { id: "infraestructura", title: "Infraestructura", description: "Califica la postería y la ocupación del tendido aéreo." },
+      { id: "operadores", title: "Operadores", description: "Marca incumbentes y registra ISP locales o regionales visibles." },
+      { id: "cierre", title: "Cierre", description: "Agrega evidencia y notas relevantes del punto." }
     ],
     fields: [
-      {key:"ciudad",section:"ubicacion",label:"Ciudad",type:"text",required:true,help:"Ciudad donde se realiza el relevamiento."},
-      {key:"sector_barrio",section:"ubicacion",label:"Sector / barrio",type:"text",help:"Barrio, urbanización o sector observado."},
-      {key:"anio",section:"ubicacion",label:"Año",type:"numeric",required:true,maxLength:4,default:new Date().getFullYear(),help:"Año en que se realiza el relevamiento."},
-      {key:"coordenadas",section:"ubicacion",label:"Ubicación actual",type:"gps",required:true,full:true,help:"Usa la ubicación del dispositivo para registrar el punto exacto."},
+      {key:"coordenadas",section:"ubicacion",label:"Coordenadas",type:"coordinates",required:true,full:true,help:"Pega la coordenada en formato latitud, longitud. Ejemplo: 7.10485, -73.10280. El municipio se mostrará automáticamente."},
+      {key:"anio_imagen",section:"ubicacion",label:"Año de la imagen de Google Street View",type:"numeric",required:true,maxLength:4,help:"Ingresa el año visible en la imagen de Street View para conocer la vigencia del relevamiento."},
+      {key:"sector_barrio",section:"ubicacion",label:"Sector / barrio",type:"text",help:"Opcional. Úsalo si el nombre del sector ayuda a identificar el punto."},
 
-      {key:"e_postes",section:"infraestructura",label:"E. Postes",type:"segmented",options:["1","2","3","4","5"],help:"Selecciona una opción del 1 al 5."},
-      {key:"s_postes",section:"infraestructura",label:"S. Postes",type:"segmented",options:["1","2","3","4","5"],help:"Selecciona una opción del 1 al 5."},
+      {key:"condicion_ocupacion_tendido",section:"infraestructura",label:"Condición de ocupación del tendido",type:"segmented",required:true,options:["1","2","3","4","5"],help:"1 = crítica / saturada · 5 = muy baja ocupación / óptima."},
+      {key:"condicion_fisica_posteria",section:"infraestructura",label:"Condición física de la postería",type:"segmented",required:true,options:["1","2","3","4","5"],help:"1 = crítica / no apta · 5 = óptima / nueva."},
 
-      {key:"tigo_hfc",section:"operadores",label:"TIGO HFC",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa red HFC de TIGO. Toca el control para cambiar entre No y Sí."},
-      {key:"tigo_ftth",section:"operadores",label:"TIGO FTTH",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa red FTTH de TIGO. Toca el control para cambiar entre No y Sí."},
-      {key:"claro_hfc",section:"operadores",label:"CLARO HFC",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa red HFC de Claro. Toca el control para cambiar entre No y Sí."},
-      {key:"claro_ftth",section:"operadores",label:"CLARO FTTH",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa red FTTH de Claro. Toca el control para cambiar entre No y Sí."},
-      {key:"movistar",section:"operadores",label:"Movistar",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa presencia de Movistar. Toca el control para cambiar entre No y Sí."},
-      {key:"isp_1",section:"operadores",label:"ISP 1",type:"text",help:"Primer operador local o ISP adicional identificado."},
-      {key:"isp_2",section:"operadores",label:"ISP 2",type:"text",help:"Segundo operador local o ISP adicional identificado."},
-      {key:"isp_3",section:"operadores",label:"ISP 3",type:"text",help:"Tercer operador local o ISP adicional identificado."},
-      {key:"isp_4",section:"operadores",label:"ISP 4",type:"text",help:"Cuarto operador local o ISP adicional identificado."},
+      {key:"tigo_hfc",section:"operadores",label:"TIGO HFC",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa red HFC de TIGO."},
+      {key:"tigo_ftth",section:"operadores",label:"TIGO FTTH",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa red FTTH de TIGO."},
+      {key:"claro_hfc",section:"operadores",label:"CLARO HFC",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa red HFC de Claro."},
+      {key:"claro_ftth",section:"operadores",label:"CLARO FTTH",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa red FTTH de Claro."},
+      {key:"movistar",section:"operadores",label:"Movistar",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa presencia de Movistar."},
+      {key:"isp_1",section:"operadores",label:"ISP 1",type:"text",help:"Primer ISP local o regional identificado."},
+      {key:"isp_2",section:"operadores",label:"ISP 2",type:"text",help:"Segundo ISP local o regional identificado."},
+      {key:"isp_3",section:"operadores",label:"ISP 3",type:"text",help:"Tercer ISP local o regional identificado."},
+      {key:"isp_4",section:"operadores",label:"ISP 4",type:"text",help:"Cuarto ISP local o regional identificado."},
 
-      {key:"nota",section:"evidencia",label:"Nota",type:"textarea",full:true,help:"Describe cualquier condición relevante del sector."},
-      {key:"fotos",section:"evidencia",label:"Fotos",type:"photos",full:true,help:"Toma o selecciona hasta 3 fotos como evidencia del relevamiento."}
+      {key:"link_evidencia",section:"cierre",label:"Link de evidencia",type:"text",full:true,help:"Opcional. Pega el enlace de Street View, Google Maps o My Maps que respalda la observación."},
+      {key:"nota",section:"cierre",label:"Nota",type:"textarea",full:true,help:"Agrega cualquier condición relevante que no haya quedado registrada en los campos anteriores."}
+    ]
+  },
+
+  EXPLORACION_PRESENCIAL: {
+    id: "EXPLORACION_PRESENCIAL",
+    name: "Exploración presencial",
+    description: "Relevamiento en campo con GPS del dispositivo para registrar infraestructura, operadores y evidencia fotográfica.",
+    eyebrow: "EXPANSIÓN",
+    meta: ["GPS", "Fotos opcionales", "Operadores / infraestructura"],
+    sections: [
+      { id: "ubicacion", title: "Ubicación", description: "Toma las coordenadas del dispositivo y valida el municipio detectado." },
+      { id: "infraestructura", title: "Infraestructura", description: "Califica la postería y la ocupación del tendido aéreo." },
+      { id: "operadores", title: "Operadores", description: "Marca incumbentes y registra ISP locales o regionales visibles." },
+      { id: "cierre", title: "Cierre", description: "Agrega notas y evidencia fotográfica del punto." }
+    ],
+    fields: [
+      {key:"coordenadas",section:"ubicacion",label:"Ubicación actual",type:"gps",required:true,full:true,help:"Presiona el botón para tomar automáticamente la ubicación del dispositivo. El municipio se mostrará debajo."},
+      {key:"sector_barrio",section:"ubicacion",label:"Sector / barrio",type:"text",help:"Opcional. Registra el barrio o sector si ayuda a identificar el punto."},
+
+      {key:"condicion_ocupacion_tendido",section:"infraestructura",label:"Condición de ocupación del tendido",type:"segmented",required:true,options:["1","2","3","4","5"],help:"1 = crítica / saturada · 5 = muy baja ocupación / óptima."},
+      {key:"condicion_fisica_posteria",section:"infraestructura",label:"Condición física de la postería",type:"segmented",required:true,options:["1","2","3","4","5"],help:"1 = crítica / no apta · 5 = óptima / nueva."},
+
+      {key:"tigo_hfc",section:"operadores",label:"TIGO HFC",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa red HFC de TIGO."},
+      {key:"tigo_ftth",section:"operadores",label:"TIGO FTTH",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa red FTTH de TIGO."},
+      {key:"claro_hfc",section:"operadores",label:"CLARO HFC",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa red HFC de Claro."},
+      {key:"claro_ftth",section:"operadores",label:"CLARO FTTH",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa red FTTH de Claro."},
+      {key:"movistar",section:"operadores",label:"Movistar",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa presencia de Movistar."},
+      {key:"isp_1",section:"operadores",label:"ISP 1",type:"text",help:"Primer ISP local o regional identificado."},
+      {key:"isp_2",section:"operadores",label:"ISP 2",type:"text",help:"Segundo ISP local o regional identificado."},
+      {key:"isp_3",section:"operadores",label:"ISP 3",type:"text",help:"Tercer ISP local o regional identificado."},
+      {key:"isp_4",section:"operadores",label:"ISP 4",type:"text",help:"Cuarto ISP local o regional identificado."},
+
+      {key:"nota",section:"cierre",label:"Nota",type:"textarea",full:true,help:"Agrega cualquier condición relevante observada en campo."},
+      {key:"fotos",section:"cierre",label:"Fotos",type:"photos",full:true,help:"Opcional. Toma o selecciona hasta 3 fotos como evidencia del relevamiento."}
     ]
   }
 };
