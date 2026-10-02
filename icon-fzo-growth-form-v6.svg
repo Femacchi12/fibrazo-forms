@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="116" fill="#00FE9C"/>
+  <text x="256" y="140" text-anchor="middle" fill="#FFFFFF"
+        font-family="Inter,Arial,Helvetica,sans-serif"
+        font-size="82" font-weight="700" letter-spacing="2">GROWTH</text>
+  <text x="158" y="318" text-anchor="middle" fill="#FFFFFF"
+        font-family="Inter,Arial,Helvetica,sans-serif"
+        font-size="166" font-weight="800">f</text>
+  <text x="260" y="318" text-anchor="middle" fill="#FFFFFF"
+        font-family="Inter,Arial,Helvetica,sans-serif"
+        font-size="166" font-weight="800">z</text>
+  <text x="370" y="318" text-anchor="middle" fill="#FFFFFF"
+        font-family="Inter,Arial,Helvetica,sans-serif"
+        font-size="166" font-weight="800">o</text>
+  <text x="256" y="448" text-anchor="middle" fill="#FFFFFF"
+        font-family="Inter,Arial,Helvetica,sans-serif"
+        font-size="82" font-weight="700" letter-spacing="3">FORM</text>
+</svg>
