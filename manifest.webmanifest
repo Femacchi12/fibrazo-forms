@@ -10,7 +10,7 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "/icon-fzo-growth-form.svg",
+      "src": "/icon-fzo-growth-form-v2.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
