@@ -202,18 +202,22 @@ function validateSubmission(formId,payload){
     const incAllowed=["Mantenimiento no realizado","Demora en mantenimiento","Lentitud","Intermitencia","Demora en mudanza","Atención al cliente","Otro"];
     if(Array.isArray(d.inconformidad_tipo)&&d.inconformidad_tipo.some(v=>!incAllowed.includes(v))) throw httpError("INVALID_DISSATISFACTION",400);
     short(d.operador_actual,100,"TEXT_TOO_LONG");short(d.canales_destacados,1000,"TEXT_TOO_LONG");short(d.cambio_para_volver,1500,"TEXT_TOO_LONG");short(d.comentario,2000,"TEXT_TOO_LONG");
-  }else if(formId==="EXPLORACION"){
-    if(!text(d.ciudad,100)) throw httpError("MISSING_CITY",400);
-    if(!digits(d.anio,4)) throw httpError("INVALID_YEAR",400);
+  }else if(formId==="EXPLORACION"||formId==="EXPLORACION_PRESENCIAL"){
     const lat=Number(payload.location?.lat),lng=Number(payload.location?.lng),acc=Number(payload.location?.accuracy);
     if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat<-90||lat>90||lng<-180||lng>180) throw httpError("GPS_REQUIRED",400);
     if(Number.isFinite(acc)&&acc<0) throw httpError("INVALID_GPS",400);
-    for(const key of ["e_postes","s_postes"]){
-      if(d[key]!==""&&d[key]!=null&&!["1","2","3","4","5"].includes(String(d[key]))) throw httpError("INVALID_POSTE_VALUE_"+key.toUpperCase(),400);
+
+    if(formId==="EXPLORACION"&&!digits(d.anio_imagen,4)) throw httpError("INVALID_STREETVIEW_YEAR",400);
+
+    for(const key of ["condicion_fisica_posteria","condicion_ocupacion_tendido"]){
+      if(!["1","2","3","4","5"].includes(String(d[key]||""))) throw httpError("INVALID_INFRASTRUCTURE_VALUE_"+key.toUpperCase(),400);
     }
-    const network=["Sí","No","No validado"];
+
+    const network=["Sí","No"];
     for(const key of ["tigo_hfc","tigo_ftth","claro_hfc","claro_ftth","movistar"]) one(d[key],network,"INVALID_NETWORK_VALUE");
-    for(const key of ["ciudad","sector_barrio","isp_1","isp_2","isp_3","isp_4"]) short(d[key],120,"TEXT_TOO_LONG");
+
+    for(const key of ["sector_barrio","isp_1","isp_2","isp_3","isp_4"]) short(d[key],120,"TEXT_TOO_LONG");
+    short(d.link_evidencia,1000,"TEXT_TOO_LONG");
     short(d.nota,2000,"TEXT_TOO_LONG");
   }else{
     throw httpError("INVALID_FORM",400);

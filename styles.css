@@ -519,3 +519,5 @@ body.form-mode main{width:min(1180px,96%);padding-top:14px}
   .private-form-link{grid-template-columns:minmax(0,1fr) auto}
   .private-form-link a{max-width:58vw}
 }
+
+.coordinate-box{display:grid;gap:10px}.coordinate-box .gps-city{margin-top:0}

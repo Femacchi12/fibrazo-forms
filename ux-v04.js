@@ -125,6 +125,7 @@
     else if(field.type==="textarea"){const t=document.createElement("textarea");t.name=field.key;t.addEventListener("input",()=>clearError(field.key));wrap.appendChild(t);}
     else if(field.type==="radio"||field.type==="checkbox"){wrap.appendChild(choiceInput(field));}
     else if(field.type==="gps"){wrap.appendChild(gpsInput(field));}
+    else if(field.type==="coordinates"){wrap.appendChild(coordinatesInput(field));}
     else if(field.type==="photos"){wrap.appendChild(photoInput(field));}
 
     const err=document.createElement("div");err.className="field-error";err.dataset.errorFor=field.key;err.hidden=true;wrap.appendChild(err);
@@ -192,11 +193,29 @@
     const box=document.createElement("div");box.className="gps-box";const value=document.createElement("div");value.className="gps-value";value.textContent="Ubicación pendiente";
     const btn=document.createElement("button");btn.type="button";btn.className="secondary-button";btn.textContent="Tomar coordenadas";btn.addEventListener("click",()=>captureGps(value,btn,field.key));
     box.append(value,btn);
-    if(state.form?.id==="CHURN"&&field.key==="coordenadas"){
-      const city=document.createElement("div");city.className="gps-city";city.dataset.gpsCityFor=field.key;city.textContent="Ciudad GPS: pendiente";
+    if(field.key==="coordenadas"&&(state.form?.id==="CHURN"||isExplorationForm())){
+      const city=document.createElement("div");city.className="gps-city";city.dataset.gpsCityFor=field.key;
+      city.textContent=state.form?.id==="CHURN"?"Ciudad GPS: pendiente":"Municipio: pendiente";
       box.appendChild(city);
     }
     return box;
+  }
+  function coordinatesInput(field){
+    const box=document.createElement("div");box.className="coordinate-box";
+    const input=document.createElement("input");input.type="text";input.name=field.key;input.inputMode="decimal";input.autocomplete="off";
+    input.placeholder="7.10485, -73.10280";
+    const status=document.createElement("div");status.className="gps-city";status.dataset.gpsCityFor=field.key;status.textContent="Municipio: pendiente";
+    let timer=null;
+    input.addEventListener("input",()=>{
+      clearError(field.key);clearTimeout(timer);
+      const raw=String(input.value||"").trim(),parsed=parseCoordinateText(raw);
+      if(!raw){state.gps=null;state.detectedCity="";state.citySource="";status.textContent="Municipio: pendiente";return;}
+      if(!parsed){state.gps=null;state.detectedCity="";state.citySource="";status.textContent="Formato esperado: latitud, longitud";return;}
+      state.gps={lat:parsed.lat,lng:parsed.lng,accuracy:null,cityDetected:"",citySource:"manual-coordinate"};
+      status.textContent="Municipio: identificando…";
+      timer=setTimeout(()=>resolveExplorationMunicipality(parsed.lat,parsed.lng,field.key),350);
+    });
+    box.append(input,status);return box;
   }
   function photoInput(field){
     const holder=document.createElement("div"),input=document.createElement("input"),preview=document.createElement("div");input.type="file";input.accept="image/*";input.multiple=true;input.capture="environment";input.className="photo-input";preview.className="photo-preview";
@@ -264,6 +283,7 @@
 
   function validateField(field){
     if(field.type==="gps")return field.required&&!state.gps?"Debes tomar la ubicación antes de continuar.":"";
+    if(field.type==="coordinates")return field.required&&!state.gps?"Pega una coordenada válida en formato latitud, longitud.":"";
     if(field.type==="photos")return"";
     const v=fieldValue(field.key),empty=Array.isArray(v)?v.length===0:String(v||"").trim()==="";
     if(field.required&&empty)return"Este campo es obligatorio.";
@@ -291,7 +311,11 @@
     activeSections().forEach(section=>{const visible=state.form.fields.filter(f=>f.section===section.id&&conditionMet(f));if(!visible.length)return;const card=document.createElement("section");card.className="review-section";const rows=visible.map(f=>'<div class="review-row"><span>'+esc(f.label)+'</span><strong>'+esc(reviewValue(f))+'</strong></div>').join("");card.innerHTML='<div class="review-section-head"><span>SECCIÓN</span><h2>'+esc(section.title)+"</h2></div>"+rows;host.appendChild(card);});
   }
   function reviewValue(field){
-    if(field.type==="gps")return state.gps?state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+" · ±"+Math.round(state.gps.accuracy)+" m"+(state.gps.cityDetected?" · "+state.gps.cityDetected:""):"—";
+    if(field.type==="gps"||field.type==="coordinates"){
+      if(!state.gps)return"—";
+      const accuracy=Number.isFinite(Number(state.gps.accuracy))?" · ±"+Math.round(Number(state.gps.accuracy))+" m":"";
+      return state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+accuracy+(state.gps.cityDetected?" · "+state.gps.cityDetected:"");
+    }
     if(field.type==="photos")return state.photos.length?state.photos.length+" foto"+(state.photos.length===1?"":"s"):"—";
     const v=fieldValue(field.key);if(Array.isArray(v))return v.length?v.join(", "):"—";if(!v)return"—";if(field.type==="currency")return"$ "+Number(v).toLocaleString("es-CO");if(field.type==="date-flex")return isoToDmy(v);if(field.suffix)return v+" "+field.suffix;return String(v);
   }
@@ -345,7 +369,13 @@
         if(icon)icon.textContent="↻";
       }else{
         if(title)title.textContent="Formulario completado con éxito";
-        if(message)message.textContent=state.policy?.completionMessage||"La información fue guardada correctamente.";
+        let completion=state.policy?.completionMessage||"La información fue guardada correctamente.";
+        if(isExplorationForm()&&result.masterSync){
+          completion+=result.masterSync.ok
+            ?" Punto maestro "+String(result.masterSync.pointId||"")+" sincronizado correctamente."
+            :" La respuesta quedó guardada, pero la sincronización con Bucaramanga_Exploracion quedó pendiente.";
+        }
+        if(message)message.textContent=completion;
         if(icon)icon.textContent="✓";
       }
       window.FIBRAZO_OFFLINE?.refreshUi?.();
@@ -354,7 +384,7 @@
       setStatus(e.message||"No se pudo guardar la respuesta.","error");
     }finally{btn.disabled=false;}
   }
-  function collectData(){const d={};state.form.fields.forEach(f=>{if(f.type==="gps"||f.type==="photos"||!conditionMet(f))return;d[f.key]=fieldValue(f.key);});return d;}
+  function collectData(){const d={};state.form.fields.forEach(f=>{if(f.type==="gps"||f.type==="coordinates"||f.type==="photos"||!conditionMet(f))return;d[f.key]=fieldValue(f.key);});return d;}
   function setStatus(m,t){if(!$("saveStatus"))return;$("saveStatus").textContent=m;$("saveStatus").className="save-status"+(t?" "+t:"");}
 
   function captureChurnGpsAutomatically(){
@@ -384,6 +414,8 @@
           if(resolved)applyDetectedCity(resolved);
           else if(cityStatus&&!fallback)cityStatus.textContent="Ciudad GPS: no se pudo identificar · selección manual disponible";
         }
+      }else if(isExplorationForm()&&key==="coordenadas"){
+        await resolveExplorationMunicipality(state.gps.lat,state.gps.lng,key);
       }
       btn.disabled=false;btn.textContent="Actualizar ubicación";clearError(key);
     },()=>{
@@ -396,13 +428,13 @@
     return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
   }
 
-  function applyDetectedCity(cityName){
+  function applyDetectedCity(cityName,source="gps"){
     const city=String(cityName||"").trim();
     if(!city)return;
-    state.detectedCity=city;state.citySource="gps";
-    if(state.gps){state.gps.cityDetected=city;state.gps.citySource="gps";}
+    state.detectedCity=city;state.citySource=source;
+    if(state.gps){state.gps.cityDetected=city;state.gps.citySource=source;}
     const status=document.querySelector('[data-gps-city-for="coordenadas"]');
-    if(status)status.textContent="Ciudad GPS: "+city;
+    if(status)status.textContent=(isExplorationForm()?"Municipio: ":"Ciudad GPS: ")+city;
     const select=document.querySelector('[name="ciudad"]');
     if(!select)return;
     select.querySelectorAll('[data-gps-detected="1"]').forEach(o=>o.remove());
@@ -418,6 +450,56 @@
     }
     delete select.dataset.autoGps;
     clearError("ciudad");
+  }
+
+  function isExplorationForm(){
+    return state.form?.id==="EXPLORACION"||state.form?.id==="EXPLORACION_PRESENCIAL";
+  }
+
+  function parseCoordinateText(value){
+    const m=String(value||"").trim().match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+    if(!m)return null;
+    const lat=Number(m[1]),lng=Number(m[2]);
+    if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat<-90||lat>90||lng<-180||lng>180)return null;
+    return {lat,lng};
+  }
+
+  function normalizeAmbMunicipality(value){
+    const normalized=normalizeCityName(value);
+    if(normalized.includes("floridablanca"))return"Floridablanca";
+    if(normalized.includes("piedecuesta"))return"Piedecuesta";
+    if(normalized.includes("giron"))return"Girón";
+    if(normalized.includes("bucaramanga"))return"Bucaramanga";
+    return"";
+  }
+
+  async function resolveExplorationMunicipality(lat,lng,key="coordenadas"){
+    const status=document.querySelector('[data-gps-city-for="'+css(key)+'"]');
+    const fallback=detectAmbMunicipalityOffline(lat,lng);
+    if(status)status.textContent=navigator.onLine?"Municipio: identificando…":(fallback?"Municipio aprox.: "+fallback:"Municipio: se validará al sincronizar");
+    if(navigator.onLine){
+      const raw=await reverseGeocodeCity(lat,lng);
+      const resolved=normalizeAmbMunicipality(raw);
+      if(resolved){applyDetectedCity(resolved,"reverse-geocode");return resolved;}
+    }
+    if(fallback){applyDetectedCity(fallback,"aproximado");return fallback;}
+    if(status)status.textContent="Municipio: se validará con el cruce geográfico";
+    return"";
+  }
+
+  function detectAmbMunicipalityOffline(lat,lng){
+    const cities=[
+      {name:"Bucaramanga",lat:7.11935,lng:-73.12274,maxKm:18},
+      {name:"Floridablanca",lat:7.06222,lng:-73.08644,maxKm:18},
+      {name:"Girón",lat:7.06820,lng:-73.16980,maxKm:18},
+      {name:"Piedecuesta",lat:6.98770,lng:-73.05080,maxKm:18}
+    ];
+    let best=null;
+    for(const city of cities){
+      const distance=haversineKm(lat,lng,city.lat,city.lng);
+      if(distance<=city.maxKm&&(!best||distance<best.distance))best={name:city.name,distance};
+    }
+    return best?.name||"";
   }
 
   async function reverseGeocodeCity(lat,lng){
