@@ -33,6 +33,14 @@
   function signIn(){
     if(authBusy||!auth)return;
     authBusy=true;
+    clearTimeout(publicAuthWatchdog);
+    publicAuthWatchdog=setTimeout(()=>{
+      if(authBusy&&!auth?.currentUser){
+        authBusy=false;
+        btn.disabled=false;btn.textContent="Continuar con Google";
+        $("publicAuthError").textContent="Google no respondió en el celular. Cierra cualquier ventana de Google abierta y vuelve a intentarlo una sola vez.";
+      }
+    },30000);
     const btn=$("publicGoogleSignIn");
     btn.disabled=true;btn.textContent="Abriendo Google…";$("publicAuthError").textContent="";
     const provider=new firebase.auth.GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});
@@ -47,7 +55,7 @@
       }else{
         $("publicAuthError").textContent=e.message||"No se pudo iniciar sesión.";
       }
-    }).finally(()=>{authBusy=false;btn.disabled=false;btn.textContent="Continuar con Google";});
+    }).finally(()=>{clearTimeout(publicAuthWatchdog);authBusy=false;btn.disabled=false;btn.textContent="Continuar con Google";});
   }
 
   async function boot(){

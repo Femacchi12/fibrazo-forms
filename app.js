@@ -25,6 +25,7 @@
   const provider = new firebase.auth.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
   let authInFlight = false;
+  let authPopupWatchdog = null;
 
   function setAuthInFlight(value) {
     authInFlight = !!value;
@@ -41,6 +42,13 @@
     if (authInFlight) return;
     setAuthInFlight(true);
     $("authError").textContent = "";
+    clearTimeout(authPopupWatchdog);
+    authPopupWatchdog=setTimeout(()=>{
+      if(authInFlight&&!auth.currentUser){
+        setAuthInFlight(false);
+        $("authError").textContent="Google no respondió en el celular. Cierra cualquier ventana de Google abierta y vuelve a intentarlo una sola vez.";
+      }
+    },30000);
 
     const launch = () => {
       auth.signInWithPopup(provider)
@@ -56,7 +64,7 @@
             $("authError").textContent = error.message || "No se pudo iniciar sesión.";
           }
         })
-        .finally(() => setAuthInFlight(false));
+        .finally(() => {clearTimeout(authPopupWatchdog);setAuthInFlight(false);});
     };
 
     if (changeAccount && auth.currentUser) {
@@ -133,6 +141,7 @@
   }
 
   function showDashboard(user) {
+    clearTimeout(authPopupWatchdog);setAuthInFlight(false);
     state.user = user;
     $("signedInEmail").textContent = user.email || "";
     document.body.classList.remove("auth-pending");
