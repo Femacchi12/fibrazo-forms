@@ -30,18 +30,23 @@
     if(typeof window.FIBRAZO_UX_OPEN_FORM!=="function")return fail("No se pudo iniciar el formulario.");
     window.FIBRAZO_UX_OPEN_FORM(policy.id);
   }
-  async function signIn(){
-    if(authBusy||!auth)return;authBusy=true;
-    const btn=$("publicGoogleSignIn");btn.disabled=true;btn.textContent="Abriendo Google…";$("publicAuthError").textContent="";
+  function signIn(){
+    if(authBusy||!auth)return;
+    authBusy=true;
+    const btn=$("publicGoogleSignIn");
+    btn.disabled=true;btn.textContent="Abriendo Google…";$("publicAuthError").textContent="";
     const provider=new firebase.auth.GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});
-    if(prefersRedirect()){
-      auth.signInWithRedirect(provider).catch(e=>{authBusy=false;btn.disabled=false;btn.textContent="Continuar con Google";$("publicAuthError").textContent=e.message||"No se pudo iniciar sesión.";});
-      return;
-    }
     auth.signInWithPopup(provider).catch(e=>{
       const code=String(e?.code||"");
-      if(code==="auth/popup-blocked")return auth.signInWithRedirect(provider);
-      $("publicAuthError").textContent=e.message||"No se pudo iniciar sesión.";
+      if(code==="auth/popup-blocked"){
+        $("publicAuthError").textContent="Chrome bloqueó la ventana de Google. Habilita ventanas emergentes para este sitio y vuelve a intentarlo.";
+      }else if(code==="auth/cancelled-popup-request"){
+        $("publicAuthError").textContent="Ya había un acceso de Google en curso. Cierra la ventana anterior y vuelve a intentarlo.";
+      }else if(code==="auth/popup-closed-by-user"){
+        $("publicAuthError").textContent="Se cerró Google antes de completar el acceso.";
+      }else{
+        $("publicAuthError").textContent=e.message||"No se pudo iniciar sesión.";
+      }
     }).finally(()=>{authBusy=false;btn.disabled=false;btn.textContent="Continuar con Google";});
   }
 
@@ -63,7 +68,6 @@
         if(user&&user.emailVerified)startForm(user);
         else showAuth();
       });
-      auth.getRedirectResult().catch(e=>{$("publicAuthError").textContent=e.message||"No se pudo completar el acceso con Google.";showAuth();});
     }catch(error){fail(error.message||"Este formulario no está disponible.");}
   }
   boot();

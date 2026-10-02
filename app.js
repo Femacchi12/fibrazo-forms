@@ -37,47 +37,36 @@
     if (change) change.disabled = authInFlight;
   }
 
-  function prefersRedirectAuth() {
-    const ua = navigator.userAgent || "";
-    const mobileUa = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
-    const standalone = window.matchMedia?.("(display-mode: standalone)")?.matches || navigator.standalone === true;
-    return mobileUa || standalone;
-  }
-
   function startGoogleSignIn(changeAccount = false) {
     if (authInFlight) return;
     setAuthInFlight(true);
     $("authError").textContent = "";
 
-    // Do not await anything before starting Google auth.
-    // Desktop popup must be triggered directly from the user's click.
-    if (prefersRedirectAuth()) {
-      auth.signInWithRedirect(provider).catch((error) => {
-        $("authError").textContent = error.message || "No se pudo iniciar sesión.";
+    const launch = () => {
+      auth.signInWithPopup(provider)
+        .catch((error) => {
+          const code = String(error && error.code || "");
+          if (code === "auth/popup-blocked") {
+            $("authError").textContent = "Chrome bloqueó la ventana de Google. Habilita ventanas emergentes para fibrazo-forms.vercel.app y vuelve a intentarlo.";
+          } else if (code === "auth/cancelled-popup-request") {
+            $("authError").textContent = "Ya había un acceso de Google en curso. Cierra la ventana anterior y vuelve a intentarlo.";
+          } else if (code === "auth/popup-closed-by-user") {
+            $("authError").textContent = "Se cerró Google antes de completar el acceso. Puedes intentarlo nuevamente.";
+          } else {
+            $("authError").textContent = error.message || "No se pudo iniciar sesión.";
+          }
+        })
+        .finally(() => setAuthInFlight(false));
+    };
+
+    if (changeAccount && auth.currentUser) {
+      auth.signOut().then(launch).catch(() => {
         setAuthInFlight(false);
+        $("authError").textContent = "No se pudo cambiar de cuenta.";
       });
       return;
     }
-
-    auth.signInWithPopup(provider)
-      .catch((error) => {
-        const code = String(error && error.code || "");
-
-        if (code === "auth/popup-blocked") {
-          return auth.signInWithRedirect(provider).catch((redirectError) => {
-            $("authError").textContent = redirectError.message || "No se pudo iniciar sesión.";
-          });
-        }
-
-        if (code === "auth/cancelled-popup-request") {
-          $("authError").textContent = "Ya había un acceso de Google en curso. Cierra cualquier ventana de Google abierta y vuelve a intentarlo.";
-        } else if (code === "auth/popup-closed-by-user") {
-          $("authError").textContent = "Se cerró el acceso de Google antes de terminar. Puedes intentarlo nuevamente.";
-        } else {
-          $("authError").textContent = error.message || "No se pudo iniciar sesión.";
-        }
-      })
-      .finally(() => setAuthInFlight(false));
+    launch();
   }
 
   function isAllowed(user) {
@@ -175,11 +164,6 @@
   $("signOutButton").addEventListener("click", async () => {
     resetPrivateUi();
     try{await auth.signOut();}catch(_){}
-  });
-
-  auth.getRedirectResult().catch((error) => {
-    $("authError").textContent = error.message || "No se pudo completar el acceso con Google.";
-    setAuthInFlight(false);
   });
 
   auth.onAuthStateChanged(async (user) => {

@@ -5,15 +5,16 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#00FE9C",
+  "theme_color": "#00FE9C",
   "orientation": "any",
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "/icon-fro.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "id": "/"
 }

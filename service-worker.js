@@ -1,7 +1,7 @@
-const CACHE="fibrazo-forms-v0.7.2-20261001";
+const CACHE="fibrazo-forms-v0.7.3-20261001";
 const APP_SHELL=[
   "/","/index.html","/public","/styles.css","/forms-config.js","/app.js","/access-v03.js",
-  "/ux-v04.js","/offline-v04.js","/admin-v03.js","/public-v05.js","/manifest.webmanifest","/icon.svg"
+  "/ux-v04.js","/offline-v04.js","/admin-v03.js","/public-v05.js","/manifest.webmanifest","/icon-fro.svg"
 ];
 const REMOTE_SHELL=[
   "https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js",
