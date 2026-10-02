@@ -30,32 +30,40 @@
     if(typeof window.FIBRAZO_UX_OPEN_FORM!=="function")return fail("No se pudo iniciar el formulario.");
     window.FIBRAZO_UX_OPEN_FORM(policy.id);
   }
+  function prefersRedirectAuth(){
+    const ua=navigator.userAgent||"";
+    return /Android|iPhone|iPad|iPod|Mobile/i.test(ua)
+      || window.matchMedia?.("(display-mode: standalone)")?.matches
+      || navigator.standalone===true;
+  }
+
   function signIn(){
     if(authBusy||!auth)return;
     authBusy=true;
-    clearTimeout(publicAuthWatchdog);
-    publicAuthWatchdog=setTimeout(()=>{
-      if(authBusy&&!auth?.currentUser){
-        authBusy=false;
-        btn.disabled=false;btn.textContent="Continuar con Google";
-        $("publicAuthError").textContent="Google no respondió en el celular. Cierra cualquier ventana de Google abierta y vuelve a intentarlo una sola vez.";
-      }
-    },30000);
     const btn=$("publicGoogleSignIn");
     btn.disabled=true;btn.textContent="Abriendo Google…";$("publicAuthError").textContent="";
     const provider=new firebase.auth.GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});
+
+    if(prefersRedirectAuth()){
+      auth.signInWithRedirect(provider).catch(e=>{
+        authBusy=false;btn.disabled=false;btn.textContent="Continuar con Google";
+        $("publicAuthError").textContent=e.message||"No se pudo abrir el acceso con Google.";
+      });
+      return;
+    }
+
     auth.signInWithPopup(provider).catch(e=>{
       const code=String(e?.code||"");
       if(code==="auth/popup-blocked"){
-        $("publicAuthError").textContent="Chrome bloqueó la ventana de Google. Habilita ventanas emergentes para este sitio y vuelve a intentarlo.";
+        $("publicAuthError").textContent="El navegador bloqueó la ventana de Google. Habilita ventanas emergentes para este sitio.";
       }else if(code==="auth/cancelled-popup-request"){
-        $("publicAuthError").textContent="Ya había un acceso de Google en curso. Cierra la ventana anterior y vuelve a intentarlo.";
+        $("publicAuthError").textContent="Ya había un acceso de Google en curso.";
       }else if(code==="auth/popup-closed-by-user"){
         $("publicAuthError").textContent="Se cerró Google antes de completar el acceso.";
       }else{
         $("publicAuthError").textContent=e.message||"No se pudo iniciar sesión.";
       }
-    }).finally(()=>{clearTimeout(publicAuthWatchdog);authBusy=false;btn.disabled=false;btn.textContent="Continuar con Google";});
+    }).finally(()=>{authBusy=false;btn.disabled=false;btn.textContent="Continuar con Google";});
   }
 
   async function boot(){
@@ -72,6 +80,7 @@
       if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
       auth=firebase.auth();
       $("publicGoogleSignIn").addEventListener("click",signIn);
+      auth.getRedirectResult().catch(e=>{$("publicAuthError").textContent=e.message||"No se pudo completar el acceso con Google.";showAuth();});
       auth.onAuthStateChanged(user=>{
         if(user&&user.emailVerified)startForm(user);
         else showAuth();

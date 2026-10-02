@@ -1,7 +1,7 @@
 (() => {
   const firebaseConfig = {
     apiKey: "AIzaSyDBmVNRqmjy_bt2UovRtmZVNpKrCTyNjLU",
-    authDomain: "dashboards-fibrazo.firebaseapp.com",
+    authDomain: location.hostname==="fibrazo-forms.vercel.app" ? "fibrazo-forms.vercel.app" : "dashboards-fibrazo.firebaseapp.com",
     projectId: "dashboards-fibrazo",
     storageBucket: "dashboards-fibrazo.firebasestorage.app",
     messagingSenderId: "926517595208",
@@ -38,24 +38,40 @@
     if (change) change.disabled = authInFlight;
   }
 
+  function prefersRedirectAuth() {
+    const ua=navigator.userAgent||"";
+    return /Android|iPhone|iPad|iPod|Mobile/i.test(ua)
+      || window.matchMedia?.("(display-mode: standalone)")?.matches
+      || navigator.standalone===true;
+  }
+
   function startGoogleSignIn(changeAccount = false) {
     if (authInFlight) return;
     setAuthInFlight(true);
     $("authError").textContent = "";
     clearTimeout(authPopupWatchdog);
-    authPopupWatchdog=setTimeout(()=>{
-      if(authInFlight&&!auth.currentUser){
-        setAuthInFlight(false);
-        $("authError").textContent="Google no respondió en el celular. Cierra cualquier ventana de Google abierta y vuelve a intentarlo una sola vez.";
-      }
-    },30000);
 
     const launch = () => {
+      if (prefersRedirectAuth()) {
+        auth.signInWithRedirect(provider).catch((error)=>{
+          setAuthInFlight(false);
+          $("authError").textContent=error.message||"No se pudo abrir el acceso con Google.";
+        });
+        return;
+      }
+
+      authPopupWatchdog=setTimeout(()=>{
+        if(authInFlight&&!auth.currentUser){
+          setAuthInFlight(false);
+          $("authError").textContent="Google no respondió. Cierra cualquier ventana de Google abierta y vuelve a intentarlo.";
+        }
+      },30000);
+
       auth.signInWithPopup(provider)
         .catch((error) => {
           const code = String(error && error.code || "");
           if (code === "auth/popup-blocked") {
-            $("authError").textContent = "Chrome bloqueó la ventana de Google. Habilita ventanas emergentes para fibrazo-forms.vercel.app y vuelve a intentarlo.";
+            $("authError").textContent = "El navegador bloqueó la ventana de Google. Habilita ventanas emergentes para este sitio y vuelve a intentarlo.";
           } else if (code === "auth/cancelled-popup-request") {
             $("authError").textContent = "Ya había un acceso de Google en curso. Cierra la ventana anterior y vuelve a intentarlo.";
           } else if (code === "auth/popup-closed-by-user") {
@@ -173,6 +189,14 @@
   $("signOutButton").addEventListener("click", async () => {
     resetPrivateUi();
     try{await auth.signOut();}catch(_){}
+  });
+
+  auth.getRedirectResult().catch((error)=>{
+    setAuthInFlight(false);
+    const code=String(error?.code||"");
+    $("authError").textContent=code==="auth/unauthorized-domain"
+      ?"El dominio de FIBRAZO Forms todavía no está autorizado en Firebase."
+      :(error.message||"No se pudo completar el acceso con Google.");
   });
 
   auth.onAuthStateChanged(async (user) => {
