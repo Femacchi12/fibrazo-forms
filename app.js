@@ -657,7 +657,7 @@
   function renderResults() {
     const rows = state.rows || [];
     const churn = rows.filter((row) => row.formId === "CHURN").length;
-    const exploration = rows.filter((row) => row.formId === "EXPLORACION").length;
+    const exploration = rows.filter((row) => String(row.formId || "").startsWith("EXPLORACION")).length;
 
     $("churnCount").textContent = churn;
     $("explorationCount").textContent = exploration;
