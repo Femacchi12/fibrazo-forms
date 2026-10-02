@@ -332,9 +332,14 @@ async function readRows(auth,forms,requested,limit,user,adminFlag){
           user:row[25]||""
         });
       }else if(isExploration(form.id)){
+        const tipo=String(row[26]||"").trim();
+        const belongs=form.id==="EXPLORACION"
+          ?(!tipo||tipo==="Virtual")
+          :tipo==="Presencial";
+        if(!belongs)continue;
         out.push({
           formId:form.id,timestamp:row[0],id:row[1],
-          data:{ciudad:row[2],sector_barrio:row[3],tigo_hfc:row[7],claro_hfc:row[9],movistar:row[11],tipo:row[26]||""},
+          data:{ciudad:row[2],sector_barrio:row[3],tigo_hfc:row[7],claro_hfc:row[9],movistar:row[11],tipo},
           user:row[24]||""
         });
       }
