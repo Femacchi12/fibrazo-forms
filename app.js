@@ -17,13 +17,31 @@
 
   const $ = (id) => document.getElementById(id);
 
-  function directPrivateForm(){
+  function directFormSlug(){
     const match=location.pathname.match(/^\/form\/([^/]+)\/?$/i);
-    if(!match)return null;
-    const slug=decodeURIComponent(match[1]).trim().toLowerCase();
-    return Object.values(forms).find(form=>
-      String(form.id||"").toLowerCase()===slug || String(form.slug||"").toLowerCase()===slug
-    )||null;
+    return match?decodeURIComponent(match[1]).trim().toLowerCase():"";
+  }
+
+  function directPrivateForm(){
+    const slug=directFormSlug();
+    if(!slug)return null;
+    return Object.values(forms).find(form=>{
+      const policy=window.FIBRAZO_FORM_POLICIES?.[form.id]||{};
+      return String(form.id||"").toLowerCase()===slug || String(policy.slug||"").toLowerCase()===slug;
+    })||null;
+  }
+
+  async function resolveCanonicalFormRoute(){
+    const slug=directFormSlug();
+    if(!slug)return "private";
+    try{
+      const response=await fetch("/api/public?slug="+encodeURIComponent(slug),{cache:"no-store"});
+      if(response.ok){
+        location.replace("/f/"+encodeURIComponent(slug));
+        return "public";
+      }
+    }catch(_){}
+    return "private";
   }
 
   function openDirectPrivateForm(){
@@ -47,6 +65,7 @@
 
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
+  const canonicalFormRoute=resolveCanonicalFormRoute();
   let authInFlight = false;
   let authPopupWatchdog = null;
 
@@ -210,6 +229,7 @@
   });
 
   auth.onAuthStateChanged(async (user) => {
+    if(await canonicalFormRoute==="public")return;
     if (!user) {
       setAuthInFlight(false);
       showGate();

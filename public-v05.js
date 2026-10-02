@@ -1,7 +1,7 @@
 (() => {
   const firebaseConfig={
     apiKey:"AIzaSyDBmVNRqmjy_bt2UovRtmZVNpKrCTyNjLU",
-    authDomain:"dashboards-fibrazo.firebaseapp.com",
+    authDomain:location.hostname==="fibrazo-forms.vercel.app"?"fibrazo-forms.vercel.app":"dashboards-fibrazo.firebaseapp.com",
     projectId:"dashboards-fibrazo",
     storageBucket:"dashboards-fibrazo.firebasestorage.app",
     messagingSenderId:"926517595208",
@@ -13,10 +13,6 @@
   function fail(message){
     $("publicLoading").hidden=true;$("publicAuth").hidden=true;$("publicError").hidden=false;
     $("publicErrorText").textContent=message;
-  }
-  function prefersRedirect(){
-    const ua=navigator.userAgent||"";
-    return /Android|iPhone|iPad|iPod|Mobile/i.test(ua)||window.matchMedia?.("(display-mode: standalone)")?.matches||navigator.standalone===true;
   }
   function showAuth(){
     $("publicLoading").hidden=true;$("publicError").hidden=true;$("publicAuth").hidden=false;
@@ -30,32 +26,17 @@
     if(typeof window.FIBRAZO_UX_OPEN_FORM!=="function")return fail("No se pudo iniciar el formulario.");
     window.FIBRAZO_UX_OPEN_FORM(policy.id);
   }
-  function prefersRedirectAuth(){
-    const ua=navigator.userAgent||"";
-    return /Android|iPhone|iPad|iPod|Mobile/i.test(ua)
-      || window.matchMedia?.("(display-mode: standalone)")?.matches
-      || navigator.standalone===true;
-  }
-
-  function signIn(){
+  async function signIn(){
     if(authBusy||!auth)return;
     authBusy=true;
     const btn=$("publicGoogleSignIn");
     btn.disabled=true;btn.textContent="Abriendo Google…";$("publicAuthError").textContent="";
-    const provider=new firebase.auth.GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});
-
-    if(prefersRedirectAuth()){
-      auth.signInWithRedirect(provider).catch(e=>{
-        authBusy=false;btn.disabled=false;btn.textContent="Continuar con Google";
-        $("publicAuthError").textContent=e.message||"No se pudo abrir el acceso con Google.";
-      });
-      return;
-    }
-
+    try{await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);}catch(_){}
+    const provider=new firebase.auth.GoogleAuthProvider();
     auth.signInWithPopup(provider).catch(e=>{
       const code=String(e?.code||"");
       if(code==="auth/popup-blocked"){
-        $("publicAuthError").textContent="El navegador bloqueó la ventana de Google. Habilita ventanas emergentes para este sitio.";
+        $("publicAuthError").textContent="Chrome bloqueó la ventana de Google. Habilita ventanas emergentes para este sitio.";
       }else if(code==="auth/cancelled-popup-request"){
         $("publicAuthError").textContent="Ya había un acceso de Google en curso.";
       }else if(code==="auth/popup-closed-by-user"){
@@ -80,7 +61,6 @@
       if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
       auth=firebase.auth();
       $("publicGoogleSignIn").addEventListener("click",signIn);
-      auth.getRedirectResult().catch(e=>{$("publicAuthError").textContent=e.message||"No se pudo completar el acceso con Google.";showAuth();});
       auth.onAuthStateChanged(user=>{
         if(user&&user.emailVerified)startForm(user);
         else showAuth();

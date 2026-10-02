@@ -93,7 +93,7 @@
     items.forEach(f=>{
       const card=document.createElement("article");card.className="admin-form-card accordion compact";card.dataset.formId=f.id;
       card._domains=[...(f.domains||[])];card._emails=[...(f.allowedEmails||[])];card.dataset.savedPublic=String(!!f.publicEnabled);
-      const publicUrl=location.origin+"/f/"+f.slug;
+      const publicUrl=location.origin+"/form/"+f.slug;
       const isActive=String(f.status).toLowerCase()==="activo";
       card.dataset.savedStatus=isActive?"activo":"inactivo";
       card.innerHTML=
@@ -112,9 +112,9 @@
           '</details>'+
 
           '<details class="admin-compact-section public-section">'+
-            '<summary><div><span>PUBLICACIÓN</span><strong>Enlace público</strong></div><b class="section-status" data-public-status></b></summary>'+
+            '<summary><div><span>PUBLICACIÓN</span><strong>Acceso por enlace</strong></div><b class="section-status" data-public-status></b></summary>'+
             '<div class="compact-section-body">'+
-              '<label class="compact-toggle-row"><div><strong>Permitir acceso por enlace</strong><small>Cualquier persona con el enlace podrá abrir el formulario. La recopilación de correo se define en Experiencia.</small></div><span class="switch"><input type="checkbox" data-field="publicEnabled" '+(f.publicEnabled?"checked":"")+'><i></i></span></label>'+
+              '<label class="compact-toggle-row"><div><strong>Permitir acceso por enlace</strong><small>Usa siempre este mismo enlace. Si habilitas acceso público, cualquiera con el enlace podrá responder; si lo deshabilitas, exigirá inicio de sesión y permisos.</small></div><span class="switch"><input type="checkbox" data-field="publicEnabled" '+(f.publicEnabled?"checked":"")+'><i></i></span></label>'+
               '<div class="compact-public-row" data-public-details><input readonly value="'+esc(publicUrl)+'"><button type="button" class="secondary-button compact" data-copy>Copiar</button><label><span>Límite / 10 min</span><input data-field="rateLimit" type="number" min="1" max="100" value="'+esc(f.rateLimit)+'"></label></div>'+
               '<div class="public-link-state compact-state"></div>'+
             '</div>'+
