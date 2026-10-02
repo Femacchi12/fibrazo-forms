@@ -331,7 +331,8 @@
           "required": true,
           "options": [],
           "showWhen": null,
-          "label": "Año"
+          "label": "Año",
+          "default": 2026
         },
         {
           "key": "coordenadas",
@@ -345,85 +346,97 @@
         {
           "key": "e_postes",
           "section": "infraestructura",
-          "type": "numeric",
+          "type": "segmented",
           "required": false,
-          "options": [],
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
           "showWhen": null,
           "label": "E. Postes"
         },
         {
           "key": "s_postes",
           "section": "infraestructura",
-          "type": "numeric",
+          "type": "segmented",
           "required": false,
-          "options": [],
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
           "showWhen": null,
           "label": "S. Postes"
         },
         {
           "key": "tigo_hfc",
           "section": "operadores",
-          "type": "select",
+          "type": "toggle",
           "required": false,
           "options": [
             "Sí",
-            "No",
-            "No validado"
+            "No"
           ],
           "showWhen": null,
-          "label": "TIGO HFC"
+          "label": "TIGO HFC",
+          "default": "No"
         },
         {
           "key": "tigo_ftth",
           "section": "operadores",
-          "type": "select",
+          "type": "toggle",
           "required": false,
           "options": [
             "Sí",
-            "No",
-            "No validado"
+            "No"
           ],
           "showWhen": null,
-          "label": "TIGO FTTH"
+          "label": "TIGO FTTH",
+          "default": "No"
         },
         {
           "key": "claro_hfc",
           "section": "operadores",
-          "type": "select",
+          "type": "toggle",
           "required": false,
           "options": [
             "Sí",
-            "No",
-            "No validado"
+            "No"
           ],
           "showWhen": null,
-          "label": "CLARO HFC"
+          "label": "CLARO HFC",
+          "default": "No"
         },
         {
           "key": "claro_ftth",
           "section": "operadores",
-          "type": "select",
+          "type": "toggle",
           "required": false,
           "options": [
             "Sí",
-            "No",
-            "No validado"
+            "No"
           ],
           "showWhen": null,
-          "label": "CLARO FTTH"
+          "label": "CLARO FTTH",
+          "default": "No"
         },
         {
           "key": "movistar",
           "section": "operadores",
-          "type": "select",
+          "type": "toggle",
           "required": false,
           "options": [
             "Sí",
-            "No",
-            "No validado"
+            "No"
           ],
           "showWhen": null,
-          "label": "Movistar"
+          "label": "Movistar",
+          "default": "No"
         },
         {
           "key": "isp_1",
@@ -572,5 +585,10 @@
     "labelPx": 12,
     "helpPx": 11,
     "microPx": 9
+  },
+  "ui": {
+    "stepperFutureTitles": "hidden",
+    "explorationPostes": "segmented 1-5",
+    "explorationOperatorPresence": "toggle No/Sí, default No"
   }
 }
