@@ -105,6 +105,7 @@
 
   function exitForm(){
     if(publicMode){location.reload();return;}
+    if(/^\/form\//i.test(location.pathname))history.replaceState({},"","/");
     document.body.classList.remove("form-mode");
     $("formWorkspace").hidden=true;$("reviewWorkspace").hidden=true;$("successWorkspace").hidden=true;
     state.form=null;state.policy=null;state.gps=null;state.photos=[];state.detectedCity="";state.citySource="";window.scrollTo({top:0,behavior:"smooth"});

@@ -17,6 +17,31 @@
 
   const $ = (id) => document.getElementById(id);
 
+  function directPrivateForm(){
+    const match=location.pathname.match(/^\/form\/([^/]+)\/?$/i);
+    if(!match)return null;
+    const slug=decodeURIComponent(match[1]).trim().toLowerCase();
+    return Object.values(forms).find(form=>
+      String(form.id||"").toLowerCase()===slug || String(form.slug||"").toLowerCase()===slug
+    )||null;
+  }
+
+  function openDirectPrivateForm(){
+    const form=directPrivateForm();
+    if(!form)return;
+    const allowed=window.FIBRAZO_ACCESS?.[form.id]===true || window.FIBRAZO_ACCESS_META?.admin===true;
+    if(!allowed)return;
+    let attempts=0;
+    const tryOpen=()=>{
+      if(typeof window.FIBRAZO_UX_OPEN_FORM==="function"){
+        window.FIBRAZO_UX_OPEN_FORM(form.id);
+        return;
+      }
+      if(++attempts<50)setTimeout(tryOpen,100);
+    };
+    tryOpen();
+  }
+
   $("activeFormsCount").textContent = Object.keys(forms).length;
   $("previewBadge").hidden = !isGitHubPreview;
 
@@ -158,6 +183,7 @@
     $("authError").textContent = "";
     renderCards();
     window.dispatchEvent(new CustomEvent("fibrazo:access-ready"));
+    openDirectPrivateForm();
     if (isGitHubPreview) {
       $("backendState").textContent = "PREVIEW";
       $("backendDetail").textContent = "datos locales";
