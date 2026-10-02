@@ -1,4 +1,4 @@
-const CACHE="fibrazo-forms-v0.7.8-20261001";
+const CACHE="fibrazo-forms-v0.7.9-20261002";
 const APP_SHELL=[
   "/","/index.html","/public","/styles.css","/forms-config.js","/app.js","/access-v03.js",
   "/ux-v04.js","/offline-v04.js","/admin-v03.js","/public-v05.js","/manifest.webmanifest","/icon-fzo-growth-form.svg"
@@ -47,8 +47,25 @@ self.addEventListener("fetch",event=>{
     return;
   }
 
+  const isVersionedAppAsset=url.origin===self.location.origin &&
+    (/\.(?:js|css|webmanifest)$/.test(url.pathname));
+
+  if(isVersionedAppAsset){
+    event.respondWith((async()=>{
+      try{
+        const fresh=await fetch(request,{cache:"no-store"});
+        const cache=await caches.open(CACHE);
+        if(fresh&&fresh.ok) await cache.put(request,fresh.clone());
+        return fresh;
+      }catch(_){
+        return (await caches.match(request)) || (await caches.match(url.pathname)) || Response.error();
+      }
+    })());
+    return;
+  }
+
   event.respondWith((async()=>{
-    const cached=await caches.match(request,{ignoreSearch:true});
+    const cached=await caches.match(request);
     if(cached) return cached;
     try{
       const fresh=await fetch(request);

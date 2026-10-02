@@ -38,42 +38,31 @@
     if (change) change.disabled = authInFlight;
   }
 
-  function prefersRedirectAuth() {
-    const ua=navigator.userAgent||"";
-    return /Android|iPhone|iPad|iPod|Mobile/i.test(ua)
-      || window.matchMedia?.("(display-mode: standalone)")?.matches
-      || navigator.standalone===true;
-  }
-
   function startGoogleSignIn(changeAccount = false) {
     if (authInFlight) return;
     setAuthInFlight(true);
     $("authError").textContent = "";
     clearTimeout(authPopupWatchdog);
 
-    const launch = () => {
-      if (prefersRedirectAuth()) {
-        auth.signInWithRedirect(provider).catch((error)=>{
-          setAuthInFlight(false);
-          $("authError").textContent=error.message||"No se pudo abrir el acceso con Google.";
-        });
-        return;
-      }
+    const launch = async () => {
+      try {
+        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      } catch (_) {}
 
       authPopupWatchdog=setTimeout(()=>{
         if(authInFlight&&!auth.currentUser){
           setAuthInFlight(false);
-          $("authError").textContent="Google no respondió. Cierra cualquier ventana de Google abierta y vuelve a intentarlo.";
+          $("authError").textContent="Google tardó demasiado en responder. Vuelve a intentarlo.";
         }
-      },30000);
+      },45000);
 
       auth.signInWithPopup(provider)
         .catch((error) => {
           const code = String(error && error.code || "");
           if (code === "auth/popup-blocked") {
-            $("authError").textContent = "El navegador bloqueó la ventana de Google. Habilita ventanas emergentes para este sitio y vuelve a intentarlo.";
+            $("authError").textContent = "Chrome bloqueó la ventana de Google. Habilita ventanas emergentes para este sitio y vuelve a intentarlo.";
           } else if (code === "auth/cancelled-popup-request") {
-            $("authError").textContent = "Ya había un acceso de Google en curso. Cierra la ventana anterior y vuelve a intentarlo.";
+            $("authError").textContent = "Ya había un acceso de Google en curso. Espera unos segundos y vuelve a intentarlo.";
           } else if (code === "auth/popup-closed-by-user") {
             $("authError").textContent = "Se cerró Google antes de completar el acceso. Puedes intentarlo nuevamente.";
           } else {
@@ -191,16 +180,11 @@
     try{await auth.signOut();}catch(_){}
   });
 
-  auth.getRedirectResult().catch((error)=>{
-    setAuthInFlight(false);
-    const code=String(error?.code||"");
-    $("authError").textContent=code==="auth/unauthorized-domain"
-      ?"El dominio de FIBRAZO Forms todavía no está autorizado en Firebase."
-      :(error.message||"No se pudo completar el acceso con Google.");
-  });
+  auth.getRedirectResult().catch(()=>{ setAuthInFlight(false); });
 
   auth.onAuthStateChanged(async (user) => {
     if (!user) {
+      setAuthInFlight(false);
       showGate();
       return;
     }
