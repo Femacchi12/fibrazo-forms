@@ -22,8 +22,6 @@
 
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
-  const provider = new firebase.auth.GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: "select_account" });
   let authInFlight = false;
   let authPopupWatchdog = null;
 
@@ -48,6 +46,11 @@
       try {
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
       } catch (_) {}
+
+      const provider = new firebase.auth.GoogleAuthProvider();
+      if (changeAccount) {
+        provider.setCustomParameters({ prompt: "select_account" });
+      }
 
       authPopupWatchdog=setTimeout(()=>{
         if(authInFlight&&!auth.currentUser){
@@ -179,8 +182,6 @@
     resetPrivateUi();
     try{await auth.signOut();}catch(_){}
   });
-
-  auth.getRedirectResult().catch(()=>{ setAuthInFlight(false); });
 
   auth.onAuthStateChanged(async (user) => {
     if (!user) {
