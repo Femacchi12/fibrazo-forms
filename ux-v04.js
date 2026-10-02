@@ -369,7 +369,13 @@
         if(icon)icon.textContent="↻";
       }else{
         if(title)title.textContent="Formulario completado con éxito";
-        if(message)message.textContent=state.policy?.completionMessage||"La información fue guardada correctamente.";
+        let completion=state.policy?.completionMessage||"La información fue guardada correctamente.";
+        if(isExplorationForm()&&result.masterSync){
+          completion+=result.masterSync.ok
+            ?" Punto maestro "+String(result.masterSync.pointId||"")+" sincronizado correctamente."
+            :" La respuesta quedó guardada, pero la sincronización con Bucaramanga_Exploracion quedó pendiente.";
+        }
+        if(message)message.textContent=completion;
         if(icon)icon.textContent="✓";
       }
       window.FIBRAZO_OFFLINE?.refreshUi?.();
