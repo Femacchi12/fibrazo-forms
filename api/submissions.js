@@ -7,8 +7,11 @@ const {
 
 const LEGACY_PHOTO_FOLDER_ENV={
   CHURN:"DRIVE_CHURN_FOLDER_ID",
-  EXPLORACION:"DRIVE_EXPLORACION_FOLDER_ID"
+  EXPLORACION:"DRIVE_EXPLORACION_FOLDER_ID",
+  EXPLORACION_PRESENCIAL:"DRIVE_EXPLORACION_FOLDER_ID"
 };
+const MASTER_SHEET_ID=process.env.BUCARAMANGA_EXPLORACION_SHEET_ID||"1LKNNf7a1VlUGpr9SlRqJGAkZq4NprW-wvdjNIlmB4E4";
+let masterPolygonCache=null;
 const PHOTO_ROOT_FOLDER_ID=process.env.DRIVE_FORMS_ROOT_FOLDER_ID||"0AF3Q3h3jUqsoUk9PVA";
 const photoFolderCache=new Map();
 
@@ -106,6 +109,10 @@ async function uploadPhotos(auth,form,id,list){
   return links;
 }
 
+function isExploration(formId){
+  return formId==="EXPLORACION"||formId==="EXPLORACION_PRESENCIAL";
+}
+
 function buildRow(form,p,id,links,email){
   const d=p.data||{},l=p.location||{},now=new Date().toISOString();
   if(form.id==="CHURN"){
@@ -118,14 +125,168 @@ function buildRow(form,p,id,links,email){
       d.comentario||"",l.lat||"",l.lng||"",l.accuracy||"",links.join(" | "),email||"ANONIMO",l.cityDetected||"",l.citySource||""
     ];
   }
-  const maps=l.lat&&l.lng?`https://www.google.com/maps?q=${l.lat},${l.lng}`:"";
+  const maps=Number.isFinite(Number(l.lat))&&Number.isFinite(Number(l.lng))
+    ?`https://www.google.com/maps?q=${l.lat},${l.lng}`:"";
+  const tipo=form.id==="EXPLORACION"?"Virtual":"Presencial";
   return [
-    now,id,d.ciudad||"",d.sector_barrio||"",d.anio||"",d.e_postes||"",d.s_postes||"",
+    now,id,l.cityDetected||"",d.sector_barrio||"",d.anio_imagen||"",
+    d.condicion_fisica_posteria||"",d.condicion_ocupacion_tendido||"",
     d.tigo_hfc||"",d.tigo_ftth||"",d.claro_hfc||"",d.claro_ftth||"",d.movistar||"",
     d.isp_1||"",d.isp_2||"",d.isp_3||"",d.isp_4||"",d.nota||"",
     l.lat||"",l.lng||"",l.accuracy||"",maps,links[0]||"",links[1]||"",links[2]||"",
-    email||"ANONIMO","0.5"
+    email||"ANONIMO","0.8",tipo,d.link_evidencia||""
   ];
+}
+
+function num(v){
+  const n=Number(String(v??"").replace(",","."));
+  return Number.isFinite(n)?n:NaN;
+}
+
+function parsePolygonWkt(wkt){
+  const s=String(wkt||"").trim(),m=s.match(/^POLYGON\s*\(\((.*)\)\)$/i);
+  if(!m)return[];
+  return m[1].split(/\)\s*,\s*\(/).map(txt=>
+    txt.split(",").map(pair=>{
+      const p=pair.trim().split(/\s+/);return[Number(p[0]),Number(p[1])];
+    }).filter(p=>Number.isFinite(p[0])&&Number.isFinite(p[1]))
+  ).filter(r=>r.length>=3);
+}
+
+function pointOnSegment(px,py,x1,y1,x2,y2){
+  const eps=1e-10,cross=(px-x1)*(y2-y1)-(py-y1)*(x2-x1);
+  return Math.abs(cross)<=eps&&px>=Math.min(x1,x2)-eps&&px<=Math.max(x1,x2)+eps&&py>=Math.min(y1,y2)-eps&&py<=Math.max(y1,y2)+eps;
+}
+function pointInRing(x,y,ring){
+  let inside=false;
+  for(let i=0,j=ring.length-1;i<ring.length;j=i++){
+    const xi=ring[i][0],yi=ring[i][1],xj=ring[j][0],yj=ring[j][1];
+    if(pointOnSegment(x,y,xj,yj,xi,yi))return true;
+    const crosses=((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/((yj-yi)||1e-30)+xi);
+    if(crosses)inside=!inside;
+  }
+  return inside;
+}
+function pointInPolygon(x,y,rings){
+  if(!rings.length||!pointInRing(x,y,rings[0]))return false;
+  for(let i=1;i<rings.length;i++)if(pointInRing(x,y,rings[i]))return false;
+  return true;
+}
+function localDistance(lon1,lat1,lon2,lat2,latRef){
+  const R=6371000,rad=Math.PI/180;
+  return Math.hypot((lon2-lon1)*R*Math.cos(latRef*rad)*rad,(lat2-lat1)*R*rad);
+}
+function bboxDistance(lon,lat,p){
+  return localDistance(lon,lat,Math.max(p.minLon,Math.min(p.maxLon,lon)),Math.max(p.minLat,Math.min(p.maxLat,lat)),lat);
+}
+function segmentDistance(px,py,x1,y1,x2,y2){
+  const R=6371000,rad=Math.PI/180,xScale=R*Math.cos(py*rad)*rad,yScale=R*rad;
+  const ax=(x1-px)*xScale,ay=(y1-py)*yScale,bx=(x2-px)*xScale,by=(y2-py)*yScale;
+  const vx=bx-ax,vy=by-ay,vv=vx*vx+vy*vy;
+  let t=vv?-(ax*vx+ay*vy)/vv:0;t=Math.max(0,Math.min(1,t));
+  return Math.hypot(ax+t*vx,ay+t*vy);
+}
+function polygonDistance(lon,lat,rings){
+  let best=Infinity;
+  for(const ring of rings)for(let i=0;i<ring.length;i++){
+    const a=ring[i],b=ring[(i+1)%ring.length],d=segmentDistance(lon,lat,a[0],a[1],b[0],b[1]);
+    if(d<best)best=d;
+  }
+  return best;
+}
+
+async function loadMasterPolygons(sheets){
+  if(masterPolygonCache)return masterPolygonCache;
+  const r=await sheets.spreadsheets.values.get({spreadsheetId:MASTER_SHEET_ID,range:"03_POLIGONOS_ESTRATOS!A2:I"});
+  masterPolygonCache=(r.data.values||[]).map(row=>({
+    id:String(row[0]||""),municipio:String(row[1]||""),estrato:String(row[2]||""),
+    minLon:num(row[4]),minLat:num(row[5]),maxLon:num(row[6]),maxLat:num(row[7]),rings:parsePolygonWkt(row[8])
+  })).filter(p=>p.id&&/^[1-6]$/.test(p.estrato)&&p.rings.length&&[p.minLon,p.minLat,p.maxLon,p.maxLat].every(Number.isFinite));
+  return masterPolygonCache;
+}
+
+function matchMasterPolygon(lon,lat,polygons){
+  for(const p of polygons){
+    if(lon<p.minLon||lon>p.maxLon||lat<p.minLat||lat>p.maxLat)continue;
+    if(pointInPolygon(lon,lat,p.rings))return{polygon:p,distance:0,method:"Dentro del polígono"};
+  }
+  const candidates=polygons.map(p=>({p,min:bboxDistance(lon,lat,p)})).sort((a,b)=>a.min-b.min);
+  let best=null,bestDistance=Infinity;
+  for(const item of candidates){
+    if(item.min>bestDistance)break;
+    const d=polygonDistance(lon,lat,item.p.rings);
+    if(d<bestDistance){best=item.p;bestDistance=d;}
+  }
+  return best?{polygon:best,distance:Math.round(bestDistance*10)/10,method:"Más cercano"}:null;
+}
+
+function nextSequence(values,re){
+  let max=0;
+  for(const row of values||[]){
+    const m=String(row[0]||"").match(re);if(m)max=Math.max(max,Number(m[1]));
+  }
+  return max+1;
+}
+
+async function syncExplorationMaster(auth,form,payload,links){
+  if(!isExploration(form.id)||!MASTER_SHEET_ID)return{ok:false,reason:"NOT_APPLICABLE"};
+  const sheets=google.sheets({version:"v4",auth}),d=payload.data||{},l=payload.location||{};
+  const lat=num(l.lat),lon=num(l.lng);
+  if(!Number.isFinite(lat)||!Number.isFinite(lon))return{ok:false,reason:"NO_COORDINATES"};
+
+  const polygons=await loadMasterPolygons(sheets),geo=matchMasterPolygon(lon,lat,polygons);
+  if(!geo)return{ok:false,reason:"NO_POLYGON_DATA"};
+
+  const [pointIds,compIds]=await Promise.all([
+    sheets.spreadsheets.values.get({spreadsheetId:MASTER_SHEET_ID,range:"01_PUNTOS_RELEVAMIENTO!A2:A"}),
+    sheets.spreadsheets.values.get({spreadsheetId:MASTER_SHEET_ID,range:"02_COMPETENCIA_PUNTO!A2:A"})
+  ]);
+  const pointNo=nextSequence(pointIds.data.values,/^BGF_P(\d+)$/i),pointId="BGF_P"+String(pointNo).padStart(4,"0");
+  const nextRow=(pointIds.data.values||[]).length+2;
+  const today=new Date().toISOString().slice(0,10);
+  const fuente=form.id==="EXPLORACION"?"Street View":"Presencial";
+  const estado=form.id==="EXPLORACION"?"Virtual":"Validado en campo";
+  const evidence=form.id==="EXPLORACION"?(d.link_evidencia||""):(links.join(" | ")||"");
+  const municipioObservado=l.cityDetected||geo.polygon.municipio||"";
+
+  await sheets.spreadsheets.values.batchUpdate({
+    spreadsheetId:MASTER_SHEET_ID,
+    requestBody:{valueInputOption:"USER_ENTERED",data:[
+      {range:`01_PUNTOS_RELEVAMIENTO!A${nextRow}:G${nextRow}`,values:[[
+        pointId,today,fuente,d.anio_imagen||"",municipioObservado,d.sector_barrio||"",`${lat}, ${lon}`
+      ]]},
+      {range:`01_PUNTOS_RELEVAMIENTO!K${nextRow}:U${nextRow}`,values:[[
+        geo.polygon.id,geo.polygon.municipio,Number(geo.polygon.estrato),geo.distance,geo.method,
+        Number(d.condicion_fisica_posteria),Number(d.condicion_ocupacion_tendido),d.nota||"",evidence,estado,new Date().toISOString()
+      ]]}
+    ]}
+  });
+
+  let compNo=nextSequence(compIds.data.values,/^BGF_C(\d+)$/i);
+  const operators=[];
+  const addTraditional=(name,tech,value)=>{
+    if(value==="Sí")operators.push({name,category:"Operador tradicional / incumbente",tech});
+  };
+  addTraditional("Tigo","HFC",d.tigo_hfc);addTraditional("Tigo","FTTH",d.tigo_ftth);
+  addTraditional("Claro","HFC",d.claro_hfc);addTraditional("Claro","FTTH",d.claro_ftth);
+  addTraditional("Movistar","No identificada",d.movistar);
+  for(const key of ["isp_1","isp_2","isp_3","isp_4"]){
+    const name=String(d[key]||"").trim();
+    if(name)operators.push({name,category:"ISP local / regional",tech:"No identificada"});
+  }
+  if(operators.length){
+    const confidence=form.id==="EXPLORACION"?"Media":"Alta";
+    const rows=operators.map(op=>[
+      "BGF_C"+String(compNo++).padStart(4,"0"),pointId,op.name,op.category,op.tech,
+      "Cable identificado",confidence,d.nota||"",new Date().toISOString(),
+      geo.polygon.municipio,Number(geo.polygon.estrato),d.sector_barrio||"",fuente,evidence
+    ]);
+    await sheets.spreadsheets.values.append({
+      spreadsheetId:MASTER_SHEET_ID,range:"02_COMPETENCIA_PUNTO!A:N",
+      valueInputOption:"USER_ENTERED",insertDataOption:"INSERT_ROWS",requestBody:{values:rows}
+    });
+  }
+  return{ok:true,pointId,municipio:geo.polygon.municipio,estrato:geo.polygon.estrato,method:geo.method,distance:geo.distance};
 }
 
 function resolveSubmissionId(payload,formId){
@@ -161,7 +322,7 @@ async function readRows(auth,forms,requested,limit,user,adminFlag){
   for(const form of allowed){
     const r=await sheets.spreadsheets.values.get({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!A2:Z`
+      range:`${form.sheet}!A2:AB`
     });
     for(const row of (r.data.values||[]).slice(-limit).reverse()){
       if(form.id==="CHURN"){
@@ -170,10 +331,10 @@ async function readRows(auth,forms,requested,limit,user,adminFlag){
           data:{ciudad:row[2],cliente_id:row[3],motivo_principal:row[5]},
           user:row[25]||""
         });
-      }else if(form.id==="EXPLORACION"){
+      }else if(isExploration(form.id)){
         out.push({
           formId:form.id,timestamp:row[0],id:row[1],
-          data:{ciudad:row[2],sector_barrio:row[3],tigo_hfc:row[7],claro_hfc:row[9],movistar:row[11]},
+          data:{ciudad:row[2],sector_barrio:row[3],tigo_hfc:row[7],claro_hfc:row[9],movistar:row[11],tipo:row[26]||""},
           user:row[24]||""
         });
       }
@@ -248,13 +409,22 @@ module.exports=async(req,res)=>{
       requestBody:{values:[buildRow(form,payload,id,links,recordedEmail)]}
     });
 
+    let masterSync=null;
+    if(isExploration(form.id)){
+      try{masterSync=await syncExplorationMaster(auth,form,payload,links);}
+      catch(syncError){
+        console.error("MASTER_SYNC_FAILED",syncError?.message||syncError);
+        masterSync={ok:false,reason:"SYNC_ERROR"};
+      }
+    }
+
     if(publicContext){
       await logSecurity(auth,{
         formId,ipHash:publicContext.ipHash,event:"PUBLIC_SUBMIT",result:"ACEPTADO",detail:id,req
       });
     }
 
-    return res.status(200).json({ok:true,id,photos:links});
+    return res.status(200).json({ok:true,id,photos:links,masterSync});
   }catch(error){
     if(publicContext?.ipHash&&auth){
       try{
