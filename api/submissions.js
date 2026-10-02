@@ -70,7 +70,7 @@ function buildRow(form,p,id,links,email){
 function resolveSubmissionId(payload,formId){
   const supplied=String(payload.clientSubmissionId||"").trim();
   if(!supplied) return idFor(formId);
-  if(!/^LOCAL-(CHURN|EXPLORACION)-\\d{10,}-[A-Z0-9]{4,20}$/.test(supplied)) throw httpError("INVALID_CLIENT_SUBMISSION_ID",400);
+  if(!/^LOCAL-(CHURN|EXPLORACION)-\d{10,}-[A-Z0-9]{4,20}$/.test(supplied)) throw httpError("INVALID_CLIENT_SUBMISSION_ID",400);
   if(!supplied.startsWith("LOCAL-"+formId+"-")) throw httpError("INVALID_CLIENT_SUBMISSION_ID",400);
   return supplied;
 }

@@ -209,7 +209,7 @@ function validateSubmission(formId,payload){
     if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat<-90||lat>90||lng<-180||lng>180) throw httpError("GPS_REQUIRED",400);
     if(Number.isFinite(acc)&&acc<0) throw httpError("INVALID_GPS",400);
     for(const key of ["e_postes","s_postes"]){
-      if(d[key]!==""&&d[key]!=null&&!digits(d[key],8)) throw httpError("INVALID_NUMBER_"+key.toUpperCase(),400);
+      if(d[key]!==""&&d[key]!=null&&!["1","2","3","4","5"].includes(String(d[key]))) throw httpError("INVALID_POSTE_VALUE_"+key.toUpperCase(),400);
     }
     const network=["Sí","No","No validado"];
     for(const key of ["tigo_hfc","tigo_ftth","claro_hfc","claro_ftth","movistar"]) one(d[key],network,"INVALID_NETWORK_VALUE");

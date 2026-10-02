@@ -119,6 +119,8 @@
     else if(field.type==="numeric"||field.type==="currency"){wrap.appendChild(numericInput(field));}
     else if(field.type==="date-flex"){wrap.appendChild(dateInput(field));}
     else if(field.type==="select"){wrap.appendChild(selectInput(field));}
+    else if(field.type==="segmented"){wrap.appendChild(segmentedInput(field));}
+    else if(field.type==="toggle"){wrap.appendChild(toggleInput(field));}
     else if(field.type==="textarea"){const t=document.createElement("textarea");t.name=field.key;t.addEventListener("input",()=>clearError(field.key));wrap.appendChild(t);}
     else if(field.type==="radio"||field.type==="checkbox"){wrap.appendChild(choiceInput(field));}
     else if(field.type==="gps"){wrap.appendChild(gpsInput(field));}
@@ -158,6 +160,28 @@
       }
       clearError(field.key);updateVisibility();
     });return s;
+  }
+  function segmentedInput(field){
+    const holder=document.createElement("div");holder.className="segmented-control";holder.setAttribute("role","radiogroup");
+    const hidden=document.createElement("input");hidden.type="hidden";hidden.name=field.key;hidden.value="";
+    (field.options||[]).forEach(o=>{
+      const b=document.createElement("button");b.type="button";b.className="segment-option";b.textContent=o;b.setAttribute("aria-pressed","false");
+      b.addEventListener("click",()=>{
+        hidden.value=String(o);
+        holder.querySelectorAll(".segment-option").forEach(x=>{const on=x===b;x.classList.toggle("selected",on);x.setAttribute("aria-pressed",String(on));});
+        clearError(field.key);updateVisibility();
+      });
+      holder.appendChild(b);
+    });
+    holder.prepend(hidden);return holder;
+  }
+  function toggleInput(field){
+    const holder=document.createElement("div");holder.className="binary-toggle";
+    const hidden=document.createElement("input");hidden.type="hidden";hidden.name=field.key;hidden.value=String(field.default??"No");
+    const b=document.createElement("button");b.type="button";b.className="binary-toggle-button";
+    const paint=()=>{const yes=hidden.value==="Sí";b.classList.toggle("is-yes",yes);b.setAttribute("aria-pressed",String(yes));b.innerHTML='<span class="toggle-state">'+(yes?"Sí":"No")+'</span><span class="toggle-hint">Toca para cambiar</span>';};
+    b.addEventListener("click",()=>{hidden.value=hidden.value==="Sí"?"No":"Sí";paint();clearError(field.key);updateVisibility();});
+    paint();holder.append(hidden,b);return holder;
   }
   function choiceInput(field){
     const grid=document.createElement("div");grid.className="choice-grid";
@@ -206,7 +230,12 @@
     const section=sections[state.sectionIndex];
     $("sectionTitle").textContent=section.title;$("sectionDescription").textContent=section.description||"";$("sectionEyebrow").textContent="SECCIÓN "+(state.sectionIndex+1);$("formStepCounter").textContent=(state.sectionIndex+1)+" de "+sections.length;
     const stepper=$("sectionStepper");stepper.innerHTML="";
-    sections.forEach((s,i)=>{const x=document.createElement("div");x.className="step"+(i===state.sectionIndex?" active":i<state.sectionIndex?" complete":"");x.innerHTML="<span>"+(i+1)+"</span><small>"+esc(s.title)+"</small>";stepper.appendChild(x);});
+    stepper.style.gridTemplateColumns="repeat("+sections.length+",minmax(0,1fr))";
+    sections.forEach((s,i)=>{
+      const x=document.createElement("div");x.className="step"+(i===state.sectionIndex?" active":i<state.sectionIndex?" complete":" future");
+      x.innerHTML="<span>"+(i+1)+"</span>"+(i<=state.sectionIndex?"<small>"+esc(s.title)+"</small>":"");
+      stepper.appendChild(x);
+    });
     stepper.hidden=state.policy?.showProgress===false;
     $("formStepCounter").hidden=state.policy?.showProgress===false;
     $("prevSection").hidden=state.sectionIndex===0;const last=state.sectionIndex===sections.length-1;$("nextSection").hidden=last;$("reviewForm").hidden=!last;

@@ -486,3 +486,18 @@ body.form-mode main{width:min(1180px,96%);padding-top:14px}
 /* v0.7.1 · Estado clickeable */
 .status-switch{cursor:pointer}
 .status-switch i{cursor:pointer}
+
+/* v0.7.2 · controles rápidos de campo */
+.segmented-control{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+.segmented-control>input{display:none}
+.segment-option{min-height:44px;border:1px solid var(--fz-border-strong);border-radius:9px;background:var(--fz-control);color:#dfe7e3;font-weight:800;font-size:13px}
+.segment-option.selected{border-color:var(--fz-green);background:var(--fz-green-soft);color:#fff;box-shadow:0 0 0 1px rgba(0,242,154,.12)}
+.binary-toggle>input{display:none}
+.binary-toggle-button{width:100%;min-height:48px;padding:8px 12px;border:1px solid var(--fz-border-strong);border-radius:10px;background:var(--fz-control);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left}
+.binary-toggle-button .toggle-state{font-size:14px;font-weight:800}
+.binary-toggle-button .toggle-hint{font-size:9px;color:var(--fz-muted);font-weight:600}
+.binary-toggle-button.is-yes{border-color:var(--fz-green);background:var(--fz-green-soft)}
+.binary-toggle-button.is-yes .toggle-state{color:var(--fz-green)}
+.step.future{justify-content:center;min-width:52px}
+.step.future small{display:none}
+@media(max-width:560px){.segmented-control{gap:5px}.segment-option{min-height:42px;padding:6px}.step.future{min-width:58px}}
