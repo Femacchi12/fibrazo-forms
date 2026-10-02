@@ -406,13 +406,16 @@ module.exports=async(req,res)=>{
 
     const links=await uploadPhotos(auth,form,id,payload.photos||[]);
     const sheets=google.sheets({version:"v4",auth});
-    await sheets.spreadsheets.values.append({
+    const appended=await sheets.spreadsheets.values.append({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!A:AB`,
+      range:`${form.sheet}!${isExploration(form.id)?"A:AD":"A:AB"}`,
       valueInputOption:"RAW",
       insertDataOption:"INSERT_ROWS",
       requestBody:{values:[buildRow(form,payload,id,links,recordedEmail)]}
     });
+    const rawUpdatedRange=String(appended.data.updates?.updatedRange||"");
+    const rawRowMatch=rawUpdatedRange.match(/!A(\d+):/i);
+    const rawRow=rawRowMatch?Number(rawRowMatch[1]):null;
 
     let masterSync=null;
     if(isExploration(form.id)){
@@ -420,6 +423,17 @@ module.exports=async(req,res)=>{
       catch(syncError){
         console.error("MASTER_SYNC_FAILED",syncError?.message||syncError);
         masterSync={ok:false,reason:"SYNC_ERROR"};
+      }
+      if(rawRow){
+        await sheets.spreadsheets.values.update({
+          spreadsheetId:SHEET_ID,
+          range:`${form.sheet}!AC${rawRow}:AD${rawRow}`,
+          valueInputOption:"RAW",
+          requestBody:{values:[[
+            masterSync?.pointId||"",
+            masterSync?.ok?"OK":String(masterSync?.reason||"PENDIENTE")
+          ]]}
+        });
       }
     }
 
