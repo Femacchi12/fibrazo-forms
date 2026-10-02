@@ -28,7 +28,9 @@ async function uploadPhotos(auth,form,id,list){
     const existing=await drive.files.list({
       q:`'${folderId}' in parents and name = '${escaped}' and trashed = false`,
       fields:"files(id,webViewLink)",
-      pageSize:1
+      pageSize:1,
+      supportsAllDrives:true,
+      includeItemsFromAllDrives:true
     });
     if(existing.data.files?.length){
       const file=existing.data.files[0];
@@ -38,7 +40,8 @@ async function uploadPhotos(auth,form,id,list){
     const created=await drive.files.create({
       requestBody:{name,parents:[folderId]},
       media:{mimeType:match[1],body:Readable.from(Buffer.from(match[2],"base64"))},
-      fields:"id,webViewLink"
+      fields:"id,webViewLink",
+      supportsAllDrives:true
     });
     links.push(created.data.webViewLink||`https://drive.google.com/file/d/${created.data.id}/view`);
   }
