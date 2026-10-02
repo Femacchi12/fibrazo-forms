@@ -14,7 +14,7 @@
       const form=Object.values(forms).find(item=>item.name===title);
       if(!form)return;
       const allowed=window.FIBRAZO_ACCESS[form.id]===true;
-      const button=card.querySelector("button");
+      const button=card.querySelector(".form-open-button");
       card.hidden=hasRules&&!allowed;
       card.classList.toggle("form-card-locked",hasRules&&!allowed);
       if(!allowed&&hasRules){
