@@ -69,7 +69,7 @@
   }
 
   document.addEventListener("click",event=>{
-    const button=event.target.closest(".form-card button");if(!button)return;
+    const button=event.target.closest(".form-card .form-open-button");if(!button)return;
     const title=button.closest(".form-card")?.querySelector("h3")?.textContent?.trim();
     const form=Object.values(forms).find(item=>item.name===title);if(!form)return;
     if(window.FIBRAZO_ACCESS[form.id]!==true){event.preventDefault();event.stopImmediatePropagation();}

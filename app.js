@@ -245,6 +245,8 @@
       const card = document.createElement("article");
       card.className = "form-card";
       const chips = (form.meta || []).map((x) => '<span class="meta-chip">' + escapeHtml(x) + "</span>").join("");
+      const privateSlug=String(form.slug||form.id||"").toLowerCase();
+      const privateUrl=location.origin+"/form/"+encodeURIComponent(privateSlug);
       card.innerHTML =
         '<div class="form-card-top">' +
           "<div><div class=\"eyebrow\">" + escapeHtml(form.eyebrow || "FORMULARIO") + "</div><h3>" + escapeHtml(form.name) + "</h3></div>" +
@@ -252,8 +254,28 @@
         "</div>" +
         "<p>" + escapeHtml(form.description || "") + "</p>" +
         '<div class="form-meta">' + chips + "</div>" +
-        '<button class="primary-button" type="button">Abrir formulario →</button>';
-      card.querySelector("button").addEventListener("click", () => openForm(form.id));
+        '<div class="private-form-link">' +
+          '<div><span>ACCESO DIRECTO PRIVADO</span><a href="'+escapeHtml(privateUrl)+'">'+escapeHtml(privateUrl)+'</a></div>' +
+          '<button class="copy-private-link" type="button" aria-label="Copiar acceso directo">Copiar</button>' +
+        "</div>" +
+        '<button class="primary-button form-open-button" type="button">Abrir formulario →</button>';
+      card.querySelector(".form-open-button").addEventListener("click", () => openForm(form.id));
+      card.querySelector(".copy-private-link").addEventListener("click",async(event)=>{
+        event.preventDefault();
+        event.stopPropagation();
+        const button=event.currentTarget;
+        try{
+          await navigator.clipboard.writeText(privateUrl);
+        }catch(_){
+          const input=document.createElement("textarea");
+          input.value=privateUrl;input.style.position="fixed";input.style.opacity="0";
+          document.body.appendChild(input);input.select();document.execCommand("copy");input.remove();
+        }
+        const previous=button.textContent;
+        button.textContent="✓ Copiado";
+        button.classList.add("copied");
+        setTimeout(()=>{button.textContent=previous;button.classList.remove("copied");},1600);
+      });
       host.appendChild(card);
     });
   }

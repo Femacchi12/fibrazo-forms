@@ -501,3 +501,21 @@ body.form-mode main{width:min(1180px,96%);padding-top:14px}
 .step.future{justify-content:center;min-width:52px}
 .step.future small{display:none}
 @media(max-width:560px){.segmented-control{gap:5px}.segment-option{min-height:42px;padding:6px}.step.future{min-width:58px}}
+
+
+/* v0.7.13 · selector de formularios, link privado y stepper alineado */
+.form-picker-title>div:first-child>span{display:block;font-size:20px;letter-spacing:-.01em;text-transform:none;color:#fff;font-weight:800}
+.private-form-link{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:center;margin:0 0 12px;padding:10px 11px;border:1px solid var(--fz-border);border-radius:9px;background:var(--fz-surface-inner)}
+.private-form-link span{display:block;margin-bottom:4px;color:var(--fz-muted);font-size:8px;font-weight:800;letter-spacing:.08em}
+.private-form-link a{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#dce7e1;font-size:9px;text-decoration:none}
+.copy-private-link{width:auto!important;min-width:76px;min-height:32px;padding:7px 10px;border:1px solid var(--fz-border-strong);border-radius:7px;background:var(--fz-control);color:#fff;font-size:9px;font-weight:800}
+.copy-private-link:hover,.copy-private-link.copied{border-color:var(--fz-green-border);color:var(--fz-green);background:var(--fz-green-soft)}
+.section-stepper .step{appearance:none;width:auto;text-align:left;font:inherit;cursor:default}
+.section-stepper .step.complete{cursor:pointer}
+.section-stepper .step.complete:hover{border-color:var(--fz-green-border);background:rgba(0,242,154,.045)}
+.section-stepper .step.future:disabled{opacity:.62}
+@media(max-width:560px){
+  .form-picker-title>div:first-child>span{font-size:18px}
+  .private-form-link{grid-template-columns:minmax(0,1fr) auto}
+  .private-form-link a{max-width:58vw}
+}

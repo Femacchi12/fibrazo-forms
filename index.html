@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=2026.10.02.4">
+  <link rel="stylesheet" href="styles.css?v=2026.10.02.5">
 </head>
 <body class="auth-pending">
   <section id="authGate" class="auth-gate" aria-live="polite">
@@ -36,7 +36,7 @@
         <p>Formularios, relevamientos y resultados en un único espacio.</p>
       </div>
       <div class="update-cards">
-        <article><span>Versión</span><b>0.7.12 · Drive automático</b></article>
+        <article><span>Versión</span><b>0.7.13 · UX formularios</b></article>
         <article><span>Formularios activos</span><b id="activeFormsCount">2</b></article>
       </div>
       <div id="authSession" class="auth-session" hidden>
@@ -94,11 +94,10 @@
 
     <section id="formsView">
       <section class="panel intro-panel">
-        <div class="section-title">
-          <div><span>FORMULARIOS</span><h2>Selecciona un relevamiento</h2></div>
+        <div class="section-title form-picker-title">
+          <div><span>Selecciona un formulario</span></div>
           <div id="previewBadge" class="status-badge" hidden>Vista previa GitHub</div>
         </div>
-        <p class="support-copy">Los formularios se adaptan al celular, se completan por secciones y permiten revisar las respuestas antes de confirmar.</p>
         <div id="formCards" class="form-cards"></div>
       </section>
 
@@ -247,15 +246,15 @@
     </section>
   </main>
 
-  <footer>FIBRAZO · Growth <span>Forms v0.7.12 · Drive automático · 2026</span></footer>
+  <footer>FIBRAZO · Growth <span>Forms v0.7.13 · UX formularios · 2026</span></footer>
 
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
-  <script src="forms-config.js?v=2026.10.02.4"></script>
-  <script src="app.js?v=2026.10.02.4"></script>
-  <script src="access-v03.js?v=2026.10.02.4"></script>
-  <script src="offline-v04.js?v=2026.10.02.4"></script>
-  <script src="ux-v04.js?v=2026.10.02.4"></script>
-  <script src="admin-v03.js?v=2026.10.02.4"></script>
+  <script src="forms-config.js?v=2026.10.02.5"></script>
+  <script src="app.js?v=2026.10.02.5"></script>
+  <script src="access-v03.js?v=2026.10.02.5"></script>
+  <script src="offline-v04.js?v=2026.10.02.5"></script>
+  <script src="ux-v04.js?v=2026.10.02.5"></script>
+  <script src="admin-v03.js?v=2026.10.02.5"></script>
 </body>
 </html>

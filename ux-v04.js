@@ -25,7 +25,7 @@
   renderPending();
 
   document.addEventListener("click",e=>{
-    const btn=e.target.closest(".form-card button");if(!btn)return;
+    const btn=e.target.closest(".form-card .form-open-button");if(!btn)return;
     const title=btn.closest(".form-card")?.querySelector("h3")?.textContent?.trim();
     const form=Object.values(forms).find(x=>x.name===title);if(!form)return;
     e.preventDefault();e.stopImmediatePropagation();openForm(form.id);
@@ -232,15 +232,32 @@
     $("sectionTitle").textContent=section.title;$("sectionDescription").textContent=section.description||"";$("sectionEyebrow").textContent="SECCIÓN "+(state.sectionIndex+1);$("formStepCounter").textContent=(state.sectionIndex+1)+" de "+sections.length;
     const stepper=$("sectionStepper");stepper.innerHTML="";
     stepper.style.gridTemplateColumns="repeat("+sections.length+",minmax(0,1fr))";
+    let activeStep=null;
     sections.forEach((s,i)=>{
-      const x=document.createElement("div");x.className="step"+(i===state.sectionIndex?" active":i<state.sectionIndex?" complete":" future");
-      x.innerHTML="<span>"+(i+1)+"</span>"+(i<=state.sectionIndex?"<small>"+esc(s.title)+"</small>":"");
+      const x=document.createElement("button");
+      x.type="button";
+      x.className="step"+(i===state.sectionIndex?" active":i<state.sectionIndex?" complete":" future");
+      x.innerHTML="<span>"+(i+1)+"</span><small>"+esc(s.title)+"</small>";
+      x.disabled=i>state.sectionIndex;
+      x.setAttribute("aria-current",i===state.sectionIndex?"step":"false");
+      if(i<state.sectionIndex){
+        x.title="Volver a "+s.title;
+        x.addEventListener("click",()=>{state.sectionIndex=i;renderSection();});
+      }
+      if(i===state.sectionIndex)activeStep=x;
       stepper.appendChild(x);
     });
     stepper.hidden=state.policy?.showProgress===false;
     $("formStepCounter").hidden=state.policy?.showProgress===false;
     $("prevSection").hidden=state.sectionIndex===0;const last=state.sectionIndex===sections.length-1;$("nextSection").hidden=last;$("reviewForm").hidden=!last;
-    clearValidation();updateVisibility();window.scrollTo({top:0,behavior:"smooth"});
+    clearValidation();updateVisibility();
+    requestAnimationFrame(()=>{
+      if(activeStep&&stepper.scrollWidth>stepper.clientWidth){
+        const left=Math.max(0,activeStep.offsetLeft-(stepper.clientWidth-activeStep.offsetWidth)/2);
+        stepper.scrollTo({left,behavior:"smooth"});
+      }
+    });
+    window.scrollTo({top:0,behavior:"smooth"});
   }
   function prev(){if(state.sectionIndex>0){state.sectionIndex--;renderSection();}}
   function next(){const e=validateSection(state.sectionIndex,true);if(e.length)return showValidation(e);state.sectionIndex++;renderSection();}
