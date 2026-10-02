@@ -5,18 +5,76 @@ const {
   validatePublicGuards,validatePhotos,validateSubmission,httpError,SHEET_ID,DEFAULT_DOMAIN,EXCEPTION
 }=require("./_core");
 
-const runtime={
-  CHURN:{folder:"DRIVE_CHURN_FOLDER_ID"},
-  EXPLORACION:{folder:"DRIVE_EXPLORACION_FOLDER_ID"}
+const LEGACY_PHOTO_FOLDER_ENV={
+  CHURN:"DRIVE_CHURN_FOLDER_ID",
+  EXPLORACION:"DRIVE_EXPLORACION_FOLDER_ID"
 };
+const PHOTO_ROOT_FOLDER_ID=process.env.DRIVE_FORMS_ROOT_FOLDER_ID||"0AF3Q3h3jUqsoUk9PVA";
+const photoFolderCache=new Map();
 
 const idFor=form=>`${form}-${Date.now()}-${Math.random().toString(36).slice(2,7).toUpperCase()}`;
+
+function driveQueryValue(value){return String(value||"").replace(/\\/g,"\\\\").replace(/'/g,"\\'");}
+function photoFolderName(form){
+  const source=String(form.slug||form.id||"Formulario").normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  return source
+    .split(/[^A-Za-z0-9]+/)
+    .filter(Boolean)
+    .map(part=>part.charAt(0).toUpperCase()+part.slice(1).toLowerCase())
+    .join(" ")||String(form.id||"Formulario");
+}
+
+async function resolvePhotoFolder(auth,form){
+  if(photoFolderCache.has(form.id)) return photoFolderCache.get(form.id);
+
+  const legacyEnv=LEGACY_PHOTO_FOLDER_ENV[form.id];
+  const legacyFolder=legacyEnv?String(process.env[legacyEnv]||"").trim():"";
+  if(legacyFolder){
+    photoFolderCache.set(form.id,legacyFolder);
+    return legacyFolder;
+  }
+
+  if(!PHOTO_ROOT_FOLDER_ID) throw httpError("PHOTO_ROOT_FOLDER_NOT_CONFIGURED",500);
+  const drive=google.drive({version:"v3",auth});
+  const name=photoFolderName(form);
+  const escapedName=driveQueryValue(name);
+  const escapedRoot=driveQueryValue(PHOTO_ROOT_FOLDER_ID);
+
+  const existing=await drive.files.list({
+    q:`'${escapedRoot}' in parents and name = '${escapedName}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+    fields:"files(id,name)",
+    pageSize:10,
+    corpora:"drive",
+    driveId:PHOTO_ROOT_FOLDER_ID,
+    includeItemsFromAllDrives:true,
+    supportsAllDrives:true
+  });
+  if(existing.data.files?.length){
+    const folderId=existing.data.files[0].id;
+    photoFolderCache.set(form.id,folderId);
+    return folderId;
+  }
+
+  const created=await drive.files.create({
+    requestBody:{
+      name,
+      mimeType:"application/vnd.google-apps.folder",
+      parents:[PHOTO_ROOT_FOLDER_ID],
+      appProperties:{fibrazoFormId:String(form.id||""),managedBy:"fibrazo-forms"}
+    },
+    fields:"id,name",
+    supportsAllDrives:true
+  });
+  const folderId=created.data.id;
+  if(!folderId) throw httpError("PHOTO_FOLDER_CREATE_FAILED",500);
+  photoFolderCache.set(form.id,folderId);
+  return folderId;
+}
 
 async function uploadPhotos(auth,form,id,list){
   const photos=Array.isArray(list)?list:[];
   if(!photos.length) return [];
-  const folderId=process.env[runtime[form.id]?.folder];
-  if(!folderId) throw httpError("PHOTO_FOLDER_NOT_CONFIGURED",500);
+  const folderId=await resolvePhotoFolder(auth,form);
   const drive=google.drive({version:"v3",auth});
   const links=[];
   for(let i=0;i<photos.length;i++){
@@ -73,7 +131,7 @@ function buildRow(form,p,id,links,email){
 function resolveSubmissionId(payload,formId){
   const supplied=String(payload.clientSubmissionId||"").trim();
   if(!supplied) return idFor(formId);
-  if(!/^LOCAL-(CHURN|EXPLORACION)-\d{10,}-[A-Z0-9]{4,20}$/.test(supplied)) throw httpError("INVALID_CLIENT_SUBMISSION_ID",400);
+  if(!/^LOCAL-[A-Z0-9_-]+-\d{10,}-[A-Z0-9]{4,20}$/.test(supplied)) throw httpError("INVALID_CLIENT_SUBMISSION_ID",400);
   if(!supplied.startsWith("LOCAL-"+formId+"-")) throw httpError("INVALID_CLIENT_SUBMISSION_ID",400);
   return supplied;
 }
@@ -149,7 +207,7 @@ module.exports=async(req,res)=>{
     const formId=String(payload.formId||"").toUpperCase();
     const forms=await loadForms(auth);
     const form=forms.find(item=>item.id===formId);
-    if(!form||!runtime[formId]) throw httpError("INVALID_FORM",400);
+    if(!form) throw httpError("INVALID_FORM",400);
     if(String(form.status).toLowerCase()!=="activo") throw httpError("FORM_INACTIVE",403);
 
     let user=null;
