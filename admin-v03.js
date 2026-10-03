@@ -38,7 +38,7 @@
         return '<div class="admin-permission-row" data-permission-row data-email="'+esc(a.email)+'" data-form-id="'+esc(f.id)+'">'+
           '<div class="admin-permission-form"><strong>'+esc(f.name)+'</strong><small>'+esc(f.id)+'</small></div>'+
           '<label title="Puede ver y abrir este formulario"><input type="checkbox" data-perm="canView" '+(p.canView?"checked ":"")+disabled+'> Ver</label>'+
-          '<label title="Puede editar configuración y contenido del formulario"><input type="checkbox" data-perm="canEditForm" '+(p.canEditForm?"checked ":"")+disabled+'> Editar</label>'+
+          '<label title="Puede editar estado, experiencia y evidencia del formulario; no modifica las preguntas."><input type="checkbox" data-perm="canEditForm" '+(p.canEditForm?"checked ":"")+disabled+'> Editar configuración</label>'+
           '<label title="Puede modificar accesos, publicación y permisos del formulario"><input type="checkbox" data-perm="canManagePermissions" '+(p.canManagePermissions?"checked ":"")+disabled+'> Permisos</label>'+
           '<label title="Puede abrir directamente la hoja donde se guardan las respuestas"><input type="checkbox" data-perm="canViewDatabase" '+(p.canViewDatabase?"checked ":"")+disabled+'> Base</label>'+
         '</div>';
@@ -61,7 +61,7 @@
         '<div class="admin-system-body">'+
           '<div class="admin-list-compact admin-permission-list">'+rows+'</div>'+
           '<div class="compact-add-row"><input id="newAdminEmail" type="email" placeholder="nuevo.admin@empresa.com"><button id="addAdminButton" type="button" class="secondary-button compact">Agregar administrador</button></div>'+
-          '<small>Agregar un administrador no le otorga acceso automático. Después eliges formulario por formulario qué puede ver, editar, administrar y si puede abrir la base de datos.</small>'+
+          '<small>Agregar un administrador no le otorga acceso automático. Después eliges formulario por formulario qué puede ver, editar en la configuración, administrar y si puede abrir la base de datos.</small>'+
         '</div>'+
       '</details>';
 
