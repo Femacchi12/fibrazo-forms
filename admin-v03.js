@@ -1,7 +1,7 @@
 (() => {
   const $=id=>document.getElementById(id);
   const nav=$("adminNavButton"),view=$("adminView"),host=$("adminForms"),globalHost=$("adminGlobal"),status=$("adminStatus");
-  let items=[],admins=[],openId=null;
+  let items=[],admins=[],openId=null,adminMeta={baseAdmin:false,canCreateForms:false,canManageUsers:false};
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
   const current=()=>window.firebase?.auth?.().currentUser||null;
   async function tok(){const u=current();if(!u)throw new Error("AUTH_REQUIRED");return u.getIdToken();}
@@ -11,7 +11,7 @@
 
   function forceForms(){
     nav.hidden=true;view.hidden=true;host.innerHTML="";if(globalHost)globalHost.innerHTML="";
-    items=[];admins=[];openId=null;
+    items=[];admins=[];openId=null;adminMeta={baseAdmin:false,canCreateForms:false,canManageUsers:false};
     if(window.FIBRAZO_SET_VIEW)window.FIBRAZO_SET_VIEW("forms");
   }
 
@@ -20,37 +20,91 @@
       const r=await fetch("/api/admin",{headers:{Authorization:"Bearer "+await tok()},cache:"no-store"});
       if(r.status===403){forceForms();return;}
       const j=await r.json();if(!r.ok)throw new Error(j.error||"No se pudo cargar administración.");
-      nav.hidden=false;items=j.forms||[];admins=j.admins||[];renderGlobal();renderForms();
+      nav.hidden=false;items=j.forms||[];admins=j.admins||[];adminMeta={baseAdmin:!!j.baseAdmin,canCreateForms:!!j.canCreateForms,canManageUsers:!!j.canManageUsers};renderGlobal();renderForms();
     }catch(_){forceForms();}
   }
 
   function renderGlobal(){
     if(!globalHost)return;
-    const rows=admins.map(a=>
-      '<div class="admin-person-row"><div><strong>'+esc(a.email)+'</strong><small>'+(a.base?'Administrador base':'Administrador agregado')+'</small></div>'+
-      (a.base?'<span class="base-badge">BASE</span>':'<button type="button" class="icon-action danger" data-remove-admin="'+esc(a.email)+'">Quitar</button>')+
-      '</div>'
-    ).join("");
+    if(!adminMeta.canManageUsers){
+      globalHost.hidden=true;globalHost.innerHTML="";return;
+    }
+    globalHost.hidden=false;
+    const rows=admins.map(a=>{
+      const permissionMap=Object.fromEntries((a.permissions||[]).map(p=>[p.formId,p]));
+      const formRows=items.map(f=>{
+        const p=permissionMap[f.id]||{canView:false,canEditForm:false,canManagePermissions:false,canViewDatabase:false};
+        const disabled=a.base?" disabled":"";
+        return '<div class="admin-permission-row" data-permission-row data-email="'+esc(a.email)+'" data-form-id="'+esc(f.id)+'">'+
+          '<div class="admin-permission-form"><strong>'+esc(f.name)+'</strong><small>'+esc(f.id)+'</small></div>'+
+          '<label title="Puede ver y abrir este formulario"><input type="checkbox" data-perm="canView" '+(p.canView?"checked ":"")+disabled+'> Ver</label>'+
+          '<label title="Puede editar configuración y contenido del formulario"><input type="checkbox" data-perm="canEditForm" '+(p.canEditForm?"checked ":"")+disabled+'> Editar</label>'+
+          '<label title="Puede modificar accesos, publicación y permisos del formulario"><input type="checkbox" data-perm="canManagePermissions" '+(p.canManagePermissions?"checked ":"")+disabled+'> Permisos</label>'+
+          '<label title="Puede abrir directamente la hoja donde se guardan las respuestas"><input type="checkbox" data-perm="canViewDatabase" '+(p.canViewDatabase?"checked ":"")+disabled+'> Base</label>'+
+        '</div>';
+      }).join("");
+      return '<details class="admin-person-permissions" '+(a.base?"":"")+'>'+
+        '<summary><div><strong>'+esc(a.email)+'</strong><small>'+(a.base?"Administrador base":"Administrador por permisos")+'</small></div>'+
+          (a.base?'<span class="base-badge">BASE</span>':'<span class="count-badge">'+(a.permissions||[]).filter(p=>p.canView).length+' formularios</span>')+
+        '</summary>'+
+        '<div class="admin-person-permission-body">'+
+          '<label class="compact-toggle-row admin-create-toggle"><div><strong>Crear formularios</strong><small>Habilita la creación de nuevos formularios desde el dashboard cuando el constructor esté disponible.</small></div><span class="switch"><input type="checkbox" data-user-create="'+esc(a.email)+'" '+(a.canCreateForms?"checked ":"")+(a.base?"disabled":"")+'><i></i></span></label>'+
+          '<div class="admin-permission-grid">'+formRows+'</div>'+
+          (a.base?"":'<button type="button" class="icon-action danger" data-remove-admin="'+esc(a.email)+'">Quitar administrador</button>')+
+        '</div>'+
+      '</details>';
+    }).join("");
+
     globalHost.innerHTML=
-      '<details class="admin-system-card">'+
-        '<summary><div><span>ADMINISTRADORES</span><strong>Administradores del sistema</strong></div><div class="summary-right"><b>'+admins.length+' activos</b><i>⌄</i></div></summary>'+
+      '<details class="admin-system-card" open>'+
+        '<summary><div><span>ADMINISTRADORES</span><strong>Permisos por formulario</strong></div><div class="summary-right"><b>'+admins.length+' activos</b><i>⌄</i></div></summary>'+
         '<div class="admin-system-body">'+
-          '<div class="admin-list-compact">'+rows+'</div>'+
+          '<div class="admin-list-compact admin-permission-list">'+rows+'</div>'+
           '<div class="compact-add-row"><input id="newAdminEmail" type="email" placeholder="nuevo.admin@empresa.com"><button id="addAdminButton" type="button" class="secondary-button compact">Agregar administrador</button></div>'+
-          '<small>Los administradores base están protegidos. Los administradores agregados tienen acceso total a formularios, resultados y configuración.</small>'+
+          '<small>Agregar un administrador no le otorga acceso automático. Después eliges formulario por formulario qué puede ver, editar, administrar y si puede abrir la base de datos.</small>'+
         '</div>'+
       '</details>';
 
     globalHost.querySelector("#addAdminButton")?.addEventListener("click",addAdmin);
     globalHost.querySelector("#newAdminEmail")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addAdmin();}});
     globalHost.querySelectorAll("[data-remove-admin]").forEach(btn=>btn.addEventListener("click",()=>removeAdmin(btn.dataset.removeAdmin)));
+    globalHost.querySelectorAll("[data-user-create]").forEach(input=>input.addEventListener("change",()=>updateUserSetting(input.dataset.userCreate,input.checked)));
+    globalHost.querySelectorAll("[data-permission-row] input[data-perm]").forEach(input=>input.addEventListener("change",()=>updateFormPermission(input.closest("[data-permission-row]"))));
   }
-
   async function adminMutation(action,email){
     const r=await fetch("/api/admin",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await tok()},body:JSON.stringify({adminAction:action,email})});
     const j=await r.json();if(!r.ok)throw new Error(j.error||"No se pudo actualizar administradores.");
     admins=j.admins||[];renderGlobal();
   }
+  async function updateUserSetting(email,canCreateForms){
+    const currentAdmin=admins.find(a=>a.email===email);
+    msg("Actualizando permisos de usuario…");
+    try{
+      const r=await fetch("/api/admin",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await tok()},body:JSON.stringify({
+        userSettingsAction:"set",email,canCreateForms,canManageUsers:!!currentAdmin?.canManageUsers
+      })});
+      const j=await r.json();if(!r.ok)throw new Error(j.error||"No se pudo actualizar el usuario.");
+      admins=j.admins||[];renderGlobal();msg("Permiso global actualizado.","success");
+    }catch(e){msg(e.message||"No se pudo actualizar.","error");renderGlobal();}
+  }
+
+  async function updateFormPermission(row){
+    if(!row)return;
+    const email=row.dataset.email,formId=row.dataset.formId;
+    const read=key=>!!row.querySelector('[data-perm="'+key+'"]')?.checked;
+    let canView=read("canView"),canEditForm=read("canEditForm"),canManagePermissions=read("canManagePermissions"),canViewDatabase=read("canViewDatabase");
+    if(canEditForm||canManagePermissions||canViewDatabase)canView=true;
+    if(canManagePermissions)canViewDatabase=true;
+    msg("Actualizando permiso de "+formId+"…");
+    try{
+      const r=await fetch("/api/admin",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await tok()},body:JSON.stringify({
+        permissionAction:"set",email,formId,canView,canEditForm,canManagePermissions,canViewDatabase
+      })});
+      const j=await r.json();if(!r.ok)throw new Error(j.error||"No se pudo actualizar el permiso.");
+      admins=j.admins||[];renderGlobal();msg("Permisos de "+formId+" actualizados.","success");
+    }catch(e){msg(e.message||"No se pudo actualizar.","error");renderGlobal();}
+  }
+
   async function addAdmin(){
     const input=globalHost?.querySelector("#newAdminEmail"),email=String(input?.value||"").trim().toLowerCase();
     if(!validEmail(email)){msg("Ingresa un correo válido para el nuevo administrador.","error");return;}
