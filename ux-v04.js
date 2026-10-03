@@ -90,6 +90,12 @@
 
     const intro=$("formIntroMessage");
     if(intro){intro.textContent=policy.introMessage||"";intro.hidden=!policy.introMessage;}
+    const databaseLink=$("formDatabaseLink");
+    if(databaseLink){
+      const showDatabase=!publicMode&&!!policy.canViewDatabase&&!!policy.databaseUrl;
+      databaseLink.hidden=!showDatabase;
+      databaseLink.href=showDatabase?policy.databaseUrl:"#";
+    }
 
     $("dynamicFields").innerHTML="";
     shuffledFields(form,!!policy.shuffleQuestions).forEach(field=>$("dynamicFields").appendChild(renderField(field)));
