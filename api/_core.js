@@ -209,7 +209,8 @@ function validateSubmission(formId,payload){
 
     if(formId==="EXPLORACION"&&!digits(d.anio_imagen,4)) throw httpError("INVALID_STREETVIEW_YEAR",400);
     if(formId==="EXPLORACION_PRESENCIAL"){
-      one(d.municipio,["Bucaramanga","Floridablanca","Girón","Piedecuesta"],"INVALID_MUNICIPALITY");
+      if(!String(d.municipio||"").trim()) throw httpError("INVALID_MUNICIPALITY",400);
+      short(d.municipio,120,"TEXT_TOO_LONG");
     }
 
     for(const key of ["condicion_fisica_posteria","condicion_ocupacion_tendido"]){
