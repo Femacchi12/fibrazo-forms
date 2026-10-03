@@ -141,6 +141,14 @@
     }catch(_){return null;}
   }
 
+  function usableCachedAccess(email,maxAgeMs=7*24*60*60*1000){
+    const cached=cachedAccessFor(email);
+    if(!cached)return null;
+    const updatedAt=Number(cached.updatedAt||0);
+    if(!updatedAt||Date.now()-updatedAt>maxAgeMs)return null;
+    return cached;
+  }
+
   async function authorizeDashboard(user){
     const email=String(user?.email||"").toLowerCase();
     try{
@@ -158,14 +166,12 @@
       try{localStorage.setItem("fibrazoFormsAccessCache",JSON.stringify({email,access,policies,updatedAt:Date.now()}));}catch(_){}
       return {ok:true};
     }catch(_){
-      if(!navigator.onLine){
-        const cached=cachedAccessFor(email);
-        if(cached){
-          window.FIBRAZO_ACCESS=cached.access;
-          window.FIBRAZO_FORM_POLICIES=cached.policies||{};
-          window.FIBRAZO_ACCESS_BOOTSTRAPPED_EMAIL=email;
-          return {ok:true,offline:true};
-        }
+      const cached=usableCachedAccess(email);
+      if(cached){
+        window.FIBRAZO_ACCESS=cached.access;
+        window.FIBRAZO_FORM_POLICIES=cached.policies||{};
+        window.FIBRAZO_ACCESS_BOOTSTRAPPED_EMAIL=email;
+        return {ok:true,offline:!navigator.onLine,cached:true};
       }
       return {ok:false,network:true};
     }
@@ -243,13 +249,12 @@
     }
     const authorization=await authorizeDashboard(user);
     if(!authorization.ok){
-      await auth.signOut();
-      showGate(
-        authorization.denied
-          ? "Esta cuenta no tiene acceso habilitado al dashboard."
-          : "No se pudo validar el acceso. Revisa la conexión e inténtalo nuevamente.",
-        true
-      );
+      if(authorization.denied){
+        await auth.signOut();
+        showGate("Esta cuenta no tiene acceso habilitado al dashboard.",true);
+      }else{
+        showGate("Tu sesión sigue guardada, pero no pudimos validar los permisos por un problema de conexión. Reintenta cuando vuelva la red.",false);
+      }
       return;
     }
     showDashboard(user);
