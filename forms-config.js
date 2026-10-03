@@ -93,7 +93,7 @@ window.FIBRAZO_FORMS = {
     ],
     fields: [
       {key:"coordenadas",section:"ubicacion",label:"Ubicación actual",type:"gps",required:true,full:true,manualEdit:true,help:"Toma la ubicación con el GPS. Si es necesario, puedes corregir manualmente la coordenada antes de continuar."},
-      {key:"municipio",section:"ubicacion",label:"Municipio",type:"select",required:true,options:["Bucaramanga","Floridablanca","Girón","Piedecuesta"],autoCity:true,help:"Se completa automáticamente según la coordenada detectada, pero puedes corregirlo manualmente."},
+      {key:"municipio",section:"ubicacion",label:"Municipio / ciudad",type:"text",required:true,autoCity:true,help:"Se completa automáticamente según la coordenada detectada. Puedes corregirlo manualmente si es necesario; el formulario sirve para relevamientos en cualquier ciudad."},
       {key:"sector_barrio",section:"ubicacion",label:"Sector / barrio",type:"text",help:"Opcional. Registra el barrio o sector si ayuda a identificar el punto."},
 
       {key:"condicion_ocupacion_tendido",section:"infraestructura",label:"Condición de ocupación del tendido",type:"segmented",required:true,options:["1","2","3","4","5"],details:{"1":"Crítica / saturada","2":"Alta ocupación","3":"Ocupación media","4":"Baja ocupación","5":"Muy baja ocupación / óptima"},help:"Selecciona una opción del 1 al 5. Debajo verás el significado de la opción elegida."},
