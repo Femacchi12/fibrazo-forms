@@ -718,14 +718,25 @@
   async function resolveExplorationMunicipality(lat,lng,key="coordenadas"){
     const status=document.querySelector('[data-gps-city-for="'+css(key)+'"]');
     const fallback=detectAmbMunicipalityOffline(lat,lng);
+    state.geoLookupCancelled=false;
+    state.geoController?.abort();
+    const municipalityController=new AbortController();
+    state.geoController=municipalityController;
     if(status)status.textContent=navigator.onLine?"Municipio: identificando…":(fallback?"Municipio aprox.: "+fallback:"Municipio: sin conexión");
+    if(navigator.onLine)geoStatus("Identificando municipio…",{busy:true});
     let resolved="";
     if(navigator.onLine){
-      const raw=await reverseGeocodeCity(lat,lng);
+      const raw=await reverseGeocodeCity(lat,lng,municipalityController.signal);
+      if(state.geoLookupCancelled||municipalityController.signal.aborted){
+        if(state.geoController===municipalityController)state.geoController=null;
+        return "";
+      }
       if(raw){resolved=raw;applyDetectedCity(raw,"reverse-geocode");}
     }
+    if(state.geoController===municipalityController)state.geoController=null;
     if(!resolved&&fallback){resolved=fallback;applyDetectedCity(fallback,"aproximado");}
     if(!resolved&&status)status.textContent="Municipio: puedes corregirlo manualmente";
+    if(state.geoLookupCancelled)return resolved||fallback||"";
     await queryExplorationEnrichment(lat,lng,resolved||fallback||"");
     return resolved||fallback||"";
   }
@@ -745,12 +756,14 @@
     return best?.name||"";
   }
 
-  async function reverseGeocodeCity(lat,lng){
+  async function reverseGeocodeCity(lat,lng,externalSignal=null){
     if(!navigator.onLine)return"";
-    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),5500);
+    const controller=externalSignal?null:new AbortController();
+    const signal=externalSignal||controller.signal;
+    const timer=setTimeout(()=>{if(controller)controller.abort();},5500);
     try{
       const url="https://api.bigdatacloud.net/data/reverse-geocode-client?latitude="+encodeURIComponent(lat)+"&longitude="+encodeURIComponent(lng)+"&localityLanguage=es";
-      const response=await fetch(url,{signal:controller.signal});
+      const response=await fetch(url,{signal});
       if(!response.ok)return"";
       const data=await response.json();
       return String(data.city||data.locality||"").trim();
