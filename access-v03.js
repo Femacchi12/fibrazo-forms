@@ -34,10 +34,11 @@
     const items=payload.forms||[];
     window.FIBRAZO_ACCESS=Object.fromEntries(items.map(item=>[item.id,item.canAccess]));
     window.FIBRAZO_FORM_POLICIES=Object.fromEntries(items.map(item=>[item.id,item]));
+    window.FIBRAZO_ACCESS_META={admin:!!payload.admin,baseAdmin:!!payload.baseAdmin,canCreateForms:!!payload.canCreateForms,canManageUsers:!!payload.canManageUsers,email};
     window.FIBRAZO_ACCESS_BOOTSTRAPPED_EMAIL=email;
     try{
       localStorage.setItem(ACCESS_CACHE_KEY,JSON.stringify({
-        email,access:window.FIBRAZO_ACCESS,policies:window.FIBRAZO_FORM_POLICIES,updatedAt:Date.now()
+        email,access:window.FIBRAZO_ACCESS,policies:window.FIBRAZO_FORM_POLICIES,meta:window.FIBRAZO_ACCESS_META,updatedAt:Date.now()
       }));
     }catch(_){}
     annotate();
@@ -50,6 +51,7 @@
       if(!cached||cached.email!==email||!cached.access)return false;
       window.FIBRAZO_ACCESS=cached.access;
       window.FIBRAZO_FORM_POLICIES=cached.policies||{};
+      window.FIBRAZO_ACCESS_META=cached.meta||window.FIBRAZO_ACCESS_META||{};
       annotate();return true;
     }catch(_){return false;}
   }
@@ -80,7 +82,7 @@
   window.firebase?.auth?.().onAuthStateChanged(user=>{
     if(user){loadCached();setTimeout(load,120);}
     else{
-      window.FIBRAZO_ACCESS={};window.FIBRAZO_FORM_POLICIES={};window.FIBRAZO_ACCESS_BOOTSTRAPPED_EMAIL="";
+      window.FIBRAZO_ACCESS={};window.FIBRAZO_FORM_POLICIES={};window.FIBRAZO_ACCESS_META={};window.FIBRAZO_ACCESS_BOOTSTRAPPED_EMAIL="";
     }
   });
 })();
