@@ -132,6 +132,7 @@
     else if(field.type==="radio"||field.type==="checkbox"){wrap.appendChild(choiceInput(field));}
     else if(field.type==="gps"){wrap.appendChild(gpsInput(field));}
     else if(field.type==="coordinates"){wrap.appendChild(coordinatesInput(field));}
+    else if(field.type==="isp-autocomplete"){wrap.appendChild(ispAutocompleteInput(field));}
     else if(field.type==="photos"){wrap.appendChild(photoInput(field));}
 
     const err=document.createElement("div");err.className="field-error";err.dataset.errorFor=field.key;err.hidden=true;wrap.appendChild(err);
@@ -283,7 +284,7 @@
       const geo=document.createElement("div");geo.className="geo-enrichment";geo.dataset.geoEnrichment="1";geo.hidden=true;
       const txt=document.createElement("span");txt.dataset.geoEnrichmentText="1";
       const stop=document.createElement("button");stop.type="button";stop.className="secondary-button compact";stop.textContent="Detener búsqueda";
-      stop.dataset.geoStop="1";stop.addEventListener("click",()=>cancelGeoLookup("Búsqueda detenida. Puedes continuar y completar Barrio/Estrato manualmente."));
+      stop.dataset.geoStop="1";stop.addEventListener("click",handleGeoAction);
       geo.append(txt,stop);box.appendChild(geo);
     }
     return box;
@@ -306,7 +307,7 @@
     const geo=document.createElement("div");geo.className="geo-enrichment";geo.dataset.geoEnrichment="1";geo.hidden=true;
     const txt=document.createElement("span");txt.dataset.geoEnrichmentText="1";
     const stop=document.createElement("button");stop.type="button";stop.className="secondary-button compact";stop.textContent="Detener búsqueda";stop.dataset.geoStop="1";
-    stop.addEventListener("click",()=>cancelGeoLookup("Búsqueda detenida. Puedes continuar y completar Barrio/Estrato manualmente."));
+    stop.addEventListener("click",handleGeoAction);
     geo.append(txt,stop);
     box.append(input,status,geo);return box;
   }
@@ -378,6 +379,16 @@
   function prev(){if(state.sectionIndex>0){state.sectionIndex--;renderSection();}}
   function next(){const e=validateSection(state.sectionIndex,true);if(e.length)return showValidation(e);state.sectionIndex++;renderSection();}
 
+  function hasExplorationOperator(){
+    if(!isExplorationForm())return true;
+    const incumbent=["tigo_hfc","tigo_ftth","claro_hfc","claro_ftth","movistar"].some(key=>String(fieldValue(key)||"")==="Sí");
+    const isp=["isp_1","isp_2","isp_3","isp_4"].some(key=>{
+      const value=String(fieldValue(key)||"").trim();
+      return value&&value!=="Sin ISP";
+    });
+    return incumbent||isp;
+  }
+
   function validateField(field){
     if(field.type==="gps")return field.required&&!state.gps?"Debes tomar la ubicación antes de continuar.":"";
     if(field.type==="coordinates")return field.required&&!state.gps?"Pega una coordenada válida en formato latitud, longitud.":"";
@@ -391,7 +402,16 @@
   }
   function validateSection(index,paint){
     const section=activeSections()[index];if(!section)return[];const errors=[];
-    state.form.fields.filter(f=>f.section===section.id&&conditionMet(f)).forEach(f=>{const m=validateField(f);if(m){errors.push({field:f,message:m});if(paint)setError(f.key,m);}else if(paint)clearError(f.key);});return errors;
+    state.form.fields.filter(f=>f.section===section.id&&conditionMet(f)).forEach(f=>{const m=validateField(f);if(m){errors.push({field:f,message:m});if(paint)setError(f.key,m);}else if(paint)clearError(f.key);});
+    if(isExplorationForm()&&section.id==="operadores"&&!hasExplorationOperator()){
+      const target=state.form.fields.find(f=>f.key==="isp_1")||state.form.fields.find(f=>f.section==="operadores");
+      if(target){
+        const message="Selecciona al menos un operador incumbente o un ISP antes de continuar.";
+        errors.push({field:target,message});
+        if(paint)setError(target.key,message);
+      }
+    }
+    return errors;
   }
   function validateAll(){return activeSections().flatMap((s,i)=>validateSection(i,false));}
   function setError(key,msg){const f=document.querySelector('[data-key="'+css(key)+'"]'),e=document.querySelector('[data-error-for="'+css(key)+'"]');f?.classList.add("invalid");if(e){e.textContent=msg;e.hidden=false;}}
@@ -613,20 +633,36 @@
     return {lat,lng};
   }
 
-  function geoStatus(message,{busy=false,hidden=false}={}){
+  function geoStatus(message,{busy=false,hidden=false,retry=false}={}){
     const box=document.querySelector("[data-geo-enrichment='1']");
     const text=box?.querySelector("[data-geo-enrichment-text='1']");
     const stop=box?.querySelector("[data-geo-stop='1']");
     if(!box)return;
     box.hidden=hidden;
     if(text)text.textContent=message||"";
-    if(stop)stop.hidden=!busy;
+    if(stop){
+      stop.hidden=!(busy||retry);
+      stop.textContent=busy?"Detener búsqueda":"Reintentar búsqueda";
+      stop.dataset.geoMode=busy?"stop":"retry";
+    }
+  }
+
+  function handleGeoAction(){
+    const mode=this?.dataset?.geoMode||"stop";
+    if(mode==="retry")return restartGeoLookup();
+    cancelGeoLookup("Búsqueda detenida. Puedes continuar manualmente o reiniciarla.");
   }
 
   function cancelGeoLookup(message="Búsqueda detenida. Puedes continuar."){
     state.geoLookupCancelled=true;
     state.geoController?.abort();state.geoController=null;
-    geoStatus(message,{busy:false});
+    geoStatus(message,{busy:false,retry:true});
+  }
+
+  function restartGeoLookup(){
+    if(!state.gps)return;
+    state.geoLookupCancelled=false;
+    return resolveExplorationMunicipality(state.gps.lat,state.gps.lng,"coordenadas");
   }
 
   function setGeoField(key,value){
@@ -641,7 +677,7 @@
   }
 
   async function queryExplorationEnrichment(lat,lng,cityHint=""){
-    if(!navigator.onLine){geoStatus("Sin conexión · puedes continuar y completar Barrio/Estrato manualmente.",{busy:false});return null;}
+    if(!navigator.onLine){geoStatus("Sin conexión · puedes continuar y completar Barrio/Estrato manualmente.",{busy:false,retry:true});return null;}
     const lookupId=++state.geoLookupId;
     state.geoLookupCancelled=false;
     state.geoController?.abort();
@@ -659,7 +695,7 @@
       if(lookupId!==state.geoLookupId||state.geoLookupCancelled)return null;
       if(data.city)applyDetectedCity(data.city,"geografia");
       setGeoField("sector_barrio",data.barrio||"");
-      setGeoField("estrato",data.estrato||"");
+      setGeoField("estrato",data.estrato||"Sin información");
       state.ispOptions=Array.isArray(data.isps)?data.isps:[];
       refreshIspSuggestions();
       const parts=[];
@@ -671,7 +707,7 @@
     }catch(error){
       if(lookupId!==state.geoLookupId)return null;
       const stopped=state.geoLookupCancelled||error?.name==="AbortError";
-      geoStatus(stopped?"Búsqueda detenida o sin respuesta. Puedes continuar manualmente.":"No se pudo completar la búsqueda automática. Puedes continuar manualmente.",{busy:false});
+      geoStatus(stopped?"Búsqueda detenida o sin respuesta. Puedes continuar manualmente o reintentar.":"No se pudo completar la búsqueda automática. Puedes continuar manualmente o reintentar.",{busy:false,retry:true});
       return null;
     }finally{
       clearTimeout(timer);
