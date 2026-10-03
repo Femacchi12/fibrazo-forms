@@ -139,7 +139,7 @@ function buildRow(form,p,id,links,email){
     d.tigo_hfc||"",d.tigo_ftth||"",d.claro_hfc||"",d.claro_ftth||"",d.movistar||"",
     rawIsp(d.isp_1),rawIsp(d.isp_2),rawIsp(d.isp_3),rawIsp(d.isp_4),d.nota||"",
     l.lat||"",l.lng||"",l.accuracy||"",maps,links[0]||"",links[1]||"",links[2]||"",
-    email||"ANONIMO","0.8.5",tipo,d.link_evidencia||""
+    email||"ANONIMO","0.8.6",tipo,d.link_evidencia||""
   ];
 }
 
@@ -215,14 +215,7 @@ function matchMasterPolygon(lon,lat,polygons){
     if(lon<p.minLon||lon>p.maxLon||lat<p.minLat||lat>p.maxLat)continue;
     if(pointInPolygon(lon,lat,p.rings))return{polygon:p,distance:0,method:"Dentro del polígono"};
   }
-  const candidates=polygons.map(p=>({p,min:bboxDistance(lon,lat,p)})).sort((a,b)=>a.min-b.min);
-  let best=null,bestDistance=Infinity;
-  for(const item of candidates){
-    if(item.min>bestDistance)break;
-    const d=polygonDistance(lon,lat,item.p.rings);
-    if(d<bestDistance){best=item.p;bestDistance=d;}
-  }
-  return best?{polygon:best,distance:Math.round(bestDistance*10)/10,method:"Más cercano"}:null;
+  return null;
 }
 
 function nextSequence(values,re){
@@ -293,18 +286,17 @@ async function syncExplorationMaster(auth,form,payload,links){
   }
 
   const sheets=google.sheets({version:"v4",auth});
-  const polygons=await loadMasterPolygons(sheets),geo=matchMasterPolygon(lon,lat,polygons);
-  if(!geo)return{ok:false,reason:"NO_POLYGON_DATA",project:"BUCARAMANGA_AMB"};
+  const [polygons,barrios]=await Promise.all([loadMasterPolygons(sheets),loadMasterBarrios(sheets)]);
+  const geo=matchMasterPolygon(lon,lat,polygons);
+  const barrio=matchMasterBarrio(lon,lat,barrios);
+  const projectMunicipality=String(geo?.polygon?.municipio||barrio?.municipio||observedMunicipality||"").trim();
 
-  if(geo.method==="Más cercano"&&Number(geo.distance)>5000){
+  if(!isAmbMunicipality(projectMunicipality)){
     return{
       ok:true,scope:"GLOBAL_ONLY",project:"GENERAL",reason:"GLOBAL_ONLY",
-      municipio:d.municipio||l.cityDetected||"",distance:geo.distance
+      municipio:projectMunicipality||observedMunicipality
     };
   }
-
-  const barrios=await loadMasterBarrios(sheets);
-  const barrio=matchMasterBarrio(lon,lat,barrios);
 
   const [pointIds,compIds]=await Promise.all([
     sheets.spreadsheets.values.get({spreadsheetId:MASTER_SHEET_ID,range:"01_PUNTOS_RELEVAMIENTO!A2:A"}),
@@ -318,7 +310,7 @@ async function syncExplorationMaster(auth,form,payload,links){
   const estado=form.id==="EXPLORACION"?"Virtual":"Validado en campo";
   const evidence=form.id==="EXPLORACION"?(d.link_evidencia||""):(links.join(" | ")||"");
   const imageLink=form.id==="EXPLORACION"?(d.link_evidencia||""):(links[0]||"");
-  const municipioObservado=d.municipio||l.cityDetected||geo.polygon.municipio||"";
+  const municipioObservado=d.municipio||l.cityDetected||projectMunicipality||"";
   const accuracy=Number.isFinite(Number(l.accuracy))?Math.round(Number(l.accuracy)*10)/10:"";
 
   await sheets.spreadsheets.values.batchUpdate({
@@ -329,7 +321,7 @@ async function syncExplorationMaster(auth,form,payload,links){
       ]]},
       {range:`01_PUNTOS_RELEVAMIENTO!K${nextRow}:Y${nextRow}`,values:[[
         accuracy,
-        geo.polygon.id,geo.polygon.municipio,Number(geo.polygon.estrato),geo.distance,geo.method,
+        geo?.polygon?.id||"",geo?.polygon?.municipio||projectMunicipality,geo?.polygon?.estrato||"Sin información",geo?0:"",geo?"Dentro del polígono":"Sin coincidencia",
         Number(d.condicion_fisica_posteria),Number(d.condicion_ocupacion_tendido),d.nota||"",
         evidence,estado,now,barrio?.id||"",barrio?.barrio||"",imageLink
       ]]}
@@ -367,8 +359,8 @@ async function syncExplorationMaster(auth,form,payload,links){
   }
   return{
     ok:true,scope:"PROJECT",project:"BUCARAMANGA_AMB",pointId,
-    municipio:geo.polygon.municipio,estrato:geo.polygon.estrato,
-    barrio:barrio?.barrio||"",method:geo.method,distance:geo.distance,imageLink
+    municipio:projectMunicipality,estrato:geo?.polygon?.estrato||"Sin información",
+    barrio:barrio?.barrio||"",method:geo?"Dentro del polígono":"Sin coincidencia",distance:geo?0:"",imageLink
   };
 }
 
@@ -522,6 +514,14 @@ module.exports=async(req,res)=>{
         masterSync={ok:false,reason};
       }
       if(rawRow){
+        if(!String(payload.data?.sector_barrio||"").trim()&&masterSync?.barrio){
+          await sheets.spreadsheets.values.update({
+            spreadsheetId:SHEET_ID,
+            range:`${form.sheet}!D${rawRow}`,
+            valueInputOption:"RAW",
+            requestBody:{values:[[String(masterSync.barrio)]]}
+          });
+        }
         const project=masterSync?.project||"GENERAL";
         const processState=masterSync?.ok
           ?(masterSync?.scope==="GLOBAL_ONLY"?"REGISTRADO_GLOBAL":"PROCESADO_PROYECTO")
