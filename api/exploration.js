@@ -80,7 +80,7 @@ async function loadGeo(auth){
     expires:now+10*60*1000,
     bgfBarrios:bb.map(r=>({id:r[0],city:r[2],name:r[3],minLon:num(r[4]),minLat:num(r[5]),maxLon:num(r[6]),maxLat:num(r[7]),polygons:parseWkt(r[8])})).filter(x=>x.id&&x.polygons.length),
     bgfEstratos:be.map(r=>({id:r[0],city:r[1],estrato:String(r[2]||""),minLon:num(r[4]),minLat:num(r[5]),maxLon:num(r[6]),maxLat:num(r[7]),polygons:parseWkt(r[8])})).filter(x=>x.id&&/^[1-6]$/.test(x.estrato)&&x.polygons.length),
-    territorialBarrios:tb.map(r=>({id:r[0],city:r[1],name:r[2],preferred:r[13]===true||String(r[13]).toUpperCase()==="TRUE",source:r[10]||r[9]||"",minLon:num(r[15]),minLat:num(r[16]),maxLon:num(r[17]),maxLat:num(r[18]),polygons:parseWkt(r[14])})).filter(x=>x.id&&x.polygons.length).sort((a,b)=>Number(b.preferred)-Number(a.preferred)),
+    territorialBarrios:tb.map(r=>({id:r[0],city:r[1],name:r[2],preferred:r[13]===true||String(r[13]).toUpperCase()==="TRUE",source:r[10]||r[9]||"",minLon:num(r[15]),minLat:num(r[16]),maxLon:num(r[17]),maxLat:num(r[18]),polygons:parseWkt(r[14])})).filter(x=>x.id&&x.polygons.length&&x.preferred),
     operators:ops,
     presence:pres
   };
