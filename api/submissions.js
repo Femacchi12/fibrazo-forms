@@ -288,8 +288,9 @@ async function syncExplorationMaster(auth,form,payload,links){
       geo.polygon.municipio,Number(geo.polygon.estrato),d.sector_barrio||"",fuente,evidence
     ]);
     await sheets.spreadsheets.values.append({
-      spreadsheetId:MASTER_SHEET_ID,range:"02_COMPETENCIA_PUNTO!A:N",
-      valueInputOption:"USER_ENTERED",insertDataOption:"INSERT_ROWS",requestBody:{values:rows}
+      spreadsheetId:MASTER_SHEET_ID,range:"02_COMPETENCIA_PUNTO!A:I",
+      valueInputOption:"USER_ENTERED",insertDataOption:"INSERT_ROWS",
+      requestBody:{values:rows.map(row=>row.slice(0,9))}
     });
   }
   return{ok:true,pointId,municipio:geo.polygon.municipio,estrato:geo.polygon.estrato,method:geo.method,distance:geo.distance};
