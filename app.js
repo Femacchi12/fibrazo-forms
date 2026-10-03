@@ -65,6 +65,7 @@
 
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
+  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
   const canonicalFormRoute=resolveCanonicalFormRoute();
   let authInFlight = false;
   let authPopupWatchdog = null;
