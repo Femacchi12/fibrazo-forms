@@ -134,7 +134,17 @@
   }
 
   function textInput(field){
-    const i=document.createElement("input");i.type="text";i.name=field.key;i.addEventListener("input",()=>{clearError(field.key);updateVisibility();});return i;
+    const i=document.createElement("input");i.type="text";i.name=field.key;
+    i.addEventListener("input",()=>{
+      if(state.form?.id==="EXPLORACION_PRESENCIAL"&&field.key==="municipio"){
+        const city=String(i.value||"").trim();
+        state.detectedCity=city;state.citySource="manual";
+        if(state.gps){state.gps.cityDetected=city;state.gps.citySource="manual";}
+        const status=document.querySelector('[data-gps-city-for="coordenadas"]');
+        if(status)status.textContent=city?"Municipio: "+city+" · corregido manualmente":"Municipio: pendiente";
+      }
+      clearError(field.key);updateVisibility();
+    });return i;
   }
   function numericInput(field){
     const shell=document.createElement("div");shell.className="input-affix";
@@ -434,7 +444,13 @@
     if(title)title.textContent="Encuesta completada correctamente";
     if(message)message.textContent=state.policy?.completionMessage||"La información fue guardada correctamente.";
     if(statusTitle)statusTitle.textContent="Todo correcto";
-    if(statusDetail)statusDetail.textContent=isExplorationForm()?"La respuesta quedó guardada y sincronizada con la base maestra.":"La respuesta quedó guardada correctamente.";
+    if(statusDetail){
+      if(isExplorationForm()&&result?.masterSync?.scope==="GLOBAL_ONLY"){
+        statusDetail.textContent="La respuesta quedó guardada correctamente en el registro general. No se asignó a un proyecto geográfico específico.";
+      }else{
+        statusDetail.textContent=isExplorationForm()?"La respuesta quedó guardada y procesada en el proyecto geográfico correspondiente.":"La respuesta quedó guardada correctamente.";
+      }
+    }
     if(isExplorationForm()&&result?.masterSync?.pointId&&pointWrap&&point){
       pointWrap.hidden=false;point.textContent=result.masterSync.pointId;
     }
@@ -505,22 +521,25 @@
     if(state.gps){state.gps.cityDetected=city;state.gps.citySource=source;}
     const status=document.querySelector('[data-gps-city-for="coordenadas"]');
     if(status)status.textContent=(isExplorationForm()?"Municipio: ":"Ciudad GPS: ")+city;
-    const selectKey=state.form?.id==="CHURN"?"ciudad":state.form?.id==="EXPLORACION_PRESENCIAL"?"municipio":"";
-    const select=selectKey?document.querySelector('[name="'+css(selectKey)+'"]'):null;
-    if(!select)return;
-    select.querySelectorAll('[data-gps-detected="1"]').forEach(o=>o.remove());
-    const configured=state.form?.fields?.find(f=>f.key===selectKey)?.options||[];
-    const match=configured.find(item=>normalizeCityName(item)===normalizeCityName(city));
-    select.dataset.autoGps="1";
-    if(match){
-      select.value=match;
+    const fieldKey=state.form?.id==="CHURN"?"ciudad":state.form?.id==="EXPLORACION_PRESENCIAL"?"municipio":"";
+    const control=fieldKey?document.querySelector('[name="'+css(fieldKey)+'"]'):null;
+    if(!control)return;
+    control.dataset.autoGps="1";
+    if(control.tagName==="SELECT"){
+      control.querySelectorAll('[data-gps-detected="1"]').forEach(o=>o.remove());
+      const configured=state.form?.fields?.find(f=>f.key===fieldKey)?.options||[];
+      const match=configured.find(item=>normalizeCityName(item)===normalizeCityName(city));
+      if(match)control.value=match;
+      else{
+        const opt=document.createElement("option");
+        opt.value=city;opt.textContent=city+" · detectada por GPS";opt.disabled=true;opt.selected=true;opt.dataset.gpsDetected="1";
+        control.insertBefore(opt,control.options[1]||null);
+      }
     }else{
-      const opt=document.createElement("option");
-      opt.value=city;opt.textContent=city+" · detectada por GPS";opt.disabled=true;opt.selected=true;opt.dataset.gpsDetected="1";
-      select.insertBefore(opt,select.options[1]||null);
+      control.value=city;
     }
-    delete select.dataset.autoGps;
-    clearError(selectKey);
+    delete control.dataset.autoGps;
+    clearError(fieldKey);
   }
 
   function isExplorationForm(){
@@ -535,26 +554,16 @@
     return {lat,lng};
   }
 
-  function normalizeAmbMunicipality(value){
-    const normalized=normalizeCityName(value);
-    if(normalized.includes("floridablanca"))return"Floridablanca";
-    if(normalized.includes("piedecuesta"))return"Piedecuesta";
-    if(normalized.includes("giron"))return"Girón";
-    if(normalized.includes("bucaramanga"))return"Bucaramanga";
-    return"";
-  }
-
   async function resolveExplorationMunicipality(lat,lng,key="coordenadas"){
     const status=document.querySelector('[data-gps-city-for="'+css(key)+'"]');
     const fallback=detectAmbMunicipalityOffline(lat,lng);
-    if(status)status.textContent=navigator.onLine?"Municipio: identificando…":(fallback?"Municipio aprox.: "+fallback:"Municipio: se validará al sincronizar");
+    if(status)status.textContent=navigator.onLine?"Municipio: identificando…":(fallback?"Municipio aprox.: "+fallback:"Municipio: pendiente de identificar");
     if(navigator.onLine){
       const raw=await reverseGeocodeCity(lat,lng);
-      const resolved=normalizeAmbMunicipality(raw);
-      if(resolved){applyDetectedCity(resolved,"reverse-geocode");return resolved;}
+      if(raw){applyDetectedCity(raw,"reverse-geocode");return raw;}
     }
     if(fallback){applyDetectedCity(fallback,"aproximado");return fallback;}
-    if(status)status.textContent="Municipio: se validará con el cruce geográfico";
+    if(status)status.textContent="Municipio: puedes corregirlo manualmente";
     return"";
   }
 
