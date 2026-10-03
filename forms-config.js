@@ -2,6 +2,8 @@ window.FIBRAZO_PENDING = [
   {id:"email-copy",title:"Enviar copia por correo",description:"Enviar automáticamente un resumen del formulario al correo de quien lo completó.",status:"Pendiente"}
 ];
 
+const FIBRAZO_CURRENT_YEAR = new Date().getFullYear();
+
 window.FIBRAZO_FORMS = {
   CHURN: {
     id: "CHURN",
@@ -49,7 +51,7 @@ window.FIBRAZO_FORMS = {
     name: "Exploración virtual",
     description: "Relevamiento virtual desde Google Street View para registrar infraestructura, operadores y evidencia del sector.",
     eyebrow: "EXPANSIÓN",
-    meta: ["Street View", "Coordenadas manuales", "Operadores / infraestructura"],
+    meta: ["Street View", "Coordenadas manuales", "Fotos opcionales", "Operadores / infraestructura"],
     sections: [
       { id: "ubicacion", title: "Ubicación", description: "Pega la coordenada observada y valida el municipio detectado." },
       { id: "infraestructura", title: "Infraestructura", description: "Califica la postería y la ocupación del tendido aéreo." },
@@ -58,7 +60,7 @@ window.FIBRAZO_FORMS = {
     ],
     fields: [
       {key:"coordenadas",section:"ubicacion",label:"Coordenadas",type:"coordinates",required:true,full:true,help:"Pega la coordenada en formato latitud, longitud. Ejemplo: 7.10485, -73.10280. El municipio se mostrará automáticamente."},
-      {key:"anio_imagen",section:"ubicacion",label:"Año de la imagen de Google Street View",type:"numeric",required:true,maxLength:4,max:2026,help:"Ingresa el año visible en la imagen de Street View. No puede ser posterior a 2026."},
+      {key:"anio_imagen",section:"ubicacion",label:"Año de la imagen de Google Street View",type:"numeric",required:true,maxLength:4,max:FIBRAZO_CURRENT_YEAR,help:`Ingresa el año visible en la imagen de Street View. No puede ser posterior a ${FIBRAZO_CURRENT_YEAR}.`},
       {key:"sector_barrio",section:"ubicacion",label:"Barrio",type:"text",autoGeo:"barrio",help:"Se completa automáticamente cuando existe información geográfica disponible. Puedes corregirlo o completarlo manualmente."},
       {key:"estrato",section:"ubicacion",label:"Estrato",type:"select",options:["1","2","3","4","5","6","Sin información"],autoGeo:"estrato",help:"Se completa automáticamente cuando existe una capa de estratificación disponible. Puedes corregirlo manualmente o dejarlo vacío si no hay información."},
 
@@ -76,6 +78,7 @@ window.FIBRAZO_FORMS = {
       {key:"isp_4",section:"operadores",label:"ISP 4",type:"isp-autocomplete",default:"Sin ISP",showWhen:{field:"isp_3",notValues:["","Sin ISP"]},help:"Cuarto ISP local o regional identificado."},
 
       {key:"link_evidencia",section:"cierre",label:"Link de evidencia",type:"text",full:true,help:"Opcional. Pega el enlace de Street View, Google Maps o My Maps que respalda la observación."},
+      {key:"fotos",section:"cierre",label:"Fotos",type:"photos",full:true,help:"Opcional. Adjunta hasta 3 fotos para dejar constancia del estado de la postería, cableado u operadores observados."},
       {key:"nota",section:"cierre",label:"Nota",type:"textarea",full:true,help:"Agrega cualquier condición relevante que no haya quedado registrada en los campos anteriores."}
     ]
   },
