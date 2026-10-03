@@ -139,7 +139,7 @@ function buildRow(form,p,id,links,email){
     d.tigo_hfc||"",d.tigo_ftth||"",d.claro_hfc||"",d.claro_ftth||"",d.movistar||"",
     rawIsp(d.isp_1),rawIsp(d.isp_2),rawIsp(d.isp_3),rawIsp(d.isp_4),d.nota||"",
     l.lat||"",l.lng||"",l.accuracy||"",maps,links[0]||"",links[1]||"",links[2]||"",
-    email||"ANONIMO","0.8.4",tipo,d.link_evidencia||""
+    email||"ANONIMO","0.8.5",tipo,d.link_evidencia||""
   ];
 }
 
