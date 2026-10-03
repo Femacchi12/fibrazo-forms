@@ -37,7 +37,7 @@ async function verifyUser(req,{required=true}={}){
 
 async function loadForms(auth){
   const sheets=google.sheets({version:"v4",auth});
-  const r=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"FORMULARIOS!A2:Y"});
+  const r=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"FORMULARIOS!A2:AB"});
   return (r.data.values||[]).filter(row=>row[0]).map((row,index)=>{
     const legacyAccess=String(row[8]||"PRIVADO").toUpperCase();
     const domains=splitDomains(row[10]||"");
@@ -51,20 +51,41 @@ async function loadForms(auth){
       updatedBy:String(row[14]||""),updatedAt:String(row[15]||""),
       publicEnabled:boolAt(16,false),domainsEnabled:boolAt(17,legacyAccess==="DOMINIO"),emailsEnabled:boolAt(18,legacyAccess==="CORREOS"),
       introMessage:String(row[19]||"").slice(0,2000),completionMessage:String(row[20]||"").slice(0,2000),
-      collectEmail:boolAt(21,true),shuffleQuestions:boolAt(22,false),showProgress:boolAt(23,true),allowMultipleResponses:boolAt(24,true)
+      collectEmail:boolAt(21,true),shuffleQuestions:boolAt(22,false),showProgress:boolAt(23,true),allowMultipleResponses:boolAt(24,true),
+      databaseUrl:String(row[25]||""),createdBy:String(row[26]||""),createdAt:String(row[27]||"")
     };
   });
 }
 
 async function loadUsers(auth){
   const sheets=google.sheets({version:"v4",auth});
-  const r=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"USUARIOS!A2:D"});
+  const r=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"USUARIOS!A2:H"});
   return (r.data.values||[]).filter(row=>row[0]).map((row,index)=>({
     row:index+2,
     email:String(row[0]||"").trim().toLowerCase(),
     role:String(row[1]||"").toUpperCase(),
     status:String(row[2]||"").toUpperCase(),
-    notes:String(row[3]||"")
+    notes:String(row[3]||""),
+    canCreateForms:toBool(row[4]),
+    canManageUsers:toBool(row[5]),
+    updatedBy:String(row[6]||""),
+    updatedAt:String(row[7]||"")
+  }));
+}
+
+async function loadFormPermissions(auth){
+  const sheets=google.sheets({version:"v4",auth});
+  const r=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"PERMISOS_FORMULARIO!A2:H"});
+  return (r.data.values||[]).filter(row=>row[0]&&row[1]).map((row,index)=>({
+    row:index+2,
+    email:String(row[0]||"").trim().toLowerCase(),
+    formId:String(row[1]||"").trim().toUpperCase(),
+    canView:toBool(row[2]),
+    canEditForm:toBool(row[3]),
+    canManagePermissions:toBool(row[4]),
+    canViewDatabase:toBool(row[5]),
+    updatedBy:String(row[6]||""),
+    updatedAt:String(row[7]||"")
   }));
 }
 
@@ -72,11 +93,41 @@ function isBaseAdmin(email){
   return BASE_ADMINS.includes(String(email||"").trim().toLowerCase());
 }
 
+function permissionFor(permissions,email,formId,baseAdmin=false){
+  const normalizedEmail=String(email||"").trim().toLowerCase();
+  const normalizedForm=String(formId||"").trim().toUpperCase();
+  if(baseAdmin||isBaseAdmin(normalizedEmail)){
+    return {canView:true,canEditForm:true,canManagePermissions:true,canViewDatabase:true};
+  }
+  const p=(permissions||[]).find(item=>item.email===normalizedEmail&&item.formId===normalizedForm);
+  if(!p)return {canView:false,canEditForm:false,canManagePermissions:false,canViewDatabase:false};
+  return {
+    canView:!!p.canView||!!p.canEditForm||!!p.canManagePermissions||!!p.canViewDatabase,
+    canEditForm:!!p.canEditForm,
+    canManagePermissions:!!p.canManagePermissions,
+    canViewDatabase:!!p.canViewDatabase||!!p.canManagePermissions
+  };
+}
+
+async function userCapabilities(auth,email){
+  const normalized=String(email||"").trim().toLowerCase();
+  const base=isBaseAdmin(normalized);
+  const [users,permissions]=await Promise.all([loadUsers(auth),loadFormPermissions(auth)]);
+  const user=users.find(u=>u.email===normalized);
+  const adminActive=base||!!(user&&user.status==="ACTIVO"&&["ADMIN","COLABORADOR"].includes(user.role));
+  return {
+    email:normalized,
+    base,
+    adminActive,
+    canCreateForms:base||!!(adminActive&&user?.canCreateForms),
+    canManageUsers:base||!!(adminActive&&user?.canManageUsers),
+    user:user||null,
+    permissions
+  };
+}
+
 async function isAdmin(auth,email){
-  if(!email)return false;
-  if(isBaseAdmin(email))return true;
-  const users=await loadUsers(auth);
-  return users.some(u=>u.email===String(email).toLowerCase()&&u.role==="ADMIN"&&u.status==="ACTIVO");
+  return (await userCapabilities(auth,email)).adminActive;
 }
 
 function canUseDashboard(user,adminFlag=false,forms=[]){
@@ -91,11 +142,12 @@ function canUseDashboard(user,adminFlag=false,forms=[]){
   });
 }
 
-function canAccess(form,user,adminFlag=false){
+function canAccess(form,user,baseAdmin=false,adminPermission=null){
   if(!form||String(form.status).toLowerCase()!=="activo")return false;
-  if(adminFlag)return true;
+  if(baseAdmin)return true;
   const email=String(user?.email||"").trim().toLowerCase();
   if(!email)return false;
+  if(adminPermission?.canView)return true;
   if(form.emailsEnabled&&form.allowedEmails.includes(email))return true;
   if(form.domainsEnabled&&form.domains.some(domain=>email.endsWith(domain)))return true;
   return false;
@@ -113,7 +165,8 @@ function runtimePolicy(form){
 
 function sanitizeForm(form){
   return {...runtimePolicy(form),access:form.access,allowedEmails:form.allowedEmails,domains:form.domains,
-    emailsEnabled:!!form.emailsEnabled,domainsEnabled:!!form.domainsEnabled,updatedBy:form.updatedBy,updatedAt:form.updatedAt};
+    emailsEnabled:!!form.emailsEnabled,domainsEnabled:!!form.domainsEnabled,updatedBy:form.updatedBy,updatedAt:form.updatedAt,
+    databaseUrl:form.databaseUrl||"",createdBy:form.createdBy||"",createdAt:form.createdAt||""};
 }
 
 function clientIp(req){
@@ -243,4 +296,4 @@ function toBool(v){return v===true||String(v).toUpperCase()==="TRUE";}
 function clampInt(v,min,max,fallback){const n=parseInt(v,10);return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;}
 function clampNum(v,min,max,fallback){const n=Number(String(v??"").replace(",","."));return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;}
 
-module.exports={PROJECT,SHEET_ID,DEFAULT_DOMAIN,EXCEPTION,BASE_ADMINS,gauth,verifyUser,loadForms,loadUsers,isBaseAdmin,isAdmin,canUseDashboard,canAccess,runtimePolicy,sanitizeForm,hashIp,checkPublicRate,logSecurity,validatePublicGuards,validatePhotos,validateSubmission,httpError,splitEmails,splitDomains,clampInt,clampNum};
+module.exports={PROJECT,SHEET_ID,DEFAULT_DOMAIN,EXCEPTION,BASE_ADMINS,gauth,verifyUser,loadForms,loadUsers,loadFormPermissions,isBaseAdmin,permissionFor,userCapabilities,isAdmin,canUseDashboard,canAccess,runtimePolicy,sanitizeForm,hashIp,checkPublicRate,logSecurity,validatePublicGuards,validatePhotos,validateSubmission,httpError,splitEmails,splitDomains,clampInt,clampNum};
