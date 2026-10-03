@@ -61,8 +61,8 @@ window.FIBRAZO_FORMS = {
       {key:"anio_imagen",section:"ubicacion",label:"Año de la imagen de Google Street View",type:"numeric",required:true,maxLength:4,help:"Ingresa el año visible en la imagen de Street View para conocer la vigencia del relevamiento."},
       {key:"sector_barrio",section:"ubicacion",label:"Sector / barrio",type:"text",help:"Opcional. Úsalo si el nombre del sector ayuda a identificar el punto."},
 
-      {key:"condicion_ocupacion_tendido",section:"infraestructura",label:"Condición de ocupación del tendido",type:"segmented",required:true,options:["1","2","3","4","5"],help:"1 = crítica / saturada · 5 = muy baja ocupación / óptima."},
-      {key:"condicion_fisica_posteria",section:"infraestructura",label:"Condición física de la postería",type:"segmented",required:true,options:["1","2","3","4","5"],help:"1 = crítica / no apta · 5 = óptima / nueva."},
+      {key:"condicion_ocupacion_tendido",section:"infraestructura",label:"Condición de ocupación del tendido",type:"segmented",required:true,options:["1","2","3","4","5"],details:{"1":"Crítica / saturada","2":"Alta ocupación","3":"Ocupación media","4":"Baja ocupación","5":"Muy baja ocupación / óptima"},help:"Selecciona una opción del 1 al 5. Debajo verás el significado de la opción elegida."},
+      {key:"condicion_fisica_posteria",section:"infraestructura",label:"Condición física de la postería",type:"segmented",required:true,options:["1","2","3","4","5"],details:{"1":"Crítica / no apta","2":"Deficiente","3":"Aceptable","4":"Buena","5":"Óptima / nueva"},help:"Selecciona una opción del 1 al 5. Debajo verás el significado de la opción elegida."},
 
       {key:"tigo_hfc",section:"operadores",label:"TIGO HFC",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa red HFC de TIGO."},
       {key:"tigo_ftth",section:"operadores",label:"TIGO FTTH",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa red FTTH de TIGO."},
@@ -70,9 +70,9 @@ window.FIBRAZO_FORMS = {
       {key:"claro_ftth",section:"operadores",label:"CLARO FTTH",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa red FTTH de Claro."},
       {key:"movistar",section:"operadores",label:"Movistar",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa presencia de Movistar."},
       {key:"isp_1",section:"operadores",label:"ISP 1",type:"text",help:"Primer ISP local o regional identificado."},
-      {key:"isp_2",section:"operadores",label:"ISP 2",type:"text",help:"Segundo ISP local o regional identificado."},
-      {key:"isp_3",section:"operadores",label:"ISP 3",type:"text",help:"Tercer ISP local o regional identificado."},
-      {key:"isp_4",section:"operadores",label:"ISP 4",type:"text",help:"Cuarto ISP local o regional identificado."},
+      {key:"isp_2",section:"operadores",label:"ISP 2",type:"text",showWhen:{field:"isp_1",notEmpty:true},help:"Segundo ISP local o regional identificado."},
+      {key:"isp_3",section:"operadores",label:"ISP 3",type:"text",showWhen:{field:"isp_2",notEmpty:true},help:"Tercer ISP local o regional identificado."},
+      {key:"isp_4",section:"operadores",label:"ISP 4",type:"text",showWhen:{field:"isp_3",notEmpty:true},help:"Cuarto ISP local o regional identificado."},
 
       {key:"link_evidencia",section:"cierre",label:"Link de evidencia",type:"text",full:true,help:"Opcional. Pega el enlace de Street View, Google Maps o My Maps que respalda la observación."},
       {key:"nota",section:"cierre",label:"Nota",type:"textarea",full:true,help:"Agrega cualquier condición relevante que no haya quedado registrada en los campos anteriores."}
@@ -92,11 +92,12 @@ window.FIBRAZO_FORMS = {
       { id: "cierre", title: "Cierre", description: "Agrega notas y evidencia fotográfica del punto." }
     ],
     fields: [
-      {key:"coordenadas",section:"ubicacion",label:"Ubicación actual",type:"gps",required:true,full:true,help:"Presiona el botón para tomar automáticamente la ubicación del dispositivo. El municipio se mostrará debajo."},
+      {key:"coordenadas",section:"ubicacion",label:"Ubicación actual",type:"gps",required:true,full:true,manualEdit:true,help:"Toma la ubicación con el GPS. Si es necesario, puedes corregir manualmente la coordenada antes de continuar."},
+      {key:"municipio",section:"ubicacion",label:"Municipio",type:"select",required:true,options:["Bucaramanga","Floridablanca","Girón","Piedecuesta"],autoCity:true,help:"Se completa automáticamente según la coordenada detectada, pero puedes corregirlo manualmente."},
       {key:"sector_barrio",section:"ubicacion",label:"Sector / barrio",type:"text",help:"Opcional. Registra el barrio o sector si ayuda a identificar el punto."},
 
-      {key:"condicion_ocupacion_tendido",section:"infraestructura",label:"Condición de ocupación del tendido",type:"segmented",required:true,options:["1","2","3","4","5"],help:"1 = crítica / saturada · 5 = muy baja ocupación / óptima."},
-      {key:"condicion_fisica_posteria",section:"infraestructura",label:"Condición física de la postería",type:"segmented",required:true,options:["1","2","3","4","5"],help:"1 = crítica / no apta · 5 = óptima / nueva."},
+      {key:"condicion_ocupacion_tendido",section:"infraestructura",label:"Condición de ocupación del tendido",type:"segmented",required:true,options:["1","2","3","4","5"],details:{"1":"Crítica / saturada","2":"Alta ocupación","3":"Ocupación media","4":"Baja ocupación","5":"Muy baja ocupación / óptima"},help:"Selecciona una opción del 1 al 5. Debajo verás el significado de la opción elegida."},
+      {key:"condicion_fisica_posteria",section:"infraestructura",label:"Condición física de la postería",type:"segmented",required:true,options:["1","2","3","4","5"],details:{"1":"Crítica / no apta","2":"Deficiente","3":"Aceptable","4":"Buena","5":"Óptima / nueva"},help:"Selecciona una opción del 1 al 5. Debajo verás el significado de la opción elegida."},
 
       {key:"tigo_hfc",section:"operadores",label:"TIGO HFC",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa red HFC de TIGO."},
       {key:"tigo_ftth",section:"operadores",label:"TIGO FTTH",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa red FTTH de TIGO."},
@@ -104,9 +105,9 @@ window.FIBRAZO_FORMS = {
       {key:"claro_ftth",section:"operadores",label:"CLARO FTTH",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa red FTTH de Claro."},
       {key:"movistar",section:"operadores",label:"Movistar",type:"toggle",default:"No",options:["Sí","No"],help:"Indica si se observa presencia de Movistar."},
       {key:"isp_1",section:"operadores",label:"ISP 1",type:"text",help:"Primer ISP local o regional identificado."},
-      {key:"isp_2",section:"operadores",label:"ISP 2",type:"text",help:"Segundo ISP local o regional identificado."},
-      {key:"isp_3",section:"operadores",label:"ISP 3",type:"text",help:"Tercer ISP local o regional identificado."},
-      {key:"isp_4",section:"operadores",label:"ISP 4",type:"text",help:"Cuarto ISP local o regional identificado."},
+      {key:"isp_2",section:"operadores",label:"ISP 2",type:"text",showWhen:{field:"isp_1",notEmpty:true},help:"Segundo ISP local o regional identificado."},
+      {key:"isp_3",section:"operadores",label:"ISP 3",type:"text",showWhen:{field:"isp_2",notEmpty:true},help:"Tercer ISP local o regional identificado."},
+      {key:"isp_4",section:"operadores",label:"ISP 4",type:"text",showWhen:{field:"isp_3",notEmpty:true},help:"Cuarto ISP local o regional identificado."},
 
       {key:"nota",section:"cierre",label:"Nota",type:"textarea",full:true,help:"Agrega cualquier condición relevante observada en campo."},
       {key:"fotos",section:"cierre",label:"Fotos",type:"photos",full:true,help:"Opcional. Toma o selecciona hasta 3 fotos como evidencia del relevamiento."}
