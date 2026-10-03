@@ -47,7 +47,7 @@
   function openDirectPrivateForm(){
     const form=directPrivateForm();
     if(!form)return;
-    const allowed=window.FIBRAZO_ACCESS?.[form.id]===true || window.FIBRAZO_ACCESS_META?.admin===true;
+    const allowed=window.FIBRAZO_ACCESS?.[form.id]===true;
     if(!allowed)return;
     let attempts=0;
     const tryOpen=()=>{
@@ -152,7 +152,7 @@
       const policies=Object.fromEntries(items.map(item=>[item.id,item]));
       window.FIBRAZO_ACCESS=access;
       window.FIBRAZO_FORM_POLICIES=policies;
-      window.FIBRAZO_ACCESS_META={admin:!!result.admin,email};
+      window.FIBRAZO_ACCESS_META={admin:!!result.admin,baseAdmin:!!result.baseAdmin,canCreateForms:!!result.canCreateForms,canManageUsers:!!result.canManageUsers,email};
       window.FIBRAZO_ACCESS_BOOTSTRAPPED_EMAIL=email;
       try{localStorage.setItem("fibrazoFormsAccessCache",JSON.stringify({email,access,policies,updatedAt:Date.now()}));}catch(_){}
       return {ok:true};
@@ -267,6 +267,10 @@
       const chips = (form.meta || []).map((x) => '<span class="meta-chip">' + escapeHtml(x) + "</span>").join("");
       const privateSlug=String(form.slug||form.id||"").toLowerCase();
       const privateUrl=location.origin+"/form/"+encodeURIComponent(privateSlug);
+      const policy=window.FIBRAZO_FORM_POLICIES?.[form.id]||{};
+      const databaseHtml=policy.canViewDatabase&&policy.databaseUrl
+        ?'<a class="secondary-button compact form-db-link" href="'+escapeHtml(policy.databaseUrl)+'" target="_blank" rel="noopener">↗ Base de datos</a>'
+        :"";
       card.innerHTML =
         '<div class="form-card-top">' +
           "<div><div class=\"eyebrow\">" + escapeHtml(form.eyebrow || "FORMULARIO") + "</div><h3>" + escapeHtml(form.name) + "</h3></div>" +
@@ -278,6 +282,7 @@
           '<div><span>ACCESO DIRECTO PRIVADO</span><a href="'+escapeHtml(privateUrl)+'">'+escapeHtml(privateUrl)+'</a></div>' +
           '<button class="copy-private-link" type="button" aria-label="Copiar acceso directo">Copiar</button>' +
         "</div>" +
+        databaseHtml+
         '<button class="primary-button form-open-button" type="button">Abrir formulario →</button>';
       card.querySelector(".form-open-button").addEventListener("click", () => openForm(form.id));
       card.querySelector(".copy-private-link").addEventListener("click",async(event)=>{
