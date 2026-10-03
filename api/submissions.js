@@ -12,6 +12,7 @@ const LEGACY_PHOTO_FOLDER_ENV={
 };
 const MASTER_SHEET_ID=process.env.BUCARAMANGA_EXPLORACION_SHEET_ID||"1LKNNf7a1VlUGpr9SlRqJGAkZq4NprW-wvdjNIlmB4E4";
 let masterPolygonCache=null;
+let masterBarrioCache=null;
 const PHOTO_ROOT_FOLDER_ID=process.env.DRIVE_FORMS_ROOT_FOLDER_ID||"0AF3Q3h3jUqsoUk9PVA";
 const photoFolderCache=new Map();
 
@@ -228,17 +229,65 @@ function nextSequence(values,re){
   return max+1;
 }
 
+function parseAreaWkt(wkt){
+  const s=String(wkt||"").trim();
+  const ring=txt=>txt.split(",").map(pair=>{
+    const p=pair.trim().split(/\s+/);return[Number(p[0]),Number(p[1])];
+  }).filter(p=>Number.isFinite(p[0])&&Number.isFinite(p[1]));
+  if(/^POLYGON/i.test(s)){
+    const body=s.replace(/^POLYGON\s*\(\(/i,"").replace(/\)\)\s*$/,"");
+    return [body.split(/\)\s*,\s*\(/).map(ring).filter(r=>r.length>=3)];
+  }
+  if(/^MULTIPOLYGON/i.test(s)){
+    const body=s.replace(/^MULTIPOLYGON\s*\(\(\(/i,"").replace(/\)\)\)\s*$/,"");
+    return body.split(/\)\)\s*,\s*\(\(/).map(poly=>
+      poly.split(/\)\s*,\s*\(/).map(ring).filter(r=>r.length>=3)
+    ).filter(poly=>poly.length);
+  }
+  return[];
+}
+
+async function loadMasterBarrios(sheets){
+  if(masterBarrioCache)return masterBarrioCache;
+  const r=await sheets.spreadsheets.values.get({spreadsheetId:MASTER_SHEET_ID,range:"06_POLIGONOS_BARRIOS!A2:I"});
+  masterBarrioCache=(r.data.values||[]).map(row=>({
+    id:String(row[0]||""),municipio:String(row[2]||""),barrio:String(row[3]||""),
+    minLon:num(row[4]),minLat:num(row[5]),maxLon:num(row[6]),maxLat:num(row[7]),polygons:parseAreaWkt(row[8])
+  })).filter(p=>p.id&&p.polygons.length&&[p.minLon,p.minLat,p.maxLon,p.maxLat].every(Number.isFinite));
+  return masterBarrioCache;
+}
+
+function matchMasterBarrio(lon,lat,barrios){
+  for(const b of barrios){
+    if(lon<b.minLon||lon>b.maxLon||lat<b.minLat||lat>b.maxLat)continue;
+    if(b.polygons.some(poly=>pointInPolygon(lon,lat,poly)))return b;
+  }
+  return null;
+}
+
 async function syncExplorationMaster(auth,form,payload,links){
-  if(!isExploration(form.id)||!MASTER_SHEET_ID)return{ok:false,reason:"NOT_APPLICABLE"};
-  const sheets=google.sheets({version:"v4",auth}),d=payload.data||{},l=payload.location||{};
+  if(!isExploration(form.id))return{ok:false,reason:"NOT_APPLICABLE"};
+  const d=payload.data||{},l=payload.location||{};
   const lat=num(l.lat),lon=num(l.lng);
   if(!Number.isFinite(lat)||!Number.isFinite(lon))return{ok:false,reason:"NO_COORDINATES"};
 
-  const polygons=await loadMasterPolygons(sheets),geo=matchMasterPolygon(lon,lat,polygons);
-  if(!geo)return{ok:false,reason:"NO_POLYGON_DATA"};
-  if(geo.method==="Más cercano"&&Number(geo.distance)>5000){
-    return{ok:false,reason:"OUTSIDE_STUDY_AREA",distance:geo.distance};
+  if(!MASTER_SHEET_ID){
+    return{ok:true,scope:"GLOBAL_ONLY",project:"GENERAL",reason:"GLOBAL_ONLY",municipio:d.municipio||l.cityDetected||""};
   }
+
+  const sheets=google.sheets({version:"v4",auth});
+  const polygons=await loadMasterPolygons(sheets),geo=matchMasterPolygon(lon,lat,polygons);
+  if(!geo)return{ok:false,reason:"NO_POLYGON_DATA",project:"BUCARAMANGA_AMB"};
+
+  if(geo.method==="Más cercano"&&Number(geo.distance)>5000){
+    return{
+      ok:true,scope:"GLOBAL_ONLY",project:"GENERAL",reason:"GLOBAL_ONLY",
+      municipio:d.municipio||l.cityDetected||"",distance:geo.distance
+    };
+  }
+
+  const barrios=await loadMasterBarrios(sheets);
+  const barrio=matchMasterBarrio(lon,lat,barrios);
 
   const [pointIds,compIds]=await Promise.all([
     sheets.spreadsheets.values.get({spreadsheetId:MASTER_SHEET_ID,range:"01_PUNTOS_RELEVAMIENTO!A2:A"}),
@@ -247,10 +296,13 @@ async function syncExplorationMaster(auth,form,payload,links){
   const pointNo=nextSequence(pointIds.data.values,/^BGF_P(\d+)$/i),pointId="BGF_P"+String(pointNo).padStart(4,"0");
   const nextRow=(pointIds.data.values||[]).length+2;
   const today=new Date().toISOString().slice(0,10);
+  const now=new Date().toISOString();
   const fuente=form.id==="EXPLORACION"?"Street View":"Presencial";
   const estado=form.id==="EXPLORACION"?"Virtual":"Validado en campo";
   const evidence=form.id==="EXPLORACION"?(d.link_evidencia||""):(links.join(" | ")||"");
+  const imageLink=form.id==="EXPLORACION"?(d.link_evidencia||""):(links[0]||"");
   const municipioObservado=d.municipio||l.cityDetected||geo.polygon.municipio||"";
+  const accuracy=Number.isFinite(Number(l.accuracy))?Math.round(Number(l.accuracy)*10)/10:"";
 
   await sheets.spreadsheets.values.batchUpdate({
     spreadsheetId:MASTER_SHEET_ID,
@@ -258,12 +310,11 @@ async function syncExplorationMaster(auth,form,payload,links){
       {range:`01_PUNTOS_RELEVAMIENTO!A${nextRow}:G${nextRow}`,values:[[
         pointId,today,fuente,d.anio_imagen||"",municipioObservado,d.sector_barrio||"",`${lat}, ${lon}`
       ]]},
-      {range:`01_PUNTOS_RELEVAMIENTO!K${nextRow}:U${nextRow}`,values:[[
+      {range:`01_PUNTOS_RELEVAMIENTO!K${nextRow}:Y${nextRow}`,values:[[
+        accuracy,
         geo.polygon.id,geo.polygon.municipio,Number(geo.polygon.estrato),geo.distance,geo.method,
-        Number(d.condicion_fisica_posteria),Number(d.condicion_ocupacion_tendido),d.nota||"",evidence,estado,new Date().toISOString()
-      ]]},
-      {range:`01_PUNTOS_RELEVAMIENTO!V${nextRow}`,values:[[
-        Number.isFinite(Number(l.accuracy))?Math.round(Number(l.accuracy)*10)/10:""
+        Number(d.condicion_fisica_posteria),Number(d.condicion_ocupacion_tendido),d.nota||"",
+        evidence,estado,now,barrio?.id||"",barrio?.barrio||"",imageLink
       ]]}
     ]}
   });
@@ -284,16 +335,18 @@ async function syncExplorationMaster(auth,form,payload,links){
     const confidence=form.id==="EXPLORACION"?"Media":"Alta";
     const rows=operators.map(op=>[
       "BGF_C"+String(compNo++).padStart(4,"0"),pointId,op.name,op.category,op.tech,
-      "Cable identificado",confidence,d.nota||"",new Date().toISOString(),
-      geo.polygon.municipio,Number(geo.polygon.estrato),d.sector_barrio||"",fuente,evidence
+      "Cable identificado",confidence,d.nota||"",now
     ]);
     await sheets.spreadsheets.values.append({
       spreadsheetId:MASTER_SHEET_ID,range:"02_COMPETENCIA_PUNTO!A:I",
-      valueInputOption:"USER_ENTERED",insertDataOption:"INSERT_ROWS",
-      requestBody:{values:rows.map(row=>row.slice(0,9))}
+      valueInputOption:"USER_ENTERED",insertDataOption:"INSERT_ROWS",requestBody:{values:rows}
     });
   }
-  return{ok:true,pointId,municipio:geo.polygon.municipio,estrato:geo.polygon.estrato,method:geo.method,distance:geo.distance};
+  return{
+    ok:true,scope:"PROJECT",project:"BUCARAMANGA_AMB",pointId,
+    municipio:geo.polygon.municipio,estrato:geo.polygon.estrato,
+    barrio:barrio?.barrio||"",method:geo.method,distance:geo.distance,imageLink
+  };
 }
 
 function resolveSubmissionId(payload,formId){
@@ -443,13 +496,19 @@ module.exports=async(req,res)=>{
         masterSync={ok:false,reason};
       }
       if(rawRow){
+        const project=masterSync?.project||"GENERAL";
+        const processState=masterSync?.ok
+          ?(masterSync?.scope==="GLOBAL_ONLY"?"REGISTRADO_GLOBAL":"PROCESADO_PROYECTO")
+          :"PENDIENTE";
         await sheets.spreadsheets.values.update({
           spreadsheetId:SHEET_ID,
-          range:`${form.sheet}!AC${rawRow}:AD${rawRow}`,
+          range:`${form.sheet}!AC${rawRow}:AF${rawRow}`,
           valueInputOption:"RAW",
           requestBody:{values:[[
             masterSync?.pointId||"",
-            masterSync?.ok?"OK":String(masterSync?.reason||"PENDIENTE")
+            masterSync?.ok?(masterSync?.scope==="GLOBAL_ONLY"?"GLOBAL_ONLY":"OK"):String(masterSync?.reason||"PENDIENTE"),
+            project,
+            processState
           ]]}
         });
       }
