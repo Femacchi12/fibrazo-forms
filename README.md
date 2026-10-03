@@ -1,78 +1,70 @@
-# FIBRAZO Forms · MVP 0.1
+# FIBRAZO Forms · v0.8.6
 
-Centro de formularios y relevamientos de FIBRAZO.
+Centro interno de formularios, relevamientos y resultados de FIBRAZO.
 
-## Diseño
-La interfaz replica la lógica visual del Dashboard de Impacto Social: Inter, fondo negro, superficies carbón, verde FIBRAZO `#00f29a`, controles compactos, paneles de 14 px y jerarquías equivalentes.
+## Arquitectura
 
-## Formularios
-- **Churn** — Sincelejo / Montería, con preguntas condicionales.
-- **Exploración** — infraestructura, operadores, GPS y hasta 3 fotos.
+- **Forms** administra formularios, usuarios, permisos, respuestas originales, evidencias y seguridad.
+- **Exploración** es la fuente maestra de municipio, barrio, estrato, territorio y criterios de relevamiento.
+- **Competencia** es la fuente maestra de operadores, ISP y presencia competitiva.
+- Los **proyectos ciudad** reciben resultados procesados cuando corresponde, sin reemplazar la respuesta original guardada en Forms.
 
-## Datos
-Las respuestas se almacenan en Google Sheets y las evidencias fotográficas en Google Drive.
+La respuesta enviada por el usuario se conserva en `RESP_*`. Los enriquecimientos posteriores agregan estado, proyecto, ID de punto y datos geográficos sin eliminar el registro crudo.
 
-Los IDs reales y credenciales no se publican en el repositorio. Se cargan como variables privadas del entorno de despliegue.
+## Fuente de verdad de las preguntas
 
-## GitHub Pages
-URL prevista: `https://femacchi12.github.io/fibrazo-forms/`
+Mientras no exista un editor/builder de preguntas en Administración, la configuración productiva de preguntas vive en:
 
-En GitHub Pages las respuestas se guardan únicamente en `localStorage`; esta publicación funciona como vista previa del frontend.
+`forms-config.js`
 
-## Backend Vercel
-El repositorio incluye una API serverless en `api/submissions.js`.
+La hoja `PREGUNTAS` de Google Sheets se conserva como referencia histórica/documental y **no modifica el formulario productivo**.
 
-Variables requeridas: ver `.env.example`.
+## Formularios activos
 
-Para habilitar escritura real:
-1. Conectar el repositorio a Vercel.
-2. Configurar las variables de entorno con los valores reales.
-3. Compartir el Sheet y las carpetas de fotos con la cuenta de servicio de Google.
-4. Validar una respuesta de Churn y una de Exploración desde celular.
+- **Churn** — visitas a clientes que dejaron de recargar.
+- **Exploración virtual** — Street View, infraestructura, operadores/ISP, barrio/estrato automático cuando existe fuente preferida y fotos opcionales.
+- **Exploración presencial** — GPS, infraestructura, operadores/ISP y evidencia fotográfica.
 
-## Estado
-- Frontend: v0.4 con PWA, cola offline y sincronización segura.
-- GitHub Pages: requiere activación inicial del repositorio.
-- Backend: preparado para Vercel.
-- Google Sheets / Drive: estructuras creadas.
+## Geografía
 
+El enriquecimiento automático respeta las fuentes territoriales preferidas. Una capa candidata no se presenta como barrio validado.
 
-## Flujos draw.io
-El mapa maestro vive versionado junto al código:
+En el proyecto Bucaramanga/AMB, el estrato solo se asigna cuando la coordenada cae **dentro** de un polígono oficial. Si no existe coincidencia geométrica, se registra **Sin información**; no se asigna el polígono más cercano.
+
+## Datos y evidencias
+
+- Respuestas: Google Sheets `FIBRAZO Forms - Base de datos`.
+- Fotos: Google Drive.
+- Máximo configurable: hasta 3 fotos por respuesta.
+- Las respuestas offline se almacenan temporalmente en el dispositivo y se sincronizan al recuperar conexión.
+
+## Acceso y seguridad
+
+La configuración se administra desde **Administrar**.
+
+Permisos:
+- **Ver**: puede abrir el formulario.
+- **Editar configuración**: puede cambiar estado, experiencia y evidencia; no modifica preguntas.
+- **Permisos**: puede administrar accesos/publicación.
+- **Base**: puede abrir la hoja de respuestas.
+
+Los modos de acceso son `PRIVADO`, `CORREOS`, `DOMINIO` y `PUBLICO`.
+
+## PWA y sesión
+
+- PWA instalable con service worker.
+- Cola offline persistente en IndexedDB.
+- Firebase usa persistencia local.
+- Ante fallas transitorias de red, puede reutilizar permisos previamente validados en el dispositivo durante un período acotado.
+
+## Producción
+
+Vercel: https://fibrazo-forms.vercel.app/
+
+Versión: **0.8.6**
+
+## Flujos
+
+El mapa maestro se mantiene en:
 
 `docs/FIBRAZO_Forms_Flujos.drawio`
-
-Abrir/editar directamente en diagrams.net:
-
-`https://app.diagrams.net/?mode=github#HFemacchi12%2Ffibrazo-forms%2Fmain%2Fdocs%2FFIBRAZO_Forms_Flujos.drawio`
-
-Cada formulario debe conservar su propia página dentro del archivo y actualizarse en el mismo cambio que modifique su lógica.
-
-## Seguridad por formulario
-La configuración se administra desde **Administrar → Formularios → Permisos** y se persiste en la hoja `FORMULARIOS`.
-
-Modos:
-- `PRIVADO`: solo administradores.
-- `CORREOS`: lista explícita de correos.
-- `DOMINIO`: dominio autorizado.
-- `PUBLICO`: acceso directo mediante `/f/<slug>` sin exponer dashboard ni resultados.
-
-Los formularios públicos aplican validación del backend, honeypot, ventana mínima de llenado, rate limit por huella de IP, límites de cantidad/tamaño de fotos y registro en `SECURITY_LOG`.
-
-
-## Modo offline v0.4
-Los formularios internos autenticados pueden seguir utilizándose con señal inestable una vez que la app fue abierta con conexión.
-
-- PWA instalable mediante `manifest.webmanifest` y `service-worker.js`.
-- App shell cacheado para volver a abrir el dashboard.
-- Cola local persistente en IndexedDB.
-- Respuestas, GPS y fotos se almacenan localmente cuando no hay conexión o existe un error temporal.
-- Cada respuesta recibe `clientSubmissionId` antes del primer intento.
-- El backend usa ese ID como clave idempotente para evitar duplicados.
-- Las fotos reutilizan el mismo nombre por ID para evitar cargas duplicadas en reintentos.
-- Sincronización automática al recuperar conexión, volver a primer plano o recuperar la sesión.
-- Botón manual **Sincronizar ahora**.
-- La cola se separa por correo del usuario que creó la respuesta.
-- Los formularios públicos permanecen online-only por seguridad.
-
-Si la app se cerró mientras estaba sin conexión, la sincronización ocurre al próximo inicio con conexión y con la misma cuenta activa.
