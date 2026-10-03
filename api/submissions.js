@@ -265,11 +265,24 @@ function matchMasterBarrio(lon,lat,barrios){
   return null;
 }
 
+function normalizePlaceName(value){
+  return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
+}
+function isAmbMunicipality(value){
+  const v=normalizePlaceName(value);
+  return ["bucaramanga","floridablanca","giron","piedecuesta"].includes(v);
+}
+
 async function syncExplorationMaster(auth,form,payload,links){
   if(!isExploration(form.id))return{ok:false,reason:"NOT_APPLICABLE"};
   const d=payload.data||{},l=payload.location||{};
   const lat=num(l.lat),lon=num(l.lng);
   if(!Number.isFinite(lat)||!Number.isFinite(lon))return{ok:false,reason:"NO_COORDINATES"};
+  const observedMunicipality=String(d.municipio||l.cityDetected||"").trim();
+
+  if(observedMunicipality&&!isAmbMunicipality(observedMunicipality)){
+    return{ok:true,scope:"GLOBAL_ONLY",project:"GENERAL",reason:"GLOBAL_ONLY",municipio:observedMunicipality};
+  }
 
   if(!MASTER_SHEET_ID){
     return{ok:true,scope:"GLOBAL_ONLY",project:"GENERAL",reason:"GLOBAL_ONLY",municipio:d.municipio||l.cityDetected||""};
