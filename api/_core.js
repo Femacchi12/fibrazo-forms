@@ -260,7 +260,10 @@ function validateSubmission(formId,payload){
     if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat<-90||lat>90||lng<-180||lng>180) throw httpError("GPS_REQUIRED",400);
     if(Number.isFinite(acc)&&acc<0) throw httpError("INVALID_GPS",400);
 
-    if(formId==="EXPLORACION"&&!digits(d.anio_imagen,4)) throw httpError("INVALID_STREETVIEW_YEAR",400);
+    if(formId==="EXPLORACION"){
+      if(!digits(d.anio_imagen,4)||Number(d.anio_imagen)>2026) throw httpError("INVALID_STREETVIEW_YEAR",400);
+    }
+    one(d.estrato,["1","2","3","4","5","6","Sin información"],"INVALID_STRATUM");
     if(formId==="EXPLORACION_PRESENCIAL"){
       if(!String(d.municipio||"").trim()) throw httpError("INVALID_MUNICIPALITY",400);
       short(d.municipio,120,"TEXT_TOO_LONG");
