@@ -161,16 +161,23 @@
     const list=document.createElement("div");list.className="isp-suggestion-list";list.hidden=true;
     const options=()=>{
       const query=normalizeCityName(input.value==="Sin ISP"?"":input.value);
-      const all=["Sin Identificar",...(state.ispOptions||[])];
-      return all.filter((name,index)=>index===0||!query||normalizeCityName(name).includes(query));
+      const all=["Sin ISP","Sin Identificar",...(state.ispOptions||[])];
+      return [...new Set(all)].filter((name,index)=>index<2||!query||normalizeCityName(name).includes(query));
+    };
+    const choose=name=>{
+      input.value=name;
+      list.hidden=true;
+      clearError(field.key);
+      updateVisibility();
+      input.dispatchEvent(new Event("change",{bubbles:true}));
     };
     const paint=()=>{
       list.innerHTML="";
       for(const name of options()){
         const b=document.createElement("button");b.type="button";b.className="isp-suggestion";
         b.textContent=name;
-        b.addEventListener("mousedown",e=>e.preventDefault());
-        b.addEventListener("click",()=>{input.value=name;list.hidden=true;clearError(field.key);updateVisibility();});
+        b.addEventListener("pointerdown",e=>{e.preventDefault();choose(name);});
+        b.addEventListener("click",e=>{e.preventDefault();choose(name);});
         list.appendChild(b);
       }
       const custom=String(input.value||"").trim();
@@ -181,7 +188,7 @@
     };
     input.addEventListener("focus",()=>{if(input.value==="Sin ISP")input.select();paint();});
     input.addEventListener("input",()=>{paint();clearError(field.key);updateVisibility();});
-    input.addEventListener("blur",()=>setTimeout(()=>{list.hidden=true;},120));
+    input.addEventListener("blur",()=>setTimeout(()=>{list.hidden=true;},220));
     shell.append(input,list);return shell;
   }
 
