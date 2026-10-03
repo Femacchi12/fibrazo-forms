@@ -261,7 +261,8 @@ function validateSubmission(formId,payload){
     if(Number.isFinite(acc)&&acc<0) throw httpError("INVALID_GPS",400);
 
     if(formId==="EXPLORACION"){
-      if(!digits(d.anio_imagen,4)||Number(d.anio_imagen)>2026) throw httpError("INVALID_STREETVIEW_YEAR",400);
+      const currentYear=new Date().getFullYear();
+      if(!digits(d.anio_imagen,4)||Number(d.anio_imagen)>currentYear) throw httpError("INVALID_STREETVIEW_YEAR",400);
     }
     one(d.estrato,["1","2","3","4","5","6","Sin información"],"INVALID_STRATUM");
     if(formId==="EXPLORACION_PRESENCIAL"){
@@ -275,6 +276,13 @@ function validateSubmission(formId,payload){
 
     const network=["Sí","No"];
     for(const key of ["tigo_hfc","tigo_ftth","claro_hfc","claro_ftth","movistar"]) one(d[key],network,"INVALID_NETWORK_VALUE");
+
+    const incumbentSelected=["tigo_hfc","tigo_ftth","claro_hfc","claro_ftth","movistar"].some(key=>String(d[key]||"")==="Sí");
+    const ispSelected=["isp_1","isp_2","isp_3","isp_4"].some(key=>{
+      const value=String(d[key]||"").trim();
+      return value&&value!=="Sin ISP";
+    });
+    if(!incumbentSelected&&!ispSelected) throw httpError("OPERATOR_REQUIRED",400);
 
     for(const key of ["sector_barrio","isp_1","isp_2","isp_3","isp_4"]) short(d[key],120,"TEXT_TOO_LONG");
     short(d.link_evidencia,1000,"TEXT_TOO_LONG");
