@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=2026.10.02.12">
+  <link rel="stylesheet" href="/styles.css?v=2026.10.03.01">
 </head>
 <body class="auth-pending">
   <section id="authGate" class="auth-gate" aria-live="polite">
@@ -36,7 +36,7 @@
         <p>Formularios, relevamientos y resultados en un único espacio.</p>
       </div>
       <div class="update-cards">
-        <article><span>Versión</span><b>0.8.0 · Logo PWA</b></article>
+        <article><span>Versión</span><b>0.8.1 · Logo PWA</b></article>
         <article><span>Formularios activos</span><b id="activeFormsCount">2</b></article>
       </div>
       <div id="authSession" class="auth-session" hidden>
@@ -180,12 +180,21 @@
       </section>
 
       <section id="successWorkspace" class="panel success-workspace" hidden>
-        <div class="success-icon">✓</div>
-        <span>RESPUESTA REGISTRADA</span>
-        <h1 id="successTitle">Formulario completado con éxito</h1>
+        <div id="successIcon" class="success-icon">✓</div>
+        <span>ESTADO DE LA ENCUESTA</span>
+        <h1 id="successTitle">Encuesta finalizada</h1>
         <p id="successMessage">La información fue guardada correctamente.</p>
+
+        <div id="successStatusCard" class="success-status-card status-ok">
+          <span id="successStatusDot" class="success-status-dot">●</span>
+          <div>
+            <strong id="successStatusTitle">Todo correcto</strong>
+            <p id="successStatusDetail">La respuesta quedó guardada y sincronizada.</p>
+          </div>
+        </div>
+
         <div class="success-meta">
-          <div><span>ID de respuesta</span><strong id="successId"></strong></div>
+          <div id="successPointWrap" hidden><span>Punto maestro</span><strong id="successPoint"></strong></div>
           <div><span>Completado por</span><strong id="successEmail"></strong></div>
         </div>
         <div class="success-actions">
@@ -247,15 +256,15 @@
     </section>
   </main>
 
-  <footer>FIBRAZO · Growth <span>Forms v0.8.0 · Logo PWA · 2026</span></footer>
+  <footer>FIBRAZO · Growth <span>Forms v0.8.1 · Logo PWA · 2026</span></footer>
 
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
-  <script src="/forms-config.js?v=2026.10.02.12"></script>
-  <script src="/app.js?v=2026.10.02.12"></script>
-  <script src="/access-v03.js?v=2026.10.02.12"></script>
-  <script src="/offline-v04.js?v=2026.10.02.12"></script>
-  <script src="/ux-v04.js?v=2026.10.02.12"></script>
-  <script src="/admin-v03.js?v=2026.10.02.12"></script>
+  <script src="/forms-config.js?v=2026.10.03.01"></script>
+  <script src="/app.js?v=2026.10.03.01"></script>
+  <script src="/access-v03.js?v=2026.10.03.01"></script>
+  <script src="/offline-v04.js?v=2026.10.03.01"></script>
+  <script src="/ux-v04.js?v=2026.10.03.01"></script>
+  <script src="/admin-v03.js?v=2026.10.03.01"></script>
 </body>
 </html>

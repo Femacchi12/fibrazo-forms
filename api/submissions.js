@@ -129,7 +129,7 @@ function buildRow(form,p,id,links,email){
     ?`https://www.google.com/maps?q=${l.lat},${l.lng}`:"";
   const tipo=form.id==="EXPLORACION"?"Virtual":"Presencial";
   return [
-    now,id,l.cityDetected||"",d.sector_barrio||"",d.anio_imagen||"",
+    now,id,d.municipio||l.cityDetected||"",d.sector_barrio||"",d.anio_imagen||"",
     d.condicion_fisica_posteria||"",d.condicion_ocupacion_tendido||"",
     d.tigo_hfc||"",d.tigo_ftth||"",d.claro_hfc||"",d.claro_ftth||"",d.movistar||"",
     d.isp_1||"",d.isp_2||"",d.isp_3||"",d.isp_4||"",d.nota||"",
@@ -236,6 +236,9 @@ async function syncExplorationMaster(auth,form,payload,links){
 
   const polygons=await loadMasterPolygons(sheets),geo=matchMasterPolygon(lon,lat,polygons);
   if(!geo)return{ok:false,reason:"NO_POLYGON_DATA"};
+  if(geo.method==="Más cercano"&&Number(geo.distance)>5000){
+    return{ok:false,reason:"OUTSIDE_STUDY_AREA",distance:geo.distance};
+  }
 
   const [pointIds,compIds]=await Promise.all([
     sheets.spreadsheets.values.get({spreadsheetId:MASTER_SHEET_ID,range:"01_PUNTOS_RELEVAMIENTO!A2:A"}),
@@ -247,7 +250,7 @@ async function syncExplorationMaster(auth,form,payload,links){
   const fuente=form.id==="EXPLORACION"?"Street View":"Presencial";
   const estado=form.id==="EXPLORACION"?"Virtual":"Validado en campo";
   const evidence=form.id==="EXPLORACION"?(d.link_evidencia||""):(links.join(" | ")||"");
-  const municipioObservado=l.cityDetected||geo.polygon.municipio||"";
+  const municipioObservado=d.municipio||l.cityDetected||geo.polygon.municipio||"";
 
   await sheets.spreadsheets.values.batchUpdate({
     spreadsheetId:MASTER_SHEET_ID,
@@ -258,6 +261,9 @@ async function syncExplorationMaster(auth,form,payload,links){
       {range:`01_PUNTOS_RELEVAMIENTO!K${nextRow}:U${nextRow}`,values:[[
         geo.polygon.id,geo.polygon.municipio,Number(geo.polygon.estrato),geo.distance,geo.method,
         Number(d.condicion_fisica_posteria),Number(d.condicion_ocupacion_tendido),d.nota||"",evidence,estado,new Date().toISOString()
+      ]]},
+      {range:`01_PUNTOS_RELEVAMIENTO!V${nextRow}`,values:[[
+        Number.isFinite(Number(l.accuracy))?Math.round(Number(l.accuracy)*10)/10:""
       ]]}
     ]}
   });
@@ -348,6 +354,16 @@ async function readRows(auth,forms,requested,limit,user,adminFlag){
   return out.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).slice(0,limit);
 }
 
+function classifyMasterSyncError(error){
+  const status=Number(error?.code||error?.response?.status||error?.response?.statusCode||0);
+  const message=String(error?.message||error?.response?.data?.error?.message||"").toLowerCase();
+  if(status===403||/permission|forbidden|insufficient permission|does not have permission/.test(message))return"MASTER_ACCESS_DENIED";
+  if(status===404||/not found|requested entity was not found/.test(message))return"MASTER_NOT_FOUND";
+  if(status===429||/rate limit|quota exceeded|too many requests/.test(message))return"MASTER_RATE_LIMIT";
+  if(/timeout|timed out|deadline/.test(message))return"MASTER_TIMEOUT";
+  return"SYNC_ERROR";
+}
+
 module.exports=async(req,res)=>{
   res.setHeader("Cache-Control","no-store");
   let auth;
@@ -421,8 +437,9 @@ module.exports=async(req,res)=>{
     if(isExploration(form.id)){
       try{masterSync=await syncExplorationMaster(auth,form,payload,links);}
       catch(syncError){
-        console.error("MASTER_SYNC_FAILED",syncError?.message||syncError);
-        masterSync={ok:false,reason:"SYNC_ERROR"};
+        const reason=classifyMasterSyncError(syncError);
+        console.error("MASTER_SYNC_FAILED",reason,syncError?.message||syncError);
+        masterSync={ok:false,reason};
       }
       if(rawRow){
         await sheets.spreadsheets.values.update({

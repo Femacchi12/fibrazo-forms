@@ -208,6 +208,9 @@ function validateSubmission(formId,payload){
     if(Number.isFinite(acc)&&acc<0) throw httpError("INVALID_GPS",400);
 
     if(formId==="EXPLORACION"&&!digits(d.anio_imagen,4)) throw httpError("INVALID_STREETVIEW_YEAR",400);
+    if(formId==="EXPLORACION_PRESENCIAL"){
+      one(d.municipio,["Bucaramanga","Floridablanca","Girón","Piedecuesta"],"INVALID_MUNICIPALITY");
+    }
 
     for(const key of ["condicion_fisica_posteria","condicion_ocupacion_tendido"]){
       if(!["1","2","3","4","5"].includes(String(d[key]||""))) throw httpError("INVALID_INFRASTRUCTURE_VALUE_"+key.toUpperCase(),400);

@@ -156,26 +156,35 @@
     const s=document.createElement("select");s.name=field.key;const first=document.createElement("option");first.value="";first.textContent="Seleccionar…";s.appendChild(first);
     (field.options||[]).forEach(o=>{const x=document.createElement("option");x.value=o;x.textContent=o;s.appendChild(x);});
     s.addEventListener("change",()=>{
-      if(state.form?.id==="CHURN"&&field.key==="ciudad"&&s.dataset.autoGps!=="1"){
-        state.citySource="manual";
-        if(state.gps)state.gps.citySource="manual";
+      const isManualCity=(state.form?.id==="CHURN"&&field.key==="ciudad")||(state.form?.id==="EXPLORACION_PRESENCIAL"&&field.key==="municipio");
+      if(isManualCity&&s.dataset.autoGps!=="1"){
+        const city=String(s.value||"").trim();
+        state.detectedCity=city;state.citySource="manual";
+        if(state.gps){state.gps.cityDetected=city;state.gps.citySource="manual";}
+        const status=document.querySelector('[data-gps-city-for="coordenadas"]');
+        if(status)status.textContent=city?"Municipio: "+city+" · corregido manualmente":"Municipio: pendiente";
       }
       clearError(field.key);updateVisibility();
     });return s;
   }
   function segmentedInput(field){
+    const shell=document.createElement("div");shell.className="segmented-shell";
     const holder=document.createElement("div");holder.className="segmented-control";holder.setAttribute("role","radiogroup");
     const hidden=document.createElement("input");hidden.type="hidden";hidden.name=field.key;hidden.value="";
+    const detail=document.createElement("div");detail.className="segment-detail";detail.hidden=true;
     (field.options||[]).forEach(o=>{
       const b=document.createElement("button");b.type="button";b.className="segment-option";b.textContent=o;b.setAttribute("aria-pressed","false");
       b.addEventListener("click",()=>{
         hidden.value=String(o);
         holder.querySelectorAll(".segment-option").forEach(x=>{const on=x===b;x.classList.toggle("selected",on);x.setAttribute("aria-pressed",String(on));});
+        const text=field.details?.[String(o)]||"";
+        detail.textContent=text?String(o)+" · "+text:"";
+        detail.hidden=!text;
         clearError(field.key);updateVisibility();
       });
       holder.appendChild(b);
     });
-    holder.prepend(hidden);return holder;
+    holder.prepend(hidden);shell.append(holder,detail);return shell;
   }
   function toggleInput(field){
     const holder=document.createElement("div");holder.className="binary-toggle";
@@ -197,6 +206,23 @@
       const city=document.createElement("div");city.className="gps-city";city.dataset.gpsCityFor=field.key;
       city.textContent=state.form?.id==="CHURN"?"Ciudad GPS: pendiente":"Municipio: pendiente";
       box.appendChild(city);
+    }
+    if(field.manualEdit){
+      const editor=document.createElement("div");editor.className="gps-manual-editor";
+      const label=document.createElement("small");label.textContent="Corregir coordenadas manualmente";
+      const row=document.createElement("div");row.className="gps-manual-row";
+      const input=document.createElement("input");input.type="text";input.inputMode="decimal";input.placeholder="7.10485, -73.10280";
+      const apply=document.createElement("button");apply.type="button";apply.className="secondary-button compact";apply.textContent="Aplicar";
+      apply.addEventListener("click",async()=>{
+        const parsed=parseCoordinateText(input.value);
+        if(!parsed){input.setCustomValidity("Coordenada inválida");input.reportValidity();return;}
+        input.setCustomValidity("");
+        state.gps={lat:parsed.lat,lng:parsed.lng,accuracy:null,cityDetected:"",citySource:"manual-coordinate"};
+        value.textContent=parsed.lat.toFixed(6)+", "+parsed.lng.toFixed(6)+" · corrección manual";
+        await resolveExplorationMunicipality(parsed.lat,parsed.lng,field.key);
+        clearError(field.key);
+      });
+      row.append(input,apply);editor.append(label,row);box.appendChild(editor);
     }
     return box;
   }
@@ -234,7 +260,10 @@
     return nodes[0].value;
   }
   function conditionMet(field){
-    if(!field.showWhen)return true;const v=fieldValue(field.showWhen.field);return Array.isArray(v)?v.includes(field.showWhen.equals):v===field.showWhen.equals;
+    if(!field.showWhen)return true;
+    const v=fieldValue(field.showWhen.field);
+    if(field.showWhen.notEmpty===true)return Array.isArray(v)?v.length>0:String(v||"").trim()!=="";
+    return Array.isArray(v)?v.includes(field.showWhen.equals):v===field.showWhen.equals;
   }
   function activeSections(){
     if(!state.form)return[];return (state.form.sections||[]).filter(section=>state.form.fields.some(field=>field.section===section.id&&conditionMet(field)));
@@ -359,31 +388,72 @@
       }
 
       $("reviewWorkspace").hidden=true;$("formWorkspace").hidden=true;$("successWorkspace").hidden=false;
-      $("successId").textContent=result.id||"—";
       const recordedWho=state.policy?.collectEmail===false?"Respuesta anónima":(u?.email||"—");
       $("successEmail").textContent=recordedWho;
-      const title=$("successTitle"),message=$("successMessage"),icon=document.querySelector(".success-icon");
-      if(result.queued){
-        if(title)title.textContent="Guardado para sincronizar";
-        if(message)message.textContent="La respuesta, el GPS y las fotos quedaron seguros en este dispositivo. Se sincronizarán automáticamente cuando el almacenamiento y la conexión estén disponibles.";
-        if(icon)icon.textContent="↻";
-      }else{
-        if(title)title.textContent="Formulario completado con éxito";
-        let completion=state.policy?.completionMessage||"La información fue guardada correctamente.";
-        if(isExplorationForm()&&result.masterSync){
-          completion+=result.masterSync.ok
-            ?" Punto maestro "+String(result.masterSync.pointId||"")+" sincronizado correctamente."
-            :" La respuesta quedó guardada, pero la sincronización con Bucaramanga_Exploracion quedó pendiente.";
-        }
-        if(message)message.textContent=completion;
-        if(icon)icon.textContent="✓";
-      }
+      paintCompletionStatus(result);
       window.FIBRAZO_OFFLINE?.refreshUi?.();
       window.scrollTo({top:0,behavior:"smooth"});
     }catch(e){
-      setStatus(e.message||"No se pudo guardar la respuesta.","error");
+      const msg=e.message||"No se pudo guardar la respuesta.";
+      setStatus("🔴 "+msg+" La encuesta no se considera finalizada hasta que puedas reintentar.","error");
+      const summary=$("validationSummary"),list=$("validationList");
+      if(summary&&list){summary.hidden=false;list.innerHTML="<li>"+esc(msg)+"</li>";}
     }finally{btn.disabled=false;}
   }
+
+  function paintCompletionStatus(result){
+    const workspace=$("successWorkspace"),title=$("successTitle"),message=$("successMessage"),icon=$("successIcon");
+    const card=$("successStatusCard"),statusTitle=$("successStatusTitle"),statusDetail=$("successStatusDetail");
+    const pointWrap=$("successPointWrap"),point=$("successPoint");
+    workspace?.classList.remove("status-ok","status-pending","status-error");
+    card?.classList.remove("status-ok","status-pending","status-error");
+    if(pointWrap)pointWrap.hidden=true;
+
+    if(result?.queued){
+      workspace?.classList.add("status-pending");card?.classList.add("status-pending");
+      if(icon)icon.textContent="!";
+      if(title)title.textContent="Encuesta guardada en el dispositivo";
+      if(message)message.textContent="La encuesta quedó segura localmente y todavía no llegó al servidor.";
+      if(statusTitle)statusTitle.textContent="Pendiente de sincronización";
+      if(statusDetail)statusDetail.textContent="Cuando vuelva la conexión, utiliza Sincronizar ahora. No necesitas completar nuevamente la encuesta.";
+      return;
+    }
+
+    if(isExplorationForm()&&result?.masterSync&&!result.masterSync.ok){
+      workspace?.classList.add("status-pending");card?.classList.add("status-pending");
+      if(icon)icon.textContent="!";
+      if(title)title.textContent="Encuesta guardada";
+      if(message)message.textContent="La respuesta quedó registrada correctamente en FIBRAZO Forms.";
+      if(statusTitle)statusTitle.textContent="Sincronización con el maestro pendiente";
+      if(statusDetail)statusDetail.textContent="El relevamiento está seguro, pero aún no pudo incorporarse a Bucaramanga_Exploracion. Motivo: "+friendlySyncReason(result.masterSync.reason);
+      return;
+    }
+
+    workspace?.classList.add("status-ok");card?.classList.add("status-ok");
+    if(icon)icon.textContent="✓";
+    if(title)title.textContent="Encuesta completada correctamente";
+    if(message)message.textContent=state.policy?.completionMessage||"La información fue guardada correctamente.";
+    if(statusTitle)statusTitle.textContent="Todo correcto";
+    if(statusDetail)statusDetail.textContent=isExplorationForm()?"La respuesta quedó guardada y sincronizada con la base maestra.":"La respuesta quedó guardada correctamente.";
+    if(isExplorationForm()&&result?.masterSync?.pointId&&pointWrap&&point){
+      pointWrap.hidden=false;point.textContent=result.masterSync.pointId;
+    }
+  }
+
+  function friendlySyncReason(reason){
+    const map={
+      MASTER_ACCESS_DENIED:"la integración no tiene acceso de edición al Sheet maestro",
+      MASTER_NOT_FOUND:"no se encontró el Sheet maestro configurado",
+      MASTER_RATE_LIMIT:"Google limitó temporalmente las solicitudes",
+      MASTER_TIMEOUT:"la sincronización excedió el tiempo disponible",
+      OUTSIDE_STUDY_AREA:"la coordenada está fuera del área de estudio de Bucaramanga, Floridablanca, Girón y Piedecuesta",
+      NO_POLYGON_DATA:"no fue posible relacionar la coordenada con la base geográfica",
+      SYNC_ERROR:"se produjo un error técnico en la integración",
+      PENDIENTE:"la sincronización quedó pendiente"
+    };
+    return map[String(reason||"")]||String(reason||"pendiente");
+  }
+
   function collectData(){const d={};state.form.fields.forEach(f=>{if(f.type==="gps"||f.type==="coordinates"||f.type==="photos"||!conditionMet(f))return;d[f.key]=fieldValue(f.key);});return d;}
   function setStatus(m,t){if(!$("saveStatus"))return;$("saveStatus").textContent=m;$("saveStatus").className="save-status"+(t?" "+t:"");}
 
@@ -435,10 +505,11 @@
     if(state.gps){state.gps.cityDetected=city;state.gps.citySource=source;}
     const status=document.querySelector('[data-gps-city-for="coordenadas"]');
     if(status)status.textContent=(isExplorationForm()?"Municipio: ":"Ciudad GPS: ")+city;
-    const select=document.querySelector('[name="ciudad"]');
+    const selectKey=state.form?.id==="CHURN"?"ciudad":state.form?.id==="EXPLORACION_PRESENCIAL"?"municipio":"";
+    const select=selectKey?document.querySelector('[name="'+css(selectKey)+'"]'):null;
     if(!select)return;
     select.querySelectorAll('[data-gps-detected="1"]').forEach(o=>o.remove());
-    const configured=state.form?.fields?.find(f=>f.key==="ciudad")?.options||[];
+    const configured=state.form?.fields?.find(f=>f.key===selectKey)?.options||[];
     const match=configured.find(item=>normalizeCityName(item)===normalizeCityName(city));
     select.dataset.autoGps="1";
     if(match){
@@ -449,7 +520,7 @@
       select.insertBefore(opt,select.options[1]||null);
     }
     delete select.dataset.autoGps;
-    clearError("ciudad");
+    clearError(selectKey);
   }
 
   function isExplorationForm(){
