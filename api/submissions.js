@@ -1,7 +1,7 @@
 const {google}=require("googleapis");
 const {Readable}=require("stream");
 const {
-  gauth,verifyUser,loadForms,isAdmin,canUseDashboard,canAccess,checkPublicRate,logSecurity,
+  gauth,verifyUser,loadForms,userCapabilities,permissionFor,canUseDashboard,canAccess,checkPublicRate,logSecurity,
   validatePublicGuards,validatePhotos,validateSubmission,httpError,SHEET_ID,DEFAULT_DOMAIN,EXCEPTION
 }=require("./_core");
 
@@ -340,9 +340,15 @@ async function syncExplorationMaster(auth,form,payload,links){
   addTraditional("Tigo","HFC",d.tigo_hfc);addTraditional("Tigo","FTTH",d.tigo_ftth);
   addTraditional("Claro","HFC",d.claro_hfc);addTraditional("Claro","FTTH",d.claro_ftth);
   addTraditional("Movistar","No identificada",d.movistar);
+  const seenIsps=new Set();
   for(const key of ["isp_1","isp_2","isp_3","isp_4"]){
-    const name=String(d[key]||"").trim();
-    if(name)operators.push({name,category:"ISP local / regional",tech:"No identificada"});
+    let name=String(d[key]||"").trim();
+    if(!name||name==="Sin ISP")continue;
+    if(name==="Sin Identificar")name="ISP sin identificar"+(municipioObservado?" ("+municipioObservado+")":"");
+    const normalized=name.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+    if(seenIsps.has(normalized))continue;
+    seenIsps.add(normalized);
+    operators.push({name,category:"ISP local / regional",tech:"No identificada"});
   }
   if(operators.length){
     const confidence=form.id==="EXPLORACION"?"Media":"Alta";
@@ -385,11 +391,15 @@ async function hasExistingResponseForEmail(auth,form,email){
   return (r.data.values||[]).some(row=>String(row[0]||"").trim().toLowerCase()===target);
 }
 
-async function readRows(auth,forms,requested,limit,user,adminFlag){
+async function readRows(auth,forms,requested,limit,user,caps){
   const selected=requested==="all"?forms:forms.filter(form=>form.id===requested);
   const email=String(user?.email||"").toLowerCase();
   const internal=email===EXCEPTION||email.endsWith(DEFAULT_DOMAIN);
-  const allowed=selected.filter(form=>adminFlag||(form.access==="PUBLICO"?internal:canAccess(form,user,false)));
+  const allowed=selected.filter(form=>{
+    const p=permissionFor(caps.permissions,email,form.id,caps.base);
+    if(canAccess(form,user,caps.base,p))return true;
+    return form.access==="PUBLICO"&&internal;
+  });
   const sheets=google.sheets({version:"v4",auth});
   const out=[];
   for(const form of allowed){
@@ -440,13 +450,12 @@ module.exports=async(req,res)=>{
 
     if(req.method==="GET"){
       const user=await verifyUser(req);
-      const adminFlag=await isAdmin(auth,user.email);
-      const forms=await loadForms(auth);
-      if(!canUseDashboard(user,adminFlag,forms)) throw httpError("DASHBOARD_ACCESS_DENIED",403);
+      const [forms,caps]=await Promise.all([loadForms(auth),userCapabilities(auth,user.email)]);
+      if(!canUseDashboard(user,caps.adminActive,forms)) throw httpError("DASHBOARD_ACCESS_DENIED",403);
       const requested=String(req.query.form||"all").toUpperCase();
       const limit=Math.min(Number(req.query.limit)||100,250);
       return res.status(200).json({
-        rows:await readRows(auth,forms,requested==="ALL"?"all":requested,limit,user,adminFlag)
+        rows:await readRows(auth,forms,requested==="ALL"?"all":requested,limit,user,caps)
       });
     }
 
@@ -460,7 +469,6 @@ module.exports=async(req,res)=>{
     if(String(form.status).toLowerCase()!=="activo") throw httpError("FORM_INACTIVE",403);
 
     let user=null;
-    let adminFlag=false;
 
     const isPublicRequest=payload.publicMode===true||(!req.headers.authorization&&form.publicEnabled);
     if(isPublicRequest){
@@ -470,9 +478,10 @@ module.exports=async(req,res)=>{
       publicContext={ipHash:await checkPublicRate(auth,form,req)};
     }else{
       user=await verifyUser(req);
-      adminFlag=await isAdmin(auth,user.email);
-      if(!canUseDashboard(user,adminFlag,forms)) throw httpError("DASHBOARD_ACCESS_DENIED",403);
-      if(!canAccess(form,user,adminFlag)) throw httpError("FORM_ACCESS_DENIED",403);
+      const caps=await userCapabilities(auth,user.email);
+      const permission=permissionFor(caps.permissions,user.email,form.id,caps.base);
+      if(!canUseDashboard(user,caps.adminActive,forms)) throw httpError("DASHBOARD_ACCESS_DENIED",403);
+      if(!canAccess(form,user,caps.base,permission)) throw httpError("FORM_ACCESS_DENIED",403);
     }
 
     validateSubmission(formId,payload);
@@ -523,6 +532,12 @@ module.exports=async(req,res)=>{
             project,
             processState
           ]]}
+        });
+        await sheets.spreadsheets.values.update({
+          spreadsheetId:SHEET_ID,
+          range:`${form.sheet}!AG${rawRow}`,
+          valueInputOption:"RAW",
+          requestBody:{values:[[String(payload.data?.estrato||"")]]}
         });
       }
     }
