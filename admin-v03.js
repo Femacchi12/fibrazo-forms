@@ -148,6 +148,7 @@
       const card=document.createElement("article");card.className="admin-form-card accordion compact";card.dataset.formId=f.id;
       card._domains=[...(f.domains||[])];card._emails=[...(f.allowedEmails||[])];card.dataset.savedPublic=String(!!f.publicEnabled);
       const publicUrl=location.origin+"/form/"+f.slug;
+      const databaseHtml=f.canViewDatabase&&f.databaseUrl?'<a class="secondary-button compact admin-db-link" href="'+esc(f.databaseUrl)+'" target="_blank" rel="noopener">↗ Base de datos</a>':"";
       const isActive=String(f.status).toLowerCase()==="activo";
       card.dataset.savedStatus=isActive?"activo":"inactivo";
       card.innerHTML=
@@ -156,8 +157,8 @@
           '<b class="accordion-chevron">⌄</b>'+
         '</button>'+
         '<div class="admin-accordion-body compact-body" hidden>'+
-          '<div class="form-status-control"><div><span>ESTADO</span><strong>Formulario '+(isActive?"activo":"inactivo")+'</strong><small>'+(isActive?"Acepta respuestas según los permisos configurados.":"Bloqueado para todos: usuarios, enlace público y administradores.")+'</small></div><label class="switch status-switch" title="Activar o desactivar formulario"><input type="checkbox" data-field="formActive" '+(isActive?"checked":"")+'><i></i></label></div>'+
-          '<details class="admin-compact-section">'+
+          '<div class="form-status-control" data-admin-scope="edit"><div><span>ESTADO</span><strong>Formulario '+(isActive?"activo":"inactivo")+'</strong><small>'+(isActive?"Acepta respuestas según los permisos configurados.":"Bloqueado para todos: usuarios, enlace público y administradores.")+'</small></div><label class="switch status-switch" title="Activar o desactivar formulario"><input type="checkbox" data-field="formActive" '+(isActive?"checked":"")+'><i></i></label></div>'+
+          '<details class="admin-compact-section" data-admin-scope="permissions">'+
             '<summary><div><span>ACCESOS</span><strong>Dominios y correos autorizados</strong></div><b data-access-summary>'+esc(accessSummary(f).replace(" · público",""))+'</b></summary>'+
             '<div class="compact-section-body access-columns">'+
               '<div class="compact-permission-box"><div class="compact-box-head"><div><strong>Dominios autorizados</strong><small>Quien tenga un correo de estos dominios podrá entrar al dashboard y a este formulario.</small></div><span class="count-badge" data-domain-count>'+card._domains.length+'</span></div><div class="domain-list compact-list" data-domain-list></div><div class="compact-add-row"><input data-domain-input type="text" placeholder="@fibrazo.com"><button type="button" class="secondary-button compact" data-add-domain>Agregar</button></div></div>'+
@@ -165,7 +166,7 @@
             '</div>'+
           '</details>'+
 
-          '<details class="admin-compact-section public-section">'+
+          '<details class="admin-compact-section public-section" data-admin-scope="permissions">'+
             '<summary><div><span>PUBLICACIÓN</span><strong>Acceso por enlace</strong></div><b class="section-status" data-public-status></b></summary>'+
             '<div class="compact-section-body">'+
               '<label class="compact-toggle-row"><div><strong>Permitir acceso por enlace</strong><small>Usa siempre este mismo enlace. Si habilitas acceso público, cualquiera con el enlace podrá responder; si lo deshabilitas, exigirá inicio de sesión y permisos.</small></div><span class="switch"><input type="checkbox" data-field="publicEnabled" '+(f.publicEnabled?"checked":"")+'><i></i></span></label>'+
@@ -174,7 +175,7 @@
             '</div>'+
           '</details>'+
 
-          '<details class="admin-compact-section">'+
+          '<details class="admin-compact-section" data-admin-scope="edit">'+
             '<summary><div><span>EXPERIENCIA</span><strong>Presentación y comportamiento</strong></div><b>'+esc(experienceSummary(f))+'</b></summary>'+
             '<div class="compact-section-body">'+
               '<details class="nested-config"><summary>Mensajes de la encuesta</summary><div class="message-grid compact-messages"><label><span>Mensaje inicial</span><textarea data-field="introMessage" placeholder="Mensaje opcional al iniciar">'+esc(f.introMessage||"")+'</textarea></label><label><span>Mensaje final</span><textarea data-field="completionMessage" placeholder="Mensaje después de enviar">'+esc(f.completionMessage||"")+'</textarea></label></div></details>'+
@@ -187,14 +188,18 @@
             '</div>'+
           '</details>'+
 
-          '<details class="admin-compact-section">'+
+          '<details class="admin-compact-section" data-admin-scope="edit">'+
             '<summary><div><span>EVIDENCIA</span><strong>Fotos y archivos</strong></div><b data-evidence-summary>'+photoSummary(f.maxPhotos,f.maxPhotoMb)+'</b></summary>'+
             '<div class="compact-section-body evidence-row"><label><span>Máximo de fotos</span><input data-field="maxPhotos" type="number" min="0" max="3" value="'+esc(Number.isFinite(f.maxPhotos)?f.maxPhotos:3)+'"><small data-photo-state></small></label><label data-photo-size><span>Máximo por foto (MB)</span><input data-field="maxPhotoMb" type="number" min=".25" max="2" step=".25" value="'+esc(f.maxPhotoMb)+'"></label></div>'+
           '</details>'+
 
-          '<div class="admin-card-actions compact-actions"><small>Última actualización: '+esc(f.updatedAt||"—")+(f.updatedBy?" · "+esc(f.updatedBy):"")+'</small><button type="button" class="primary-button compact-save" data-save>Guardar cambios</button></div>'+
+          '<div class="admin-card-actions compact-actions"><small>Última actualización: '+esc(f.updatedAt||"—")+(f.updatedBy?" · "+esc(f.updatedBy):"")+'</small>'+databaseHtml+'<button type="button" class="primary-button compact-save" data-save>Guardar cambios</button></div>'+
         '</div>';
 
+      card.querySelectorAll('[data-admin-scope="permissions"]').forEach(el=>{el.hidden=!f.canManagePermissions;});
+      card.querySelectorAll('[data-admin-scope="edit"]').forEach(el=>{el.hidden=!f.canEditForm;});
+      const saveButton=card.querySelector("[data-save]");
+      if(saveButton)saveButton.hidden=!(f.canEditForm||f.canManagePermissions);
       card.querySelector("[data-toggle]").addEventListener("click",()=>toggleCard(card));
       card.querySelectorAll('input[data-field],textarea[data-field]').forEach(el=>el.addEventListener("input",()=>{markDirty(card);refresh(card);}));
       card.querySelectorAll('input[type="checkbox"][data-field]').forEach(el=>el.addEventListener("change",()=>{markDirty(card);refresh(card);}));
