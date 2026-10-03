@@ -236,6 +236,9 @@ async function syncExplorationMaster(auth,form,payload,links){
 
   const polygons=await loadMasterPolygons(sheets),geo=matchMasterPolygon(lon,lat,polygons);
   if(!geo)return{ok:false,reason:"NO_POLYGON_DATA"};
+  if(geo.method==="Más cercano"&&Number(geo.distance)>5000){
+    return{ok:false,reason:"OUTSIDE_STUDY_AREA",distance:geo.distance};
+  }
 
   const [pointIds,compIds]=await Promise.all([
     sheets.spreadsheets.values.get({spreadsheetId:MASTER_SHEET_ID,range:"01_PUNTOS_RELEVAMIENTO!A2:A"}),
