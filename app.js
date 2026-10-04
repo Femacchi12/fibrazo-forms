@@ -644,7 +644,18 @@
   $("refreshResults").addEventListener("click", loadResults);
   $("resultFormFilter").addEventListener("change", renderResults);
 
+  async function localHistoryRows() {
+    if(!window.FIBRAZO_OFFLINE?.list)return[];
+    const email=String(state.user?.email||"").trim().toLowerCase();
+    const records=(await window.FIBRAZO_OFFLINE.list()).filter(r=>!email||r.userEmail===email);
+    return records.map(r=>({
+      formId:r.formId,id:r.clientSubmissionId,clientTimestamp:r.createdAt,
+      data:r.payload?.data||{},user:r.userEmail||"",localStatus:r.status||"pending",local:true
+    }));
+  }
+
   async function loadResults() {
+    const local=await localHistoryRows().catch(()=>[]);
     try {
       if (isGitHubPreview) {
         state.rows = JSON.parse(localStorage.getItem("fibrazoFormsPreview") || "[]");
@@ -655,19 +666,19 @@
         const response = await fetch(apiBase + "/api/submissions?form=all&limit=100", {
           headers: { Authorization: "Bearer " + token }
         });
-
         const result = await response.json();
         if (!response.ok) throw new Error(result.error || "Error de sincronización");
-        state.rows = result.rows || [];
-        $("backendState").textContent = "CONECTADO";
-        $("backendDetail").textContent = "Google Sheets + Drive";
+        const server=result.rows||[],serverIds=new Set(server.map(r=>String(r.id||"")));
+        const localOnly=local.filter(r=>!serverIds.has(String(r.id||"")));
+        state.rows=[...localOnly,...server.map(r=>({...r,localStatus:"sent"}))].sort((a,b)=>new Date(b.clientTimestamp||b.timestamp)-new Date(a.clientTimestamp||a.timestamp));
+        $("backendState").textContent = localOnly.some(r=>r.localStatus!=="sent")?"PENDIENTES":"CONECTADO";
+        $("backendDetail").textContent = localOnly.some(r=>r.localStatus!=="sent")?"hay respuestas locales por sincronizar":"Google Sheets + historial local";
       }
-
       renderResults();
     } catch (error) {
-      $("backendState").textContent = "ERROR";
-      $("backendDetail").textContent = error.message || "sin conexión";
-      state.rows = [];
+      state.rows=local;
+      $("backendState").textContent = navigator.onLine?"ERROR":"SIN CONEXIÓN";
+      $("backendDetail").textContent = local.length?"mostrando historial local":(error.message||"sin conexión");
       renderResults();
     }
   }
@@ -708,6 +719,7 @@
         "<td>" + escapeHtml(data.ciudad || "—") + "</td>" +
         "<td>" + escapeHtml(reference) + "</td>" +
         "<td>" + escapeHtml(detail) + "</td>" +
+        '<td><span class="result-status '+escapeHtml(row.localStatus||"sent")+'">'+escapeHtml(window.FIBRAZO_OFFLINE?.statusLabel?.(row.localStatus||"sent")||"Enviado")+"</span></td>" +
         "<td>" + escapeHtml((row.user && row.user.email) || row.user || "—") + "</td>";
 
       body.appendChild(tr);
