@@ -1,10 +1,9 @@
 const {google}=require("googleapis");
 const {gauth,verifyUser,httpError}=require("./_core");
 
-const BGF_SHEET_ID=process.env.BUCARAMANGA_EXPLORACION_SHEET_ID||"1LKNNf7a1VlUGpr9SlRqJGAkZq4NprW-wvdjNIlmB4E4";
 const TERRITORIAL_SHEET_ID=process.env.TERRITORIAL_SHEET_ID||"19_ixY0PwYIlobp94h-X7AD_CnFgHHIOso0H2RZlkGHY";
 const COMPETENCIA_SHEET_ID=process.env.COMPETENCIA_SHEET_ID||"1v2sBVe_w-bTl438b8qWFmvw0gT66bj8TskcXbnY-gbU";
-let cache={expires:0,bgfBarrios:null,bgfEstratos:null,territorialBarrios:null,territorialEstratos:null,operators:null,presence:null};
+let cache={expires:0,territorialBarrios:null,territorialEstratos:null,operators:null,presence:null};
 
 function norm(v){
   return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
@@ -19,6 +18,16 @@ function canonicalCity(value){
   return aliases.find(([key])=>v.includes(key))?.[1]||String(value||"").trim();
 }
 function num(v){const n=Number(String(v??"").replace(",","."));return Number.isFinite(n)?n:NaN;}
+function truthy(v){return v===true||["true","si","sí","1","yes"].includes(norm(v));}
+function headerKey(v){return norm(v).replace(/[^a-z0-9_]+/g,"_").replace(/^_+|_+$/g,"");}
+function tableReader(table){
+  const header=table?.[0]||[];
+  const index=new Map(header.map((name,i)=>[headerKey(name),i]));
+  return{rows:(table||[]).slice(1),get(row,...names){
+    for(const name of names){const i=index.get(headerKey(name));if(i!==undefined)return row?.[i]??"";}
+    return"";
+  }};
+}
 
 function parseWkt(wkt){
   const s=String(wkt||"").trim();
@@ -89,24 +98,36 @@ async function values(sheets,spreadsheetId,range){
 }
 async function loadGeo(auth){
   const now=Date.now();
-  if(cache.expires>now&&cache.bgfBarrios&&cache.operators)return cache;
+  if(cache.expires>now&&cache.territorialBarrios&&cache.operators)return cache;
   const sheets=google.sheets({version:"v4",auth});
-  const [bb,be,tb,te,ops,pres]=await Promise.all([
-    values(sheets,BGF_SHEET_ID,"06_POLIGONOS_BARRIOS!A2:I1000").catch(()=>[]),
-    values(sheets,BGF_SHEET_ID,"03_POLIGONOS_ESTRATOS!A2:I10000").catch(()=>[]),
-    values(sheets,TERRITORIAL_SHEET_ID,"02_BARRIOS!A2:S3000").catch(()=>[]),
-    values(sheets,TERRITORIAL_SHEET_ID,"03_ESTRATOS!A2:O3000").catch(()=>[]),
+  const [tb,te,ops,pres]=await Promise.all([
+    values(sheets,TERRITORIAL_SHEET_ID,"02_BARRIOS!A:T").catch(()=>[]),
+    values(sheets,TERRITORIAL_SHEET_ID,"03_ESTRATOS!A:R").catch(()=>[]),
     values(sheets,COMPETENCIA_SHEET_ID,"01_OPERADORES!A2:P1000").catch(()=>[]),
     values(sheets,COMPETENCIA_SHEET_ID,"03_PRESENCIA!C2:J3000").catch(()=>[])
   ]);
+  const barrios=tableReader(tb),estratos=tableReader(te);
   cache={
     expires:now+10*60*1000,
-    bgfBarrios:bb.map(r=>({id:r[0],city:r[2],name:r[3],minLon:num(r[4]),minLat:num(r[5]),maxLon:num(r[6]),maxLat:num(r[7]),polygons:parseWkt(r[8])})).filter(x=>x.id&&x.polygons.length),
-    bgfEstratos:be.map(r=>({id:r[0],city:r[1],estrato:String(r[2]||""),minLon:num(r[4]),minLat:num(r[5]),maxLon:num(r[6]),maxLat:num(r[7]),polygons:parseWkt(r[8])})).filter(x=>x.id&&/^[1-6]$/.test(x.estrato)&&x.polygons.length),
-    territorialBarrios:tb.map(r=>({id:r[0],city:r[1],name:r[2],preferred:r[13]===true||String(r[13]).toUpperCase()==="TRUE",source:r[10]||r[9]||"",minLon:num(r[15]),minLat:num(r[16]),maxLon:num(r[17]),maxLat:num(r[18]),polygons:parseWkt(r[14])})).filter(x=>x.id&&x.polygons.length&&x.preferred),
-    territorialEstratos:te.map(r=>({id:r[0],city:r[1],estrato:String(r[2]||""),sourceType:String(r[5]||""),source:String(r[6]||""),year:String(r[8]||""),preferred:r[9]===true||String(r[9]).toUpperCase()==="TRUE",minLon:num(r[11]),minLat:num(r[12]),maxLon:num(r[13]),maxLat:num(r[14]),polygons:parseWkt(r[10])})).filter(x=>x.id&&/^[1-6]$/.test(x.estrato)&&x.polygons.length),
-    operators:ops,
-    presence:pres
+    territorialBarrios:barrios.rows.map(r=>({
+      id:barrios.get(r,"ID_Barrio"),city:barrios.get(r,"Ciudad"),name:barrios.get(r,"Barrio"),
+      preferred:truthy(barrios.get(r,"Preferida_Analisis")),
+      sourceType:String(barrios.get(r,"Fuente_tipo")||""),source:String(barrios.get(r,"Fuente_nombre","Fuente_tipo")||""),
+      sourceUrl:String(barrios.get(r,"Fuente_URL")||""),year:String(barrios.get(r,"Año_Vigencia")||""),
+      minLon:num(barrios.get(r,"Min_Lon")),minLat:num(barrios.get(r,"Min_Lat")),
+      maxLon:num(barrios.get(r,"Max_Lon")),maxLat:num(barrios.get(r,"Max_Lat")),
+      polygons:parseWkt(barrios.get(r,"WKT"))
+    })).filter(x=>x.id&&x.preferred&&x.polygons.length&&[x.minLon,x.minLat,x.maxLon,x.maxLat].every(Number.isFinite)),
+    territorialEstratos:estratos.rows.map(r=>({
+      id:estratos.get(r,"ID_Estrato_Poligono"),city:estratos.get(r,"Ciudad"),estrato:String(estratos.get(r,"Estrato")||""),
+      sourceType:String(estratos.get(r,"Fuente_tipo")||""),source:String(estratos.get(r,"Fuente_nombre","Fuente_tipo")||""),
+      sourceUrl:String(estratos.get(r,"Fuente_URL")||""),year:String(estratos.get(r,"Año_Vigencia")||""),
+      preferred:truthy(estratos.get(r,"Preferida_Analisis")),
+      minLon:num(estratos.get(r,"Min_Lon")),minLat:num(estratos.get(r,"Min_Lat")),
+      maxLon:num(estratos.get(r,"Max_Lon")),maxLat:num(estratos.get(r,"Max_Lat")),
+      polygons:parseWkt(estratos.get(r,"WKT"))
+    })).filter(x=>x.id&&/^[1-6]$/.test(x.estrato)&&x.polygons.length&&[x.minLon,x.minLat,x.maxLon,x.maxLat].every(Number.isFinite)),
+    operators:ops,presence:pres
   };
   return cache;
 }
@@ -140,30 +161,6 @@ function ispOptions(city,data){
   return [...names].sort((a,b)=>a.localeCompare(b,"es",{sensitivity:"base"}));
 }
 
-async function cartagenaOfficialBarrio(lat,lng){
-  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),3500);
-  try{
-    const url="https://services5.arcgis.com/NH8goQnevWdS65Vx/arcgis/rest/services/Aspecto_Cartografia_Base/FeatureServer/1/query?geometry="+encodeURIComponent(lng+","+lat)+"&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=false&f=json";
-    const r=await fetch(url,{signal:controller.signal});if(!r.ok)return null;
-    const j=await r.json(),a=j.features?.[0]?.attributes||null;if(!a)return null;
-    const name=String(a.BARRIO||a.Barrio||a.barrio||a.NOMBRE||a.Nombre||a.nombre||"").trim();
-    return name?{name,source:"Planeación Cartagena · Aspecto Cartografia Base · Barrios"}:null;
-  }catch(_){return null;}finally{clearTimeout(timer);}
-}
-
-async function barranquillaEstrato(lat,lng){
-  const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),3500);
-  try{
-    const url="https://services3.arcgis.com/oGYAc07w6wsvgUYr/ArcGIS/rest/services/PANORAMA_URBANO_AGOL_WFL1/FeatureServer/0/query?geometry="+encodeURIComponent(lng+","+lat)+"&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=estrato&returnGeometry=false&f=json";
-    const r=await fetch(url,{signal:controller.signal});
-    if(!r.ok)return"";
-    const j=await r.json();
-    const v=j.features?.[0]?.attributes?.estrato;
-    return /^[1-6]$/.test(String(v??""))?String(v):"";
-  }catch(_){return"";}finally{clearTimeout(timer);}
-}
-
 module.exports=async(req,res)=>{
   res.setHeader("Cache-Control","private, max-age=60");
   try{
@@ -173,54 +170,31 @@ module.exports=async(req,res)=>{
     if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat<-90||lat>90||lng<-180||lng>180)throw httpError("INVALID_COORDINATES",400);
     const auth=gauth(),data=await loadGeo(auth);
     const hint=canonicalCity(req.query.city||"");
-    const bgBarrio=findPolygon(lng,lat,data.bgfBarrios);
-    const bgEstrato=findPolygon(lng,lat,data.bgfEstratos);
-    let territorial=findPolygon(lng,lat,data.territorialBarrios);
-    const cartagenaArea=lat>=10.25&&lat<=10.55&&lng>=-75.65&&lng<=-75.35;
-    if(!territorial&&(norm(hint)==="cartagena"||cartagenaArea)){
-      const direct=await cartagenaOfficialBarrio(lat,lng);
-      if(direct)territorial={city:"Cartagena",name:direct.name,source:direct.source};
-    }
+    const territorial=findPolygon(lng,lat,data.territorialBarrios);
     const territorialEstrato=findPolygon(lng,lat,(data.territorialEstratos||[]).filter(x=>x.preferred));
     const historicalEstrato=findPolygon(lng,lat,(data.territorialEstratos||[]).filter(x=>!x.preferred&&norm(x.city)==="cartagena"));
-    const city=canonicalCity(bgBarrio?.city||bgEstrato?.city||territorial?.city||territorialEstrato?.city||historicalEstrato?.city||(cartagenaArea?"Cartagena":"")||hint);
-    const barrio=bgBarrio?.name||territorial?.name||"";
-    let estrato=bgEstrato?.estrato||territorialEstrato?.estrato||"";
-    let estratoSource=bgEstrato?"Bucaramanga_Exploracion":territorialEstrato?.source||"";
+    const city=canonicalCity(territorial?.city||territorialEstrato?.city||historicalEstrato?.city||hint);
+    const barrio=territorial?.name||"";
+    let estrato=territorialEstrato?.estrato||"";
+    let estratoSource=territorialEstrato?.source||"";
     let estratoMatch=estrato?"exacto":"";
     let estratoDistanceM=estrato?0:null;
     if(!estrato&&historicalEstrato){
       estrato=historicalEstrato.estrato;
       estratoSource=(historicalEstrato.source||"GeoInformador Cartagena")+" · "+(historicalEstrato.year||"histórico");
-      estratoMatch="historico";
-      estratoDistanceM=0;
+      estratoMatch="historico";estratoDistanceM=0;
     }
     if(!estrato&&norm(city)==="cartagena"){
       const nearestHistorical=nearestPolygon(lng,lat,(data.territorialEstratos||[]).filter(x=>!x.preferred&&norm(x.city)==="cartagena"),"Cartagena",5000);
       if(nearestHistorical){
         estrato=nearestHistorical.item.estrato;
         estratoSource=(nearestHistorical.item.source||"GeoInformador Cartagena")+" · "+(nearestHistorical.item.year||"histórico");
-        estratoMatch="historico_cercano";
-        estratoDistanceM=Math.round(nearestHistorical.distance);
+        estratoMatch="historico_cercano";estratoDistanceM=Math.round(nearestHistorical.distance);
       }
-    }
-    if(!estrato&&city){
-      const nearest=nearestPolygon(lng,lat,data.bgfEstratos,city,5000);
-      if(nearest){
-        estrato=nearest.item.estrato;
-        estratoSource="Bucaramanga_Exploracion";
-        estratoMatch="cercano";
-        estratoDistanceM=Math.round(nearest.distance);
-      }
-    }
-    if(!estrato&&norm(city)==="barranquilla"){
-      estrato=await barranquillaEstrato(lat,lng);
-      if(estrato){estratoSource="Barranquilla GIS público";estratoMatch="exacto";estratoDistanceM=0;}
     }
     return res.status(200).json({
       ok:true,city,barrio,estrato,estratoMatch,estratoDistanceM,
-      barrioSource:bgBarrio?"AMB Barrios":territorial?.source||"",
-      estratoSource,
+      barrioSource:territorial?.source||"",estratoSource,
       isps:ispOptions(city||hint,data)
     });
   }catch(error){
