@@ -129,7 +129,7 @@ function parseWkt(wkt){
   if(/^MULTIPOLYGON\s*/i.test(s)){
     const body=stripOuter(s.replace(/^MULTIPOLYGON\s*/i,""));
     return groupsAtTop(body).map(polyText=>
-      groupsAtTop(stripOuter(polyText)).map(parseRing).filter(r=>r.length>=3)
+      groupsAtTop(polyText).map(parseRing).filter(r=>r.length>=3)
     ).filter(poly=>poly.length);
   }
   return [];
