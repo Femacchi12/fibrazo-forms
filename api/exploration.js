@@ -183,7 +183,7 @@ module.exports=async(req,res)=>{
     }
     const territorialEstrato=findPolygon(lng,lat,(data.territorialEstratos||[]).filter(x=>x.preferred));
     const historicalEstrato=findPolygon(lng,lat,(data.territorialEstratos||[]).filter(x=>!x.preferred&&norm(x.city)==="cartagena"));
-    const city=canonicalCity(bgBarrio?.city||bgEstrato?.city||territorial?.city||territorialEstrato?.city||historicalEstrato?.city||hint);
+    const city=canonicalCity(bgBarrio?.city||bgEstrato?.city||territorial?.city||territorialEstrato?.city||historicalEstrato?.city||(cartagenaArea?"Cartagena":"")||hint);
     const barrio=bgBarrio?.name||territorial?.name||"";
     let estrato=bgEstrato?.estrato||territorialEstrato?.estrato||"";
     let estratoSource=bgEstrato?"Bucaramanga_Exploracion":territorialEstrato?.source||"";
@@ -194,6 +194,15 @@ module.exports=async(req,res)=>{
       estratoSource=(historicalEstrato.source||"GeoInformador Cartagena")+" · "+(historicalEstrato.year||"histórico");
       estratoMatch="historico";
       estratoDistanceM=0;
+    }
+    if(!estrato&&norm(city)==="cartagena"){
+      const nearestHistorical=nearestPolygon(lng,lat,(data.territorialEstratos||[]).filter(x=>!x.preferred&&norm(x.city)==="cartagena"),"Cartagena",5000);
+      if(nearestHistorical){
+        estrato=nearestHistorical.item.estrato;
+        estratoSource=(nearestHistorical.item.source||"GeoInformador Cartagena")+" · "+(nearestHistorical.item.year||"histórico");
+        estratoMatch="historico_cercano";
+        estratoDistanceM=Math.round(nearestHistorical.distance);
+      }
     }
     if(!estrato&&city){
       const nearest=nearestPolygon(lng,lat,data.bgfEstratos,city,5000);
