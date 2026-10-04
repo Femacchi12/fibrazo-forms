@@ -716,7 +716,7 @@
       tr.innerHTML =
         "<td>" + escapeHtml(formatDate(row.clientTimestamp || row.timestamp)) + "</td>" +
         "<td>" + escapeHtml(row.formId || "—") + "</td>" +
-        "<td>" + escapeHtml(data.ciudad || "—") + "</td>" +
+        "<td>" + escapeHtml(data.municipio || data.ciudad || row.location?.cityDetected || "—") + "</td>" +
         "<td>" + escapeHtml(reference) + "</td>" +
         "<td>" + escapeHtml(detail) + "</td>" +
         '<td><span class="result-status '+escapeHtml(row.localStatus||"sent")+'">'+escapeHtml(window.FIBRAZO_OFFLINE?.statusLabel?.(row.localStatus||"sent")||"Enviado")+"</span></td>" +
