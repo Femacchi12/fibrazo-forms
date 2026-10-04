@@ -4,6 +4,7 @@ const {
   gauth,verifyUser,loadForms,userCapabilities,permissionFor,canUseDashboard,canAccess,checkPublicRate,logSecurity,
   validatePublicGuards,validatePhotos,validateSubmission,httpError,SHEET_ID,DEFAULT_DOMAIN,EXCEPTION
 }=require("./_core");
+const {resolveTerritorial,TERRITORIAL_VERSION}=require("./_territorial");
 
 const LEGACY_PHOTO_FOLDER_ENV={
   CHURN:"DRIVE_CHURN_FOLDER_ID",
@@ -139,7 +140,7 @@ function buildRow(form,p,id,links,email){
     d.tigo_hfc||"",d.tigo_ftth||"",d.claro_hfc||"",d.claro_ftth||"",d.movistar||"",
     rawIsp(d.isp_1),rawIsp(d.isp_2),rawIsp(d.isp_3),rawIsp(d.isp_4),d.nota||"",
     l.lat||"",l.lng||"",l.accuracy||"",maps,links[0]||"",links[1]||"",links[2]||"",
-    email||"ANONIMO","0.8.9",tipo,d.link_evidencia||""
+    email||"ANONIMO","0.8.14",tipo,d.link_evidencia||""
   ];
 }
 
@@ -148,161 +149,69 @@ function num(v){
   return Number.isFinite(n)?n:NaN;
 }
 
-function parsePolygonWkt(wkt){
-  const s=String(wkt||"").trim(),m=s.match(/^POLYGON\s*\(\((.*)\)\)$/i);
-  if(!m)return[];
-  return m[1].split(/\)\s*,\s*\(/).map(txt=>
-    txt.split(",").map(pair=>{
-      const p=pair.trim().split(/\s+/);return[Number(p[0]),Number(p[1])];
-    }).filter(p=>Number.isFinite(p[0])&&Number.isFinite(p[1]))
-  ).filter(r=>r.length>=3);
-}
-
-function pointOnSegment(px,py,x1,y1,x2,y2){
-  const eps=1e-10,cross=(px-x1)*(y2-y1)-(py-y1)*(x2-x1);
-  return Math.abs(cross)<=eps&&px>=Math.min(x1,x2)-eps&&px<=Math.max(x1,x2)+eps&&py>=Math.min(y1,y2)-eps&&py<=Math.max(y1,y2)+eps;
-}
-function pointInRing(x,y,ring){
-  let inside=false;
-  for(let i=0,j=ring.length-1;i<ring.length;j=i++){
-    const xi=ring[i][0],yi=ring[i][1],xj=ring[j][0],yj=ring[j][1];
-    if(pointOnSegment(x,y,xj,yj,xi,yi))return true;
-    const crosses=((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/((yj-yi)||1e-30)+xi);
-    if(crosses)inside=!inside;
-  }
-  return inside;
-}
-function pointInPolygon(x,y,rings){
-  if(!rings.length||!pointInRing(x,y,rings[0]))return false;
-  for(let i=1;i<rings.length;i++)if(pointInRing(x,y,rings[i]))return false;
-  return true;
-}
-function localDistance(lon1,lat1,lon2,lat2,latRef){
-  const R=6371000,rad=Math.PI/180;
-  return Math.hypot((lon2-lon1)*R*Math.cos(latRef*rad)*rad,(lat2-lat1)*R*rad);
-}
-function bboxDistance(lon,lat,p){
-  return localDistance(lon,lat,Math.max(p.minLon,Math.min(p.maxLon,lon)),Math.max(p.minLat,Math.min(p.maxLat,lat)),lat);
-}
-function segmentDistance(px,py,x1,y1,x2,y2){
-  const R=6371000,rad=Math.PI/180,xScale=R*Math.cos(py*rad)*rad,yScale=R*rad;
-  const ax=(x1-px)*xScale,ay=(y1-py)*yScale,bx=(x2-px)*xScale,by=(y2-py)*yScale;
-  const vx=bx-ax,vy=by-ay,vv=vx*vx+vy*vy;
-  let t=vv?-(ax*vx+ay*vy)/vv:0;t=Math.max(0,Math.min(1,t));
-  return Math.hypot(ax+t*vx,ay+t*vy);
-}
-function polygonDistance(lon,lat,rings){
-  let best=Infinity;
-  for(const ring of rings)for(let i=0;i<ring.length;i++){
-    const a=ring[i],b=ring[(i+1)%ring.length],d=segmentDistance(lon,lat,a[0],a[1],b[0],b[1]);
-    if(d<best)best=d;
-  }
-  return best;
-}
-
-async function loadMasterPolygons(sheets){
-  if(masterPolygonCache)return masterPolygonCache;
-  const r=await sheets.spreadsheets.values.get({spreadsheetId:MASTER_SHEET_ID,range:"03_POLIGONOS_ESTRATOS!A2:I"});
-  masterPolygonCache=(r.data.values||[]).map(row=>({
-    id:String(row[0]||""),municipio:String(row[1]||""),estrato:String(row[2]||""),
-    minLon:num(row[4]),minLat:num(row[5]),maxLon:num(row[6]),maxLat:num(row[7]),rings:parsePolygonWkt(row[8])
-  })).filter(p=>p.id&&/^[1-6]$/.test(p.estrato)&&p.rings.length&&[p.minLon,p.minLat,p.maxLon,p.maxLat].every(Number.isFinite));
-  return masterPolygonCache;
-}
-
-function matchMasterPolygon(lon,lat,polygons){
-  for(const p of polygons){
-    if(lon<p.minLon||lon>p.maxLon||lat<p.minLat||lat>p.maxLat)continue;
-    if(pointInPolygon(lon,lat,p.rings))return{polygon:p,distance:0,method:"Dentro del polígono"};
-  }
-  return null;
-}
-
 function nextSequence(values,re){
   let max=0;
   for(const row of values||[]){
-    const m=String(row[0]||"").match(re);if(m)max=Math.max(max,Number(m[1]));
+    const m=String(row[0]||"").match(re);
+    if(m)max=Math.max(max,Number(m[1]));
   }
   return max+1;
 }
 
-function parseAreaWkt(wkt){
-  const s=String(wkt||"").trim();
-  const ring=txt=>txt.split(",").map(pair=>{
-    const p=pair.trim().split(/\s+/);return[Number(p[0]),Number(p[1])];
-  }).filter(p=>Number.isFinite(p[0])&&Number.isFinite(p[1]));
-  if(/^POLYGON/i.test(s)){
-    const body=s.replace(/^POLYGON\s*\(\(/i,"").replace(/\)\)\s*$/,"");
-    return [body.split(/\)\s*,\s*\(/).map(ring).filter(r=>r.length>=3)];
+function exactName(layer,fallback=""){
+  return layer?.status==="DENTRO"?String(layer.assigned?.name||fallback||""):String(fallback||"");
+}
+function exactId(layer){
+  return layer?.status==="DENTRO"?String(layer.assigned?.id||""):"";
+}
+function layerDistance(layer){
+  return Number.isFinite(Number(layer?.distanceM))?Math.round(Number(layer.distanceM)*10)/10:"";
+}
+function layerMethod(layer){
+  const state=String(layer?.status||"");
+  if(state==="DENTRO")return"Dentro del polígono";
+  if(state==="FUERA"){
+    const nearby=String(layer?.nearby?.name||layer?.nearby?.id||"").trim();
+    return"Fuera del polígono"+(nearby?" · cercano: "+nearby:"");
   }
-  if(/^MULTIPOLYGON/i.test(s)){
-    const body=s.replace(/^MULTIPOLYGON\s*\(\(\(/i,"").replace(/\)\)\)\s*$/,"");
-    return body.split(/\)\)\s*,\s*\(\(/).map(poly=>
-      poly.split(/\)\s*,\s*\(/).map(ring).filter(r=>r.length>=3)
-    ).filter(poly=>poly.length);
-  }
-  return[];
+  return state||"Sin información";
 }
 
-async function loadMasterBarrios(sheets){
-  if(masterBarrioCache)return masterBarrioCache;
-  const r=await sheets.spreadsheets.values.get({spreadsheetId:MASTER_SHEET_ID,range:"06_POLIGONOS_BARRIOS!A2:I"});
-  masterBarrioCache=(r.data.values||[]).map(row=>({
-    id:String(row[0]||""),municipio:String(row[2]||""),barrio:String(row[3]||""),
-    minLon:num(row[4]),minLat:num(row[5]),maxLon:num(row[6]),maxLat:num(row[7]),polygons:parseAreaWkt(row[8])
-  })).filter(p=>p.id&&p.polygons.length&&[p.minLon,p.minLat,p.maxLon,p.maxLat].every(Number.isFinite));
-  return masterBarrioCache;
-}
-
-function matchMasterBarrio(lon,lat,barrios){
-  for(const b of barrios){
-    if(lon<b.minLon||lon>b.maxLon||lat<b.minLat||lat>b.maxLat)continue;
-    if(b.polygons.some(poly=>pointInPolygon(lon,lat,poly)))return b;
-  }
-  return null;
-}
-
-function normalizePlaceName(value){
-  return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
-}
-function isAmbMunicipality(value){
-  const v=normalizePlaceName(value);
-  return ["bucaramanga","floridablanca","giron","piedecuesta"].includes(v);
-}
-
-async function syncExplorationMaster(auth,form,payload,links){
+async function syncExplorationMaster(auth,form,payload,links,territorial){
   if(!isExploration(form.id))return{ok:false,reason:"NOT_APPLICABLE"};
   const d=payload.data||{},l=payload.location||{};
   const lat=num(l.lat),lon=num(l.lng);
   if(!Number.isFinite(lat)||!Number.isFinite(lon))return{ok:false,reason:"NO_COORDINATES"};
+
   const observedMunicipality=String(d.municipio||l.cityDetected||"").trim();
+  const resolvedMunicipality=exactName(territorial?.city,observedMunicipality);
 
-  if(observedMunicipality&&!isAmbMunicipality(observedMunicipality)){
-    return{ok:true,scope:"GLOBAL_ONLY",project:"GENERAL",reason:"GLOBAL_ONLY",municipio:observedMunicipality};
-  }
-
-  if(!MASTER_SHEET_ID){
-    return{ok:true,scope:"GLOBAL_ONLY",project:"GENERAL",reason:"GLOBAL_ONLY",municipio:d.municipio||l.cityDetected||""};
-  }
-
-  const sheets=google.sheets({version:"v4",auth});
-  const [polygons,barrios]=await Promise.all([loadMasterPolygons(sheets),loadMasterBarrios(sheets)]);
-  const geo=matchMasterPolygon(lon,lat,polygons);
-  const barrio=matchMasterBarrio(lon,lat,barrios);
-  const projectMunicipality=String(geo?.polygon?.municipio||barrio?.municipio||observedMunicipality||"").trim();
-
-  if(!isAmbMunicipality(projectMunicipality)){
+  if(!territorial||territorial.catalogId!=="BUC_AMB"||territorial.city?.status!=="DENTRO"){
     return{
       ok:true,scope:"GLOBAL_ONLY",project:"GENERAL",reason:"GLOBAL_ONLY",
-      municipio:projectMunicipality||observedMunicipality
+      municipio:resolvedMunicipality||observedMunicipality,
+      barrio:exactName(territorial?.barrio),
+      estrato:exactName(territorial?.estrato,"Sin información"),
+      territorialVersion:territorial?.version||TERRITORIAL_VERSION
     };
   }
 
+  if(!MASTER_SHEET_ID){
+    return{
+      ok:true,scope:"GLOBAL_ONLY",project:"GENERAL",reason:"GLOBAL_ONLY",
+      municipio:resolvedMunicipality||observedMunicipality,
+      territorialVersion:territorial?.version||TERRITORIAL_VERSION
+    };
+  }
+
+  const sheets=google.sheets({version:"v4",auth});
   const [pointIds,compIds]=await Promise.all([
     sheets.spreadsheets.values.get({spreadsheetId:MASTER_SHEET_ID,range:"01_PUNTOS_RELEVAMIENTO!A2:A"}),
     sheets.spreadsheets.values.get({spreadsheetId:MASTER_SHEET_ID,range:"02_COMPETENCIA_PUNTO!A2:A"})
   ]);
-  const pointNo=nextSequence(pointIds.data.values,/^BGF_P(\d+)$/i),pointId="BGF_P"+String(pointNo).padStart(4,"0");
+
+  const pointNo=nextSequence(pointIds.data.values,/^BGF_P(\d+)$/i);
+  const pointId="BGF_P"+String(pointNo).padStart(4,"0");
   const nextRow=(pointIds.data.values||[]).length+2;
   const today=new Date().toISOString().slice(0,10);
   const now=new Date().toISOString();
@@ -310,20 +219,27 @@ async function syncExplorationMaster(auth,form,payload,links){
   const estado=form.id==="EXPLORACION"?"Virtual":"Validado en campo";
   const evidence=form.id==="EXPLORACION"?(d.link_evidencia||""):(links.join(" | ")||"");
   const imageLink=form.id==="EXPLORACION"?(d.link_evidencia||""):(links[0]||"");
-  const municipioObservado=d.municipio||l.cityDetected||projectMunicipality||"";
   const accuracy=Number.isFinite(Number(l.accuracy))?Math.round(Number(l.accuracy)*10)/10:"";
+  const municipio=exactName(territorial.city,observedMunicipality);
+  const barrio=exactName(territorial.barrio);
+  const estrato=exactName(territorial.estrato,"Sin información");
 
   await sheets.spreadsheets.values.batchUpdate({
     spreadsheetId:MASTER_SHEET_ID,
     requestBody:{valueInputOption:"USER_ENTERED",data:[
       {range:`01_PUNTOS_RELEVAMIENTO!A${nextRow}:G${nextRow}`,values:[[
-        pointId,today,fuente,d.anio_imagen||"",municipioObservado,d.sector_barrio||"",`${lat}, ${lon}`
+        pointId,today,fuente,d.anio_imagen||"",municipio,d.sector_barrio||barrio||"",`${lat}, ${lon}`
       ]]},
       {range:`01_PUNTOS_RELEVAMIENTO!K${nextRow}:Y${nextRow}`,values:[[
         accuracy,
-        geo?.polygon?.id||"",geo?.polygon?.municipio||projectMunicipality,geo?.polygon?.estrato||"Sin información",geo?0:"",geo?"Dentro del polígono":"Sin coincidencia",
+        exactId(territorial.estrato),
+        municipio,
+        estrato,
+        layerDistance(territorial.estrato),
+        layerMethod(territorial.estrato),
         Number(d.condicion_fisica_posteria),Number(d.condicion_ocupacion_tendido),d.nota||"",
-        evidence,estado,now,barrio?.id||"",barrio?.barrio||"",imageLink
+        evidence,estado,now,
+        exactId(territorial.barrio),barrio,imageLink
       ]]}
     ]}
   });
@@ -333,19 +249,23 @@ async function syncExplorationMaster(auth,form,payload,links){
   const addTraditional=(name,tech,value)=>{
     if(value==="Sí")operators.push({name,category:"Operador tradicional / incumbente",tech});
   };
-  addTraditional("Tigo","HFC",d.tigo_hfc);addTraditional("Tigo","FTTH",d.tigo_ftth);
-  addTraditional("Claro","HFC",d.claro_hfc);addTraditional("Claro","FTTH",d.claro_ftth);
+  addTraditional("Tigo","HFC",d.tigo_hfc);
+  addTraditional("Tigo","FTTH",d.tigo_ftth);
+  addTraditional("Claro","HFC",d.claro_hfc);
+  addTraditional("Claro","FTTH",d.claro_ftth);
   addTraditional("Movistar","No identificada",d.movistar);
+
   const seenIsps=new Set();
   for(const key of ["isp_1","isp_2","isp_3","isp_4"]){
     let name=String(d[key]||"").trim();
     if(!name||name==="Sin ISP")continue;
-    if(name==="Sin Identificar")name="ISP sin identificar"+(municipioObservado?" ("+municipioObservado+")":"");
+    if(name==="Sin Identificar")name="ISP sin identificar"+(municipio?" ("+municipio+")":"");
     const normalized=name.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
     if(seenIsps.has(normalized))continue;
     seenIsps.add(normalized);
     operators.push({name,category:"ISP local / regional",tech:"No identificada"});
   }
+
   if(operators.length){
     const confidence=form.id==="EXPLORACION"?"Media":"Alta";
     const rows=operators.map(op=>[
@@ -353,15 +273,46 @@ async function syncExplorationMaster(auth,form,payload,links){
       "Cable identificado",confidence,d.nota||"",now
     ]);
     await sheets.spreadsheets.values.append({
-      spreadsheetId:MASTER_SHEET_ID,range:"02_COMPETENCIA_PUNTO!A:I",
-      valueInputOption:"USER_ENTERED",insertDataOption:"INSERT_ROWS",requestBody:{values:rows}
+      spreadsheetId:MASTER_SHEET_ID,
+      range:"02_COMPETENCIA_PUNTO!A:I",
+      valueInputOption:"USER_ENTERED",
+      insertDataOption:"INSERT_ROWS",
+      requestBody:{values:rows}
     });
   }
+
   return{
     ok:true,scope:"PROJECT",project:"BUCARAMANGA_AMB",pointId,
-    municipio:projectMunicipality,estrato:geo?.polygon?.estrato||"Sin información",
-    barrio:barrio?.barrio||"",method:geo?"Dentro del polígono":"Sin coincidencia",distance:geo?0:"",imageLink
+    municipio,estrato,barrio,
+    method:layerMethod(territorial.estrato),
+    distance:layerDistance(territorial.estrato),
+    imageLink,
+    territorialVersion:territorial.version||TERRITORIAL_VERSION
   };
+}
+
+function territorialAuditRow(t){
+  const layer=l=>[
+    String(l?.status||""),
+    String(l?.assigned?.id||""),
+    String(l?.assigned?.name||""),
+    String(l?.nearby?.id||""),
+    String(l?.nearby?.name||""),
+    Number.isFinite(Number(l?.distanceM))?Math.round(Number(l.distanceM)*10)/10:""
+  ];
+  if(!t){
+    return[
+      TERRITORIAL_VERSION,"","",
+      "ERROR_RESOLUCION","","","","","",
+      "ERROR_RESOLUCION","","","","","",
+      "ERROR_RESOLUCION","","","","","",
+      "ERROR_RESOLUCION","","","","",""
+    ];
+  }
+  return[
+    t.version||TERRITORIAL_VERSION,t.catalogId||"",t.territorialFileId||"",
+    ...layer(t.city),...layer(t.barrio),...layer(t.estrato),...layer(t.troncal)
+  ];
 }
 
 function resolveSubmissionId(payload,formId){
@@ -508,23 +459,36 @@ module.exports=async(req,res)=>{
     const rawRow=rawRowMatch?Number(rawRowMatch[1]):null;
 
     let masterSync=null;
+    let territorial=null;
+    let territorialError="";
     if(isExploration(form.id)){
-      try{masterSync=await syncExplorationMaster(auth,form,payload,links);}
-      catch(syncError){
+      try{
+        territorial=await resolveTerritorial(auth,payload.location?.lat,payload.location?.lng);
+      }catch(geoError){
+        territorialError=String(geoError?.message||"TERRITORIAL_ERROR");
+        console.error("TERRITORIAL_RESOLUTION_FAILED",territorialError);
+      }
+
+      try{
+        masterSync=await syncExplorationMaster(auth,form,payload,links,territorial);
+      }catch(syncError){
         const reason=classifyMasterSyncError(syncError);
         console.error("MASTER_SYNC_FAILED",reason,syncError?.message||syncError);
         masterSync={ok:false,reason};
       }
+
       if(rawRow){
-        if(!String(payload.data?.sector_barrio||"").trim()&&masterSync?.barrio){
+        const exactBarrio=territorial?.barrio?.status==="DENTRO"?String(territorial.barrio.assigned?.name||""):"";
+        if(!String(payload.data?.sector_barrio||"").trim()&&exactBarrio){
           await sheets.spreadsheets.values.update({
             spreadsheetId:SHEET_ID,
             range:`${form.sheet}!D${rawRow}`,
             valueInputOption:"RAW",
-            requestBody:{values:[[String(masterSync.barrio)]]}
+            requestBody:{values:[[exactBarrio]]}
           });
         }
-        const project=masterSync?.project||"GENERAL";
+
+        const project=masterSync?.project||territorial?.catalogId||"GENERAL";
         const processState=masterSync?.ok
           ?(masterSync?.scope==="GLOBAL_ONLY"?"REGISTRADO_GLOBAL":"PROCESADO_PROYECTO")
           :"PENDIENTE";
@@ -539,16 +503,26 @@ module.exports=async(req,res)=>{
             processState
           ]]}
         });
+
+        const exactEstrato=territorial?.estrato?.status==="DENTRO"?String(territorial.estrato.assigned?.name||""):"";
+        const estratoValue=String(payload.data?.estrato||exactEstrato||"");
+        const estratoStatus=String(territorial?.estrato?.status||"");
+        const estratoDistance=Number.isFinite(Number(territorial?.estrato?.distanceM))
+          ?Math.round(Number(territorial.estrato.distanceM))
+          :"";
+        const estratoSource=String(territorial?.estrato?.source||"");
         await sheets.spreadsheets.values.update({
           spreadsheetId:SHEET_ID,
           range:`${form.sheet}!AG${rawRow}:AJ${rawRow}`,
           valueInputOption:"RAW",
-          requestBody:{values:[[
-            String(payload.data?.estrato||masterSync?.estrato||""),
-            String(payload.location?.estratoMatch||""),
-            Number.isFinite(Number(payload.location?.estratoDistanceM))?Math.round(Number(payload.location.estratoDistanceM)):"",
-            String(payload.location?.estratoSource||"")
-          ]]}
+          requestBody:{values:[[estratoValue,estratoStatus,estratoDistance,estratoSource]]}
+        });
+
+        await sheets.spreadsheets.values.update({
+          spreadsheetId:SHEET_ID,
+          range:`${form.sheet}!AK${rawRow}:BK${rawRow}`,
+          valueInputOption:"RAW",
+          requestBody:{values:[territorialAuditRow(territorial)]}
         });
       }
     }
@@ -559,7 +533,7 @@ module.exports=async(req,res)=>{
       });
     }
 
-    return res.status(200).json({ok:true,id,photos:links,masterSync});
+    return res.status(200).json({ok:true,id,photos:links,masterSync,territorial,territorialError});
   }catch(error){
     if(publicContext?.ipHash&&auth){
       try{
