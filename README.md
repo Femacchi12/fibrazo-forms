@@ -1,15 +1,16 @@
-# FIBRAZO Forms · v0.8.6
+# FIBRAZO Forms · v0.8.14
 
 Centro interno de formularios, relevamientos y resultados de FIBRAZO.
 
 ## Arquitectura
 
 - **Forms** administra formularios, usuarios, permisos, respuestas originales, evidencias y seguridad.
-- **Exploración** es la fuente maestra de municipio, barrio, estrato, territorio y criterios de relevamiento.
-- **Competencia** es la fuente maestra de operadores, ISP y presencia competitiva.
-- Los **proyectos ciudad** reciben resultados procesados cuando corresponde, sin reemplazar la respuesta original guardada en Forms.
+- **Maestro Territorial Central** es el router geográfico único para ciudad/municipio y para seleccionar el archivo territorial de cada ciudad.
+- **Bases territoriales por ciudad** contienen las capas canónicas de barrio, estrato, troncal y límite municipal.
+- **Competencia** conserva la fuente maestra de operadores, ISP y presencia competitiva.
+- Los **proyectos ciudad** pueden recibir resultados procesados cuando corresponde, sin reemplazar la respuesta original guardada en Forms.
 
-La respuesta enviada por el usuario se conserva en `RESP_*`. Los enriquecimientos posteriores agregan estado, proyecto, ID de punto y datos geográficos sin eliminar el registro crudo.
+La respuesta enviada por el usuario se conserva en `RESP_*`. El enriquecimiento territorial se registra en columnas independientes con estado, asignación exacta, polígono cercano y distancia.
 
 ## Fuente de verdad de las preguntas
 
@@ -22,14 +23,41 @@ La hoja `PREGUNTAS` de Google Sheets se conserva como referencia histórica/docu
 ## Formularios activos
 
 - **Churn** — visitas a clientes que dejaron de recargar.
-- **Exploración virtual** — Street View, infraestructura, operadores/ISP, barrio/estrato automático cuando existe fuente preferida y fotos opcionales.
+- **Exploración virtual** — Street View, infraestructura, operadores/ISP y enriquecimiento territorial por coordenadas.
 - **Exploración presencial** — GPS, infraestructura, operadores/ISP y evidencia fotográfica.
 
-## Geografía
+## Geografía · Motor territorial v3.2
 
-El enriquecimiento automático respeta las fuentes territoriales preferidas. Una capa candidata no se presenta como barrio validado.
+El enriquecimiento automático sigue una regla única:
 
-En el proyecto Bucaramanga/AMB, el estrato solo se asigna cuando la coordenada cae **dentro** de un polígono oficial. Si no existe coincidencia geométrica, se registra **Sin información**; no se asigna el polígono más cercano.
+- **DENTRO**: asigna el polígono exacto.
+- **FUERA**: no asigna; informa el polígono canónico más cercano y la distancia al borde.
+- **SIN_CAPA**: no existe una capa disponible.
+- **SIN_CAPA_CANONICA**: existen datos, pero ninguno está habilitado como canónico.
+
+La proximidad es contextual y nunca sustituye una pertenencia exacta.
+
+El frontend consulta `/api/exploration`, y el backend vuelve a resolver la geografía al guardar la respuesta. De esta manera una respuesta offline o manipulada en el navegador no puede reemplazar el resultado territorial del servidor.
+
+La integración usa:
+- Maestro Central: `01_CIUDADES`.
+- Archivo territorial seleccionado por el Maestro.
+- `11_POLIGONOS_CIUDAD` para el ámbito municipal.
+- `02_BARRIOS`, `03_ESTRATOS` y `04_TRONCALES` únicamente con `Preferida_Analisis=TRUE` y calidad oficial/validada cuando existe ese campo.
+
+Las capas históricas o candidatas no se presentan como asignaciones automáticas.
+
+## Trazabilidad de respuestas
+
+`RESP_EXPLORACION` conserva las columnas históricas y agrega desde `AK`:
+- versión territorial;
+- ID de ciudad/catálogo y archivo territorial;
+- estado, asignado, cercano y distancia para ciudad;
+- estado, asignado, cercano y distancia para barrio;
+- estado, asignado, cercano y distancia para estrato;
+- estado, asignado, cercano y distancia para troncal.
+
+El proyecto operativo **Bucaramanga-Exploración** se conserva como destino de sincronización para puntos AMB, pero ya no actúa como fuente geográfica.
 
 ## Datos y evidencias
 
@@ -61,7 +89,7 @@ Los modos de acceso son `PRIVADO`, `CORREOS`, `DOMINIO` y `PUBLICO`.
 
 Vercel: https://fibrazo-forms.vercel.app/
 
-Versión: **0.8.6**
+Versión: **0.8.14**
 
 ## Flujos
 
