@@ -241,7 +241,7 @@
         hidden.value=String(o);
         holder.querySelectorAll(".segment-option").forEach(x=>{const on=x===b;x.classList.toggle("selected",on);x.setAttribute("aria-pressed",String(on));});
         const text=field.details?.[String(o)]||"";
-        detail.textContent=text?String(o)+" · "+text:"";
+        detail.textContent=text?"Puntuación "+String(o)+"/5 · "+text:"";
         detail.hidden=!text;
         clearError(field.key);updateVisibility();
       });
@@ -319,13 +319,35 @@
     box.append(input,status,geo);return box;
   }
   function photoInput(field){
-    const holder=document.createElement("div"),input=document.createElement("input"),preview=document.createElement("div");input.type="file";input.accept="image/*";input.multiple=true;input.capture="environment";input.className="photo-input";preview.className="photo-preview";
-    input.addEventListener("change",async()=>{
-      const limit=publicMode?Math.max(0,Math.min(3,Number(window.FIBRAZO_PUBLIC_POLICY?.maxPhotos??3))):3;
-      const selected=Array.from(input.files||[]).slice(0,limit);state.photos=[];preview.innerHTML="";
-      for(const file of selected){try{const data=await compressImage(file,1280,publicMode?.68:.72);state.photos.push({name:file.name||"foto.jpg",data});const img=document.createElement("img");img.src=data;img.alt=file.name||"Foto seleccionada";preview.appendChild(img);}catch(_){}}
-      clearError(field.key);
-    });holder.append(input,preview);return holder;
+    const holder=document.createElement("div");holder.className="photo-sequence";
+    const limit=publicMode?Math.max(0,Math.min(3,Number(window.FIBRAZO_PUBLIC_POLICY?.maxPhotos??3))):3;
+    const slots=document.createElement("div");slots.className="photo-slots";
+    const render=()=>{
+      slots.innerHTML="";
+      for(let index=0;index<limit;index++){
+        if(index>state.photos.length)break;
+        const card=document.createElement("div");card.className="photo-slot";
+        const title=document.createElement("strong");title.textContent="Foto "+(index+1);
+        if(index<state.photos.length){
+          const img=document.createElement("img");img.src=state.photos[index].data;img.alt="Vista previa foto "+(index+1);
+          const actions=document.createElement("div");actions.className="photo-slot-actions";
+          const change=document.createElement("button");change.type="button";change.className="secondary-button compact";change.textContent="Cambiar";
+          const remove=document.createElement("button");remove.type="button";remove.className="secondary-button compact";remove.textContent="Eliminar";
+          const picker=document.createElement("input");picker.type="file";picker.accept="image/*";picker.capture="environment";picker.hidden=true;
+          picker.addEventListener("change",async()=>{const file=picker.files?.[0];if(!file)return;try{const data=await compressImage(file,1280,publicMode?.68:.72);state.photos[index]={name:file.name||("foto-"+(index+1)+".jpg"),data};render();}catch(_){}});
+          change.addEventListener("click",()=>picker.click());
+          remove.addEventListener("click",()=>{state.photos.splice(index,1);render();});
+          actions.append(change,remove,picker);card.append(title,img,actions);
+        }else{
+          const add=document.createElement("button");add.type="button";add.className="photo-add-button";add.textContent="＋ Tomar o seleccionar foto "+(index+1);
+          const picker=document.createElement("input");picker.type="file";picker.accept="image/*";picker.capture="environment";picker.hidden=true;
+          picker.addEventListener("change",async()=>{const file=picker.files?.[0];if(!file)return;try{const data=await compressImage(file,1280,publicMode?.68:.72);state.photos.push({name:file.name||("foto-"+(index+1)+".jpg"),data});render();clearError(field.key);}catch(_){}});
+          add.addEventListener("click",()=>picker.click());card.append(title,add,picker);
+        }
+        slots.appendChild(card);
+      }
+    };
+    render();holder.appendChild(slots);return holder;
   }
 
   function fieldValue(key){
@@ -684,7 +706,7 @@
   }
 
   async function queryExplorationEnrichment(lat,lng,cityHint=""){
-    if(!navigator.onLine){geoStatus("Sin conexión · puedes continuar y completar Barrio/Estrato manualmente.",{busy:false,retry:true});return null;}
+    if(!navigator.onLine){geoStatus("Sin conexión · GPS guardado. Barrio y estrato se consultarán al recuperar conexión; puedes completarlos manualmente si los conoces.",{busy:false,retry:true});return null;}
     const lookupId=++state.geoLookupId;
     state.geoLookupCancelled=false;
     state.geoController?.abort();
@@ -703,11 +725,20 @@
       if(data.city)applyDetectedCity(data.city,"geografia");
       setGeoField("sector_barrio",data.barrio||"");
       setGeoField("estrato",data.estrato||"Sin información");
+      if(state.gps){
+        state.gps.barrioSource=data.barrioSource||"";
+        state.gps.estratoSource=data.estratoSource||"";
+        state.gps.estratoMatch=data.estratoMatch||"";
+        state.gps.estratoDistanceM=Number.isFinite(Number(data.estratoDistanceM))?Number(data.estratoDistanceM):null;
+      }
       state.ispOptions=Array.isArray(data.isps)?data.isps:[];
       refreshIspSuggestions();
       const parts=[];
       if(data.barrio)parts.push("Barrio: "+data.barrio);
-      if(data.estrato)parts.push("Estrato: "+data.estrato);
+      if(data.estrato){
+        const ref=data.estratoMatch==="cercano"&&Number.isFinite(Number(data.estratoDistanceM))?" · referencia más cercana a ~"+Math.round(Number(data.estratoDistanceM))+" m":" · coincidencia exacta";
+        parts.push("Estrato: "+data.estrato+ref);
+      }
       if(state.ispOptions.length)parts.push(state.ispOptions.length+" ISP sugeridos");
       geoStatus(parts.length?parts.join(" · "):"Sin datos geográficos automáticos para esta coordenada. Puedes continuar manualmente.",{busy:false});
       return data;
