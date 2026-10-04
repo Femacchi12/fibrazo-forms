@@ -4,6 +4,9 @@ const TERRITORIAL_MASTER_SHEET_ID =
   process.env.TERRITORIAL_MASTER_SHEET_ID ||
   "1cVAEv60ZdDTcQoPmmiSbJV_gfhAXKwywbzf0F0WDp_0";
 const TERRITORIAL_VERSION="3.2";
+const DANE_QUERY=
+  process.env.DANE_MUNICIPIO_QUERY||
+  "https://geoportal.dane.gov.co/mparcgis/rest/services/Hosted/Serv_Mpio_MGN_2025/FeatureServer/317/query";
 const CACHE_MS=10*60*1000;
 const WKT_BATCH=12;
 
@@ -335,8 +338,52 @@ async function resolveLayer(auth,meta,lon,lat){
   return best?outside(best,bestDistance):empty("SIN_CAPA_CANONICA");
 }
 
-function resolveCityItems(items,lon,lat){
+function code5(value){
+  const s=String(value??"").replace(/\.0+$/,"").trim();
+  return s?s.padStart(5,"0"):"";
+}
+
+async function daneExactCity(items,lon,lat){
+  const byCode=new Map();
+  for(const item of items){
+    const m=String(item.id||"").match(/^DANE_MPIO_(\d{5})$/i);
+    if(m)byCode.set(m[1],item);
+  }
+  if(!byCode.size)return null;
+  const where="mpio_cdpmp IN ("+[...byCode.keys()].map(x=>"'"+x+"'").join(",")+")";
+  const params=new URLSearchParams({
+    where,
+    geometry:lon+","+lat,
+    geometryType:"esriGeometryPoint",
+    inSR:"4326",
+    spatialRel:"esriSpatialRelIntersects",
+    outFields:"mpio_cdpmp,mpio_cnmbre,dpto_cnmbre,mpio_tipo",
+    returnGeometry:"false",
+    f:"geojson"
+  });
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),4500);
+  try{
+    const response=await fetch(DANE_QUERY+"?"+params.toString(),{signal:controller.signal});
+    if(!response.ok)return null;
+    const json=await response.json();
+    const p=json?.features?.[0]?.properties||null;
+    if(!p)return null;
+    const raw=p.mpio_cdpmp??p.MPIO_CDPMP??"";
+    return byCode.get(code5(raw))||null;
+  }catch(_){
+    return null;
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
+async function resolveCityItems(items,lon,lat){
   if(!items.length)return {result:empty("SIN_CAPA"),catalog:null};
+
+  const daneItem=await daneExactCity(items,lon,lat);
+  if(daneItem)return {result:inside(daneItem),catalog:daneItem.catalog};
+
   const exact=items.filter(x=>lon>=x.minLon&&lon<=x.maxLon&&lat>=x.minLat&&lat<=x.maxLat&&inGeometry(lon,lat,x.polygons));
   if(exact.length){
     exact.sort((a,b)=>((a.maxLon-a.minLon)*(a.maxLat-a.minLat))-((b.maxLon-b.minLon)*(b.maxLat-b.minLat)));
@@ -344,10 +391,10 @@ function resolveCityItems(items,lon,lat){
   }
   let best=null,bestDistance=Infinity;
   const ranked=items.map(item=>({item,min:bboxDistance(lon,lat,item)})).sort((a,b)=>a.min-b.min);
-  for(const c of ranked){
-    if(c.min>bestDistance)break;
-    const d=geometryDistance(lon,lat,c.item.polygons);
-    if(Number.isFinite(d)&&d<bestDistance){best=c.item;bestDistance=d;}
+  for(const candidate of ranked){
+    if(candidate.min>bestDistance)break;
+    const distance=geometryDistance(lon,lat,candidate.item.polygons);
+    if(Number.isFinite(distance)&&distance<bestDistance){best=candidate.item;bestDistance=distance;}
   }
   return best?{result:outside(best,bestDistance),catalog:best.catalog}:{result:empty("SIN_CAPA"),catalog:null};
 }
@@ -358,7 +405,7 @@ async function resolveTerritorial(auth,latValue,lonValue){
     const e=new Error("INVALID_COORDINATES");e.status=400;throw e;
   }
   const cityItems=await loadCityItems(auth);
-  const cityResolved=resolveCityItems(cityItems,lon,lat);
+  const cityResolved=await resolveCityItems(cityItems,lon,lat);
   const selected=cityResolved.catalog;
 
   let barrio=empty("SIN_CAPA"),estrato=empty("SIN_CAPA"),troncal=empty("SIN_CAPA");
