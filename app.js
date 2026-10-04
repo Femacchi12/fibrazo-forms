@@ -720,15 +720,11 @@
     $("totalCount").textContent = filtered.length;
     const body=$("resultsBody");body.innerHTML="";
     filtered.forEach(row=>{
-      const data=row.data||{},reference=row.formId==="CHURN"?(data.cliente_id||"—"):(data.sector_barrio||"—");
-      const detail=row.formId==="CHURN"?(data.motivo_principal||"—"):[
-        data.tigo_hfc==="Sí"?"TIGO HFC":null,data.claro_hfc==="Sí"?"CLARO HFC":null,data.movistar==="Sí"?"Movistar":null
-      ].filter(Boolean).join(", ")||"—";
+      const data=row.data||{};
       const tr=document.createElement("tr");
       tr.innerHTML="<td>"+escapeHtml(formatDate(row.clientTimestamp||row.timestamp))+"</td>"+
         "<td>"+escapeHtml(row.formId||"—")+"</td>"+
         "<td>"+escapeHtml(data.municipio||data.ciudad||row.location?.cityDetected||"—")+"</td>"+
-        "<td>"+escapeHtml(reference)+"</td><td>"+escapeHtml(detail)+"</td>"+
         '<td><span class="result-status '+escapeHtml(row.localStatus||"sent")+'">'+escapeHtml(window.FIBRAZO_OFFLINE?.statusLabel?.(row.localStatus||"sent")||"Enviado")+"</span></td>"+
         "<td>"+escapeHtml((row.user&&row.user.email)||row.user||"—")+"</td>";
       body.appendChild(tr);
