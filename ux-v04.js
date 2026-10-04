@@ -146,6 +146,7 @@
     i.addEventListener("input",()=>{
       if(field.autoGeo&&i.dataset.geoWriting!=="1")i.dataset.geoManual="1";
       if(state.form?.id==="EXPLORACION_PRESENCIAL"&&field.key==="municipio"){
+        i.dataset.geoManual="1";
         const city=String(i.value||"").trim();
         state.detectedCity=city;state.citySource="manual";
         if(state.gps){state.gps.cityDetected=city;state.gps.citySource="manual";}
@@ -470,12 +471,18 @@
       const accuracy=Number.isFinite(Number(state.gps.accuracy))?" · ±"+Math.round(Number(state.gps.accuracy))+" m":"";
       return state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+accuracy+(state.gps.cityDetected?" · "+state.gps.cityDetected:"");
     }
-    if(field.key==="estrato"&&state.gps?.estratoMatch){
-      const base=String(fieldValue(field.key)||"—");
-      if(state.gps.estratoMatch==="cercano")return base+" · fuera del polígono · más cercano a ~"+Math.round(Number(state.gps.estratoDistanceM||0))+" m";
-      if(state.gps.estratoMatch==="historico")return base+" · referencia histórica";
-      if(state.gps.estratoMatch==="historico_cercano")return base+" · fuera del polígono · referencia histórica más cercana a ~"+Math.round(Number(state.gps.estratoDistanceM||0))+" m";
-      return base+" · coincidencia exacta";
+    if((field.key==="estrato"||field.key==="sector_barrio")&&state.gps){
+      const prefix=field.key==="estrato"?"estrato":"barrio";
+      const geoState=String(state.gps[prefix+"Status"]||"");
+      if(geoState){
+        const base=String(fieldValue(field.key)||"—");
+        const near=String(state.gps[prefix+"Nearby"]||"");
+        const distance=Number(state.gps[prefix+"DistanceM"]);
+        if(geoState==="DENTRO")return base+" · coincidencia exacta";
+        if(geoState==="FUERA")return base+" · sin asignación"+(near?" · más cercano: "+near:"")+(Number.isFinite(distance)?" · ~"+Math.round(distance)+" m":"");
+        if(geoState==="SIN_CAPA_CANONICA")return base+" · sin capa canónica disponible";
+        if(geoState==="SIN_CAPA")return base+" · sin capa disponible";
+      }
     }
     if(field.type==="photos")return state.photos.length?state.photos.length+" foto"+(state.photos.length===1?"":"s"):"—";
     const v=fieldValue(field.key);if(Array.isArray(v))return v.length?v.join(", "):"—";if(!v)return"—";if(field.type==="currency")return"$ "+Number(v).toLocaleString("es-CO");if(field.type==="date-flex")return isoToDmy(v);if(field.suffix)return v+" "+field.suffix;return String(v);
@@ -639,12 +646,16 @@
   function applyDetectedCity(cityName,source="gps"){
     const city=String(cityName||"").trim();
     if(!city)return;
+    const fieldKey=state.form?.id==="CHURN"?"ciudad":state.form?.id==="EXPLORACION_PRESENCIAL"?"municipio":"";
+    const control=fieldKey?document.querySelector('[name="'+css(fieldKey)+'"]'):null;
+    if(control?.dataset.geoManual==="1"&&source!=="manual"){
+      if(state.gps){state.gps.cityTerritorialSuggested=city;state.gps.cityTerritorialSource=source;}
+      return;
+    }
     state.detectedCity=city;state.citySource=source;
     if(state.gps){state.gps.cityDetected=city;state.gps.citySource=source;}
     const status=document.querySelector('[data-gps-city-for="coordenadas"]');
     if(status)status.textContent=(isExplorationForm()?"Municipio: ":"Ciudad GPS: ")+city;
-    const fieldKey=state.form?.id==="CHURN"?"ciudad":state.form?.id==="EXPLORACION_PRESENCIAL"?"municipio":"";
-    const control=fieldKey?document.querySelector('[name="'+css(fieldKey)+'"]'):null;
     if(!control)return;
     control.dataset.autoGps="1";
     if(control.tagName==="SELECT"){
@@ -708,25 +719,39 @@
     return resolveExplorationMunicipality(state.gps.lat,state.gps.lng,"coordenadas");
   }
 
-  function setGeoField(key,value){
-    if(value===undefined||value===null||String(value).trim()==="")return;
+  function setGeoField(key,value,emptyValue=""){
     const control=document.querySelector('[name="'+css(key)+'"]');
     if(!control||control.dataset.geoManual==="1")return;
+    const hasValue=value!==undefined&&value!==null&&String(value).trim()!=="";
     control.dataset.geoWriting="1";
-    control.value=String(value);
+    control.value=hasValue?String(value):String(emptyValue||"");
     control.dataset.geoAuto="1";
     delete control.dataset.geoWriting;
     clearError(key);
   }
 
+  function geoLayerDetail(status,nearby,distance,source,label){
+    const stateCode=String(status||"");
+    const near=String(nearby||"").trim();
+    const meters=Number(distance);
+    if(stateCode==="DENTRO")return"Coincidencia exacta"+(source?" · "+source:"");
+    if(stateCode==="FUERA")return"Fuera del polígono"+(near?" · "+label+" más cercano: "+near:"")+(Number.isFinite(meters)?" · ~"+Math.round(meters)+" m":"");
+    if(stateCode==="SIN_CAPA_CANONICA")return"Sin capa canónica disponible para "+label.toLowerCase();
+    if(stateCode==="SIN_CAPA")return"Sin capa disponible para "+label.toLowerCase();
+    return"";
+  }
+
   async function queryExplorationEnrichment(lat,lng,cityHint=""){
-    if(!navigator.onLine){geoStatus("Sin conexión · GPS guardado. Barrio y estrato se consultarán al recuperar conexión; puedes completarlos manualmente si los conoces.",{busy:false,retry:true});return null;}
+    if(!navigator.onLine){
+      geoStatus("Sin conexión · GPS guardado. La geografía canónica se resolverá al sincronizar; puedes completar los campos manualmente.",{busy:false,retry:true});
+      return null;
+    }
     const lookupId=++state.geoLookupId;
     state.geoLookupCancelled=false;
     state.geoController?.abort();
     const controller=new AbortController();state.geoController=controller;
-    const timer=setTimeout(()=>controller.abort(),7500);
-    geoStatus("Buscando Barrio, Estrato e ISP de la ciudad…",{busy:true});
+    const timer=setTimeout(()=>controller.abort(),15000);
+    geoStatus("Consultando Maestro Territorial FIBRAZO…",{busy:true});
     try{
       const user=currentUser();
       const token=user&&typeof user.getIdToken==="function"?await user.getIdToken():"";
@@ -736,28 +761,54 @@
       const data=await response.json();
       if(!response.ok)throw new Error(data.error||"LOOKUP_ERROR");
       if(lookupId!==state.geoLookupId||state.geoLookupCancelled)return null;
-      if(data.city)applyDetectedCity(data.city,"geografia");
-      setGeoField("sector_barrio",data.barrio||"");
-      setGeoField("estrato",data.estrato||"Sin información");
+
+      if(data.cityStatus==="DENTRO"&&data.city)applyDetectedCity(data.city,"territorial");
+      setGeoField("sector_barrio",data.barrio||"","");
+      setGeoField("estrato",data.estrato||"","Sin información");
+
       if(state.gps){
-        state.gps.barrioSource=data.barrioSource||"";
-        state.gps.estratoSource=data.estratoSource||"";
-        state.gps.estratoMatch=data.estratoMatch||"";
-        state.gps.estratoDistanceM=Number.isFinite(Number(data.estratoDistanceM))?Number(data.estratoDistanceM):null;
+        Object.assign(state.gps,{
+          territorialVersion:data.territorialVersion||"",
+          territorialCatalogId:data.catalogId||"",
+          territorialFileId:data.territorialFileId||"",
+          cityStatus:data.cityStatus||"",
+          cityNearby:data.cityNearby||"",
+          cityDistanceM:Number.isFinite(Number(data.cityDistanceM))?Number(data.cityDistanceM):null,
+          barrioSource:data.barrioSource||"",
+          barrioStatus:data.barrioStatus||"",
+          barrioNearby:data.barrioNearby||"",
+          barrioDistanceM:Number.isFinite(Number(data.barrioDistanceM))?Number(data.barrioDistanceM):null,
+          estratoSource:data.estratoSource||"",
+          estratoStatus:data.estratoStatus||"",
+          estratoNearby:data.estratoNearby||"",
+          estratoMatch:data.estratoMatch||"",
+          estratoDistanceM:Number.isFinite(Number(data.estratoDistanceM))?Number(data.estratoDistanceM):null,
+          troncalSource:data.troncalSource||"",
+          troncalStatus:data.troncalStatus||"",
+          troncalNearby:data.troncalNearby||"",
+          troncalDistanceM:Number.isFinite(Number(data.troncalDistanceM))?Number(data.troncalDistanceM):null
+        });
       }
+
       state.ispOptions=Array.isArray(data.isps)?data.isps:[];
       refreshIspSuggestions();
+
       const barrioInfo=document.querySelector('[data-geo-info-for="sector_barrio"]');
-      if(barrioInfo){barrioInfo.hidden=!data.barrio;barrioInfo.textContent=data.barrio?("Coincidencia exacta"+(data.barrioSource?" · "+data.barrioSource:"")):"";}
+      if(barrioInfo){
+        const detail=geoLayerDetail(data.barrioStatus,data.barrioNearby,data.barrioDistanceM,data.barrioSource,"Barrio");
+        barrioInfo.textContent=detail;barrioInfo.hidden=!detail;
+      }
       const estratoInfo=document.querySelector('[data-geo-info-for="estrato"]');
       if(estratoInfo){
-        let detail="";
-        if(data.estratoMatch==="cercano"&&Number.isFinite(Number(data.estratoDistanceM)))detail="Fuera del polígono · estrato de referencia más cercano a ~"+Math.round(Number(data.estratoDistanceM))+" m";
-        else if(data.estratoMatch==="historico")detail="Referencia histórica · no corresponde a estrato oficial vigente";
-        else if(data.estratoMatch==="historico_cercano"&&Number.isFinite(Number(data.estratoDistanceM)))detail="Fuera del polígono · referencia histórica más cercana a ~"+Math.round(Number(data.estratoDistanceM))+" m · no corresponde a estrato oficial vigente";
-        else if(data.estrato)detail="Coincidencia exacta";
-        if(detail&&data.estratoSource)detail+=" · "+data.estratoSource;
+        const detail=geoLayerDetail(data.estratoStatus,data.estratoNearby,data.estratoDistanceM,data.estratoSource,"Estrato");
         estratoInfo.textContent=detail;estratoInfo.hidden=!detail;
+      }
+      const cityStatus=document.querySelector('[data-gps-city-for="coordenadas"]');
+      if(cityStatus){
+        if(data.cityStatus==="DENTRO"&&data.city)cityStatus.textContent="Municipio: "+data.city+" · coincidencia exacta";
+        else if(data.cityStatus==="FUERA")cityStatus.textContent="Fuera del ámbito territorial"+(data.cityNearby?" · municipio más cercano: "+data.cityNearby:"")+(Number.isFinite(Number(data.cityDistanceM))?" · ~"+Math.round(Number(data.cityDistanceM))+" m":"");
+        else if(data.cityStatus==="SIN_CAPA_CANONICA")cityStatus.textContent="Municipio: sin capa canónica disponible";
+        else if(data.cityStatus==="SIN_CAPA")cityStatus.textContent="Municipio: sin capa territorial disponible";
       }
       geoStatus("",{hidden:true});
       return data;
@@ -774,28 +825,45 @@
 
   async function resolveExplorationMunicipality(lat,lng,key="coordenadas"){
     const status=document.querySelector('[data-gps-city-for="'+css(key)+'"]');
-    const fallback=detectAmbMunicipalityOffline(lat,lng);
+    const fallback=detectAmbMunicipalityOffline(lat,lng)||detectConfiguredCityOffline(lat,lng);
     state.geoLookupCancelled=false;
-    state.geoController?.abort();
-    const municipalityController=new AbortController();
-    state.geoController=municipalityController;
-    if(status)status.textContent=navigator.onLine?"Municipio: identificando…":(fallback?"Municipio aprox.: "+fallback:"Municipio: sin conexión");
-    if(navigator.onLine)geoStatus("Identificando municipio…",{busy:true});
-    let resolved="";
-    if(navigator.onLine){
-      const raw=await reverseGeocodeCity(lat,lng,municipalityController.signal);
-      if(state.geoLookupCancelled||municipalityController.signal.aborted){
-        if(state.geoController===municipalityController)state.geoController=null;
-        return "";
-      }
-      if(raw){resolved=raw;applyDetectedCity(raw,"reverse-geocode");}
+
+    if(!navigator.onLine){
+      if(fallback)applyDetectedCity(fallback,"aproximado");
+      if(status)status.textContent=fallback?"Municipio aprox.: "+fallback+" · se validará al sincronizar":"Municipio: sin conexión · se validará al sincronizar";
+      geoStatus("Sin conexión · la geografía canónica se resolverá al sincronizar.",{busy:false,retry:true});
+      return fallback||"";
     }
-    if(state.geoController===municipalityController)state.geoController=null;
-    if(!resolved&&fallback){resolved=fallback;applyDetectedCity(fallback,"aproximado");}
-    if(!resolved&&status)status.textContent="Municipio: puedes corregirlo manualmente";
-    if(state.geoLookupCancelled)return resolved||fallback||"";
-    await queryExplorationEnrichment(lat,lng,resolved||fallback||"");
-    return resolved||fallback||"";
+
+    if(status)status.textContent="Municipio: consultando Maestro Territorial…";
+    const data=await queryExplorationEnrichment(lat,lng,"");
+    if(state.geoLookupCancelled)return"";
+    if(data?.cityStatus==="DENTRO"&&data.city)return data.city;
+
+    let observed="";
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),5500);
+    try{observed=await reverseGeocodeCity(lat,lng,controller.signal);}catch(_){}
+    finally{clearTimeout(timer);}
+
+    if(observed){
+      applyDetectedCity(observed,"reverse-geocode");
+      if(status){
+        const territorialContext=data?.cityStatus==="FUERA"
+          ?(" · fuera del ámbito FIBRAZO"+(data.cityNearby?" · cercano: "+data.cityNearby:"")+(Number.isFinite(Number(data.cityDistanceM))?" · ~"+Math.round(Number(data.cityDistanceM))+" m":""))
+          :" · referencia de ubicación";
+        status.textContent="Municipio observado: "+observed+territorialContext;
+      }
+      return observed;
+    }
+
+    if(fallback){
+      applyDetectedCity(fallback,"aproximado");
+      if(status)status.textContent="Municipio aprox.: "+fallback+" · sin confirmación territorial";
+      return fallback;
+    }
+    if(status&&data?.cityStatus!=="FUERA")status.textContent="Municipio: puedes completarlo manualmente";
+    return"";
   }
 
   function detectAmbMunicipalityOffline(lat,lng){
@@ -830,8 +898,12 @@
 
   function detectConfiguredCityOffline(lat,lng){
     const cities=[
-      {name:"Sincelejo",lat:9.3047,lng:-75.3978,maxKm:15},
-      {name:"Montería",lat:8.7479,lng:-75.8814,maxKm:15}
+      {name:"Cartagena",lat:10.3910,lng:-75.4794,maxKm:30},
+      {name:"Barranquilla",lat:10.9685,lng:-74.7813,maxKm:25},
+      {name:"Santa Marta",lat:11.2408,lng:-74.1990,maxKm:30},
+      {name:"Sincelejo",lat:9.3047,lng:-75.3978,maxKm:20},
+      {name:"Montería",lat:8.7480,lng:-75.8814,maxKm:25},
+      {name:"Turbaco",lat:10.3294,lng:-75.4114,maxKm:18}
     ];
     let best=null;
     for(const city of cities){
