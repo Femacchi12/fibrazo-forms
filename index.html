@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=2026.10.04.04">
+  <link rel="stylesheet" href="/styles.css?v=2026.10.04.05">
 </head>
 <body class="auth-pending">
   <section id="authGate" class="auth-gate" aria-live="polite">
@@ -227,6 +227,13 @@
               <option value="EXPLORACION">Exploración virtual</option>
               <option value="EXPLORACION_PRESENCIAL">Exploración presencial</option>
             </select>
+            <select id="resultUserFilter" data-admin-filter hidden><option value="all">Todos los usuarios</option></select>
+            <select id="resultCityFilter"><option value="all">Todas las ciudades</option></select>
+            <select id="resultStatusFilter">
+              <option value="all">Todos los estados</option><option value="sent">Enviado</option><option value="pending">Pendiente</option><option value="syncing">Enviando</option><option value="error">Error</option>
+            </select>
+            <input id="resultDateFrom" type="date" aria-label="Fecha desde" title="Fecha desde">
+            <input id="resultDateTo" type="date" aria-label="Fecha hasta" title="Fecha hasta">
             <button id="refreshResults" class="secondary-button compact" type="button">↻ Actualizar</button>
           </div>
         </div>
@@ -261,15 +268,15 @@
     </section>
   </main>
 
-  <footer>FIBRAZO · Growth <span>Forms v0.8.10 · Flujo local-first e historial · 2026</span></footer>
+  <footer>FIBRAZO · Growth <span>Forms v0.8.11 · Historial por permisos y filtros · 2026</span></footer>
 
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
-  <script src="/forms-config.js?v=2026.10.04.04"></script>
-  <script src="/app.js?v=2026.10.04.04"></script>
-  <script src="/access-v03.js?v=2026.10.04.04"></script>
-  <script src="/offline-v04.js?v=2026.10.04.04"></script>
-  <script src="/ux-v04.js?v=2026.10.04.04"></script>
-  <script src="/admin-v03.js?v=2026.10.04.04"></script>
+  <script src="/forms-config.js?v=2026.10.04.05"></script>
+  <script src="/app.js?v=2026.10.04.05"></script>
+  <script src="/access-v03.js?v=2026.10.04.05"></script>
+  <script src="/offline-v04.js?v=2026.10.04.05"></script>
+  <script src="/ux-v04.js?v=2026.10.04.05"></script>
+  <script src="/admin-v03.js?v=2026.10.04.05"></script>
 </body>
 </html>

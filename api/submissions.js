@@ -404,6 +404,8 @@ async function readRows(auth,forms,requested,limit,user,caps){
       range:`${form.sheet}!A2:AB`
     });
     for(const row of (r.data.values||[]).slice(-limit).reverse()){
+      const rowEmail=String(row[form.id==="CHURN"?25:24]||"").trim().toLowerCase();
+      if(!caps.adminActive&&rowEmail!==email)continue;
       if(form.id==="CHURN"){
         out.push({
           formId:form.id,timestamp:row[0],id:row[1],

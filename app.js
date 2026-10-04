@@ -642,7 +642,7 @@
   }
 
   $("refreshResults").addEventListener("click", loadResults);
-  $("resultFormFilter").addEventListener("change", renderResults);
+  ["resultFormFilter","resultUserFilter","resultCityFilter","resultStatusFilter","resultDateFrom","resultDateTo"].forEach(id=>$(id)?.addEventListener("change",renderResults));
 
   async function localHistoryRows() {
     if(!window.FIBRAZO_OFFLINE?.list)return[];
@@ -685,47 +685,55 @@
 
   function renderResults() {
     const rows = state.rows || [];
-    const churn = rows.filter((row) => row.formId === "CHURN").length;
-    const exploration = rows.filter((row) => String(row.formId || "").startsWith("EXPLORACION")).length;
+    const isAdmin=!!window.FIBRAZO_ACCESS_META?.admin;
+    const userFilter=$("resultUserFilter"),cityFilter=$("resultCityFilter");
+    if(userFilter){
+      userFilter.hidden=!isAdmin;
+      if(isAdmin){
+        const current=userFilter.value||"all",users=[...new Set(rows.map(r=>String((r.user&&r.user.email)||r.user||"").trim()).filter(Boolean))].sort();
+        userFilter.innerHTML='<option value="all">Todos los usuarios</option>'+users.map(u=>'<option value="'+escapeHtml(u)+'">'+escapeHtml(u)+'</option>').join("");
+        if(users.includes(current))userFilter.value=current;
+      }else userFilter.value="all";
+    }
+    if(cityFilter){
+      const current=cityFilter.value||"all",cities=[...new Set(rows.map(r=>String(r.data?.municipio||r.data?.ciudad||r.location?.cityDetected||"").trim()).filter(Boolean))].sort();
+      cityFilter.innerHTML='<option value="all">Todas las ciudades</option>'+cities.map(x=>'<option value="'+escapeHtml(x)+'">'+escapeHtml(x)+'</option>').join("");
+      if(cities.includes(current))cityFilter.value=current;
+    }
 
-    $("churnCount").textContent = churn;
-    $("explorationCount").textContent = exploration;
-    $("totalCount").textContent = rows.length;
-
-    const filter = $("resultFormFilter").value;
-    const filtered = filter === "all" ? rows : rows.filter((row) => row.formId === filter);
-    const body = $("resultsBody");
-    body.innerHTML = "";
-
-    filtered.forEach((row) => {
-      const data = row.data || {};
-      const reference = row.formId === "CHURN" ? (data.cliente_id || "—") : (data.sector_barrio || "—");
-      let detail = "—";
-
-      if (row.formId === "CHURN") {
-        detail = data.motivo_principal || "—";
-      } else {
-        detail = [
-          data.tigo_hfc === "Sí" ? "TIGO HFC" : null,
-          data.claro_hfc === "Sí" ? "CLARO HFC" : null,
-          data.movistar === "Sí" ? "Movistar" : null
-        ].filter(Boolean).join(", ") || "—";
-      }
-
-      const tr = document.createElement("tr");
-      tr.innerHTML =
-        "<td>" + escapeHtml(formatDate(row.clientTimestamp || row.timestamp)) + "</td>" +
-        "<td>" + escapeHtml(row.formId || "—") + "</td>" +
-        "<td>" + escapeHtml(data.municipio || data.ciudad || row.location?.cityDetected || "—") + "</td>" +
-        "<td>" + escapeHtml(reference) + "</td>" +
-        "<td>" + escapeHtml(detail) + "</td>" +
-        '<td><span class="result-status '+escapeHtml(row.localStatus||"sent")+'">'+escapeHtml(window.FIBRAZO_OFFLINE?.statusLabel?.(row.localStatus||"sent")||"Enviado")+"</span></td>" +
-        "<td>" + escapeHtml((row.user && row.user.email) || row.user || "—") + "</td>";
-
-      body.appendChild(tr);
+    const form=$("resultFormFilter")?.value||"all",user=userFilter?.value||"all",city=cityFilter?.value||"all",status=$("resultStatusFilter")?.value||"all";
+    const from=$("resultDateFrom")?.value?new Date($("resultDateFrom").value+"T00:00:00"):null;
+    const to=$("resultDateTo")?.value?new Date($("resultDateTo").value+"T23:59:59.999"):null;
+    const filtered=rows.filter(row=>{
+      const d=row.data||{},when=new Date(row.clientTimestamp||row.timestamp),rowUser=String((row.user&&row.user.email)||row.user||""),rowCity=String(d.municipio||d.ciudad||row.location?.cityDetected||""),rowStatus=row.localStatus||"sent";
+      if(form!=="all"&&row.formId!==form)return false;
+      if(isAdmin&&user!=="all"&&rowUser!==user)return false;
+      if(city!=="all"&&rowCity!==city)return false;
+      if(status!=="all"&&rowStatus!==status)return false;
+      if(from&&!Number.isNaN(when)&&when<from)return false;
+      if(to&&!Number.isNaN(when)&&when>to)return false;
+      return true;
     });
 
-    $("resultsEmpty").hidden = filtered.length > 0;
+    $("churnCount").textContent = filtered.filter(r=>r.formId==="CHURN").length;
+    $("explorationCount").textContent = filtered.filter(r=>String(r.formId||"").startsWith("EXPLORACION")).length;
+    $("totalCount").textContent = filtered.length;
+    const body=$("resultsBody");body.innerHTML="";
+    filtered.forEach(row=>{
+      const data=row.data||{},reference=row.formId==="CHURN"?(data.cliente_id||"—"):(data.sector_barrio||"—");
+      const detail=row.formId==="CHURN"?(data.motivo_principal||"—"):[
+        data.tigo_hfc==="Sí"?"TIGO HFC":null,data.claro_hfc==="Sí"?"CLARO HFC":null,data.movistar==="Sí"?"Movistar":null
+      ].filter(Boolean).join(", ")||"—";
+      const tr=document.createElement("tr");
+      tr.innerHTML="<td>"+escapeHtml(formatDate(row.clientTimestamp||row.timestamp))+"</td>"+
+        "<td>"+escapeHtml(row.formId||"—")+"</td>"+
+        "<td>"+escapeHtml(data.municipio||data.ciudad||row.location?.cityDetected||"—")+"</td>"+
+        "<td>"+escapeHtml(reference)+"</td><td>"+escapeHtml(detail)+"</td>"+
+        '<td><span class="result-status '+escapeHtml(row.localStatus||"sent")+'">'+escapeHtml(window.FIBRAZO_OFFLINE?.statusLabel?.(row.localStatus||"sent")||"Enviado")+"</span></td>"+
+        "<td>"+escapeHtml((row.user&&row.user.email)||row.user||"—")+"</td>";
+      body.appendChild(tr);
+    });
+    $("resultsEmpty").hidden=filtered.length>0;
   }
 
   function formatDate(value) {
