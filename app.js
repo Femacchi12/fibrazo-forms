@@ -14,6 +14,9 @@
   const apiBase = window.FIBRAZO_FORMS_API_BASE || "";
   const forms = window.FIBRAZO_FORMS || {};
   const state = { user: null, currentForm: null, gps: null, photos: [], rows: [] };
+  const LAST_AUTH_EMAIL_KEY="fibrazoFormsLastAuthEmail";
+  function lastAuthEmail(){try{return String(localStorage.getItem(LAST_AUTH_EMAIL_KEY)||"").trim().toLowerCase();}catch(_){return "";}}
+  function rememberAuthEmail(user){const email=String(user?.email||"").trim().toLowerCase();if(!email)return;try{localStorage.setItem(LAST_AUTH_EMAIL_KEY,email);}catch(_){}}
 
   const $ = (id) => document.getElementById(id);
 
@@ -95,6 +98,9 @@
       const provider = new firebase.auth.GoogleAuthProvider();
       if (changeAccount) {
         provider.setCustomParameters({ prompt: "select_account" });
+      } else {
+        const hint=lastAuthEmail();
+        if(hint)provider.setCustomParameters({login_hint:hint});
       }
 
       authPopupWatchdog=setTimeout(()=>{
@@ -201,6 +207,7 @@
 
   function showDashboard(user) {
     clearTimeout(authPopupWatchdog);setAuthInFlight(false);
+    rememberAuthEmail(user);
     state.user = user;
     $("signedInEmail").textContent = user.email || "";
     document.body.classList.remove("auth-pending");
