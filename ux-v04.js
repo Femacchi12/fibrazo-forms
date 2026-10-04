@@ -754,6 +754,7 @@
         let detail="";
         if(data.estratoMatch==="cercano"&&Number.isFinite(Number(data.estratoDistanceM)))detail="Fuera del polígono · estrato de referencia más cercano a ~"+Math.round(Number(data.estratoDistanceM))+" m";
         else if(data.estratoMatch==="historico")detail="Referencia histórica · no corresponde a estrato oficial vigente";
+        else if(data.estratoMatch==="historico_cercano"&&Number.isFinite(Number(data.estratoDistanceM)))detail="Fuera del polígono · referencia histórica más cercana a ~"+Math.round(Number(data.estratoDistanceM))+" m · no corresponde a estrato oficial vigente";
         else if(data.estrato)detail="Coincidencia exacta";
         if(detail&&data.estratoSource)detail+=" · "+data.estratoSource;
         estratoInfo.textContent=detail;estratoInfo.hidden=!detail;
