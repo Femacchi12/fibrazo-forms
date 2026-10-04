@@ -325,27 +325,31 @@
     const holder=document.createElement("div");holder.className="photo-sequence";
     const limit=publicMode?Math.max(0,Math.min(3,Number(window.FIBRAZO_PUBLIC_POLICY?.maxPhotos??3))):3;
     const slots=document.createElement("div");slots.className="photo-slots";
+    const makePicker=(capture,onFile)=>{
+      const picker=document.createElement("input");picker.type="file";picker.accept="image/*";if(capture)picker.capture="environment";picker.hidden=true;
+      picker.addEventListener("change",async()=>{const file=picker.files?.[0];if(!file)return;try{const data=await compressImage(file,1280,publicMode?.68:.72);onFile({name:file.name||"foto.jpg",data});clearError(field.key);}catch(_){}});
+      return picker;
+    };
     const render=()=>{
       slots.innerHTML="";
       for(let index=0;index<limit;index++){
         if(index>state.photos.length)break;
         const card=document.createElement("div");card.className="photo-slot";
         const title=document.createElement("strong");title.textContent="Foto "+(index+1);
+        const actions=document.createElement("div");actions.className="photo-slot-actions";
+        const apply=photo=>{if(index<state.photos.length)state.photos[index]=photo;else state.photos.push(photo);render();};
         if(index<state.photos.length){
           const img=document.createElement("img");img.src=state.photos[index].data;img.alt="Vista previa foto "+(index+1);
-          const actions=document.createElement("div");actions.className="photo-slot-actions";
-          const change=document.createElement("button");change.type="button";change.className="secondary-button compact";change.textContent="Cambiar";
-          const remove=document.createElement("button");remove.type="button";remove.className="secondary-button compact";remove.textContent="Eliminar";
-          const picker=document.createElement("input");picker.type="file";picker.accept="image/*";picker.capture="environment";picker.hidden=true;
-          picker.addEventListener("change",async()=>{const file=picker.files?.[0];if(!file)return;try{const data=await compressImage(file,1280,publicMode?.68:.72);state.photos[index]={name:file.name||("foto-"+(index+1)+".jpg"),data};render();}catch(_){}});
-          change.addEventListener("click",()=>picker.click());
-          remove.addEventListener("click",()=>{state.photos.splice(index,1);render();});
-          actions.append(change,remove,picker);card.append(title,img,actions);
+          const camera=makePicker(true,apply),gallery=makePicker(false,apply);
+          const take=document.createElement("button");take.type="button";take.className="secondary-button compact";take.textContent="Tomar otra";take.addEventListener("click",()=>camera.click());
+          const choose=document.createElement("button");choose.type="button";choose.className="secondary-button compact";choose.textContent="Elegir otra";choose.addEventListener("click",()=>gallery.click());
+          const remove=document.createElement("button");remove.type="button";remove.className="secondary-button compact";remove.textContent="Eliminar";remove.addEventListener("click",()=>{state.photos.splice(index,1);render();});
+          actions.append(take,choose,remove,camera,gallery);card.append(title,img,actions);
         }else{
-          const add=document.createElement("button");add.type="button";add.className="photo-add-button";add.textContent="＋ Tomar o seleccionar foto "+(index+1);
-          const picker=document.createElement("input");picker.type="file";picker.accept="image/*";picker.capture="environment";picker.hidden=true;
-          picker.addEventListener("change",async()=>{const file=picker.files?.[0];if(!file)return;try{const data=await compressImage(file,1280,publicMode?.68:.72);state.photos.push({name:file.name||("foto-"+(index+1)+".jpg"),data});render();clearError(field.key);}catch(_){}});
-          add.addEventListener("click",()=>picker.click());card.append(title,add,picker);
+          const camera=makePicker(true,apply),gallery=makePicker(false,apply);
+          const take=document.createElement("button");take.type="button";take.className="photo-add-button";take.textContent="📷 Tomar foto "+(index+1);take.addEventListener("click",()=>camera.click());
+          const choose=document.createElement("button");choose.type="button";choose.className="photo-add-button secondary-photo";choose.textContent="▣ Elegir de galería";choose.addEventListener("click",()=>gallery.click());
+          actions.append(take,choose,camera,gallery);card.append(title,actions);
         }
         slots.appendChild(card);
       }
@@ -438,7 +442,7 @@
     if(isExplorationForm()&&section.id==="operadores"&&!hasExplorationOperator()){
       const target=state.form.fields.find(f=>f.key==="isp_1")||state.form.fields.find(f=>f.section==="operadores");
       if(target){
-        const message="Selecciona al menos un operador incumbente o un ISP antes de continuar.";
+        const message="Selecciona al menos un operador observado antes de continuar.";
         errors.push({field:target,message});
         if(paint)setError(target.key,message);
       }
@@ -470,6 +474,7 @@
       const base=String(fieldValue(field.key)||"—");
       if(state.gps.estratoMatch==="cercano")return base+" · fuera del polígono · más cercano a ~"+Math.round(Number(state.gps.estratoDistanceM||0))+" m";
       if(state.gps.estratoMatch==="historico")return base+" · referencia histórica";
+      if(state.gps.estratoMatch==="historico_cercano")return base+" · fuera del polígono · referencia histórica más cercana a ~"+Math.round(Number(state.gps.estratoDistanceM||0))+" m";
       return base+" · coincidencia exacta";
     }
     if(field.type==="photos")return state.photos.length?state.photos.length+" foto"+(state.photos.length===1?"":"s"):"—";
@@ -749,6 +754,7 @@
         let detail="";
         if(data.estratoMatch==="cercano"&&Number.isFinite(Number(data.estratoDistanceM)))detail="Fuera del polígono · estrato de referencia más cercano a ~"+Math.round(Number(data.estratoDistanceM))+" m";
         else if(data.estratoMatch==="historico")detail="Referencia histórica · no corresponde a estrato oficial vigente";
+        else if(data.estratoMatch==="historico_cercano"&&Number.isFinite(Number(data.estratoDistanceM)))detail="Fuera del polígono · referencia histórica más cercana a ~"+Math.round(Number(data.estratoDistanceM))+" m · no corresponde a estrato oficial vigente";
         else if(data.estrato)detail="Coincidencia exacta";
         if(detail&&data.estratoSource)detail+=" · "+data.estratoSource;
         estratoInfo.textContent=detail;estratoInfo.hidden=!detail;

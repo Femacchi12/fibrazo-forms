@@ -645,3 +645,8 @@ body.form-mode main{width:min(1180px,96%);padding-top:14px}
 .result-controls{flex-wrap:wrap}
 .result-controls select,.result-controls input[type="date"]{min-height:36px;max-width:180px}
 @media(max-width:720px){.result-controls{display:grid;grid-template-columns:1fr 1fr;width:100%}.result-controls select,.result-controls input[type="date"],.result-controls button{width:100%;max-width:none}}
+
+/* v0.8.12 · acciones explícitas de cámara/galería */
+.photo-slot-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.photo-slot-actions .photo-add-button{flex:1 1 150px}
+.photo-add-button.secondary-photo{background:var(--fz-surface-raised);color:#fff;border:1px solid var(--fz-border)}
