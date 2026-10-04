@@ -4,7 +4,7 @@ const {gauth,verifyUser,httpError}=require("./_core");
 const BGF_SHEET_ID=process.env.BUCARAMANGA_EXPLORACION_SHEET_ID||"1LKNNf7a1VlUGpr9SlRqJGAkZq4NprW-wvdjNIlmB4E4";
 const TERRITORIAL_SHEET_ID=process.env.TERRITORIAL_SHEET_ID||"19_ixY0PwYIlobp94h-X7AD_CnFgHHIOso0H2RZlkGHY";
 const COMPETENCIA_SHEET_ID=process.env.COMPETENCIA_SHEET_ID||"1v2sBVe_w-bTl438b8qWFmvw0gT66bj8TskcXbnY-gbU";
-let cache={expires:0,bgfBarrios:null,bgfEstratos:null,territorialBarrios:null,operators:null,presence:null};
+let cache={expires:0,bgfBarrios:null,bgfEstratos:null,territorialBarrios:null,territorialEstratos:null,operators:null,presence:null};
 
 function norm(v){
   return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
@@ -91,10 +91,11 @@ async function loadGeo(auth){
   const now=Date.now();
   if(cache.expires>now&&cache.bgfBarrios&&cache.operators)return cache;
   const sheets=google.sheets({version:"v4",auth});
-  const [bb,be,tb,ops,pres]=await Promise.all([
+  const [bb,be,tb,te,ops,pres]=await Promise.all([
     values(sheets,BGF_SHEET_ID,"06_POLIGONOS_BARRIOS!A2:I1000").catch(()=>[]),
     values(sheets,BGF_SHEET_ID,"03_POLIGONOS_ESTRATOS!A2:I10000").catch(()=>[]),
-    values(sheets,TERRITORIAL_SHEET_ID,"02_BARRIOS!A2:S1500").catch(()=>[]),
+    values(sheets,TERRITORIAL_SHEET_ID,"02_BARRIOS!A2:S3000").catch(()=>[]),
+    values(sheets,TERRITORIAL_SHEET_ID,"03_ESTRATOS!A2:O3000").catch(()=>[]),
     values(sheets,COMPETENCIA_SHEET_ID,"01_OPERADORES!A2:P1000").catch(()=>[]),
     values(sheets,COMPETENCIA_SHEET_ID,"03_PRESENCIA!C2:J3000").catch(()=>[])
   ]);
@@ -103,6 +104,7 @@ async function loadGeo(auth){
     bgfBarrios:bb.map(r=>({id:r[0],city:r[2],name:r[3],minLon:num(r[4]),minLat:num(r[5]),maxLon:num(r[6]),maxLat:num(r[7]),polygons:parseWkt(r[8])})).filter(x=>x.id&&x.polygons.length),
     bgfEstratos:be.map(r=>({id:r[0],city:r[1],estrato:String(r[2]||""),minLon:num(r[4]),minLat:num(r[5]),maxLon:num(r[6]),maxLat:num(r[7]),polygons:parseWkt(r[8])})).filter(x=>x.id&&/^[1-6]$/.test(x.estrato)&&x.polygons.length),
     territorialBarrios:tb.map(r=>({id:r[0],city:r[1],name:r[2],preferred:r[13]===true||String(r[13]).toUpperCase()==="TRUE",source:r[10]||r[9]||"",minLon:num(r[15]),minLat:num(r[16]),maxLon:num(r[17]),maxLat:num(r[18]),polygons:parseWkt(r[14])})).filter(x=>x.id&&x.polygons.length&&x.preferred),
+    territorialEstratos:te.map(r=>({id:r[0],city:r[1],estrato:String(r[2]||""),sourceType:String(r[5]||""),source:String(r[6]||""),year:String(r[8]||""),preferred:r[9]===true||String(r[9]).toUpperCase()==="TRUE",minLon:num(r[11]),minLat:num(r[12]),maxLon:num(r[13]),maxLat:num(r[14]),polygons:parseWkt(r[10])})).filter(x=>x.id&&/^[1-6]$/.test(x.estrato)&&x.polygons.length),
     operators:ops,
     presence:pres
   };
@@ -162,12 +164,20 @@ module.exports=async(req,res)=>{
     const bgBarrio=findPolygon(lng,lat,data.bgfBarrios);
     const bgEstrato=findPolygon(lng,lat,data.bgfEstratos);
     const territorial=findPolygon(lng,lat,data.territorialBarrios);
-    const city=canonicalCity(bgBarrio?.city||bgEstrato?.city||territorial?.city||hint);
+    const territorialEstrato=findPolygon(lng,lat,(data.territorialEstratos||[]).filter(x=>x.preferred));
+    const historicalEstrato=findPolygon(lng,lat,(data.territorialEstratos||[]).filter(x=>!x.preferred&&norm(x.city)==="cartagena"));
+    const city=canonicalCity(bgBarrio?.city||bgEstrato?.city||territorial?.city||territorialEstrato?.city||historicalEstrato?.city||hint);
     const barrio=bgBarrio?.name||territorial?.name||"";
-    let estrato=bgEstrato?.estrato||"";
-    let estratoSource=bgEstrato?"Bucaramanga_Exploracion":"";
-    let estratoMatch=bgEstrato?"exacto":"";
-    let estratoDistanceM=bgEstrato?0:null;
+    let estrato=bgEstrato?.estrato||territorialEstrato?.estrato||"";
+    let estratoSource=bgEstrato?"Bucaramanga_Exploracion":territorialEstrato?.source||"";
+    let estratoMatch=estrato?"exacto":"";
+    let estratoDistanceM=estrato?0:null;
+    if(!estrato&&historicalEstrato){
+      estrato=historicalEstrato.estrato;
+      estratoSource=(historicalEstrato.source||"GeoInformador Cartagena")+" · "+(historicalEstrato.year||"histórico");
+      estratoMatch="historico";
+      estratoDistanceM=0;
+    }
     if(!estrato&&city){
       const nearest=nearestPolygon(lng,lat,data.bgfEstratos,city,5000);
       if(nearest){

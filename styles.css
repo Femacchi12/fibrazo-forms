@@ -619,3 +619,11 @@ body.form-mode main{width:min(1180px,96%);padding-top:14px}
 .photo-add-button{width:100%;min-height:48px;padding:12px;border:1px dashed var(--fz-green-border);border-radius:9px;background:rgba(0,242,154,.05);color:#eafff6;font:inherit;font-weight:700;cursor:pointer}
 .photo-add-button:active{background:rgba(0,242,154,.12)}
 @media(max-width:560px){.photo-slot-actions .secondary-button{flex:1}.segment-detail{font-size:11px}}
+
+/* v0.8.9 · field tests round 2 */
+.isp-autocomplete>input{padding-right:48px!important}
+.isp-clear-button{position:absolute;right:10px;top:50%;transform:translateY(-50%);z-index:32;width:32px;height:32px;border:1px solid var(--fz-border-strong);border-radius:8px;background:#25302c;color:#fff;font-size:22px;line-height:1;cursor:pointer}
+.isp-suggestion-list{background:#111a17!important;color:#f7fbf9!important;border-color:#53605b!important}
+.isp-suggestion{background:#111a17!important;color:#f7fbf9!important;-webkit-text-fill-color:#f7fbf9!important}
+.isp-suggestion:hover,.isp-suggestion:focus{background:#20322b!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
+.isp-custom-note{background:#111a17!important;color:#c8d3ce!important}

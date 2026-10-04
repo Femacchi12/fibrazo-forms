@@ -258,7 +258,7 @@
   window.addEventListener("appinstalled",()=>{$("installAppButton") && ($("installAppButton").hidden=true);});
 
   if("serviceWorker" in navigator && location.protocol==="https:"){
-    window.addEventListener("load",()=>navigator.serviceWorker.register("/service-worker.js").catch(()=>{}));
+    window.addEventListener("load",()=>navigator.serviceWorker.register("/service-worker.js").then(reg=>reg.update()).catch(()=>{}));
   }
 
   window.firebase?.auth?.().onAuthStateChanged(user=>{

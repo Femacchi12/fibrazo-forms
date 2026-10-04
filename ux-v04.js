@@ -189,7 +189,10 @@
     input.addEventListener("focus",()=>{if(input.value==="Sin ISP")input.select();paint();});
     input.addEventListener("input",()=>{paint();clearError(field.key);updateVisibility();});
     input.addEventListener("blur",()=>setTimeout(()=>{list.hidden=true;},220));
-    shell.append(input,list);return shell;
+    const clear=document.createElement("button");clear.type="button";clear.className="isp-clear-button";clear.textContent="×";clear.title="Borrar selección";clear.setAttribute("aria-label","Borrar selección de ISP");
+    clear.addEventListener("pointerdown",e=>e.preventDefault());
+    clear.addEventListener("click",e=>{e.preventDefault();input.value="";input.focus();paint();clearError(field.key);updateVisibility();});
+    shell.append(input,clear,list);return shell;
   }
 
   function refreshIspSuggestions(){
@@ -462,6 +465,12 @@
       if(!state.gps)return"—";
       const accuracy=Number.isFinite(Number(state.gps.accuracy))?" · ±"+Math.round(Number(state.gps.accuracy))+" m":"";
       return state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+accuracy+(state.gps.cityDetected?" · "+state.gps.cityDetected:"");
+    }
+    if(field.key==="estrato"&&state.gps?.estratoMatch){
+      const base=String(fieldValue(field.key)||"—");
+      if(state.gps.estratoMatch==="cercano")return base+" · fuera del polígono · más cercano a ~"+Math.round(Number(state.gps.estratoDistanceM||0))+" m";
+      if(state.gps.estratoMatch==="historico")return base+" · referencia histórica";
+      return base+" · coincidencia exacta";
     }
     if(field.type==="photos")return state.photos.length?state.photos.length+" foto"+(state.photos.length===1?"":"s"):"—";
     const v=fieldValue(field.key);if(Array.isArray(v))return v.length?v.join(", "):"—";if(!v)return"—";if(field.type==="currency")return"$ "+Number(v).toLocaleString("es-CO");if(field.type==="date-flex")return isoToDmy(v);if(field.suffix)return v+" "+field.suffix;return String(v);
@@ -736,7 +745,7 @@
       const parts=[];
       if(data.barrio)parts.push("Barrio: "+data.barrio);
       if(data.estrato){
-        const ref=data.estratoMatch==="cercano"&&Number.isFinite(Number(data.estratoDistanceM))?" · referencia más cercana a ~"+Math.round(Number(data.estratoDistanceM))+" m":" · coincidencia exacta";
+        const ref=data.estratoMatch==="cercano"&&Number.isFinite(Number(data.estratoDistanceM))?" · FUERA DEL POLÍGONO · estrato más cercano a ~"+Math.round(Number(data.estratoDistanceM))+" m":data.estratoMatch==="historico"?" · REFERENCIA HISTÓRICA, no estrato oficial vigente":" · coincidencia exacta";
         parts.push("Estrato: "+data.estrato+ref);
       }
       if(state.ispOptions.length)parts.push(state.ispOptions.length+" ISP sugeridos");

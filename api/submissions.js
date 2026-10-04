@@ -139,7 +139,7 @@ function buildRow(form,p,id,links,email){
     d.tigo_hfc||"",d.tigo_ftth||"",d.claro_hfc||"",d.claro_ftth||"",d.movistar||"",
     rawIsp(d.isp_1),rawIsp(d.isp_2),rawIsp(d.isp_3),rawIsp(d.isp_4),d.nota||"",
     l.lat||"",l.lng||"",l.accuracy||"",maps,links[0]||"",links[1]||"",links[2]||"",
-    email||"ANONIMO","0.8.6",tipo,d.link_evidencia||""
+    email||"ANONIMO","0.8.9",tipo,d.link_evidencia||""
   ];
 }
 
@@ -539,9 +539,14 @@ module.exports=async(req,res)=>{
         });
         await sheets.spreadsheets.values.update({
           spreadsheetId:SHEET_ID,
-          range:`${form.sheet}!AG${rawRow}`,
+          range:`${form.sheet}!AG${rawRow}:AJ${rawRow}`,
           valueInputOption:"RAW",
-          requestBody:{values:[[String(payload.data?.estrato||masterSync?.estrato||"")]]}
+          requestBody:{values:[[
+            String(payload.data?.estrato||masterSync?.estrato||""),
+            String(payload.location?.estratoMatch||""),
+            Number.isFinite(Number(payload.location?.estratoDistanceM))?Math.round(Number(payload.location.estratoDistanceM)):"",
+            String(payload.location?.estratoSource||"")
+          ]]}
         });
       }
     }
