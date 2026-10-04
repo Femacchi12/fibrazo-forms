@@ -603,3 +603,19 @@ body.form-mode main{width:min(1180px,96%);padding-top:14px}
   .admin-permission-form{grid-column:1/-1}
   .admin-permission-row label{justify-content:flex-start}
 }
+
+/* v0.8.7 · pruebas de campo: contraste ISP, escalas completas y fotos secuenciales */
+.isp-suggestion-list{background:#18211e;border-color:var(--fz-border-strong);box-shadow:0 16px 36px rgba(0,0,0,.38)}
+.isp-suggestion{color:#f4f8f6!important;background:#18211e}
+.isp-suggestion:hover,.isp-suggestion:focus{background:rgba(0,254,156,.13);color:#fff!important}
+.isp-custom-note{color:#b7c5bf;border-top-color:var(--fz-border)}
+.segment-detail{display:block!important;padding:12px 13px;font-size:12px;font-weight:650;line-height:1.55;white-space:normal;overflow:visible;min-height:44px}
+.segment-detail[hidden]{display:none!important}
+.photo-sequence,.photo-slots{display:grid;gap:12px}
+.photo-slot{display:grid;gap:10px;padding:12px;border:1px solid var(--fz-border);border-radius:10px;background:var(--fz-control)}
+.photo-slot>strong{font-size:11px;color:#f5f7f6}
+.photo-slot img{width:100%;max-height:320px;object-fit:contain;border:1px solid var(--fz-border);border-radius:9px;background:#0d1210}
+.photo-slot-actions{display:flex;gap:8px;flex-wrap:wrap}
+.photo-add-button{width:100%;min-height:48px;padding:12px;border:1px dashed var(--fz-green-border);border-radius:9px;background:rgba(0,242,154,.05);color:#eafff6;font:inherit;font-weight:700;cursor:pointer}
+.photo-add-button:active{background:rgba(0,242,154,.12)}
+@media(max-width:560px){.photo-slot-actions .secondary-button{flex:1}.segment-detail{font-size:11px}}
