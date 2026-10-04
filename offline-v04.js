@@ -121,15 +121,9 @@
 
   async function submit(payload){
     if(!payload.clientSubmissionId) payload.clientSubmissionId=createSubmissionId(payload.formId);
-    if(!navigator.onLine) return queuePayload(payload,"Sin conexión");
-    try{
-      const result=await postPayload(payload);
-      await refreshUi();
-      return {...result,queued:false};
-    }catch(error){
-      if(error.httpStatus && !isTemporaryHttp(error.httpStatus)) throw error;
-      return queuePayload(payload,error.message||"Error de red");
-    }
+    const result=await queuePayload(payload,navigator.onLine?"En cola de envío":"Sin conexión");
+    if(navigator.onLine)setTimeout(()=>syncAll(),0);
+    return {...result,queued:true,background:true};
   }
 
   async function syncAll({manual=false}={}){
@@ -140,13 +134,14 @@
     syncing=true;
     renderSyncing(true);
     const email=currentEmail();
-    const records=(await all()).filter(item=>item.userEmail===email).sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
+    const records=(await all()).filter(item=>item.userEmail===email&&item.status!=="sent").sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
     let synced=0,failed=0;
     for(const record of records){
       try{
         await put({...record,status:"syncing",attempts:(record.attempts||0)+1,lastError:""});
-        await postPayload(record.payload);
-        await remove(record.clientSubmissionId);
+        const serverResult=await postPayload(record.payload);
+        const compactPayload={...record.payload,photos:[]};
+        await put({...record,payload:compactPayload,status:"sent",syncedAt:new Date().toISOString(),serverId:serverResult?.id||record.clientSubmissionId,lastError:""});
         synced++;
       }catch(error){
         const permanent=error.httpStatus && !isTemporaryHttp(error.httpStatus);
@@ -176,8 +171,9 @@
   async function refreshUi(){
     const email=currentEmail();
     const records=(await all()).filter(item=>!email || item.userEmail===email);
-    const pending=records.filter(item=>item.status!=="error").length;
-    const errors=records.filter(item=>item.status==="error").length;
+    const active=records.filter(item=>item.status!=="sent");
+    const pending=active.filter(item=>item.status!=="error").length;
+    const errors=active.filter(item=>item.status==="error").length;
     const online=navigator.onLine;
     const btn=$("networkToggle");
     const label=$("networkLabel");
@@ -195,7 +191,7 @@
     if(state) state.textContent=online?"Con conexión":"Sin conexión";
     const list=$("offlineQueueList");
     if(list){
-      list.innerHTML=records.length?records.map(record=>
+      list.innerHTML=active.length?active.map(record=>
         '<article class="offline-item '+(record.status==="error"?"error":"")+'">'+
         '<div><strong>'+escapeHtml(record.formId)+'</strong><p>'+escapeHtml(formReference(record))+'</p><small>'+escapeHtml(formatTime(record.createdAt))+'</small></div>'+
         '<span>'+escapeHtml(record.status==="error"?"Error":record.status==="syncing"?"Sincronizando":"Pendiente")+'</span>'+
@@ -204,7 +200,16 @@
       ).join(""):'<div class="pending-empty">No hay respuestas pendientes.</div>';
     }
     const syncBtn=$("syncNowButton");
-    if(syncBtn) syncBtn.disabled=!online||syncing||records.length===0;
+    if(syncBtn) syncBtn.disabled=!online||syncing||active.length===0;
+    renderFormHistory(records);
+  }
+
+  function statusLabel(status){return status==="sent"?"Enviado":status==="syncing"?"Enviando":status==="error"?"Error":"Pendiente";}
+  function renderFormHistory(records){
+    const host=$("formHistoryList");if(!host)return;
+    const formId=String(window.FIBRAZO_ACTIVE_FORM_ID||"");
+    const items=(records||[]).filter(r=>!formId||r.formId===formId).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,20);
+    host.innerHTML=items.length?items.map(r=>'<article class="history-item '+escapeHtml(r.status||"pending")+'"><div><strong>'+escapeHtml(formReference(r))+'</strong><small>'+escapeHtml(formatTime(r.createdAt))+'</small></div><span>'+escapeHtml(statusLabel(r.status))+'</span></article>').join(""):'<div class="pending-empty">Todavía no hay respuestas de este formulario en este dispositivo.</div>';
   }
 
   function escapeHtml(value){
@@ -268,5 +273,5 @@
 
   setTimeout(refreshUi,200);
 
-  window.FIBRAZO_OFFLINE={submit,syncAll,createSubmissionId,refreshUi,list:all};
+  window.FIBRAZO_OFFLINE={submit,syncAll,createSubmissionId,refreshUi,list:all,statusLabel};
 })();
