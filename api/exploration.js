@@ -61,6 +61,28 @@ function findPolygon(lon,lat,items){
   }
   return null;
 }
+function segmentDistanceMeters(lon,lat,a,b){
+  const lat0=lat*Math.PI/180, mx=111320*Math.cos(lat0), my=110540;
+  const px=lon*mx,py=lat*my,x1=a[0]*mx,y1=a[1]*my,x2=b[0]*mx,y2=b[1]*my;
+  const dx=x2-x1,dy=y2-y1,den=dx*dx+dy*dy;
+  const t=den?Math.max(0,Math.min(1,((px-x1)*dx+(py-y1)*dy)/den)):0;
+  return Math.hypot(px-(x1+t*dx),py-(y1+t*dy));
+}
+function nearestPolygon(lon,lat,items,city,maxMeters=5000){
+  const cityNorm=norm(canonicalCity(city));let best=null;
+  for(const item of items||[]){
+    if(cityNorm&&norm(canonicalCity(item.city))!==cityNorm)continue;
+    const approxLat=Math.max(item.minLat,Math.min(lat,item.maxLat));
+    const approxLon=Math.max(item.minLon,Math.min(lon,item.maxLon));
+    const boxDist=Math.hypot((approxLat-lat)*110540,(approxLon-lon)*111320*Math.cos(lat*Math.PI/180));
+    if(best&&boxDist>best.distance)continue;
+    for(const poly of item.polygons||[])for(const ring of poly||[])for(let i=0;i<ring.length;i++){
+      const d=segmentDistanceMeters(lon,lat,ring[i],ring[(i+1)%ring.length]);
+      if(!best||d<best.distance)best={item,distance:d};
+    }
+  }
+  return best&&best.distance<=maxMeters?best:null;
+}
 async function values(sheets,spreadsheetId,range){
   const r=await sheets.spreadsheets.values.get({spreadsheetId,range});
   return r.data.values||[];
@@ -144,12 +166,23 @@ module.exports=async(req,res)=>{
     const barrio=bgBarrio?.name||territorial?.name||"";
     let estrato=bgEstrato?.estrato||"";
     let estratoSource=bgEstrato?"Bucaramanga_Exploracion":"";
+    let estratoMatch=bgEstrato?"exacto":"";
+    let estratoDistanceM=bgEstrato?0:null;
+    if(!estrato&&city){
+      const nearest=nearestPolygon(lng,lat,data.bgfEstratos,city,5000);
+      if(nearest){
+        estrato=nearest.item.estrato;
+        estratoSource="Bucaramanga_Exploracion";
+        estratoMatch="cercano";
+        estratoDistanceM=Math.round(nearest.distance);
+      }
+    }
     if(!estrato&&norm(city)==="barranquilla"){
       estrato=await barranquillaEstrato(lat,lng);
-      if(estrato)estratoSource="Barranquilla GIS público";
+      if(estrato){estratoSource="Barranquilla GIS público";estratoMatch="exacto";estratoDistanceM=0;}
     }
     return res.status(200).json({
-      ok:true,city,barrio,estrato,
+      ok:true,city,barrio,estrato,estratoMatch,estratoDistanceM,
       barrioSource:bgBarrio?"AMB Barrios":territorial?.source||"",
       estratoSource,
       isps:ispOptions(city||hint,data)
