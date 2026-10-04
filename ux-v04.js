@@ -74,7 +74,7 @@
     const form=forms[id];if(!form)return;
     if(!publicMode&&window.FIBRAZO_ACCESS&&window.FIBRAZO_ACCESS[id]===false)return;
     const policy=policyFor(id);
-    state.form=form;state.policy=policy;state.sectionIndex=0;state.gps=null;state.photos=[];state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;
+    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.gps=null;state.photos=[];state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;
     document.body.classList.add("form-mode");
     $("formTitle").textContent=form.name;
     $("formDescription").textContent=form.description||"";
@@ -103,7 +103,7 @@
     const stepper=$("sectionStepper"),counter=$("formStepCounter");
     if(stepper)stepper.hidden=policy.showProgress===false;
     if(counter)counter.hidden=policy.showProgress===false;
-    clearValidation();renderSection();
+    clearValidation();renderSection();window.FIBRAZO_OFFLINE?.refreshUi?.();
     if(form.id==="CHURN")setTimeout(captureChurnGpsAutomatically,250);
     window.scrollTo({top:0,behavior:"smooth"});
   }
@@ -114,7 +114,7 @@
     if(/^\/form\//i.test(location.pathname))history.replaceState({},"","/");
     document.body.classList.remove("form-mode");
     $("formWorkspace").hidden=true;$("reviewWorkspace").hidden=true;$("successWorkspace").hidden=true;
-    state.geoController?.abort();state.geoController=null;state.form=null;state.policy=null;state.gps=null;state.photos=[];state.detectedCity="";state.citySource="";state.ispOptions=[];window.scrollTo({top:0,behavior:"smooth"});
+    state.geoController?.abort();state.geoController=null;state.form=null;window.FIBRAZO_ACTIVE_FORM_ID="";state.policy=null;state.gps=null;state.photos=[];state.detectedCity="";state.citySource="";state.ispOptions=[];window.scrollTo({top:0,behavior:"smooth"});
   }
 
   function renderField(field){
@@ -135,6 +135,7 @@
     else if(field.type==="isp-autocomplete"){wrap.appendChild(ispAutocompleteInput(field));}
     else if(field.type==="photos"){wrap.appendChild(photoInput(field));}
 
+    if(field.key==="sector_barrio"||field.key==="estrato"){const info=document.createElement("div");info.className="field-geo-info";info.dataset.geoInfoFor=field.key;info.hidden=true;wrap.appendChild(info);}
     const err=document.createElement("div");err.className="field-error";err.dataset.errorFor=field.key;err.hidden=true;wrap.appendChild(err);
     if(field.default!==undefined)queueMicrotask(()=>{const n=document.querySelector('[name="'+css(field.key)+'"]');if(n&&!n.value)n.value=String(field.default);});
     return wrap;
@@ -176,7 +177,6 @@
       for(const name of options()){
         const b=document.createElement("button");b.type="button";b.className="isp-suggestion";
         b.textContent=name;
-        b.addEventListener("pointerdown",e=>{e.preventDefault();choose(name);});
         b.addEventListener("click",e=>{e.preventDefault();choose(name);});
         list.appendChild(b);
       }
@@ -542,7 +542,7 @@
       if(title)title.textContent="Encuesta guardada en el dispositivo";
       if(message)message.textContent="La encuesta quedó segura localmente y todavía no llegó al servidor.";
       if(statusTitle)statusTitle.textContent="Pendiente de sincronización";
-      if(statusDetail)statusDetail.textContent="Cuando vuelva la conexión, utiliza Sincronizar ahora. No necesitas completar nuevamente la encuesta.";
+      if(statusDetail)statusDetail.textContent=navigator.onLine?"Se está enviando en segundo plano. Ya puedes completar otra respuesta.":"Se enviará automáticamente cuando vuelva la conexión. Ya puedes completar otra respuesta.";
       return;
     }
 
@@ -742,14 +742,18 @@
       }
       state.ispOptions=Array.isArray(data.isps)?data.isps:[];
       refreshIspSuggestions();
-      const parts=[];
-      if(data.barrio)parts.push("Barrio: "+data.barrio);
-      if(data.estrato){
-        const ref=data.estratoMatch==="cercano"&&Number.isFinite(Number(data.estratoDistanceM))?" · FUERA DEL POLÍGONO · estrato más cercano a ~"+Math.round(Number(data.estratoDistanceM))+" m":data.estratoMatch==="historico"?" · REFERENCIA HISTÓRICA, no estrato oficial vigente":" · coincidencia exacta";
-        parts.push("Estrato: "+data.estrato+ref);
+      const barrioInfo=document.querySelector('[data-geo-info-for="sector_barrio"]');
+      if(barrioInfo){barrioInfo.hidden=!data.barrio;barrioInfo.textContent=data.barrio?("Coincidencia exacta"+(data.barrioSource?" · "+data.barrioSource:"")):"";}
+      const estratoInfo=document.querySelector('[data-geo-info-for="estrato"]');
+      if(estratoInfo){
+        let detail="";
+        if(data.estratoMatch==="cercano"&&Number.isFinite(Number(data.estratoDistanceM)))detail="Fuera del polígono · estrato de referencia más cercano a ~"+Math.round(Number(data.estratoDistanceM))+" m";
+        else if(data.estratoMatch==="historico")detail="Referencia histórica · no corresponde a estrato oficial vigente";
+        else if(data.estrato)detail="Coincidencia exacta";
+        if(detail&&data.estratoSource)detail+=" · "+data.estratoSource;
+        estratoInfo.textContent=detail;estratoInfo.hidden=!detail;
       }
-      if(state.ispOptions.length)parts.push(state.ispOptions.length+" ISP sugeridos");
-      geoStatus(parts.length?parts.join(" · "):"Sin datos geográficos automáticos para esta coordenada. Puedes continuar manualmente.",{busy:false});
+      geoStatus("",{hidden:true});
       return data;
     }catch(error){
       if(lookupId!==state.geoLookupId)return null;

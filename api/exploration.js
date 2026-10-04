@@ -139,6 +139,18 @@ function ispOptions(city,data){
   }
   return [...names].sort((a,b)=>a.localeCompare(b,"es",{sensitivity:"base"}));
 }
+
+async function cartagenaOfficialBarrio(lat,lng){
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),3500);
+  try{
+    const url="https://services5.arcgis.com/NH8goQnevWdS65Vx/arcgis/rest/services/Aspecto_Cartografia_Base/FeatureServer/1/query?geometry="+encodeURIComponent(lng+","+lat)+"&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=false&f=json";
+    const r=await fetch(url,{signal:controller.signal});if(!r.ok)return null;
+    const j=await r.json(),a=j.features?.[0]?.attributes||null;if(!a)return null;
+    const name=String(a.BARRIO||a.Barrio||a.barrio||a.NOMBRE||a.Nombre||a.nombre||"").trim();
+    return name?{name,source:"Planeación Cartagena · Aspecto Cartografia Base · Barrios"}:null;
+  }catch(_){return null;}finally{clearTimeout(timer);}
+}
+
 async function barranquillaEstrato(lat,lng){
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),3500);
@@ -163,7 +175,12 @@ module.exports=async(req,res)=>{
     const hint=canonicalCity(req.query.city||"");
     const bgBarrio=findPolygon(lng,lat,data.bgfBarrios);
     const bgEstrato=findPolygon(lng,lat,data.bgfEstratos);
-    const territorial=findPolygon(lng,lat,data.territorialBarrios);
+    let territorial=findPolygon(lng,lat,data.territorialBarrios);
+    const cartagenaArea=lat>=10.25&&lat<=10.55&&lng>=-75.65&&lng<=-75.35;
+    if(!territorial&&(norm(hint)==="cartagena"||cartagenaArea)){
+      const direct=await cartagenaOfficialBarrio(lat,lng);
+      if(direct)territorial={city:"Cartagena",name:direct.name,source:direct.source};
+    }
     const territorialEstrato=findPolygon(lng,lat,(data.territorialEstratos||[]).filter(x=>x.preferred));
     const historicalEstrato=findPolygon(lng,lat,(data.territorialEstratos||[]).filter(x=>!x.preferred&&norm(x.city)==="cartagena"));
     const city=canonicalCity(bgBarrio?.city||bgEstrato?.city||territorial?.city||territorialEstrato?.city||historicalEstrato?.city||hint);
