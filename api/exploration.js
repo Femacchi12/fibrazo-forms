@@ -176,7 +176,8 @@ module.exports=async(req,res)=>{
     const bgBarrio=findPolygon(lng,lat,data.bgfBarrios);
     const bgEstrato=findPolygon(lng,lat,data.bgfEstratos);
     let territorial=findPolygon(lng,lat,data.territorialBarrios);
-    if(!territorial&&norm(hint)==="cartagena"){
+    const cartagenaArea=lat>=10.25&&lat<=10.55&&lng>=-75.65&&lng<=-75.35;
+    if(!territorial&&(norm(hint)==="cartagena"||cartagenaArea)){
       const direct=await cartagenaOfficialBarrio(lat,lng);
       if(direct)territorial={city:"Cartagena",name:direct.name,source:direct.source};
     }
