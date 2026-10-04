@@ -542,7 +542,7 @@
       if(title)title.textContent="Encuesta guardada en el dispositivo";
       if(message)message.textContent="La encuesta quedó segura localmente y todavía no llegó al servidor.";
       if(statusTitle)statusTitle.textContent="Pendiente de sincronización";
-      if(statusDetail)statusDetail.textContent="Cuando vuelva la conexión, utiliza Sincronizar ahora. No necesitas completar nuevamente la encuesta.";
+      if(statusDetail)statusDetail.textContent=navigator.onLine?"Se está enviando en segundo plano. Ya puedes completar otra respuesta.":"Se enviará automáticamente cuando vuelva la conexión. Ya puedes completar otra respuesta.";
       return;
     }
 
