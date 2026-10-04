@@ -135,6 +135,7 @@
     else if(field.type==="isp-autocomplete"){wrap.appendChild(ispAutocompleteInput(field));}
     else if(field.type==="photos"){wrap.appendChild(photoInput(field));}
 
+    if(field.key==="sector_barrio"||field.key==="estrato"){const info=document.createElement("div");info.className="field-geo-info";info.dataset.geoInfoFor=field.key;info.hidden=true;wrap.appendChild(info);}
     const err=document.createElement("div");err.className="field-error";err.dataset.errorFor=field.key;err.hidden=true;wrap.appendChild(err);
     if(field.default!==undefined)queueMicrotask(()=>{const n=document.querySelector('[name="'+css(field.key)+'"]');if(n&&!n.value)n.value=String(field.default);});
     return wrap;
@@ -176,7 +177,6 @@
       for(const name of options()){
         const b=document.createElement("button");b.type="button";b.className="isp-suggestion";
         b.textContent=name;
-        b.addEventListener("pointerdown",e=>{e.preventDefault();choose(name);});
         b.addEventListener("click",e=>{e.preventDefault();choose(name);});
         list.appendChild(b);
       }
@@ -742,14 +742,18 @@
       }
       state.ispOptions=Array.isArray(data.isps)?data.isps:[];
       refreshIspSuggestions();
-      const parts=[];
-      if(data.barrio)parts.push("Barrio: "+data.barrio);
-      if(data.estrato){
-        const ref=data.estratoMatch==="cercano"&&Number.isFinite(Number(data.estratoDistanceM))?" · FUERA DEL POLÍGONO · estrato más cercano a ~"+Math.round(Number(data.estratoDistanceM))+" m":data.estratoMatch==="historico"?" · REFERENCIA HISTÓRICA, no estrato oficial vigente":" · coincidencia exacta";
-        parts.push("Estrato: "+data.estrato+ref);
+      const barrioInfo=document.querySelector('[data-geo-info-for="sector_barrio"]');
+      if(barrioInfo){barrioInfo.hidden=!data.barrio;barrioInfo.textContent=data.barrio?("Coincidencia exacta"+(data.barrioSource?" · "+data.barrioSource:"")):"";}
+      const estratoInfo=document.querySelector('[data-geo-info-for="estrato"]');
+      if(estratoInfo){
+        let detail="";
+        if(data.estratoMatch==="cercano"&&Number.isFinite(Number(data.estratoDistanceM)))detail="Fuera del polígono · estrato de referencia más cercano a ~"+Math.round(Number(data.estratoDistanceM))+" m";
+        else if(data.estratoMatch==="historico")detail="Referencia histórica · no corresponde a estrato oficial vigente";
+        else if(data.estrato)detail="Coincidencia exacta";
+        if(detail&&data.estratoSource)detail+=" · "+data.estratoSource;
+        estratoInfo.textContent=detail;estratoInfo.hidden=!detail;
       }
-      if(state.ispOptions.length)parts.push(state.ispOptions.length+" ISP sugeridos");
-      geoStatus(parts.length?parts.join(" · "):"Sin datos geográficos automáticos para esta coordenada. Puedes continuar manualmente.",{busy:false});
+      geoStatus("",{hidden:true});
       return data;
     }catch(error){
       if(lookupId!==state.geoLookupId)return null;
