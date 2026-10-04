@@ -211,13 +211,16 @@ async function loadCityItems(auth){
   if(cache.cityItems&&cache.cityExpires>now)return cache.cityItems;
   const sheets=google.sheets({version:"v4",auth});
   const catalog=await loadCatalog(auth);
-  const out=[];
-  for(const entry of catalog){
+  const responses=await Promise.all(catalog.map(async entry=>{
     const r=await sheets.spreadsheets.values.get({
       spreadsheetId:entry.fileId,
       range:"11_POLIGONOS_CIUDAD!A:O"
     }).catch(()=>({data:{values:[]}}));
-    for(const row of tableRows(r.data.values||[])){
+    return{entry,values:r.data.values||[]};
+  }));
+  const out=[];
+  for(const {entry,values} of responses){
+    for(const row of tableRows(values)){
       const id=String(row.ID_Ciudad_Poligono||"").trim();
       const preferred=truthy(row.Preferida_Analisis);
       const minLon=num(row.Min_Lon),minLat=num(row.Min_Lat),maxLon=num(row.Max_Lon),maxLat=num(row.Max_Lat);
