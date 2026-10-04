@@ -74,7 +74,7 @@
     const form=forms[id];if(!form)return;
     if(!publicMode&&window.FIBRAZO_ACCESS&&window.FIBRAZO_ACCESS[id]===false)return;
     const policy=policyFor(id);
-    state.form=form;state.policy=policy;state.sectionIndex=0;state.gps=null;state.photos=[];state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;
+    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.gps=null;state.photos=[];state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;
     document.body.classList.add("form-mode");
     $("formTitle").textContent=form.name;
     $("formDescription").textContent=form.description||"";
@@ -103,7 +103,7 @@
     const stepper=$("sectionStepper"),counter=$("formStepCounter");
     if(stepper)stepper.hidden=policy.showProgress===false;
     if(counter)counter.hidden=policy.showProgress===false;
-    clearValidation();renderSection();
+    clearValidation();renderSection();window.FIBRAZO_OFFLINE?.refreshUi?.();
     if(form.id==="CHURN")setTimeout(captureChurnGpsAutomatically,250);
     window.scrollTo({top:0,behavior:"smooth"});
   }
@@ -114,7 +114,7 @@
     if(/^\/form\//i.test(location.pathname))history.replaceState({},"","/");
     document.body.classList.remove("form-mode");
     $("formWorkspace").hidden=true;$("reviewWorkspace").hidden=true;$("successWorkspace").hidden=true;
-    state.geoController?.abort();state.geoController=null;state.form=null;state.policy=null;state.gps=null;state.photos=[];state.detectedCity="";state.citySource="";state.ispOptions=[];window.scrollTo({top:0,behavior:"smooth"});
+    state.geoController?.abort();state.geoController=null;state.form=null;window.FIBRAZO_ACTIVE_FORM_ID="";state.policy=null;state.gps=null;state.photos=[];state.detectedCity="";state.citySource="";state.ispOptions=[];window.scrollTo({top:0,behavior:"smooth"});
   }
 
   function renderField(field){
