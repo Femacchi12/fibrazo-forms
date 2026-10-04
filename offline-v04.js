@@ -161,7 +161,7 @@
   function formReference(record){
     const d=record.payload?.data||{};
     if(record.formId==="CHURN") return (d.ciudad||"")+" · Cliente "+(d.cliente_id||"—");
-    return (d.ciudad||"")+" · "+(d.sector_barrio||"Sin sector");
+    return (d.municipio||d.ciudad||record.payload?.location?.cityDetected||"")+" · "+(d.sector_barrio||"Sin sector");
   }
 
   function formatTime(value){
