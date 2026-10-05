@@ -1795,8 +1795,11 @@ body.form-mode main{width:min(1180px,96%);padding-top:14px}
   box-shadow:0 5px 14px rgba(0,0,0,.45),0 0 0 3px rgba(255,138,52,.18);
   transform:rotate(45deg)
 }
-.map-selection-marker span::first-letter{
-  transform:rotate(-45deg)
+.map-selection-marker span b{
+  display:block;
+  transform:rotate(-45deg);
+  font-size:17px;
+  line-height:1
 }
 @media(max-width:560px){
   .map-estrato-options{
