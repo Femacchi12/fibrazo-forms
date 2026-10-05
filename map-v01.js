@@ -21,6 +21,7 @@
     polygonStatus:{barrios:"",estratos:""},
     polygonControllers:{barrios:null,estratos:null},
     polygonReloadTimer:null,
+    polygonFocusUntil:0,
     points:[],
     filtered:[],
     loadedOnce:false,
@@ -494,7 +495,7 @@
   }
 
   function schedulePolygonReload(){
-    if(!state.viewActive)return;
+    if(!state.viewActive||Date.now()<state.polygonFocusUntil)return;
     if(state.polygonReloadTimer)clearTimeout(state.polygonReloadTimer);
     state.polygonReloadTimer=setTimeout(()=>{
       for(const layer of ["barrios","estratos"])if(state.polygonActive[layer])loadPolygonLayer(layer,{silent:true});
@@ -523,9 +524,10 @@
   function focusPolygon(layer,id){
     const ref=state.polygonRefs[layer]?.get(String(id));
     if(!ref||!ensureMap())return;
+    state.polygonFocusUntil=Date.now()+1800;
     if(ref.bounds?.isValid())state.map.fitBounds(ref.bounds,{padding:[28,28],maxZoom:17});
     const child=ref.leaflet?.getLayers?.()[0];
-    if(child?.openPopup)setTimeout(()=>child.openPopup(),180);
+    if(child?.openPopup)setTimeout(()=>child.openPopup(),220);
   }
 
   function renderPolygonLegendAndIndex(){
