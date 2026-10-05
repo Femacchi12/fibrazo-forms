@@ -198,6 +198,49 @@ function spatialSample(rows,limit,bbox){
   }
   return result;
 }
+function parseList(value){
+  return String(value||"").split(",").map(v=>v.trim()).filter(Boolean);
+}
+function indexItems(layer,rows){
+  if(layer==="estratos"){
+    const counts=new Map();
+    for(const row of rows){
+      const value=String(row.Estrato||row.Categoria_Estrato||"").trim();
+      const match=value.match(/\b([1-6])\b/);
+      if(!match)continue;
+      counts.set(match[1],(counts.get(match[1])||0)+1);
+    }
+    return ["1","2","3","4","5","6"].map(value=>({value,count:counts.get(value)||0}));
+  }
+  const map=new Map();
+  for(const row of rows){
+    const id=safeValue(row,"ID_Barrio");
+    if(!id)continue;
+    if(!map.has(id)){
+      map.set(id,{
+        id,
+        name:safeValue(row,"Barrio")||id,
+        municipio:safeValue(row,"Municipio")||safeValue(row,"Ciudad"),
+        comuna:safeValue(row,"Comuna_Localidad")
+      });
+    }
+  }
+  return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name,"es",{sensitivity:"base",numeric:true})||a.municipio.localeCompare(b.municipio,"es"));
+}
+function applySelection(layer,rows,query){
+  if(layer==="estratos"){
+    const selected=new Set(parseList(query.estratos).map(v=>String(v)));
+    if(!selected.size)return [];
+    return rows.filter(row=>{
+      const value=String(row.Estrato||row.Categoria_Estrato||"").trim();
+      const match=value.match(/\b([1-6])\b/);
+      return !!match&&selected.has(match[1]);
+    });
+  }
+  const selected=new Set(parseList(query.ids));
+  if(!selected.size)return [];
+  return rows.filter(row=>selected.has(safeValue(row,"ID_Barrio")));
+}
 
 module.exports=async(req,res)=>{
   res.setHeader("Cache-Control","private, max-age=20");
@@ -224,8 +267,39 @@ module.exports=async(req,res)=>{
       });
     }
 
-    let candidates=meta.rows.filter(row=>intersects(row,bbox));
+    let visible=meta.rows.filter(row=>intersects(row,bbox));
+    const mode=String(req.query.mode||"geometry").toLowerCase();
+
+    if(mode==="index"){
+      return res.status(200).json({
+        ok:true,
+        mode:"index",
+        layer,
+        scope:"BUC_AMB",
+        minZoom:cfg.minZoom,
+        requiresZoom:false,
+        totalVisible:visible.length,
+        items:indexItems(layer,visible)
+      });
+    }
+
+    let candidates=applySelection(layer,visible,req.query);
     const totalVisible=candidates.length;
+    if(!totalVisible){
+      return res.status(200).json({
+        ok:true,
+        mode:"geometry",
+        layer,
+        scope:"BUC_AMB",
+        minZoom:cfg.minZoom,
+        requiresZoom:false,
+        truncated:false,
+        totalVisible:0,
+        displayMode:"VACIO",
+        features:[]
+      });
+    }
+
     const limit=featureLimit(layer,zoom);
     const truncated=candidates.length>limit;
     candidates=spatialSample(candidates,limit,bbox);
@@ -245,6 +319,7 @@ module.exports=async(req,res)=>{
 
     return res.status(200).json({
       ok:true,
+      mode:"geometry",
       layer,
       scope:"BUC_AMB",
       minZoom:cfg.minZoom,

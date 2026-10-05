@@ -21,12 +21,16 @@
     polygonRefs:{barrios:new Map(),estratos:new Map()},
     polygonStatus:{barrios:"",estratos:""},
     polygonControllers:{barrios:null,estratos:null},
+    polygonIndexControllers:{barrios:null,estratos:null},
+    polygonIndexData:{barrios:[],estratos:[]},
+    polygonSelections:{barrios:new Set(),estratos:new Set()},
     polygonReloadTimer:null,
     polygonFocusUntil:0,
     polygonIndexGroups:new Map(),
     busy:new Map(),
     busySeq:0,
     selectedMarker:null,
+    selectedLatLng:null,
     longPress:null,
     points:[],
     filtered:[],
@@ -220,7 +224,7 @@
     state.map.fitBounds(BUCARAMANGA_BOUNDS,{padding:[22,22],maxZoom:13});
     mapStatus("Vista ajustada a Bucaramanga. Las capas activas se cargarán automáticamente.","success");
     setTimeout(()=>{
-      for(const layer of ["barrios","estratos"])if(state.polygonActive[layer])loadPolygonLayer(layer,{silent:true});
+      for(const layer of ["barrios","estratos"])if(state.polygonActive[layer])refreshPolygonLayer(layer,{silent:true});
     },550);
   }
 
@@ -271,10 +275,22 @@
     closeCoordinateSheet();
 
     if(state.selectedMarker&&state.map)state.map.removeLayer(state.selectedMarker);
-    state.selectedMarker=L.circleMarker([lat,lng],{
-      radius:8,weight:3,color:"#FFFFFF",fillColor:"#FFB84D",fillOpacity:1,pane:"markerPane"
+    state.selectedLatLng={lat,lng};
+    state.selectedMarker=L.marker([lat,lng],{
+      pane:"surveyPane",
+      zIndexOffset:1200,
+      icon:L.divIcon({
+        className:"map-selection-marker",
+        html:'<span><b>＋</b></span>',
+        iconSize:[30,30],
+        iconAnchor:[15,15]
+      })
     }).addTo(state.map);
-    state.selectedMarker.bindTooltip("Punto seleccionado",{direction:"top"}).openTooltip();
+    state.selectedMarker.bindTooltip("Punto seleccionado · toca para abrir acciones",{direction:"top"});
+    state.selectedMarker.on("click",event=>{
+      if(event?.originalEvent)L.DomEvent.stopPropagation(event.originalEvent);
+      if(state.selectedLatLng)openCoordinateSheet(state.selectedLatLng);
+    });
 
     const backdrop=document.createElement("div");
     backdrop.className="map-coordinate-backdrop";
@@ -602,7 +618,7 @@
     const count=Object.values(state.polygonActive).filter(Boolean).length;
     const badge=$("mapLayerCount");
     if(badge){badge.textContent=String(count);badge.hidden=count===0;}
-    renderPolygonLegendAndIndex();
+    renderLayerControls();
   }
 
   function featureBBox(feature){
@@ -685,17 +701,16 @@
     state.polygonFeatures[layer]=[];
     state.polygonRefs[layer]=new Map();
     if(!keepStatus)state.polygonStatus[layer]="";
-    renderPolygonLegendAndIndex();
   }
 
   function polygonStyle(layer,feature,color){
     return {
       pane:layer==="estratos"?"estratosPane":"barriosPane",
       color,
-      weight:layer==="barrios"?2:1.6,
-      opacity:.95,
+      weight:layer==="barrios"?2:1.7,
+      opacity:.96,
       fillColor:color,
-      fillOpacity:layer==="barrios"?.13:.19
+      fillOpacity:layer==="barrios"?.13:.21
     };
   }
 
@@ -713,7 +728,7 @@
         style:()=>polygonStyle(layer,feature,color),
         onEachFeature:(f,leaf)=>{
           leaf.bindPopup(polygonPopup(f,layer,color),{maxWidth:320});
-          leaf.on("mouseover",()=>leaf.setStyle({weight:3,fillOpacity:.30}));
+          leaf.on("mouseover",()=>leaf.setStyle({weight:3,fillOpacity:.34}));
           leaf.on("mouseout",()=>leaf.setStyle(polygonStyle(layer,feature,color)));
         }
       });
@@ -721,7 +736,6 @@
       state.polygonRefs[layer].set(id,{feature,leaflet:geo,color,bounds:geo.getBounds()});
     }
     state.polygonFeatures[layer]=features;
-    renderPolygonLegendAndIndex();
   }
 
   function updatePolygonStatus(){
@@ -731,65 +745,200 @@
     if(!active.length){el.textContent="Capas apagadas.";return;}
     const labels=active.map(layer=>{
       const name=layer==="barrios"?"Barrios":"Estratos";
-      return state.polygonStatus[layer]?name+": "+state.polygonStatus[layer]:name+": cargando…";
+      const selected=state.polygonSelections[layer]?.size||0;
+      const suffix=state.polygonStatus[layer]||((selected?"actualizando…":"elige qué mostrar"));
+      return name+": "+suffix;
     });
     el.textContent=labels.join(" · ");
   }
 
+  function renderEstratoControls(){
+    const host=$("mapEstratoControls"),options=$("mapEstratoOptions"),hint=$("mapEstratoHint");
+    if(!host||!options)return;
+    host.hidden=!state.polygonActive.estratos;
+    if(host.hidden)return;
+    const counts=new Map((state.polygonIndexData.estratos||[]).map(item=>[String(item.value),Number(item.count)||0]));
+    options.innerHTML=["1","2","3","4","5","6"].map(value=>{
+      const checked=state.polygonSelections.estratos.has(value);
+      const count=counts.get(value)||0;
+      return '<label class="map-selective-option estrato-option'+(checked?' active':'')+'">'+
+        '<input type="checkbox" data-layer-option="estratos" value="'+value+'" '+(checked?'checked':'')+'>'+
+        '<i style="background:'+ESTRATO_COLORS[value]+'"></i>'+
+        '<span><b>Estrato '+value+'</b><small>'+count+' polígonos en la vista</small></span>'+
+      '</label>';
+    }).join("");
+    if(hint){
+      const selected=state.polygonSelections.estratos.size;
+      hint.textContent=selected
+        ?selected+" estrato"+(selected===1?"":"s")+" activo"+(selected===1?"":"s")+" · solo se dibujan geometrías visibles en el mapa."
+        :"Todos están apagados por defecto. Activa uno o varios para dibujarlos.";
+    }
+  }
+
+  function renderBarrioControls(){
+    const host=$("mapBarrioControls"),options=$("mapBarrioOptions"),countEl=$("mapBarrioVisibleCount"),hint=$("mapBarrioHint");
+    if(!host||!options)return;
+    host.hidden=!state.polygonActive.barrios;
+    if(host.hidden)return;
+    const search=norm($("mapBarrioSearch")?.value||"");
+    const all=state.polygonIndexData.barrios||[];
+    const filtered=all.filter(item=>!search||norm(item.name).includes(search)||norm(item.municipio).includes(search)||norm(item.comuna).includes(search));
+    if(countEl)countEl.textContent=String(all.length);
+    options.innerHTML=filtered.length?filtered.map(item=>{
+      const checked=state.polygonSelections.barrios.has(String(item.id));
+      return '<label class="map-selective-option barrio-option'+(checked?' active':'')+'">'+
+        '<input type="checkbox" data-layer-option="barrios" value="'+esc(item.id)+'" '+(checked?'checked':'')+'>'+
+        '<i class="barrio-selector-dot"></i>'+
+        '<span><b>'+esc(item.name||item.id)+'</b><small>'+esc(item.municipio||"")+(item.comuna?' · '+esc(item.comuna):'')+'</small></span>'+
+      '</label>';
+    }).join(""):'<div class="map-selective-empty">'+(search?'No hay barrios visibles que coincidan con la búsqueda.':'No hay barrios visibles en esta escala.')+'</div>';
+    if(hint){
+      const selected=state.polygonSelections.barrios.size;
+      hint.textContent=selected
+        ?selected+" barrio"+(selected===1?"":"s")+" seleccionado"+(selected===1?"":"s")+" · la lista muestra solo barrios observables en la vista actual."
+        :"Activa únicamente los barrios que quieras dibujar. La lista cambia al mover o acercar el mapa.";
+    }
+  }
+
+  function renderLayerControls(){
+    renderEstratoControls();
+    renderBarrioControls();
+    updatePolygonStatus();
+  }
+
+  function mapViewportQuery(){
+    const bounds=state.map.getBounds();
+    return {
+      bbox:[bounds.getWest(),bounds.getSouth(),bounds.getEast(),bounds.getNorth()].map(v=>Number(v).toFixed(6)).join(","),
+      zoom:state.map.getZoom()
+    };
+  }
+
+  async function authorizedFetch(url,controller){
+    const user=firebase?.auth?.().currentUser;
+    if(!user)throw new Error("Sesión no disponible.");
+    const token=await user.getIdToken();
+    const response=await fetch(url,{headers:{Authorization:"Bearer "+token},cache:"no-store",signal:controller?.signal});
+    const data=await response.json();
+    if(!response.ok)throw new Error(data.error||"No se pudo cargar la capa.");
+    return data;
+  }
+
+  async function loadLayerIndex(layer,{silent=false}={}){
+    if(!state.polygonActive[layer]||!ensureMap())return;
+    state.polygonIndexControllers[layer]?.abort();
+    const controller=new AbortController();
+    state.polygonIndexControllers[layer]=controller;
+    const busyToken=silent?null:beginMapBusy("Actualizando "+(layer==="barrios"?"barrios visibles":"estratos visibles")+"…");
+    if(!silent){state.polygonStatus[layer]="actualizando índice…";updatePolygonStatus();}
+    const {bbox,zoom}=mapViewportQuery();
+    try{
+      const url="/api/map-polygons?mode=index&layer="+encodeURIComponent(layer)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom);
+      const data=await authorizedFetch(url,controller);
+      if(data.requiresZoom){
+        state.polygonIndexData[layer]=[];
+        clearPolygonLayer(layer,{keepStatus:true});
+        state.polygonStatus[layer]="acércate al mapa (zoom "+data.minZoom+"+)";
+        renderLayerControls();
+        return;
+      }
+      state.polygonIndexData[layer]=Array.isArray(data.items)?data.items:[];
+      const visibleCount=layer==="barrios"?state.polygonIndexData[layer].length:Number(data.totalVisible||0);
+      state.polygonStatus[layer]=visibleCount+" visibles"+(state.polygonSelections[layer].size?" · cargando selección…":" · elige qué mostrar");
+      renderLayerControls();
+      await loadPolygonLayer(layer,{silent:true});
+    }catch(error){
+      if(error?.name==="AbortError")return;
+      state.polygonIndexData[layer]=[];
+      clearPolygonLayer(layer,{keepStatus:true});
+      state.polygonStatus[layer]="no se pudo actualizar el índice";
+      renderLayerControls();
+    }finally{
+      endMapBusy(busyToken);
+      if(state.polygonIndexControllers[layer]===controller)state.polygonIndexControllers[layer]=null;
+    }
+  }
+
   async function loadPolygonLayer(layer,{silent=false}={}){
     if(!state.polygonActive[layer]||!ensureMap())return;
+    const selection=state.polygonSelections[layer];
     const group=state.polygonGroups[layer];
     if(!state.map.hasLayer(group))group.addTo(state.map);
-    const controller=state.polygonControllers[layer];
-    if(controller)controller.abort();
-    const nextController=new AbortController();
-    state.polygonControllers[layer]=nextController;
-    const busyToken=beginMapBusy("Cargando "+(layer==="barrios"?"barrios":"estratos")+"…");
-    if(!silent){state.polygonStatus[layer]="cargando…";updatePolygonStatus();}
 
-    const bounds=state.map.getBounds();
-    const bbox=[bounds.getWest(),bounds.getSouth(),bounds.getEast(),bounds.getNorth()].map(v=>Number(v).toFixed(6)).join(",");
-    const zoom=state.map.getZoom();
+    state.polygonControllers[layer]?.abort();
+    state.polygonControllers[layer]=null;
 
+    if(!selection?.size){
+      clearPolygonLayer(layer,{keepStatus:true});
+      const visible=layer==="barrios"?(state.polygonIndexData.barrios||[]).length:(state.polygonIndexData.estratos||[]).reduce((sum,item)=>sum+(Number(item.count)||0),0);
+      state.polygonStatus[layer]=visible+" visibles · elige qué mostrar";
+      renderLayerControls();
+      return;
+    }
+
+    const controller=new AbortController();
+    state.polygonControllers[layer]=controller;
+    const busyToken=beginMapBusy("Dibujando "+(layer==="barrios"?"barrios seleccionados":"estratos seleccionados")+"…");
+    if(!silent){state.polygonStatus[layer]="cargando selección…";updatePolygonStatus();}
+    const {bbox,zoom}=mapViewportQuery();
+    const selected=[...selection];
+    const filter=layer==="barrios"
+      ?("&ids="+encodeURIComponent(selected.join(",")))
+      :("&estratos="+encodeURIComponent(selected.join(",")));
     try{
-      const user=firebase?.auth?.().currentUser;
-      if(!user)return;
-      const token=await user.getIdToken();
-      const url="/api/map-polygons?layer="+encodeURIComponent(layer)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom);
-      const response=await fetch(url,{headers:{Authorization:"Bearer "+token},cache:"no-store",signal:nextController.signal});
-      const data=await response.json();
-      if(!response.ok)throw new Error(data.error||"No se pudo cargar la capa.");
-
+      const url="/api/map-polygons?mode=geometry&layer="+encodeURIComponent(layer)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom)+filter;
+      const data=await authorizedFetch(url,controller);
       if(data.requiresZoom){
         clearPolygonLayer(layer,{keepStatus:true});
         state.polygonStatus[layer]="acércate al mapa (zoom "+data.minZoom+"+)";
-        updatePolygonStatus();
+        renderLayerControls();
         return;
       }
-
       const features=Array.isArray(data.features)?data.features:[];
       drawPolygonLayer(layer,features);
       state.polygonStatus[layer]=data.truncated
-        ?("vista general · "+features.length+" de "+Number(data.totalVisible||features.length)+" · acerca el mapa para detalle completo")
-        :(features.length+" visibles · detalle completo");
-      updatePolygonStatus();
+        ?("vista general · "+features.length+" de "+Number(data.totalVisible||features.length)+" seleccionados")
+        :(features.length+" polígonos seleccionados visibles");
+      renderLayerControls();
     }catch(error){
       if(error?.name==="AbortError")return;
       clearPolygonLayer(layer,{keepStatus:true});
-      state.polygonStatus[layer]="error al cargar";
-      updatePolygonStatus();
+      state.polygonStatus[layer]="error al dibujar selección";
+      renderLayerControls();
     }finally{
       endMapBusy(busyToken);
-      if(state.polygonControllers[layer]===nextController)state.polygonControllers[layer]=null;
+      if(state.polygonControllers[layer]===controller)state.polygonControllers[layer]=null;
     }
+  }
+
+  function refreshPolygonLayer(layer,{silent=false}={}){
+    if(!state.polygonActive[layer])return;
+    loadLayerIndex(layer,{silent});
   }
 
   function schedulePolygonReload(){
     if(!state.viewActive||Date.now()<state.polygonFocusUntil)return;
     if(state.polygonReloadTimer)clearTimeout(state.polygonReloadTimer);
     state.polygonReloadTimer=setTimeout(()=>{
-      for(const layer of ["barrios","estratos"])if(state.polygonActive[layer])loadPolygonLayer(layer,{silent:true});
-    },280);
+      for(const layer of ["barrios","estratos"]){
+        if(state.polygonActive[layer])refreshPolygonLayer(layer,{silent:true});
+      }
+    },380);
+  }
+
+  function clearLayerSelection(layer){
+    state.polygonSelections[layer].clear();
+    clearPolygonLayer(layer,{keepStatus:true});
+    renderLayerControls();
+    loadPolygonLayer(layer,{silent:true});
+  }
+
+  function setLayerSelection(layer,value,checked){
+    const set=state.polygonSelections[layer];
+    if(checked)set.add(String(value));
+    else set.delete(String(value));
+    renderLayerControls();
+    loadPolygonLayer(layer,{silent:true});
   }
 
   function togglePolygonLayer(layer){
@@ -797,23 +946,31 @@
     const next=!state.polygonActive[layer];
     state.polygonActive[layer]=next;
     const group=state.polygonGroups[layer];
+
     if(next){
+      state.polygonSelections[layer].clear();
+      state.polygonIndexData[layer]=[];
       if(!state.map.hasLayer(group))group.addTo(state.map);
-      state.polygonStatus[layer]="cargando…";
+      state.polygonStatus[layer]="actualizando índice…";
+      updateLayerButtons();
       const requiredZoom=layer==="estratos"?11:10;
       if(!viewTouchesBucaramanga()||state.map.getZoom()<requiredZoom){
         viewBucaramanga();
       }else{
-        loadPolygonLayer(layer);
+        refreshPolygonLayer(layer);
       }
     }else{
       state.polygonControllers[layer]?.abort();
+      state.polygonIndexControllers[layer]?.abort();
       state.polygonControllers[layer]=null;
+      state.polygonIndexControllers[layer]=null;
+      state.polygonSelections[layer].clear();
+      state.polygonIndexData[layer]=[];
+      clearPolygonLayer(layer);
       if(state.map.hasLayer(group))state.map.removeLayer(group);
-      state.polygonStatus[layer]="";
+      updateLayerButtons();
     }
-    updateLayerButtons();
-    updatePolygonStatus();
+    renderLayerControls();
   }
 
   function focusPolygon(layer,id){
@@ -823,75 +980,6 @@
     if(ref.bounds?.isValid())state.map.fitBounds(ref.bounds,{padding:[28,28],maxZoom:17});
     const child=ref.leaflet?.getLayers?.()[0];
     if(child?.openPopup)setTimeout(()=>child.openPopup(),220);
-  }
-
-  function focusPolygonGroup(key){
-    const group=state.polygonIndexGroups.get(String(key));
-    if(!group||!ensureMap())return;
-    state.polygonFocusUntil=Date.now()+1800;
-    let bounds=null;
-    for(const ref of group.refs){
-      if(!ref.bounds?.isValid())continue;
-      bounds=bounds?bounds.extend(ref.bounds):L.latLngBounds(ref.bounds);
-    }
-    if(bounds?.isValid())state.map.fitBounds(bounds,{padding:[28,28],maxZoom:17});
-    const first=group.refs[0]?.leaflet?.getLayers?.()[0];
-    if(first?.openPopup)setTimeout(()=>first.openPopup(),220);
-  }
-
-  function renderPolygonLegendAndIndex(){
-    const legend=$("mapPolygonLegend"),wrap=$("mapPolygonIndexWrap"),index=$("mapPolygonIndex"),countEl=$("mapPolygonIndexCount");
-    if(!legend||!wrap||!index)return;
-    const active=Object.entries(state.polygonActive).filter(([,value])=>value).map(([layer])=>layer);
-    if(!active.length){
-      legend.hidden=true;wrap.hidden=true;index.innerHTML="";state.polygonIndexGroups=new Map();if(countEl)countEl.textContent="0";return;
-    }
-
-    const parts=[];
-    if(state.polygonActive.estratos){
-      const swatches=Object.entries(ESTRATO_COLORS).map(([value,color])=>'<span><i style="background:'+color+'"></i>Estrato '+value+'</span>').join("");
-      parts.push('<div class="polygon-legend-section"><b>Estratos</b><div class="polygon-legend-items">'+swatches+'<span><i style="background:#7A8580"></i>Sin información</span></div></div>');
-    }
-    if(state.polygonActive.barrios){
-      const swatches=BARRIO_COLORS.slice(0,8).map(color=>'<i style="background:'+color+'"></i>').join("");
-      parts.push('<div class="polygon-legend-section"><b>Barrios</b><div class="polygon-neighborhood-palette">'+swatches+'</div><small>Colores alternados por proximidad para diferenciar límites; no representan una categoría.</small></div>');
-    }
-    legend.innerHTML=parts.join("");
-    legend.hidden=false;
-
-    const groups=new Map();
-    for(const layer of ["barrios","estratos"]){
-      if(!state.polygonActive[layer])continue;
-      for(const ref of state.polygonRefs[layer].values()){
-        const p=ref.feature?.properties||{};
-        const rawLabel=layer==="barrios"?String(p.name||"Barrio"):String(p.estrato||p.name||"Sin información");
-        const municipio=String(p.municipio||"");
-        const key=layer==="estratos"
-          ?("estratos|"+norm(rawLabel))
-          :("barrios|"+norm(rawLabel)+"|"+norm(municipio));
-        if(!groups.has(key)){
-          groups.set(key,{key,layer,label:layer==="barrios"?rawLabel:"Estrato "+rawLabel,municipios:new Set(),color:ref.color,refs:[]});
-        }
-        const group=groups.get(key);
-        if(municipio)group.municipios.add(municipio);
-        group.refs.push(ref);
-      }
-    }
-    state.polygonIndexGroups=groups;
-    const ordered=[...groups.values()].sort((a,b)=>a.layer.localeCompare(b.layer)||a.label.localeCompare(b.label,"es",{numeric:true,sensitivity:"base"}));
-
-    index.innerHTML=ordered.length?ordered.slice(0,140).map(group=>{
-      const municipios=[...group.municipios].sort((a,b)=>a.localeCompare(b,"es"));
-      const sub=group.layer==="estratos"
-        ?((municipios.length>1?"Varios municipios":(municipios[0]||""))+(group.refs.length>1?' · '+group.refs.length+' polígonos':''))
-        :((municipios[0]||"")+(group.refs.length>1?' · '+group.refs.length+' polígonos':''));
-      return '<button class="polygon-index-item" type="button" data-polygon-key="'+esc(group.key)+'">'+
-        '<i style="background:'+esc(group.color)+'"></i>'+
-        '<span><b>'+esc(group.label)+'</b><small>'+esc(sub)+'</small></span>'+
-      '</button>';
-    }).join(""):'<div class="polygon-index-empty">No hay polígonos visibles en esta escala.</div>';
-    if(countEl)countEl.textContent=String(ordered.length);
-    wrap.hidden=false;
   }
 
   async function loadPoints({fit=false,silent=false}={}){
@@ -1054,7 +1142,7 @@
     loadPoints({fit:!state.loadedOnce});
     updateLayerButtons();
     updatePolygonStatus();
-    for(const layer of ["barrios","estratos"])if(state.polygonActive[layer])loadPolygonLayer(layer,{silent:true});
+    for(const layer of ["barrios","estratos"])if(state.polygonActive[layer])refreshPolygonLayer(layer,{silent:true});
     startAutoRefresh();
   }
   function onMapClose(){
@@ -1073,9 +1161,16 @@
     $("mapLayerBarrios")?.addEventListener("click",()=>togglePolygonLayer("barrios"));
     $("mapLayerEstratos")?.addEventListener("click",()=>togglePolygonLayer("estratos"));
     $("mapViewBucaramanga")?.addEventListener("click",viewBucaramanga);
-    $("mapPolygonIndex")?.addEventListener("click",event=>{
-      const button=event.target.closest("[data-polygon-key]");
-      if(button)focusPolygonGroup(button.dataset.polygonKey);
+    $("mapClearEstratos")?.addEventListener("click",()=>clearLayerSelection("estratos"));
+    $("mapClearBarrios")?.addEventListener("click",()=>clearLayerSelection("barrios"));
+    $("mapBarrioSearch")?.addEventListener("input",renderBarrioControls);
+    $("mapEstratoOptions")?.addEventListener("change",event=>{
+      const input=event.target.closest('input[data-layer-option="estratos"]');
+      if(input)setLayerSelection("estratos",input.value,input.checked);
+    });
+    $("mapBarrioOptions")?.addEventListener("change",event=>{
+      const input=event.target.closest('input[data-layer-option="barrios"]');
+      if(input)setLayerSelection("barrios",input.value,input.checked);
     });
     $("mapBaseStreet")?.addEventListener("click",()=>setBaseMap("street"));
     $("mapBaseSatellite")?.addEventListener("click",()=>setBaseMap("satellite"));
@@ -1096,7 +1191,14 @@
         state.filtered=[];
         state.loadedOnce=false;
         state.route=user?routeStorage():[];
-        for(const layer of ["barrios","estratos"])clearPolygonLayer(layer);
+        for(const layer of ["barrios","estratos"]){
+          state.polygonActive[layer]=false;
+          state.polygonSelections[layer].clear();
+          state.polygonIndexData[layer]=[];
+          clearPolygonLayer(layer);
+        }
+        updateLayerButtons();
+        renderLayerControls();
         if(state.map){
           redrawRoute();
           renderMarkers();
