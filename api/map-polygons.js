@@ -199,7 +199,7 @@ function spatialSample(rows,limit,bbox){
   return result;
 }
 function parseList(value){
-  return String(value||"").split(",").map(v=>decodeURIComponent(v).trim()).filter(Boolean);
+  return String(value||"").split(",").map(v=>v.trim()).filter(Boolean);
 }
 function indexItems(layer,rows){
   if(layer==="estratos"){
