@@ -140,7 +140,7 @@ function buildRow(form,p,id,links,email){
     d.tigo_hfc||"",d.tigo_ftth||"",d.claro_hfc||"",d.claro_ftth||"",d.movistar||"",
     rawIsp(d.isp_1),rawIsp(d.isp_2),rawIsp(d.isp_3),rawIsp(d.isp_4),d.nota||"",
     l.lat||"",l.lng||"",l.accuracy||"",maps,links[0]||"",links[1]||"",links[2]||"",
-    email||"ANONIMO","0.8.14",tipo,d.link_evidencia||""
+    email||"ANONIMO","0.8.15",tipo,d.link_evidencia||""
   ];
 }
 
@@ -165,7 +165,10 @@ function exactId(layer){
   return layer?.status==="DENTRO"?String(layer.assigned?.id||""):"";
 }
 function layerDistance(layer){
-  return Number.isFinite(Number(layer?.distanceM))?Math.round(Number(layer.distanceM)*10)/10:"";
+  const value=layer?.distanceM;
+  return value!==null&&value!==undefined&&value!==""&&Number.isFinite(Number(value))
+    ?Math.round(Number(value)*10)/10
+    :"";
 }
 function layerMethod(layer){
   const state=String(layer?.status||"");
@@ -298,7 +301,9 @@ function territorialAuditRow(t){
     String(l?.assigned?.name||""),
     String(l?.nearby?.id||""),
     String(l?.nearby?.name||""),
-    Number.isFinite(Number(l?.distanceM))?Math.round(Number(l.distanceM)*10)/10:""
+    l?.distanceM!==null&&l?.distanceM!==undefined&&l?.distanceM!==""&&Number.isFinite(Number(l.distanceM))
+      ?Math.round(Number(l.distanceM)*10)/10
+      :""
   ];
   if(!t){
     return[
