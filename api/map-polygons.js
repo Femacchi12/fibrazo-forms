@@ -23,7 +23,7 @@ const CONFIG={
     id:"ID_Estrato_Poligono",
     name:"Estrato",
     minZoom:11,
-    maxFeatures:1200
+    maxFeatures:650
   }
 };
 
@@ -160,6 +160,44 @@ async function getWkts(auth,cfg,rows){
 function bboxArea(row){
   return Math.max(0,row.maxLon-row.minLon)*Math.max(0,row.maxLat-row.minLat);
 }
+function featureLimit(layer,zoom){
+  if(layer==="estratos"){
+    if(zoom<=11)return 180;
+    if(zoom===12)return 320;
+    return 650;
+  }
+  return zoom<=10?220:320;
+}
+function spatialSample(rows,limit,bbox){
+  if(rows.length<=limit)return rows;
+  const width=Math.max(1e-9,bbox.maxLon-bbox.minLon);
+  const height=Math.max(1e-9,bbox.maxLat-bbox.minLat);
+  const cells=Math.max(4,Math.ceil(Math.sqrt(limit)));
+  const buckets=new Map();
+  for(const row of rows){
+    const cx=(row.minLon+row.maxLon)/2,cy=(row.minLat+row.maxLat)/2;
+    const gx=Math.max(0,Math.min(cells-1,Math.floor((cx-bbox.minLon)/width*cells)));
+    const gy=Math.max(0,Math.min(cells-1,Math.floor((cy-bbox.minLat)/height*cells)));
+    const key=gx+"|"+gy;
+    if(!buckets.has(key))buckets.set(key,[]);
+    buckets.get(key).push(row);
+  }
+  for(const list of buckets.values())list.sort((a,b)=>bboxArea(a)-bboxArea(b)||String(a.__row).localeCompare(String(b.__row)));
+  const result=[];
+  let depth=0;
+  while(result.length<limit){
+    let added=false;
+    for(const list of buckets.values()){
+      if(list[depth]){
+        result.push(list[depth]);added=true;
+        if(result.length>=limit)break;
+      }
+    }
+    if(!added)break;
+    depth++;
+  }
+  return result;
+}
 
 module.exports=async(req,res)=>{
   res.setHeader("Cache-Control","private, max-age=20");
@@ -188,9 +226,9 @@ module.exports=async(req,res)=>{
 
     let candidates=meta.rows.filter(row=>intersects(row,bbox));
     const totalVisible=candidates.length;
-    candidates.sort((a,b)=>bboxArea(a)-bboxArea(b)||String(a[cfg.id]).localeCompare(String(b[cfg.id])));
-    const truncated=candidates.length>cfg.maxFeatures;
-    candidates=candidates.slice(0,cfg.maxFeatures);
+    const limit=featureLimit(layer,zoom);
+    const truncated=candidates.length>limit;
+    candidates=spatialSample(candidates,limit,bbox);
 
     const wkts=await getWkts(auth,cfg,candidates);
     const features=[];
@@ -213,6 +251,7 @@ module.exports=async(req,res)=>{
       requiresZoom:false,
       truncated,
       totalVisible,
+      displayMode:truncated?"GENERAL":"DETALLE",
       features
     });
   }catch(error){

@@ -183,20 +183,33 @@
     }
   }
 
-  function setView(view="forms") {
+  function viewStorageKey(){
+    const email=String(state.user?.email||firebase?.auth?.().currentUser?.email||"anonimo").trim().toLowerCase();
+    return "fibrazoFormsLastView:"+email;
+  }
+  function savedView(){
+    try{
+      const value=localStorage.getItem(viewStorageKey())||"forms";
+      if(!["forms","results","map","admin"].includes(value))return"forms";
+      if(value==="admin"&&!window.FIBRAZO_ACCESS_META?.admin&&!window.FIBRAZO_ACCESS_META?.canCreateForms&&!window.FIBRAZO_ACCESS_META?.canManageUsers)return"forms";
+      return value;
+    }catch(_){return"forms";}
+  }
+  function setView(view="forms",{persist=true}={}) {
     const target=["forms","results","map","admin"].includes(view)?view:"forms";
     document.querySelectorAll("[data-view]").forEach((b)=>b.classList.toggle("active",b.dataset.view===target));
     if ($("formsView")) $("formsView").hidden=target!=="forms";
     if ($("resultsView")) $("resultsView").hidden=target!=="results";
     if ($("mapView")) $("mapView").hidden=target!=="map";
     if ($("adminView")) $("adminView").hidden=target!=="admin";
+    if(persist){try{localStorage.setItem(viewStorageKey(),target);}catch(_){}}
     if (target==="results" && state.user) loadResults();
     window.dispatchEvent(new CustomEvent("fibrazo:view-change",{detail:{view:target}}));
   }
   window.FIBRAZO_SET_VIEW=setView;
 
   function resetPrivateUi() {
-    setView("forms");
+    setView("forms",{persist:false});
     if ($("adminNavButton")) $("adminNavButton").hidden=true;
     if ($("adminView")) $("adminView").hidden=true;
     if ($("adminForms")) $("adminForms").innerHTML="";
@@ -218,6 +231,7 @@
     $("authError").textContent = "";
     renderCards();
     window.dispatchEvent(new CustomEvent("fibrazo:access-ready"));
+    setView(savedView(),{persist:false});
     openDirectPrivateForm();
     if (isGitHubPreview) {
       $("backendState").textContent = "PREVIEW";
