@@ -54,11 +54,18 @@
       return Array.isArray(raw)?raw.filter(p=>Number.isFinite(Number(p.lat))&&Number.isFinite(Number(p.lng))).slice(-5000):[];
     }catch(_){return[];}
   };
-  const cachePoints=points=>{try{localStorage.setItem(userScopedKey(CACHE_KEY),JSON.stringify({ts:Date.now(),points}));}catch(_){}};
+  const cachePoints=points=>{
+    try{
+      localStorage.setItem(userScopedKey(CACHE_KEY),JSON.stringify({ts:Date.now(),visibility:state.visibility,points}));
+    }catch(_){}
+  };
   const cachedPoints=()=>{
     try{
       const raw=JSON.parse(localStorage.getItem(userScopedKey(CACHE_KEY))||"null");
-      return Array.isArray(raw?.points)?raw.points:[];
+      if(!Array.isArray(raw?.points))return[];
+      const cacheVisibility=raw.visibility==="team"?"team":"own";
+      if(cacheVisibility==="team"&&(!state.loadedOnce||state.visibility!=="team"))return[];
+      return raw.points;
     }catch(_){return[];}
   };
   const saveRoute=()=>{try{localStorage.setItem(userScopedKey(ROUTE_KEY),JSON.stringify(state.route.slice(-5000)));}catch(_){}};
