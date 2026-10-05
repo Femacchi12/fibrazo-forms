@@ -739,7 +739,7 @@
       const data=row.data||{};
       const tr=document.createElement("tr");
       tr.innerHTML="<td>"+escapeHtml(formatDate(row.clientTimestamp||row.timestamp))+"</td>"+
-        "<td>"+escapeHtml(row.formId||"—")+"</td>"+
+        "<td>"+escapeHtml(row.formId==="EXPLORACION_PRESENCIAL"?"Exploración presencial":row.formId==="EXPLORACION"?"Exploración virtual":(row.formId||"—"))+"</td>"+
         "<td>"+escapeHtml(data.municipio||data.ciudad||row.location?.cityDetected||"—")+"</td>"+
         '<td><span class="result-status '+escapeHtml(row.localStatus||"sent")+'">'+escapeHtml(window.FIBRAZO_OFFLINE?.statusLabel?.(row.localStatus||"sent")||"Enviado")+"</span></td>"+
         "<td>"+escapeHtml((row.user&&row.user.email)||row.user||"—")+"</td>";
