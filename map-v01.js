@@ -1,6 +1,11 @@
 (() => {
   const CACHE_KEY="fibrazoExplorationMapPointsV1";
   const ROUTE_KEY="fibrazoExplorationRouteV1";
+
+  function userScopedKey(base){
+    const email=String(window.firebase?.auth?.().currentUser?.email||"anonimo").trim().toLowerCase();
+    return base+":"+email;
+  }
   const REFRESH_MS=30000;
 
   const state={
@@ -42,18 +47,18 @@
   const formType=value=>norm(value)==="presencial"?"Presencial":"Virtual";
   const routeStorage=()=>{
     try{
-      const raw=JSON.parse(localStorage.getItem(ROUTE_KEY)||"[]");
+      const raw=JSON.parse(localStorage.getItem(userScopedKey(ROUTE_KEY))||"[]");
       return Array.isArray(raw)?raw.filter(p=>Number.isFinite(Number(p.lat))&&Number.isFinite(Number(p.lng))).slice(-5000):[];
     }catch(_){return[];}
   };
-  const cachePoints=points=>{try{localStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),points}));}catch(_){}};
+  const cachePoints=points=>{try{localStorage.setItem(userScopedKey(CACHE_KEY),JSON.stringify({ts:Date.now(),points}));}catch(_){}};
   const cachedPoints=()=>{
     try{
-      const raw=JSON.parse(localStorage.getItem(CACHE_KEY)||"null");
+      const raw=JSON.parse(localStorage.getItem(userScopedKey(CACHE_KEY))||"null");
       return Array.isArray(raw?.points)?raw.points:[];
     }catch(_){return[];}
   };
-  const saveRoute=()=>{try{localStorage.setItem(ROUTE_KEY,JSON.stringify(state.route.slice(-5000)));}catch(_){}};
+  const saveRoute=()=>{try{localStorage.setItem(userScopedKey(ROUTE_KEY),JSON.stringify(state.route.slice(-5000)));}catch(_){}};
 
   function haversine(a,b){
     const R=6371000,rad=Math.PI/180;
