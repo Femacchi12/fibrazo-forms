@@ -667,7 +667,9 @@
 
       const features=Array.isArray(data.features)?data.features:[];
       drawPolygonLayer(layer,features);
-      state.polygonStatus[layer]=features.length+" visibles"+(data.truncated?" · acerca el mapa para verlos todos":"");
+      state.polygonStatus[layer]=data.truncated
+        ?("mostrando "+features.length+" de "+Number(data.totalVisible||features.length)+" · acerca el mapa para detalle completo")
+        :(features.length+" visibles");
       updatePolygonStatus();
     }catch(error){
       if(error?.name==="AbortError")return;
