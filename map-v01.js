@@ -176,13 +176,17 @@
     bindTileBusy(satellite,"Cargando vista satelital…");
     state.baseLayers={street,satellite};
     street.addTo(state.map);
-    state.map.createPane("barriosPane");
+    // Todas las capas geograficas propias deben vivir dentro del pane rotatorio
+    // de leaflet-rotate. Si se crean directamente bajo mapPane, el mapa base gira
+    // pero barrios/estratos quedan visualmente fijos y pierden alineacion.
+    const geographicPane=state.map._rotatePane||state.map.getPane("mapPane");
+    state.map.createPane("barriosPane",geographicPane);
     state.map.getPane("barriosPane").style.zIndex="350";
     state.map.getPane("barriosPane").style.pointerEvents="auto";
-    state.map.createPane("estratosPane");
+    state.map.createPane("estratosPane",geographicPane);
     state.map.getPane("estratosPane").style.zIndex="365";
     state.map.getPane("estratosPane").style.pointerEvents="auto";
-    state.map.createPane("surveyPane");
+    state.map.createPane("surveyPane",geographicPane);
     state.map.getPane("surveyPane").style.zIndex="650";
     state.map.getPane("surveyPane").style.pointerEvents="auto";
     state.polygonRenderers={
