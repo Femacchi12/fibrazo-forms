@@ -184,12 +184,14 @@
   }
 
   function setView(view="forms") {
-    const target=["forms","results","admin"].includes(view)?view:"forms";
+    const target=["forms","results","map","admin"].includes(view)?view:"forms";
     document.querySelectorAll("[data-view]").forEach((b)=>b.classList.toggle("active",b.dataset.view===target));
     if ($("formsView")) $("formsView").hidden=target!=="forms";
     if ($("resultsView")) $("resultsView").hidden=target!=="results";
+    if ($("mapView")) $("mapView").hidden=target!=="map";
     if ($("adminView")) $("adminView").hidden=target!=="admin";
     if (target==="results" && state.user) loadResults();
+    window.dispatchEvent(new CustomEvent("fibrazo:view-change",{detail:{view:target}}));
   }
   window.FIBRAZO_SET_VIEW=setView;
 
