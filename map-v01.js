@@ -7,6 +7,7 @@
     return base+":"+email;
   }
   const REFRESH_MS=30000;
+  const BUCARAMANGA_BOUNDS=[[7.070607677,-73.172095278],[7.195892798,-73.093548025]];
 
   const state={
     map:null,
@@ -22,6 +23,11 @@
     polygonControllers:{barrios:null,estratos:null},
     polygonReloadTimer:null,
     polygonFocusUntil:0,
+    polygonIndexGroups:new Map(),
+    busy:new Map(),
+    busySeq:0,
+    selectedMarker:null,
+    longPress:null,
     points:[],
     filtered:[],
     loadedOnce:false,
@@ -78,6 +84,31 @@
   };
   const saveRoute=()=>{try{localStorage.setItem(userScopedKey(ROUTE_KEY),JSON.stringify(state.route.slice(-5000)));}catch(_){}};
 
+  function renderMapBusy(){
+    const overlay=$("mapLoadingOverlay"),text=$("mapLoadingText");
+    if(!overlay)return;
+    const entries=[...state.busy.values()];
+    overlay.hidden=!entries.length;
+    if(text)text.textContent=entries[entries.length-1]||"Cargando mapa…";
+  }
+  function beginMapBusy(label){
+    const token=++state.busySeq;
+    state.busy.set(token,label||"Cargando mapa…");
+    renderMapBusy();
+    return token;
+  }
+  function endMapBusy(token){
+    if(token!==null&&token!==undefined)state.busy.delete(token);
+    renderMapBusy();
+  }
+  function bindTileBusy(layer,label){
+    let token=null;
+    layer.on("loading",()=>{if(token===null)token=beginMapBusy(label);});
+    const finish=()=>{if(token!==null){endMapBusy(token);token=null;}};
+    layer.on("load",finish);
+    layer.on("tileerror",()=>setTimeout(finish,250));
+  }
+
   function haversine(a,b){
     const R=6371000,rad=Math.PI/180;
     const p1=Number(a.lat)*rad,p2=Number(b.lat)*rad;
@@ -95,7 +126,17 @@
   function ensureMap(){
     if(state.map)return true;
     if(!window.L||!$("explorationMap"))return false;
-    state.map=L.map("explorationMap",{zoomControl:true,preferCanvas:true}).setView([4.57,-74.30],6);
+    const rotateSupported=typeof L.Map?.prototype?.setBearing==="function";
+    state.map=L.map("explorationMap",{
+      zoomControl:true,
+      preferCanvas:true,
+      rotate:rotateSupported,
+      touchRotate:rotateSupported,
+      dragRotate:rotateSupported,
+      shiftKeyRotate:rotateSupported,
+      rotateControl:rotateSupported?{position:"topright",behavior:"reset",closeOnZeroBearing:false}:false
+    }).setView([4.57,-74.30],6);
+
     const street=L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
       maxZoom:20,
       attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
@@ -104,6 +145,8 @@
       maxZoom:20,
       attribution:'Tiles &copy; Esri'
     });
+    bindTileBusy(street,"Cargando mapa…");
+    bindTileBusy(satellite,"Cargando vista satelital…");
     state.baseLayers={street,satellite};
     street.addTo(state.map);
     state.map.createPane("territorialPane");
@@ -115,6 +158,7 @@
     state.route=routeStorage();
     redrawRoute();
     updateBaseMapButtons();
+    installLongPressSelection();
     setTimeout(()=>state.map.invalidateSize(),80);
     return true;
   }
@@ -144,6 +188,146 @@
     if(!el)return;
     el.textContent=message||"";
     el.className="map-status"+(type?" "+type:"");
+  }
+
+  function viewBucaramanga(){
+    if(!ensureMap())return;
+    state.follow=false;
+    if($("mapFollowToggle"))$("mapFollowToggle").checked=false;
+    state.polygonFocusUntil=Date.now()+1300;
+    state.map.fitBounds(BUCARAMANGA_BOUNDS,{padding:[22,22],maxZoom:13});
+    mapStatus("Vista ajustada a Bucaramanga. Las capas activas se cargarán automáticamente.","success");
+    setTimeout(()=>{
+      for(const layer of ["barrios","estratos"])if(state.polygonActive[layer])loadPolygonLayer(layer,{silent:true});
+    },550);
+  }
+
+  function viewTouchesBucaramanga(){
+    if(!ensureMap())return false;
+    const bounds=L.latLngBounds(BUCARAMANGA_BOUNDS);
+    return state.map.getBounds().intersects(bounds);
+  }
+
+  function availableCoordinateForms(){
+    const forms=Object.values(window.FIBRAZO_FORMS||{});
+    return forms.filter(form=>{
+      if(!form?.id||!Array.isArray(form.fields)||!form.fields.some(field=>field.key==="coordenadas"))return false;
+      if(window.FIBRAZO_ACCESS&&window.FIBRAZO_ACCESS[form.id]===false)return false;
+      return true;
+    });
+  }
+
+  function closeCoordinateSheet(){
+    document.querySelector(".map-coordinate-backdrop")?.remove();
+    document.querySelector(".map-coordinate-sheet")?.remove();
+  }
+
+  async function copyCoordinates(lat,lng){
+    const value=Number(lat).toFixed(6)+", "+Number(lng).toFixed(6);
+    try{
+      await navigator.clipboard.writeText(value);
+      mapStatus("Coordenadas copiadas: "+value,"success");
+    }catch(_){
+      const area=document.createElement("textarea");
+      area.value=value;area.style.position="fixed";area.style.opacity="0";
+      document.body.appendChild(area);area.select();document.execCommand("copy");area.remove();
+      mapStatus("Coordenadas copiadas: "+value,"success");
+    }
+  }
+
+  function startFormAtCoordinate(formId,lat,lng){
+    window.FIBRAZO_MAP_COORDINATE_PRESET={lat:Number(lat),lng:Number(lng),source:"map-selection"};
+    closeCoordinateSheet();
+    window.FIBRAZO_SET_VIEW?.("forms");
+    setTimeout(()=>window.FIBRAZO_UX_OPEN_FORM?.(formId),60);
+  }
+
+  function openCoordinateSheet(latlng){
+    if(!latlng)return;
+    const lat=Number(latlng.lat),lng=Number(latlng.lng);
+    if(!Number.isFinite(lat)||!Number.isFinite(lng))return;
+    closeCoordinateSheet();
+
+    if(state.selectedMarker&&state.map)state.map.removeLayer(state.selectedMarker);
+    state.selectedMarker=L.circleMarker([lat,lng],{
+      radius:8,weight:3,color:"#FFFFFF",fillColor:"#FFB84D",fillOpacity:1,pane:"markerPane"
+    }).addTo(state.map);
+    state.selectedMarker.bindTooltip("Punto seleccionado",{direction:"top"}).openTooltip();
+
+    const backdrop=document.createElement("div");
+    backdrop.className="map-coordinate-backdrop";
+    backdrop.addEventListener("click",closeCoordinateSheet);
+
+    const sheet=document.createElement("section");
+    sheet.className="map-coordinate-sheet";
+    sheet.setAttribute("role","dialog");
+    sheet.setAttribute("aria-modal","true");
+    sheet.innerHTML='<div class="map-coordinate-handle"></div>'+
+      '<div class="map-coordinate-head"><div><span>PUNTO SELECCIONADO</span><h3>Acciones con la coordenada</h3></div><button type="button" data-map-close aria-label="Cerrar">×</button></div>'+
+      '<div class="map-coordinate-value">'+lat.toFixed(6)+', '+lng.toFixed(6)+'</div>'+
+      '<div class="map-coordinate-actions">'+
+        '<button type="button" data-map-copy>⧉ Copiar coordenada</button>'+
+        '<button type="button" data-map-route>↗ Ruta en Google Maps</button>'+
+      '</div>'+
+      '<div class="map-coordinate-forms"><span>COMPLETAR FORMULARIO</span><div data-map-form-list></div></div>';
+    document.body.append(backdrop,sheet);
+    sheet.querySelector("[data-map-close]")?.addEventListener("click",closeCoordinateSheet);
+    sheet.querySelector("[data-map-copy]")?.addEventListener("click",()=>copyCoordinates(lat,lng));
+    sheet.querySelector("[data-map-route]")?.addEventListener("click",()=>{
+      window.open("https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(lat+","+lng),"_blank","noopener");
+    });
+    const list=sheet.querySelector("[data-map-form-list]");
+    const forms=availableCoordinateForms();
+    if(list){
+      list.innerHTML=forms.length?forms.map(form=>'<button type="button" data-form-id="'+esc(form.id)+'"><b>'+esc(form.name||form.id)+'</b><small>Usar '+lat.toFixed(6)+', '+lng.toFixed(6)+'</small></button>').join(""):'<div class="map-coordinate-empty">No hay formularios disponibles para esta cuenta.</div>';
+      list.addEventListener("click",event=>{
+        const button=event.target.closest("[data-form-id]");
+        if(button)startFormAtCoordinate(button.dataset.formId,lat,lng);
+      });
+    }
+  }
+
+  function installLongPressSelection(){
+    const container=$("explorationMap");
+    if(!container||container.dataset.longPressReady==="1")return;
+    container.dataset.longPressReady="1";
+    const activePointers=new Set();
+    let timer=null,start=null,pointerId=null;
+
+    const cancel=()=>{
+      if(timer){clearTimeout(timer);timer=null;}
+      start=null;pointerId=null;
+    };
+    container.addEventListener("pointerdown",event=>{
+      if(event.target.closest(".leaflet-control"))return;
+      activePointers.add(event.pointerId);
+      if(activePointers.size>1){cancel();return;}
+      pointerId=event.pointerId;
+      start={x:event.clientX,y:event.clientY};
+      timer=setTimeout(()=>{
+        if(!start||activePointers.size!==1)return;
+        const rect=container.getBoundingClientRect();
+        const latlng=state.map.containerPointToLatLng([start.x-rect.left,start.y-rect.top]);
+        navigator.vibrate?.(30);
+        openCoordinateSheet(latlng);
+        cancel();
+      },720);
+    },{passive:true});
+    container.addEventListener("pointermove",event=>{
+      if(event.pointerId!==pointerId||!start)return;
+      if(Math.hypot(event.clientX-start.x,event.clientY-start.y)>12)cancel();
+    },{passive:true});
+    const release=event=>{activePointers.delete(event.pointerId);cancel();};
+    container.addEventListener("pointerup",release,{passive:true});
+    container.addEventListener("pointercancel",release,{passive:true});
+    container.addEventListener("pointerleave",event=>{if(event.pointerType==="mouse")release(event);},{passive:true});
+    container.addEventListener("contextmenu",event=>{
+      if(event.target.closest(".leaflet-control"))return;
+      event.preventDefault();
+      const rect=container.getBoundingClientRect();
+      const latlng=state.map.containerPointToLatLng([event.clientX-rect.left,event.clientY-rect.top]);
+      openCoordinateSheet(latlng);
+    });
   }
 
   function statusLine(label,layer){
@@ -458,6 +642,7 @@
     if(controller)controller.abort();
     const nextController=new AbortController();
     state.polygonControllers[layer]=nextController;
+    const busyToken=beginMapBusy("Cargando "+(layer==="barrios"?"barrios":"estratos")+"…");
     if(!silent){state.polygonStatus[layer]="cargando…";updatePolygonStatus();}
 
     const bounds=state.map.getBounds();
@@ -490,6 +675,7 @@
       state.polygonStatus[layer]="error al cargar";
       updatePolygonStatus();
     }finally{
+      endMapBusy(busyToken);
       if(state.polygonControllers[layer]===nextController)state.polygonControllers[layer]=null;
     }
   }
@@ -510,7 +696,11 @@
     if(next){
       if(!state.map.hasLayer(group))group.addTo(state.map);
       state.polygonStatus[layer]="cargando…";
-      loadPolygonLayer(layer);
+      if(!viewTouchesBucaramanga()){
+        viewBucaramanga();
+      }else{
+        loadPolygonLayer(layer);
+      }
     }else{
       state.polygonControllers[layer]?.abort();
       state.polygonControllers[layer]=null;
@@ -530,12 +720,26 @@
     if(child?.openPopup)setTimeout(()=>child.openPopup(),220);
   }
 
+  function focusPolygonGroup(key){
+    const group=state.polygonIndexGroups.get(String(key));
+    if(!group||!ensureMap())return;
+    state.polygonFocusUntil=Date.now()+1800;
+    let bounds=null;
+    for(const ref of group.refs){
+      if(!ref.bounds?.isValid())continue;
+      bounds=bounds?bounds.extend(ref.bounds):L.latLngBounds(ref.bounds);
+    }
+    if(bounds?.isValid())state.map.fitBounds(bounds,{padding:[28,28],maxZoom:17});
+    const first=group.refs[0]?.leaflet?.getLayers?.()[0];
+    if(first?.openPopup)setTimeout(()=>first.openPopup(),220);
+  }
+
   function renderPolygonLegendAndIndex(){
     const legend=$("mapPolygonLegend"),wrap=$("mapPolygonIndexWrap"),index=$("mapPolygonIndex"),countEl=$("mapPolygonIndexCount");
     if(!legend||!wrap||!index)return;
     const active=Object.entries(state.polygonActive).filter(([,value])=>value).map(([layer])=>layer);
     if(!active.length){
-      legend.hidden=true;wrap.hidden=true;index.innerHTML="";if(countEl)countEl.textContent="0";return;
+      legend.hidden=true;wrap.hidden=true;index.innerHTML="";state.polygonIndexGroups=new Map();if(countEl)countEl.textContent="0";return;
     }
 
     const parts=[];
@@ -550,29 +754,36 @@
     legend.innerHTML=parts.join("");
     legend.hidden=false;
 
-    const rows=[];
+    const groups=new Map();
     for(const layer of ["barrios","estratos"]){
       if(!state.polygonActive[layer])continue;
-      const refs=[...state.polygonRefs[layer].values()].sort((a,b)=>{
-        const an=String(a.feature?.properties?.name||a.feature?.properties?.estrato||"");
-        const bn=String(b.feature?.properties?.name||b.feature?.properties?.estrato||"");
-        return an.localeCompare(bn,"es",{numeric:true,sensitivity:"base"});
-      });
-      for(const ref of refs.slice(0,120)){
+      for(const ref of state.polygonRefs[layer].values()){
         const p=ref.feature?.properties||{};
-        const label=layer==="barrios"?String(p.name||"Barrio"):("Estrato "+String(p.estrato||p.name||"Sin información"));
-        const sub=String(p.municipio||"");
-        rows.push('<button class="polygon-index-item" type="button" data-polygon-layer="'+layer+'" data-polygon-id="'+esc(p.id||ref.feature?.id||"")+'"><i style="background:'+esc(ref.color)+'"></i><span><b>'+esc(label)+'</b><small>'+esc(sub)+'</small></span></button>');
+        const rawLabel=layer==="barrios"?String(p.name||"Barrio"):String(p.estrato||p.name||"Sin información");
+        const municipio=String(p.municipio||"");
+        const key=layer+"|"+norm(rawLabel)+"|"+norm(municipio);
+        if(!groups.has(key)){
+          groups.set(key,{key,layer,label:layer==="barrios"?rawLabel:"Estrato "+rawLabel,municipio,color:ref.color,refs:[]});
+        }
+        groups.get(key).refs.push(ref);
       }
     }
-    const total=["barrios","estratos"].reduce((sum,layer)=>sum+(state.polygonActive[layer]?state.polygonRefs[layer].size:0),0);
-    index.innerHTML=rows.length?rows.join(""):'<div class="polygon-index-empty">No hay polígonos visibles en esta escala.</div>';
-    if(countEl)countEl.textContent=String(total);
+    state.polygonIndexGroups=groups;
+    const ordered=[...groups.values()].sort((a,b)=>a.layer.localeCompare(b.layer)||a.label.localeCompare(b.label,"es",{numeric:true,sensitivity:"base"})||a.municipio.localeCompare(b.municipio,"es"));
+
+    index.innerHTML=ordered.length?ordered.slice(0,140).map(group=>
+      '<button class="polygon-index-item" type="button" data-polygon-key="'+esc(group.key)+'">'+
+        '<i style="background:'+esc(group.color)+'"></i>'+
+        '<span><b>'+esc(group.label)+'</b><small>'+esc(group.municipio)+(group.refs.length>1?' · '+group.refs.length+' polígonos':'')+'</small></span>'+
+      '</button>'
+    ).join(""):'<div class="polygon-index-empty">No hay polígonos visibles en esta escala.</div>';
+    if(countEl)countEl.textContent=String(ordered.length);
     wrap.hidden=false;
   }
 
   async function loadPoints({fit=false,silent=false}={}){
     if(!firebase?.auth?.().currentUser)return;
+    const busyToken=beginMapBusy("Cargando puntos de exploración…");
     if(!silent)mapStatus("Actualizando puntos…","loading");
     try{
       const token=await firebase.auth().currentUser.getIdToken();
@@ -598,6 +809,8 @@
       }else{
         mapStatus(error.message||"No se pudo cargar el mapa.","error");
       }
+    }finally{
+      endMapBusy(busyToken);
     }
   }
 
@@ -744,9 +957,10 @@
     $("mapLayersToggle")?.addEventListener("click",()=>toggleLayersPanel());
     $("mapLayerBarrios")?.addEventListener("click",()=>togglePolygonLayer("barrios"));
     $("mapLayerEstratos")?.addEventListener("click",()=>togglePolygonLayer("estratos"));
+    $("mapViewBucaramanga")?.addEventListener("click",viewBucaramanga);
     $("mapPolygonIndex")?.addEventListener("click",event=>{
-      const button=event.target.closest("[data-polygon-layer][data-polygon-id]");
-      if(button)focusPolygon(button.dataset.polygonLayer,button.dataset.polygonId);
+      const button=event.target.closest("[data-polygon-key]");
+      if(button)focusPolygonGroup(button.dataset.polygonKey);
     });
     $("mapBaseStreet")?.addEventListener("click",()=>setBaseMap("street"));
     $("mapBaseSatellite")?.addEventListener("click",()=>setBaseMap("satellite"));
