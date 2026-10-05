@@ -1,6 +1,4 @@
-window.FIBRAZO_PENDING = [
-  {id:"email-copy",title:"Enviar copia por correo",description:"Enviar automáticamente un resumen del formulario al correo de quien lo completó.",status:"Pendiente"}
-];
+window.FIBRAZO_PENDING = [];
 
 const FIBRAZO_CURRENT_YEAR = new Date().getFullYear();
 
