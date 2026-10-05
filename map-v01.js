@@ -11,6 +11,9 @@
   const state={
     map:null,
     surveyLayer:null,
+    baseLayers:null,
+    baseMode:"street",
+    visibility:"own",
     points:[],
     filtered:[],
     loadedOnce:false,
@@ -78,15 +81,42 @@
     if(state.map)return true;
     if(!window.L||!$("explorationMap"))return false;
     state.map=L.map("explorationMap",{zoomControl:true,preferCanvas:true}).setView([4.57,-74.30],6);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+    const street=L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
       maxZoom:20,
       attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
-    }).addTo(state.map);
+    });
+    const satellite=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{
+      maxZoom:20,
+      attribution:'Tiles &copy; Esri'
+    });
+    state.baseLayers={street,satellite};
+    street.addTo(state.map);
     state.surveyLayer=L.layerGroup().addTo(state.map);
     state.route=routeStorage();
     redrawRoute();
+    updateBaseMapButtons();
     setTimeout(()=>state.map.invalidateSize(),80);
     return true;
+  }
+
+  function updateBaseMapButtons(){
+    $("mapBaseStreet")?.classList.toggle("active",state.baseMode==="street");
+    $("mapBaseSatellite")?.classList.toggle("active",state.baseMode==="satellite");
+  }
+
+  function setBaseMap(mode){
+    if(!ensureMap()||!state.baseLayers)return;
+    const next=mode==="satellite"?"satellite":"street";
+    if(state.baseMode===next)return;
+    const current=state.baseLayers[state.baseMode];
+    if(current&&state.map.hasLayer(current))state.map.removeLayer(current);
+    state.baseMode=next;
+    state.baseLayers[next].addTo(state.map);
+    if(state.surveyLayer)state.surveyLayer.bringToFront?.();
+    if(state.routeLine)state.routeLine.bringToFront?.();
+    if(state.accuracyCircle)state.accuracyCircle.bringToFront?.();
+    if(state.currentMarker)state.currentMarker.bringToFront?.();
+    updateBaseMapButtons();
   }
 
   function mapStatus(message,type=""){
@@ -182,9 +212,12 @@
       const current=user.value||"all";
       const users=[...new Set(state.points.map(p=>String(p.user||"").trim()).filter(Boolean))].sort();
       user.innerHTML='<option value="all">Todos los usuarios</option>'+users.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join("");
-      user.hidden=!window.FIBRAZO_ACCESS_META?.admin;
+      user.hidden=state.visibility!=="team";
       if(users.includes(current))user.value=current;
+      else user.value="all";
     }
+    updateFilterCount();
+    updateVisibilityBadge();
   }
 
   function updateKpis(filtered=state.filtered){
@@ -196,6 +229,49 @@
     updateRouteMetrics();
   }
 
+  function updateVisibilityBadge(){
+    const badge=$("mapVisibilityBadge");
+    if(!badge)return;
+    const team=state.visibility==="team";
+    badge.textContent=team?"Vista · equipo completo":"Vista · mis puntos";
+    badge.classList.toggle("team",team);
+  }
+
+  function activeFilterCount(){
+    let count=0;
+    if(($("mapCityFilter")?.value||"all")!=="all")count++;
+    if(($("mapTypeFilter")?.value||"all")!=="all")count++;
+    if(state.visibility==="team"&&($("mapUserFilter")?.value||"all")!=="all")count++;
+    if($("mapDateFrom")?.value)count++;
+    if($("mapDateTo")?.value)count++;
+    return count;
+  }
+
+  function updateFilterCount(){
+    const count=activeFilterCount();
+    const badge=$("mapFilterCount");
+    if(badge){badge.textContent=String(count);badge.hidden=count===0;}
+  }
+
+  function toggleFilters(force){
+    const panel=$("mapFiltersPanel"),button=$("mapFiltersToggle");
+    if(!panel||!button)return;
+    const open=typeof force==="boolean"?force:panel.hidden;
+    panel.hidden=!open;
+    button.setAttribute("aria-expanded",String(open));
+    button.classList.toggle("active",open);
+  }
+
+  function clearFilters(){
+    if($("mapCityFilter"))$("mapCityFilter").value="all";
+    if($("mapTypeFilter"))$("mapTypeFilter").value="all";
+    if($("mapUserFilter"))$("mapUserFilter").value="all";
+    if($("mapDateFrom"))$("mapDateFrom").value="";
+    if($("mapDateTo"))$("mapDateTo").value="";
+    updateFilterCount();
+    renderMarkers({fit:true});
+  }
+
   async function loadPoints({fit=false,silent=false}={}){
     if(!firebase?.auth?.().currentUser)return;
     if(!silent)mapStatus("Actualizando puntos…","loading");
@@ -205,6 +281,7 @@
       const data=await response.json();
       if(!response.ok)throw new Error(data.error||"No se pudo cargar el mapa.");
       state.points=Array.isArray(data.points)?data.points:[];
+      state.visibility=data.visibility==="team"?"team":"own";
       state.lastRefresh=new Date();
       cachePoints(state.points);
       updateFilters();
@@ -327,9 +404,14 @@
   function fitVisible(){
     if(!ensureMap())return;
     const bounds=state.filtered.map(p=>[p.lat,p.lng]);
-    if(state.lastLocation)bounds.push([state.lastLocation.lat,state.lastLocation.lng]);
-    if(state.route.length)bounds.push(...state.route.map(p=>[p.lat,p.lng]));
-    if(bounds.length)state.map.fitBounds(bounds,{padding:[24,24],maxZoom:16});
+    if(bounds.length){
+      state.follow=false;
+      if($("mapFollowToggle"))$("mapFollowToggle").checked=false;
+      state.map.fitBounds(bounds,{padding:[28,28],maxZoom:16});
+      mapStatus("Mostrando todos los puntos visibles según los filtros.","success");
+    }else{
+      mapStatus("No hay puntos visibles con los filtros actuales.","warning");
+    }
   }
 
   function startAutoRefresh(){
@@ -352,9 +434,13 @@
   }
 
   function bind(){
-    ["mapCityFilter","mapTypeFilter","mapUserFilter","mapDateFrom","mapDateTo"].forEach(id=>$(id)?.addEventListener("change",()=>renderMarkers()));
+    ["mapCityFilter","mapTypeFilter","mapUserFilter","mapDateFrom","mapDateTo"].forEach(id=>$(id)?.addEventListener("change",()=>{updateFilterCount();renderMarkers();}));
     $("mapRefresh")?.addEventListener("click",()=>loadPoints({fit:false}));
     $("mapFitPoints")?.addEventListener("click",fitVisible);
+    $("mapFiltersToggle")?.addEventListener("click",()=>toggleFilters());
+    $("mapClearFilters")?.addEventListener("click",clearFilters);
+    $("mapBaseStreet")?.addEventListener("click",()=>setBaseMap("street"));
+    $("mapBaseSatellite")?.addEventListener("click",()=>setBaseMap("satellite"));
     $("mapLocateMe")?.addEventListener("click",locateMe);
     $("mapStartTracking")?.addEventListener("click",startTracking);
     $("mapStopTracking")?.addEventListener("click",()=>stopTracking(true));
