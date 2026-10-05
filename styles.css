@@ -883,23 +883,24 @@ body.form-mode main{width:min(1180px,96%);padding-top:14px}
 }
 @media(max-width:600px){
   .map-kpis{
-    grid-template-columns:repeat(4,minmax(0,1fr));
-    gap:6px
+    grid-template-columns:1fr 1fr;
+    gap:7px
   }
   .map-kpis .kpi{
-    padding:10px 8px;
+    min-height:84px;
+    padding:11px 12px;
     border-radius:10px
   }
   .map-kpis .kpi span{
-    font-size:6px;
-    letter-spacing:.08em
+    font-size:7px;
+    letter-spacing:.09em
   }
   .map-kpis .kpi strong{
-    font-size:22px;
+    font-size:25px;
     margin-top:6px
   }
   .map-kpis .kpi small{
-    font-size:7px;
+    font-size:8px;
     margin-top:4px
   }
   .map-head p{
