@@ -74,7 +74,7 @@ module.exports=async(req,res)=>{
       range:"RESP_EXPLORACION!A2:BK"
     });
     const email=String(user.email||"").trim().toLowerCase();
-    const admin=!!caps.adminActive;
+    const admin=!!(caps.base||String(caps.user?.role||"").toUpperCase()==="ADMIN");
     const all=response.data.values||[];
     const points=[];
 

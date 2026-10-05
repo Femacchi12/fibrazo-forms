@@ -738,3 +738,202 @@ body.form-mode main{width:min(1180px,96%);padding-top:14px}
   .app-nav .view-switch{display:grid;grid-template-columns:1fr 1fr;gap:7px}
   .app-nav .view-switch button{width:100%;min-width:0;padding:9px 8px}
 }
+
+
+/* v0.8.17 · mapa ejecutivo */
+.map-kpis{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  margin-bottom:12px
+}
+.map-kpis .kpi{
+  min-height:0;
+  padding:14px 16px
+}
+.map-kpis .kpi span{
+  font-size:8px;
+  letter-spacing:.12em
+}
+.map-kpis .kpi strong{
+  margin-top:7px;
+  font-size:28px;
+  line-height:1
+}
+.map-kpis .kpi small{
+  margin-top:5px;
+  font-size:9px
+}
+.map-scope-row{
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap;
+  margin-top:10px
+}
+.map-visibility-badge,.map-live-badge{
+  display:inline-flex;
+  align-items:center;
+  min-height:26px;
+  padding:5px 9px;
+  border:1px solid var(--fz-border);
+  border-radius:999px;
+  background:var(--fz-surface-inner);
+  color:#c8d4ce;
+  font-size:8px!important;
+  font-weight:800;
+  letter-spacing:.04em!important
+}
+.map-visibility-badge.team{
+  border-color:rgba(0,242,154,.34);
+  color:var(--fz-green)
+}
+.map-live-badge i{
+  width:7px;height:7px;margin-right:6px;border-radius:50%;background:var(--fz-green);
+  box-shadow:0 0 0 4px rgba(0,242,154,.08)
+}
+.map-command-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin:14px 0 8px
+}
+.map-filter-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:7px
+}
+.map-filter-toggle.active{
+  border-color:var(--fz-green-border);
+  color:var(--fz-green);
+  background:var(--fz-control-active)
+}
+.map-filter-count{
+  min-width:19px;
+  height:19px;
+  padding:2px 5px;
+  border-radius:999px;
+  background:var(--fz-green);
+  color:#001a10;
+  font-size:8px;
+  font-weight:900;
+  line-height:15px;
+  text-align:center
+}
+.map-basemap-switch{
+  display:inline-flex;
+  padding:3px;
+  border:1px solid var(--fz-border);
+  border-radius:9px;
+  background:var(--fz-surface-inner)
+}
+.map-basemap-switch button{
+  min-height:30px;
+  padding:6px 11px;
+  border:0;
+  border-radius:7px;
+  background:transparent;
+  color:var(--fz-muted);
+  font:inherit;
+  font-size:9px;
+  font-weight:800;
+  cursor:pointer
+}
+.map-basemap-switch button.active{
+  background:var(--fz-control-active);
+  color:var(--fz-green)
+}
+.map-filters-panel{
+  margin:0 0 10px;
+  padding:10px;
+  border:1px solid var(--fz-border);
+  border-radius:10px;
+  background:rgba(255,255,255,.018)
+}
+.map-filters-panel[hidden]{display:none!important}
+.map-filters{margin:0}
+.map-filter-actions{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:8px
+}
+.map-location-toolbar{
+  margin:10px 0 12px;
+  padding:9px;
+  border:1px solid var(--fz-border);
+  border-radius:10px;
+  background:rgba(255,255,255,.016)
+}
+.map-route-strip{
+  margin:10px 0 0
+}
+.map-route-strip>div{
+  padding:9px 10px
+}
+.exploration-map{
+  height:min(64vh,680px)
+}
+.map-status{
+  margin-top:8px
+}
+.map-footnote{
+  margin-top:9px
+}
+@media(max-width:900px){
+  .map-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(max-width:600px){
+  .map-kpis{
+    grid-template-columns:1fr 1fr;
+    gap:7px
+  }
+  .map-kpis .kpi{
+    min-height:84px;
+    padding:11px 12px;
+    border-radius:10px
+  }
+  .map-kpis .kpi span{
+    font-size:7px;
+    letter-spacing:.09em
+  }
+  .map-kpis .kpi strong{
+    font-size:25px;
+    margin-top:6px
+  }
+  .map-kpis .kpi small{
+    font-size:8px;
+    margin-top:4px
+  }
+  .map-head p{
+    font-size:10px;
+    line-height:1.45
+  }
+  .map-scope-row{
+    margin-top:8px
+  }
+  .map-command-row{
+    align-items:stretch
+  }
+  .map-filter-toggle{
+    flex:1;
+    justify-content:center
+  }
+  .map-basemap-switch{
+    flex:0 0 auto
+  }
+  .map-filters{
+    grid-template-columns:1fr 1fr
+  }
+  .map-location-toolbar{
+    margin-top:8px
+  }
+  .map-route-strip{
+    grid-template-columns:1fr 1fr
+  }
+  .map-route-strip>div{
+    min-height:68px
+  }
+  .exploration-map{
+    height:56vh;
+    min-height:390px
+  }
+}

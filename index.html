@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="/styles.css?v=2026.10.04.16">
+  <link rel="stylesheet" href="/styles.css?v=2026.10.04.17">
 </head>
 <body class="auth-pending">
   <section id="authGate" class="auth-gate" aria-live="polite">
@@ -37,7 +37,7 @@
         <p>Formularios, relevamientos y resultados en un único espacio.</p>
       </div>
       <div class="update-cards">
-        <article><span>Versión</span><b>0.8.16 · Mapa de exploración · Motor territorial v3.2</b></article>
+        <article><span>Versión</span><b>0.8.17 · Mapa ejecutivo · Motor territorial v3.2</b></article>
         <article><span>Formularios activos</span><b id="activeFormsCount">2</b></article>
       </div>
       <div id="authSession" class="auth-session" hidden>
@@ -262,24 +262,43 @@
           <div>
             <span>EXPLORACIÓN TERRITORIAL</span>
             <h2>Mapa de puntos y recorrido</h2>
-            <p>Los puntos se actualizan automáticamente desde la base de exploración. Puedes ver tu ubicación y registrar el recorrido mientras el tablero esté abierto.</p>
+            <p>Visualiza los relevamientos, tu ubicación actual y el recorrido de campo en una sola vista.</p>
+            <div class="map-scope-row">
+              <span id="mapVisibilityBadge" class="map-visibility-badge">Cargando alcance…</span>
+              <span class="map-live-badge"><i></i> Actualización automática</span>
+            </div>
           </div>
           <div class="map-head-actions">
             <button id="mapRefresh" class="secondary-button compact" type="button">↻ Actualizar</button>
-            <button id="mapFitPoints" class="secondary-button compact" type="button">Ajustar mapa</button>
+            <button id="mapFitPoints" class="secondary-button compact" type="button" title="Encuadra todos los puntos visibles según los filtros">⌗ Ver todos los puntos</button>
           </div>
         </div>
 
-        <div class="map-filters">
-          <select id="mapCityFilter" aria-label="Filtrar ciudad"><option value="all">Todas las ciudades</option></select>
-          <select id="mapTypeFilter" aria-label="Filtrar tipo de exploración">
-            <option value="all">Virtual + presencial</option>
-            <option value="Virtual">Virtual</option>
-            <option value="Presencial">Presencial</option>
-          </select>
-          <select id="mapUserFilter" aria-label="Filtrar usuario"><option value="all">Todos los usuarios</option></select>
-          <input id="mapDateFrom" type="date" aria-label="Fecha desde" title="Fecha desde">
-          <input id="mapDateTo" type="date" aria-label="Fecha hasta" title="Fecha hasta">
+        <div class="map-command-row">
+          <button id="mapFiltersToggle" class="secondary-button compact map-filter-toggle" type="button" aria-expanded="false">
+            ☰ Filtros <span id="mapFilterCount" class="map-filter-count">0</span>
+          </button>
+          <div class="map-basemap-switch" role="group" aria-label="Tipo de mapa">
+            <button id="mapBaseStreet" class="active" type="button">Mapa</button>
+            <button id="mapBaseSatellite" type="button">Satélite</button>
+          </div>
+        </div>
+
+        <div id="mapFiltersPanel" class="map-filters-panel" hidden>
+          <div class="map-filters">
+            <select id="mapCityFilter" aria-label="Filtrar ciudad"><option value="all">Todas las ciudades</option></select>
+            <select id="mapTypeFilter" aria-label="Filtrar tipo de exploración">
+              <option value="all">Virtual + presencial</option>
+              <option value="Virtual">Virtual</option>
+              <option value="Presencial">Presencial</option>
+            </select>
+            <select id="mapUserFilter" aria-label="Filtrar usuario"><option value="all">Todos los usuarios</option></select>
+            <input id="mapDateFrom" type="date" aria-label="Fecha desde" title="Fecha desde">
+            <input id="mapDateTo" type="date" aria-label="Fecha hasta" title="Fecha hasta">
+          </div>
+          <div class="map-filter-actions">
+            <button id="mapClearFilters" class="secondary-button compact" type="button">Limpiar filtros</button>
+          </div>
         </div>
 
         <div class="map-location-toolbar">
@@ -290,6 +309,9 @@
           <label class="map-follow-toggle"><input id="mapFollowToggle" type="checkbox" checked> Seguir mi ubicación</label>
         </div>
 
+        <div id="explorationMap" class="exploration-map" aria-label="Mapa de exploración FIBRAZO"></div>
+        <div id="mapStatus" class="map-status">Abre el mapa para cargar los puntos.</div>
+
         <div class="map-route-strip">
           <div><span>GPS</span><strong id="mapGpsAccuracy">—</strong></div>
           <div><span>Recorrido</span><strong id="mapRouteDistance">0 m</strong></div>
@@ -297,9 +319,7 @@
           <div><span>Estado</span><strong id="mapTrackingState">Seguimiento detenido</strong></div>
         </div>
 
-        <div id="explorationMap" class="exploration-map" aria-label="Mapa de exploración FIBRAZO"></div>
-        <div id="mapStatus" class="map-status">Abre el mapa para cargar los puntos.</div>
-        <p class="map-footnote">El recorrido GPS se guarda localmente en este dispositivo. Android/iOS pueden pausar la ubicación si cierras el navegador, bloqueas la pantalla o restringes el uso de GPS en segundo plano.</p>
+        <p class="map-footnote">El recorrido GPS se guarda localmente en este dispositivo y separado por usuario. Android/iOS pueden pausar la ubicación si cierras el navegador, bloqueas la pantalla o restringes el GPS en segundo plano.</p>
       </section>
     </section>
 
@@ -324,17 +344,17 @@
     </section>
   </main>
 
-  <footer>FIBRAZO · Growth <span>Forms v0.8.16 · Mapa de exploración · Motor territorial v3.2 · 2026</span></footer>
+  <footer>FIBRAZO · Growth <span>Forms v0.8.17 · Mapa ejecutivo · Motor territorial v3.2 · 2026</span></footer>
 
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
-  <script src="/forms-config.js?v=2026.10.04.16"></script>
-  <script src="/app.js?v=2026.10.04.16"></script>
-  <script src="/access-v03.js?v=2026.10.04.16"></script>
-  <script src="/offline-v04.js?v=2026.10.04.16"></script>
-  <script src="/ux-v04.js?v=2026.10.04.16"></script>
-  <script src="/admin-v03.js?v=2026.10.04.16"></script>
+  <script src="/forms-config.js?v=2026.10.04.17"></script>
+  <script src="/app.js?v=2026.10.04.17"></script>
+  <script src="/access-v03.js?v=2026.10.04.17"></script>
+  <script src="/offline-v04.js?v=2026.10.04.17"></script>
+  <script src="/ux-v04.js?v=2026.10.04.17"></script>
+  <script src="/admin-v03.js?v=2026.10.04.17"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="/map-v01.js?v=2026.10.04.16"></script>
+  <script src="/map-v01.js?v=2026.10.04.17"></script>
 </body>
 </html>
