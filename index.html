@@ -15,7 +15,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="/styles.css?v=2026.10.04.18">
+  <link rel="stylesheet" href="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.css">
+  <link rel="stylesheet" href="/styles.css?v=2026.10.04.19">
 </head>
 <body class="auth-pending">
   <section id="authGate" class="auth-gate" aria-live="polite">
@@ -37,7 +38,7 @@
         <p>Formularios, relevamientos y resultados en un único espacio.</p>
       </div>
       <div class="update-cards">
-        <article><span>Versión</span><b>0.8.18 · Capas territoriales · Motor territorial v3.2</b></article>
+        <article><span>Versión</span><b>0.8.19 · Mapa interactivo · Motor territorial v3.2</b></article>
         <article><span>Formularios activos</span><b id="activeFormsCount">2</b></article>
       </div>
       <div id="authSession" class="auth-session" hidden>
@@ -312,7 +313,10 @@
               <span>CAPAS TERRITORIALES</span>
               <strong>Bucaramanga / Área Metropolitana</strong>
             </div>
-            <small>Se cargan solo los polígonos visibles para mantener el mapa ágil.</small>
+            <div class="map-layers-head-actions">
+              <small>Se cargan solo los polígonos visibles para mantener el mapa ágil.</small>
+              <button id="mapViewBucaramanga" class="secondary-button compact" type="button">◎ Ver Bucaramanga</button>
+            </div>
           </div>
           <div class="map-layer-switches">
             <button id="mapLayerBarrios" class="map-layer-chip" type="button" aria-pressed="false">
@@ -343,7 +347,13 @@
           <label class="map-follow-toggle"><input id="mapFollowToggle" type="checkbox" checked> Seguir mi ubicación</label>
         </div>
 
-        <div id="explorationMap" class="exploration-map" aria-label="Mapa de exploración FIBRAZO"></div>
+        <div class="map-canvas-wrap">
+          <div id="mapLoadingOverlay" class="map-loading-overlay" hidden aria-live="polite">
+            <div class="map-loading-track"><span></span></div>
+            <div class="map-loading-label"><i></i><span id="mapLoadingText">Cargando mapa…</span></div>
+          </div>
+          <div id="explorationMap" class="exploration-map" aria-label="Mapa de exploración FIBRAZO"></div>
+        </div>
         <div id="mapStatus" class="map-status">Abre el mapa para cargar los puntos.</div>
 
         <div class="map-route-strip">
@@ -353,7 +363,7 @@
           <div><span>Estado</span><strong id="mapTrackingState">Seguimiento detenido</strong></div>
         </div>
 
-        <p class="map-footnote">El recorrido GPS se guarda localmente en este dispositivo y separado por usuario. Android/iOS pueden pausar la ubicación si cierras el navegador, bloqueas la pantalla o restringes el GPS en segundo plano.</p>
+        <p class="map-footnote">Mantén presionado un lugar del mapa para copiar sus coordenadas, abrir una ruta en Google Maps o iniciar un formulario en ese punto. Puedes rotar el mapa con dos dedos y tocar la brújula para volver a norte arriba. El recorrido GPS se guarda localmente por usuario; Android/iOS pueden pausarlo en segundo plano.</p>
       </section>
     </section>
 
@@ -378,17 +388,18 @@
     </section>
   </main>
 
-  <footer>FIBRAZO · Growth <span>Forms v0.8.18 · Capas territoriales · Motor territorial v3.2 · 2026</span></footer>
+  <footer>FIBRAZO · Growth <span>Forms v0.8.19 · Mapa interactivo · Motor territorial v3.2 · 2026</span></footer>
 
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
-  <script src="/forms-config.js?v=2026.10.04.18"></script>
-  <script src="/app.js?v=2026.10.04.18"></script>
-  <script src="/access-v03.js?v=2026.10.04.18"></script>
-  <script src="/offline-v04.js?v=2026.10.04.18"></script>
-  <script src="/ux-v04.js?v=2026.10.04.18"></script>
-  <script src="/admin-v03.js?v=2026.10.04.18"></script>
+  <script src="/forms-config.js?v=2026.10.04.19"></script>
+  <script src="/app.js?v=2026.10.04.19"></script>
+  <script src="/access-v03.js?v=2026.10.04.19"></script>
+  <script src="/offline-v04.js?v=2026.10.04.19"></script>
+  <script src="/ux-v04.js?v=2026.10.04.19"></script>
+  <script src="/admin-v03.js?v=2026.10.04.19"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="/map-v01.js?v=2026.10.04.18"></script>
+  <script src="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.umd.min.js"></script>
+  <script src="/map-v01.js?v=2026.10.04.19"></script>
 </body>
 </html>
