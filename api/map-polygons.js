@@ -13,8 +13,8 @@ const CONFIG={
     wktCol:"O",
     id:"ID_Barrio",
     name:"Barrio",
-    minZoom:11,
-    maxFeatures:260
+    minZoom:10,
+    maxFeatures:320
   },
   estratos:{
     sheet:"03_ESTRATOS",
@@ -22,8 +22,8 @@ const CONFIG={
     wktCol:"K",
     id:"ID_Estrato_Poligono",
     name:"Estrato",
-    minZoom:13,
-    maxFeatures:320
+    minZoom:12,
+    maxFeatures:1200
   }
 };
 
@@ -129,16 +129,28 @@ async function loadMeta(auth,layer){
 async function getWkts(auth,cfg,rows){
   const sheets=google.sheets({version:"v4",auth});
   const out=new Map();
-  const chunkSize=70;
-  for(let i=0;i<rows.length;i+=chunkSize){
-    const chunk=rows.slice(i,i+chunkSize);
-    const response=await sheets.spreadsheets.values.batchGet({
-      spreadsheetId:BGA_SHEET_ID,
-      ranges:chunk.map(row=>cfg.sheet+"!"+cfg.wktCol+row.__row+":"+cfg.wktCol+row.__row)
-    });
-    const ranges=response.data.valueRanges||[];
-    chunk.forEach((row,index)=>out.set(row.__row,String(ranges[index]?.values?.[0]?.[0]||"")));
+  const ordered=[...rows].sort((a,b)=>a.__row-b.__row);
+  const groups=[];
+  let current=null;
+  for(const row of ordered){
+    if(!current||row.__row!==current.end+1||(current.end-current.start+1)>=350){
+      current={start:row.__row,end:row.__row};
+      groups.push(current);
+    }else{
+      current.end=row.__row;
+    }
   }
+  const response=await sheets.spreadsheets.values.batchGet({
+    spreadsheetId:BGA_SHEET_ID,
+    ranges:groups.map(g=>cfg.sheet+"!"+cfg.wktCol+g.start+":"+cfg.wktCol+g.end)
+  });
+  const ranges=response.data.valueRanges||[];
+  groups.forEach((group,index)=>{
+    const values=ranges[index]?.values||[];
+    for(let offset=0;offset<=group.end-group.start;offset++){
+      out.set(group.start+offset,String(values[offset]?.[0]||""));
+    }
+  });
   return out;
 }
 function bboxArea(row){
