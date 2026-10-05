@@ -256,7 +256,8 @@
 
     const backdrop=document.createElement("div");
     backdrop.className="map-coordinate-backdrop";
-    backdrop.addEventListener("click",closeCoordinateSheet);
+    const openedAt=Date.now();
+    backdrop.addEventListener("click",()=>{if(Date.now()-openedAt>450)closeCoordinateSheet();});
 
     const sheet=document.createElement("section");
     sheet.className="map-coordinate-sheet";
@@ -271,6 +272,7 @@
       '</div>'+
       '<div class="map-coordinate-forms"><span>COMPLETAR FORMULARIO</span><div data-map-form-list></div></div>';
     document.body.append(backdrop,sheet);
+    sheet.addEventListener("click",event=>event.stopPropagation());
     sheet.querySelector("[data-map-close]")?.addEventListener("click",closeCoordinateSheet);
     sheet.querySelector("[data-map-copy]")?.addEventListener("click",()=>copyCoordinates(lat,lng));
     sheet.querySelector("[data-map-route]")?.addEventListener("click",()=>{
@@ -698,7 +700,8 @@
     if(next){
       if(!state.map.hasLayer(group))group.addTo(state.map);
       state.polygonStatus[layer]="cargando…";
-      if(!viewTouchesBucaramanga()){
+      const requiredZoom=layer==="estratos"?11:10;
+      if(!viewTouchesBucaramanga()||state.map.getZoom()<requiredZoom){
         viewBucaramanga();
       }else{
         loadPolygonLayer(layer);
