@@ -123,9 +123,25 @@
     return total;
   }
 
+  function patchLeafletRotateSafety(){
+    if(!window.L?.Renderer?.prototype)return;
+    const proto=L.Renderer.prototype;
+    for(const name of ["_update","_updateTransform"]){
+      const current=proto[name];
+      if(typeof current!=="function"||current.__fibrazoSafeRotate)return;
+      const wrapped=function(...args){
+        if(!this._map)return;
+        return current.apply(this,args);
+      };
+      wrapped.__fibrazoSafeRotate=true;
+      proto[name]=wrapped;
+    }
+  }
+
   function ensureMap(){
     if(state.map)return true;
     if(!window.L||!$("explorationMap"))return false;
+    patchLeafletRotateSafety();
     const rotateSupported=typeof L.Map?.prototype?.setBearing==="function";
     state.map=L.map("explorationMap",{
       zoomControl:true,
@@ -149,9 +165,15 @@
     bindTileBusy(satellite,"Cargando vista satelital…");
     state.baseLayers={street,satellite};
     street.addTo(state.map);
-    state.map.createPane("territorialPane");
-    state.map.getPane("territorialPane").style.zIndex="350";
-    state.map.getPane("territorialPane").style.pointerEvents="auto";
+    state.map.createPane("barriosPane");
+    state.map.getPane("barriosPane").style.zIndex="350";
+    state.map.getPane("barriosPane").style.pointerEvents="auto";
+    state.map.createPane("estratosPane");
+    state.map.getPane("estratosPane").style.zIndex="365";
+    state.map.getPane("estratosPane").style.pointerEvents="auto";
+    state.map.createPane("surveyPane");
+    state.map.getPane("surveyPane").style.zIndex="650";
+    state.map.getPane("surveyPane").style.pointerEvents="auto";
     state.polygonGroups={barrios:L.layerGroup(),estratos:L.layerGroup()};
     state.surveyLayer=L.layerGroup().addTo(state.map);
     state.map.on("moveend zoomend",schedulePolygonReload);
@@ -363,11 +385,79 @@
     '</div>';
   }
 
-  function markerStyle(point){
-    const presencial=formType(point.type)==="Presencial";
-    return presencial
-      ?{radius:7,weight:2,opacity:1,fillOpacity:.86,color:"#00FE9C",fillColor:"#00FE9C"}
-      :{radius:7,weight:2,opacity:1,fillOpacity:.86,color:"#57C7FF",fillColor:"#57C7FF"};
+  const POINT_CATEGORIES=[
+    {id:"tigo",label:"Solo Tigo",color:"#0057D9",description:"Sin ISP adicional · único incumbente: Tigo"},
+    {id:"movistar",label:"Solo Movistar",color:"#4B5563",description:"Sin ISP adicional · único incumbente: Movistar"},
+    {id:"claro",label:"Solo Claro",color:"#D92D20",description:"Sin ISP adicional · único incumbente: Claro"},
+    {id:"isp_only",label:"Solo otros ISP",color:"#F4B400",description:"Hay ISP local/regional y ningún incumbente"},
+    {id:"isp_one_inc",label:"ISP + 1 incumbente",color:"#7B2CBF",description:"Hay ISP local/regional y un solo incumbente"},
+    {id:"isp_multi_inc",label:"ISP + varios incumbentes",color:"#8B4513",description:"Hay ISP local/regional y más de un incumbente"},
+    {id:"multi_inc",label:"Varios incumbentes",color:"#FF4FA3",description:"No hay otros ISP y hay más de un incumbente"},
+    {id:"none",label:"Sin operador identificado",color:"#7A8580",description:"No se registraron operadores visibles"}
+  ];
+
+  function operatorProfile(point){
+    const operators=Array.isArray(point?.operators)?point.operators:[];
+    const incumbents=new Set();
+    const others=[];
+    for(const value of operators){
+      const n=norm(value);
+      if(n.startsWith("tigo"))incumbents.add("tigo");
+      else if(n.startsWith("claro"))incumbents.add("claro");
+      else if(n.startsWith("movistar"))incumbents.add("movistar");
+      else if(String(value||"").trim())others.push(String(value).trim());
+    }
+    let id="none";
+    if(others.length){
+      if(incumbents.size===0)id="isp_only";
+      else if(incumbents.size===1)id="isp_one_inc";
+      else id="isp_multi_inc";
+    }else if(incumbents.size===1){
+      id=[...incumbents][0];
+    }else if(incumbents.size>1){
+      id="multi_inc";
+    }
+    const category=POINT_CATEGORIES.find(item=>item.id===id)||POINT_CATEGORIES.at(-1);
+    return {id,category,incumbents:[...incumbents],others};
+  }
+
+  function markerIcon(point){
+    const profile=operatorProfile(point);
+    return L.divIcon({
+      className:"exploration-point-marker",
+      html:'<span style="--point-color:'+esc(profile.category.color)+'"></span>',
+      iconSize:[20,20],
+      iconAnchor:[10,10],
+      popupAnchor:[0,-11]
+    });
+  }
+
+  function renderPointLegend(filtered=state.filtered){
+    const panel=$("mapPointLegendPanel"),summary=$("mapPointLegendSummary");
+    if(!panel)return;
+    const counts=new Map(POINT_CATEGORIES.map(item=>[item.id,0]));
+    for(const point of (Array.isArray(filtered)?filtered:[])){
+      const id=operatorProfile(point).id;
+      counts.set(id,(counts.get(id)||0)+1);
+    }
+    panel.innerHTML=POINT_CATEGORIES.map(item=>
+      '<div class="map-point-legend-item">'+
+        '<i style="background:'+esc(item.color)+'"></i>'+
+        '<span><b>'+esc(item.label)+'</b><small>'+esc(item.description)+'</small></span>'+
+        '<strong>'+String(counts.get(item.id)||0)+'</strong>'+
+      '</div>'
+    ).join("");
+    const visible=(Array.isArray(filtered)?filtered:[]).length;
+    if(summary)summary.textContent=visible+" puntos visibles · colores por presencia de operadores";
+  }
+
+  function togglePointLegend(){
+    const panel=$("mapPointLegendPanel"),button=$("mapPointLegendToggle");
+    if(!panel||!button)return;
+    const open=panel.hidden;
+    panel.hidden=!open;
+    button.setAttribute("aria-expanded",String(open));
+    button.classList.toggle("active",open);
   }
 
   function renderMarkers({fit=false}={}){
@@ -377,12 +467,22 @@
     state.filtered=filtered;
     const bounds=[];
     for(const point of filtered){
-      const marker=L.circleMarker([point.lat,point.lng],markerStyle(point));
-      marker.bindPopup(popupHtml(point),{maxWidth:320});
-      marker.addTo(state.surveyLayer);
-      bounds.push([point.lat,point.lng]);
+      try{
+        const marker=L.marker([point.lat,point.lng],{icon:markerIcon(point),pane:"surveyPane",keyboard:true});
+        const profile=operatorProfile(point);
+        const html=popupHtml(point).replace(
+          '<div class="map-popup-row"><b>Fecha</b>',
+          '<div class="map-popup-row"><b>Clasificación</b><span>'+esc(profile.category.label)+'</span></div><div class="map-popup-row"><b>Fecha</b>'
+        );
+        marker.bindPopup(html,{maxWidth:320});
+        marker.addTo(state.surveyLayer);
+        bounds.push([point.lat,point.lng]);
+      }catch(error){
+        console.warn("MAP_POINT_DRAW_ERROR",point?.id||"",error?.message||error);
+      }
     }
     updateKpis(filtered);
+    renderPointLegend(filtered);
     if(fit&&bounds.length&&!state.watchId){
       state.map.fitBounds(bounds,{padding:[24,24],maxZoom:15});
     }
@@ -590,7 +690,7 @@
 
   function polygonStyle(layer,feature,color){
     return {
-      pane:"territorialPane",
+      pane:layer==="estratos"?"estratosPane":"barriosPane",
       color,
       weight:layer==="barrios"?2:1.6,
       opacity:.95,
@@ -609,7 +709,7 @@
       const id=String(feature?.properties?.id||feature?.id||"");
       const color=layer==="barrios"?(barrioColors.get(id)||BARRIO_COLORS[0]):estratoColor(feature);
       const geo=L.geoJSON(feature,{
-        pane:"territorialPane",
+        pane:layer==="estratos"?"estratosPane":"barriosPane",
         style:()=>polygonStyle(layer,feature,color),
         onEachFeature:(f,leaf)=>{
           leaf.bindPopup(polygonPopup(f,layer,color),{maxWidth:320});
@@ -670,8 +770,8 @@
       const features=Array.isArray(data.features)?data.features:[];
       drawPolygonLayer(layer,features);
       state.polygonStatus[layer]=data.truncated
-        ?("mostrando "+features.length+" de "+Number(data.totalVisible||features.length)+" · acerca el mapa para detalle completo")
-        :(features.length+" visibles");
+        ?("vista general · "+features.length+" de "+Number(data.totalVisible||features.length)+" · acerca el mapa para detalle completo")
+        :(features.length+" visibles · detalle completo");
       updatePolygonStatus();
     }catch(error){
       if(error?.name==="AbortError")return;
@@ -766,22 +866,30 @@
         const p=ref.feature?.properties||{};
         const rawLabel=layer==="barrios"?String(p.name||"Barrio"):String(p.estrato||p.name||"Sin información");
         const municipio=String(p.municipio||"");
-        const key=layer+"|"+norm(rawLabel)+"|"+norm(municipio);
+        const key=layer==="estratos"
+          ?("estratos|"+norm(rawLabel))
+          :("barrios|"+norm(rawLabel)+"|"+norm(municipio));
         if(!groups.has(key)){
-          groups.set(key,{key,layer,label:layer==="barrios"?rawLabel:"Estrato "+rawLabel,municipio,color:ref.color,refs:[]});
+          groups.set(key,{key,layer,label:layer==="barrios"?rawLabel:"Estrato "+rawLabel,municipios:new Set(),color:ref.color,refs:[]});
         }
-        groups.get(key).refs.push(ref);
+        const group=groups.get(key);
+        if(municipio)group.municipios.add(municipio);
+        group.refs.push(ref);
       }
     }
     state.polygonIndexGroups=groups;
-    const ordered=[...groups.values()].sort((a,b)=>a.layer.localeCompare(b.layer)||a.label.localeCompare(b.label,"es",{numeric:true,sensitivity:"base"})||a.municipio.localeCompare(b.municipio,"es"));
+    const ordered=[...groups.values()].sort((a,b)=>a.layer.localeCompare(b.layer)||a.label.localeCompare(b.label,"es",{numeric:true,sensitivity:"base"}));
 
-    index.innerHTML=ordered.length?ordered.slice(0,140).map(group=>
-      '<button class="polygon-index-item" type="button" data-polygon-key="'+esc(group.key)+'">'+
+    index.innerHTML=ordered.length?ordered.slice(0,140).map(group=>{
+      const municipios=[...group.municipios].sort((a,b)=>a.localeCompare(b,"es"));
+      const sub=group.layer==="estratos"
+        ?((municipios.length>1?"Varios municipios":(municipios[0]||""))+(group.refs.length>1?' · '+group.refs.length+' polígonos':''))
+        :((municipios[0]||"")+(group.refs.length>1?' · '+group.refs.length+' polígonos':''));
+      return '<button class="polygon-index-item" type="button" data-polygon-key="'+esc(group.key)+'">'+
         '<i style="background:'+esc(group.color)+'"></i>'+
-        '<span><b>'+esc(group.label)+'</b><small>'+esc(group.municipio)+(group.refs.length>1?' · '+group.refs.length+' polígonos':'')+'</small></span>'+
-      '</button>'
-    ).join(""):'<div class="polygon-index-empty">No hay polígonos visibles en esta escala.</div>';
+        '<span><b>'+esc(group.label)+'</b><small>'+esc(sub)+'</small></span>'+
+      '</button>';
+    }).join(""):'<div class="polygon-index-empty">No hay polígonos visibles en esta escala.</div>';
     if(countEl)countEl.textContent=String(ordered.length);
     wrap.hidden=false;
   }
@@ -812,7 +920,8 @@
         state.loadedOnce=true;
         mapStatus("Sin conexión al servidor · mostrando "+cached.length+" puntos guardados en este dispositivo.","warning");
       }else{
-        mapStatus(error.message||"No se pudo cargar el mapa.","error");
+        const message=String(error?.message||"");
+        mapStatus(message.includes("_rotate")?"No se pudieron dibujar los puntos. Reintentando con modo compatible…":(message||"No se pudo cargar el mapa."),"error");
       }
     }finally{
       endMapBusy(busyToken);
@@ -959,6 +1068,7 @@
     $("mapFitPoints")?.addEventListener("click",fitVisible);
     $("mapFiltersToggle")?.addEventListener("click",()=>toggleFilters());
     $("mapClearFilters")?.addEventListener("click",clearFilters);
+    $("mapPointLegendToggle")?.addEventListener("click",togglePointLegend);
     $("mapLayersToggle")?.addEventListener("click",()=>toggleLayersPanel());
     $("mapLayerBarrios")?.addEventListener("click",()=>togglePolygonLayer("barrios"));
     $("mapLayerEstratos")?.addEventListener("click",()=>togglePolygonLayer("estratos"));
