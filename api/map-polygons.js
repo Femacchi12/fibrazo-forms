@@ -237,6 +237,10 @@ function applySelection(layer,rows,query){
       return !!match&&selected.has(match[1]);
     });
   }
+  const excluded=new Set(parseList(query.excludeIds));
+  if(String(query.allBarrios||"")==="1"){
+    return rows.filter(row=>!excluded.has(safeValue(row,"ID_Barrio")));
+  }
   const selected=new Set(parseList(query.ids));
   if(!selected.size)return [];
   return rows.filter(row=>selected.has(safeValue(row,"ID_Barrio")));
