@@ -140,17 +140,21 @@ async function getWkts(auth,cfg,rows){
       current.end=row.__row;
     }
   }
-  const response=await sheets.spreadsheets.values.batchGet({
-    spreadsheetId:BGA_SHEET_ID,
-    ranges:groups.map(g=>cfg.sheet+"!"+cfg.wktCol+g.start+":"+cfg.wktCol+g.end)
-  });
-  const ranges=response.data.valueRanges||[];
-  groups.forEach((group,index)=>{
-    const values=ranges[index]?.values||[];
-    for(let offset=0;offset<=group.end-group.start;offset++){
-      out.set(group.start+offset,String(values[offset]?.[0]||""));
-    }
-  });
+  const batchSize=80;
+  for(let i=0;i<groups.length;i+=batchSize){
+    const chunk=groups.slice(i,i+batchSize);
+    const response=await sheets.spreadsheets.values.batchGet({
+      spreadsheetId:BGA_SHEET_ID,
+      ranges:chunk.map(g=>cfg.sheet+"!"+cfg.wktCol+g.start+":"+cfg.wktCol+g.end)
+    });
+    const ranges=response.data.valueRanges||[];
+    chunk.forEach((group,index)=>{
+      const values=ranges[index]?.values||[];
+      for(let offset=0;offset<=group.end-group.start;offset++){
+        out.set(group.start+offset,String(values[offset]?.[0]||""));
+      }
+    });
+  }
   return out;
 }
 function bboxArea(row){
