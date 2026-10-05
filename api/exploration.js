@@ -87,7 +87,10 @@ function legacyMatch(layer){
   return"";
 }
 function dist(layer){
-  return Number.isFinite(Number(layer?.distanceM))?Number(layer.distanceM):null;
+  const value=layer?.distanceM;
+  return value!==null&&value!==undefined&&value!==""&&Number.isFinite(Number(value))
+    ?Number(value)
+    :null;
 }
 
 module.exports=async(req,res)=>{
