@@ -733,3 +733,8 @@ body.form-mode main{width:min(1180px,96%);padding-top:14px}
   .map-route-strip{grid-template-columns:1fr 1fr}
   .exploration-map{height:58vh;min-height:410px;border-radius:10px}
 }
+
+@media(max-width:560px){
+  .app-nav .view-switch{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .app-nav .view-switch button{width:100%;min-width:0;padding:9px 8px}
+}
