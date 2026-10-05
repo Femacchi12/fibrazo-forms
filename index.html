@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="/styles.css?v=2026.10.04.17">
+  <link rel="stylesheet" href="/styles.css?v=2026.10.04.18">
 </head>
 <body class="auth-pending">
   <section id="authGate" class="auth-gate" aria-live="polite">
@@ -37,7 +37,7 @@
         <p>Formularios, relevamientos y resultados en un único espacio.</p>
       </div>
       <div class="update-cards">
-        <article><span>Versión</span><b>0.8.17 · Mapa ejecutivo · Motor territorial v3.2</b></article>
+        <article><span>Versión</span><b>0.8.18 · Capas territoriales · Motor territorial v3.2</b></article>
         <article><span>Formularios activos</span><b id="activeFormsCount">2</b></article>
       </div>
       <div id="authSession" class="auth-session" hidden>
@@ -275,9 +275,14 @@
         </div>
 
         <div class="map-command-row">
-          <button id="mapFiltersToggle" class="secondary-button compact map-filter-toggle" type="button" aria-expanded="false">
-            ☰ Filtros <span id="mapFilterCount" class="map-filter-count">0</span>
-          </button>
+          <div class="map-command-left">
+            <button id="mapFiltersToggle" class="secondary-button compact map-filter-toggle" type="button" aria-expanded="false">
+              ☰ Filtros <span id="mapFilterCount" class="map-filter-count">0</span>
+            </button>
+            <button id="mapLayersToggle" class="secondary-button compact map-layer-toggle" type="button" aria-expanded="false">
+              ▱ Capas <span id="mapLayerCount" class="map-filter-count">0</span>
+            </button>
+          </div>
           <div class="map-basemap-switch" role="group" aria-label="Tipo de mapa">
             <button id="mapBaseStreet" class="active" type="button">Mapa</button>
             <button id="mapBaseSatellite" type="button">Satélite</button>
@@ -298,6 +303,35 @@
           </div>
           <div class="map-filter-actions">
             <button id="mapClearFilters" class="secondary-button compact" type="button">Limpiar filtros</button>
+          </div>
+        </div>
+
+        <div id="mapLayersPanel" class="map-layers-panel" hidden>
+          <div class="map-layers-head">
+            <div>
+              <span>CAPAS TERRITORIALES</span>
+              <strong>Bucaramanga / Área Metropolitana</strong>
+            </div>
+            <small>Se cargan solo los polígonos visibles para mantener el mapa ágil.</small>
+          </div>
+          <div class="map-layer-switches">
+            <button id="mapLayerBarrios" class="map-layer-chip" type="button" aria-pressed="false">
+              <i class="map-layer-icon barrios"></i>
+              <span><b>Barrios</b><small>Límites canónicos AMB</small></span>
+            </button>
+            <button id="mapLayerEstratos" class="map-layer-chip" type="button" aria-pressed="false">
+              <i class="map-layer-icon estratos"></i>
+              <span><b>Estratos</b><small>Polígonos canónicos AMB</small></span>
+            </button>
+          </div>
+          <div id="mapLayerStatus" class="map-layer-status">Capas apagadas.</div>
+          <div id="mapPolygonLegend" class="map-polygon-legend" hidden></div>
+          <div id="mapPolygonIndexWrap" class="map-polygon-index-wrap" hidden>
+            <div class="map-polygon-index-head">
+              <div><span>ÍNDICE</span><strong>Polígonos visibles</strong></div>
+              <span id="mapPolygonIndexCount">0</span>
+            </div>
+            <div id="mapPolygonIndex" class="map-polygon-index"></div>
           </div>
         </div>
 
@@ -344,17 +378,17 @@
     </section>
   </main>
 
-  <footer>FIBRAZO · Growth <span>Forms v0.8.17 · Mapa ejecutivo · Motor territorial v3.2 · 2026</span></footer>
+  <footer>FIBRAZO · Growth <span>Forms v0.8.18 · Capas territoriales · Motor territorial v3.2 · 2026</span></footer>
 
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
-  <script src="/forms-config.js?v=2026.10.04.17"></script>
-  <script src="/app.js?v=2026.10.04.17"></script>
-  <script src="/access-v03.js?v=2026.10.04.17"></script>
-  <script src="/offline-v04.js?v=2026.10.04.17"></script>
-  <script src="/ux-v04.js?v=2026.10.04.17"></script>
-  <script src="/admin-v03.js?v=2026.10.04.17"></script>
+  <script src="/forms-config.js?v=2026.10.04.18"></script>
+  <script src="/app.js?v=2026.10.04.18"></script>
+  <script src="/access-v03.js?v=2026.10.04.18"></script>
+  <script src="/offline-v04.js?v=2026.10.04.18"></script>
+  <script src="/ux-v04.js?v=2026.10.04.18"></script>
+  <script src="/admin-v03.js?v=2026.10.04.18"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="/map-v01.js?v=2026.10.04.17"></script>
+  <script src="/map-v01.js?v=2026.10.04.18"></script>
 </body>
 </html>
