@@ -535,6 +535,9 @@
       $("successEmail").textContent=recordedWho;
       paintCompletionStatus(result);
       window.FIBRAZO_OFFLINE?.refreshUi?.();
+      if(isExplorationForm()&&!result?.queued){
+        window.dispatchEvent(new CustomEvent("fibrazo:submission-saved",{detail:{formId:state.form.id,id:result?.id||""}}));
+      }
       window.scrollTo({top:0,behavior:"smooth"});
     }catch(e){
       const msg=e.message||"No se pudo guardar la respuesta.";
