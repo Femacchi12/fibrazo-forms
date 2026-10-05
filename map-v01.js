@@ -281,7 +281,7 @@
       zIndexOffset:1200,
       icon:L.divIcon({
         className:"map-selection-marker",
-        html:'<span>⌖</span>',
+        html:'<span><b>＋</b></span>',
         iconSize:[30,30],
         iconAnchor:[15,15]
       })
