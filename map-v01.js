@@ -17,6 +17,7 @@
     visibility:"own",
     polygonActive:{barrios:false,estratos:false},
     polygonGroups:null,
+    polygonRenderers:{barrios:null,estratos:null},
     polygonFeatures:{barrios:[],estratos:[]},
     polygonRefs:{barrios:new Map(),estratos:new Map()},
     polygonStatus:{barrios:"",estratos:""},
@@ -149,7 +150,7 @@
     const rotateSupported=typeof L.Map?.prototype?.setBearing==="function";
     state.map=L.map("explorationMap",{
       zoomControl:true,
-      preferCanvas:true,
+      preferCanvas:false,
       rotate:rotateSupported,
       touchRotate:rotateSupported,
       dragRotate:rotateSupported,
@@ -178,6 +179,10 @@
     state.map.createPane("surveyPane");
     state.map.getPane("surveyPane").style.zIndex="650";
     state.map.getPane("surveyPane").style.pointerEvents="auto";
+    state.polygonRenderers={
+      barrios:L.svg({pane:"barriosPane",padding:.35}),
+      estratos:L.svg({pane:"estratosPane",padding:.35})
+    };
     state.polygonGroups={barrios:L.layerGroup(),estratos:L.layerGroup()};
     state.surveyLayer=L.layerGroup().addTo(state.map);
     state.map.on("moveend zoomend",schedulePolygonReload);
@@ -716,26 +721,44 @@
 
   function drawPolygonLayer(layer,features){
     const group=state.polygonGroups?.[layer];
-    if(!group)return;
+    const renderer=state.polygonRenderers?.[layer];
+    if(!group||!renderer)return 0;
     group.clearLayers();
     state.polygonRefs[layer]=new Map();
     const barrioColors=layer==="barrios"?assignBarrioColors(features):null;
+    let drawn=0;
     for(const feature of features){
-      const id=String(feature?.properties?.id||feature?.id||"");
-      const color=layer==="barrios"?(barrioColors.get(id)||BARRIO_COLORS[0]):estratoColor(feature);
-      const geo=L.geoJSON(feature,{
-        pane:layer==="estratos"?"estratosPane":"barriosPane",
-        style:()=>polygonStyle(layer,feature,color),
-        onEachFeature:(f,leaf)=>{
-          leaf.bindPopup(polygonPopup(f,layer,color),{maxWidth:320});
-          leaf.on("mouseover",()=>leaf.setStyle({weight:3,fillOpacity:.34}));
-          leaf.on("mouseout",()=>leaf.setStyle(polygonStyle(layer,feature,color)));
-        }
-      });
-      geo.addTo(group);
-      state.polygonRefs[layer].set(id,{feature,leaflet:geo,color,bounds:geo.getBounds()});
+      try{
+        const id=String(feature?.properties?.id||feature?.id||"");
+        const color=layer==="barrios"?(barrioColors.get(id)||BARRIO_COLORS[0]):estratoColor(feature);
+        const geo=L.geoJSON(feature,{
+          pane:layer==="estratos"?"estratosPane":"barriosPane",
+          renderer,
+          interactive:true,
+          style:()=>({...polygonStyle(layer,feature,color),renderer}),
+          onEachFeature:(f,leaf)=>{
+            leaf.bindPopup(polygonPopup(f,layer,color),{maxWidth:320});
+            leaf.on("mouseover",()=>leaf.setStyle({weight:3,fillOpacity:.34}));
+            leaf.on("mouseout",()=>leaf.setStyle({...polygonStyle(layer,feature,color),renderer}));
+          }
+        });
+        const layers=geo.getLayers?.()||[];
+        if(!layers.length)continue;
+        geo.addTo(group);
+        drawn+=layers.length;
+        state.polygonRefs[layer].set(id,{feature,leaflet:geo,color,bounds:geo.getBounds()});
+      }catch(error){
+        console.warn("MAP_POLYGON_DRAW_ERROR",layer,feature?.id||feature?.properties?.id||"",error?.message||error);
+      }
     }
     state.polygonFeatures[layer]=features;
+    requestAnimationFrame(()=>{
+      try{
+        renderer._update?.();
+        for(const ref of state.polygonRefs[layer].values())ref.leaflet?.bringToFront?.();
+      }catch(_){}
+    });
+    return drawn;
   }
 
   function updatePolygonStatus(){
@@ -895,10 +918,14 @@
         return;
       }
       const features=Array.isArray(data.features)?data.features:[];
-      drawPolygonLayer(layer,features);
+      const drawn=drawPolygonLayer(layer,features);
+      const received=features.length;
       state.polygonStatus[layer]=data.truncated
-        ?("vista general · "+features.length+" de "+Number(data.totalVisible||features.length)+" seleccionados")
-        :(features.length+" polígonos seleccionados visibles");
+        ?("vista general · "+received+" recibidos · "+drawn+" dibujados · "+Number(data.totalVisible||received)+" seleccionados")
+        :(received+" recibidos · "+drawn+" dibujados");
+      if(received>0&&drawn===0){
+        mapStatus("La capa recibió "+received+" polígonos pero el navegador no pudo dibujarlos. Se activó el renderer SVG compatible.","warning");
+      }
       renderLayerControls();
     }catch(error){
       if(error?.name==="AbortError")return;
