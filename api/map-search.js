@@ -80,8 +80,13 @@ module.exports=async(req,res)=>{
     }
 
     const auth=gauth();
-    const territorial=await searchTerritorial(auth,query,{limit:18});
-    const external=await nominatimSearch(query);
+    const [territorial,external]=await Promise.all([
+      searchTerritorial(auth,query,{limit:18}).catch(error=>{
+        console.warn("MAP_SEARCH_TERRITORIAL_WARN",error?.message||error);
+        return[];
+      }),
+      nominatimSearch(query)
+    ]);
 
     const results=[...territorial];
     for(const item of external){
