@@ -446,7 +446,9 @@ function flattenTerritorial(t){
     [prefix+"Asignado"]:layer?.assigned?.name||"",
     [prefix+"IdCercano"]:layer?.nearby?.id||"",
     [prefix+"Cercano"]:layer?.nearby?.name||"",
-    [prefix+"DistanciaM"]:Number.isFinite(Number(layer?.distanceM))?Number(layer.distanceM):null,
+    [prefix+"DistanciaM"]:layer?.distanceM!==null&&layer?.distanceM!==undefined&&layer?.distanceM!==""&&Number.isFinite(Number(layer.distanceM))
+      ?Number(layer.distanceM)
+      :null,
     [prefix+"Fuente"]:layer?.source||""
   });
   return {
