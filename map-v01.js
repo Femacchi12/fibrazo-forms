@@ -949,9 +949,8 @@
       await loadPolygonLayer(layer,{silent:true});
     }catch(error){
       if(error?.name==="AbortError")return;
-      state.polygonIndexData[layer]=[];
-      clearPolygonLayer(layer,{keepStatus:true});
-      state.polygonStatus[layer]="no se pudo actualizar el índice";
+      const kept=state.polygonFeatures[layer]?.length||0;
+      state.polygonStatus[layer]=kept?("conexión inestable · manteniendo "+kept+" polígonos dibujados"):"no se pudo actualizar el índice";
       renderLayerControls();
     }finally{
       endMapBusy(busyToken);
@@ -1009,8 +1008,8 @@
       renderLayerControls();
     }catch(error){
       if(error?.name==="AbortError")return;
-      clearPolygonLayer(layer,{keepStatus:true});
-      state.polygonStatus[layer]="error al dibujar selección";
+      const kept=state.polygonFeatures[layer]?.length||0;
+      state.polygonStatus[layer]=kept?("conexión inestable · manteniendo "+kept+" polígonos dibujados"):"error al dibujar selección";
       renderLayerControls();
     }finally{
       endMapBusy(busyToken);
