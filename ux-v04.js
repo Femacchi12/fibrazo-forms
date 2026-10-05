@@ -10,8 +10,9 @@
   function currentUser(){return window.FIBRAZO_PUBLIC_USER||window.firebase?.auth?.().currentUser||null;}
 
   function renderPending(){
-    const count=$("pendingCount"),list=$("pendingList"); if(!count||!list)return;
+    const count=$("pendingCount"),list=$("pendingList"),hub=document.querySelector(".pending-hub"); if(!count||!list)return;
     count.textContent=String(pending.length);
+    if(hub)hub.hidden=pending.length===0;
     list.innerHTML=pending.length?pending.map(x=>'<article class="pending-item"><div><strong>'+esc(x.title)+'</strong><p>'+esc(x.description||"")+'</p></div><span>'+esc(x.status||"Pendiente")+'</span></article>').join(""):'<div class="pending-empty">No hay pendientes registrados.</div>';
   }
   function togglePending(force){
