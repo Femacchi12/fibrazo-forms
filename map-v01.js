@@ -25,6 +25,9 @@
     polygonIndexControllers:{barrios:null,estratos:null},
     polygonIndexData:{barrios:[],estratos:[]},
     polygonSelections:{barrios:new Set(),estratos:new Set()},
+    barrioListMode:"visible",
+    barrioAllSelected:false,
+    barrioExcluded:new Set(),
     polygonReloadTimer:null,
     polygonFocusUntil:0,
     polygonIndexGroups:new Map(),
@@ -33,6 +36,9 @@
     selectedMarker:null,
     selectedLatLng:null,
     longPress:null,
+    searchController:null,
+    searchMarker:null,
+    autoLocated:false,
     points:[],
     filtered:[],
     loadedOnce:false,
@@ -313,6 +319,7 @@
         '<button type="button" data-map-copy>⧉ Copiar coordenada</button>'+
         '<button type="button" data-map-route>↗ Ruta en Google Maps</button>'+
       '</div>'+
+      '<div class="map-coordinate-territorial"><span>CONTEXTO TERRITORIAL</span><div data-map-territorial><div class="map-coordinate-territorial-loading">Consultando nuestra base…</div></div></div>'+
       '<div class="map-coordinate-forms"><span>COMPLETAR FORMULARIO</span><div data-map-form-list></div></div>';
     document.body.append(backdrop,sheet);
     sheet.addEventListener("click",event=>event.stopPropagation());
@@ -321,6 +328,7 @@
     sheet.querySelector("[data-map-route]")?.addEventListener("click",()=>{
       window.open("https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(lat+","+lng),"_blank","noopener");
     });
+    loadCoordinateTerritorial(sheet,lat,lng);
     const list=sheet.querySelector("[data-map-form-list]");
     const forms=availableCoordinateForms();
     if(list){
@@ -329,6 +337,37 @@
         const button=event.target.closest("[data-form-id]");
         if(button)startFormAtCoordinate(button.dataset.formId,lat,lng);
       });
+    }
+
+    const territorialLayerText=(layer,label)=>{
+      const status=String(layer?.status||"");
+      const assigned=String(layer?.assigned?.name||"").trim();
+      const nearby=String(layer?.nearby?.name||"").trim();
+      const distance=formatDistance(layer?.distanceM);
+      if(status==="DENTRO")return {label,value:assigned||"Disponible",state:"ok"};
+      if(status==="FUERA")return {label,value:"Fuera del polígono"+(nearby?" · cercano: "+nearby:"")+(distance?" · "+distance:""),state:"near"};
+      return {label,value:"No disponible en nuestra base",state:"missing"};
+    };
+
+    async function loadCoordinateTerritorial(sheet,lat,lng){
+      const host=sheet?.querySelector("[data-map-territorial]");
+      if(!host)return;
+      try{
+        const data=await authorizedFetch("/api/exploration?lat="+encodeURIComponent(lat)+"&lng="+encodeURIComponent(lng));
+        if(!document.body.contains(sheet))return;
+        const territorial=data?.territorial||{};
+        const rows=[
+          territorialLayerText(territorial.city,"Ciudad / municipio"),
+          territorialLayerText(territorial.barrio,"Barrio"),
+          territorialLayerText(territorial.estrato,"Estrato"),
+          territorialLayerText(territorial.troncal,"Troncal")
+        ];
+        host.innerHTML=rows.map(row=>
+          '<div class="map-coordinate-territorial-row '+esc(row.state)+'"><b>'+esc(row.label)+'</b><span>'+esc(row.value)+'</span></div>'
+        ).join("");
+      }catch(_){
+        if(document.body.contains(sheet))host.innerHTML='<div class="map-coordinate-territorial-row missing"><b>Base territorial</b><span>No fue posible consultar la información en este momento.</span></div>';
+      }
     }
   }
 
@@ -798,8 +837,13 @@
     }
   }
 
+  function barrioIsChecked(id){
+    const key=String(id);
+    return state.barrioAllSelected?!state.barrioExcluded.has(key):state.polygonSelections.barrios.has(key);
+  }
+
   function renderBarrioControls(){
-    const host=$("mapBarrioControls"),options=$("mapBarrioOptions"),countEl=$("mapBarrioVisibleCount"),hint=$("mapBarrioHint");
+    const host=$("mapBarrioControls"),options=$("mapBarrioOptions"),countEl=$("mapBarrioVisibleCount"),hint=$("mapBarrioHint"),title=$("mapBarrioListTitle");
     if(!host||!options)return;
     host.hidden=!state.polygonActive.barrios;
     if(host.hidden)return;
@@ -807,20 +851,50 @@
     const all=state.polygonIndexData.barrios||[];
     const filtered=all.filter(item=>!search||norm(item.name).includes(search)||norm(item.municipio).includes(search)||norm(item.comuna).includes(search));
     if(countEl)countEl.textContent=String(all.length);
+    if(title)title.textContent=state.barrioListMode==="all"?"Todos los barrios de la base AMB":"Barrios visibles en esta vista";
+    $("mapBarrioModeVisible")?.classList.toggle("active",state.barrioListMode==="visible");
+    $("mapBarrioModeAll")?.classList.toggle("active",state.barrioListMode==="all");
     options.innerHTML=filtered.length?filtered.map(item=>{
-      const checked=state.polygonSelections.barrios.has(String(item.id));
+      const checked=barrioIsChecked(item.id);
       return '<label class="map-selective-option barrio-option'+(checked?' active':'')+'">'+
         '<input type="checkbox" data-layer-option="barrios" value="'+esc(item.id)+'" '+(checked?'checked':'')+'>'+
         '<i class="barrio-selector-dot"></i>'+
         '<span><b>'+esc(item.name||item.id)+'</b><small>'+esc(item.municipio||"")+(item.comuna?' · '+esc(item.comuna):'')+'</small></span>'+
       '</label>';
-    }).join(""):'<div class="map-selective-empty">'+(search?'No hay barrios visibles que coincidan con la búsqueda.':'No hay barrios visibles en esta escala.')+'</div>';
+    }).join(""):'<div class="map-selective-empty">'+(search?'No hay barrios que coincidan con la búsqueda.':'No hay barrios disponibles en esta vista.')+'</div>';
+
     if(hint){
-      const selected=state.polygonSelections.barrios.size;
+      const selected=state.barrioAllSelected
+        ?Math.max(0,all.length-state.barrioExcluded.size)
+        :state.polygonSelections.barrios.size;
+      const scope=state.barrioListMode==="all"?"la base completa":"la vista actual";
       hint.textContent=selected
-        ?selected+" barrio"+(selected===1?"":"s")+" seleccionado"+(selected===1?"":"s")+" · la lista muestra solo barrios observables en la vista actual."
-        :"Activa únicamente los barrios que quieras dibujar. La lista cambia al mover o acercar el mapa.";
+        ?selected+" barrio"+(selected===1?"":"s")+" seleccionado"+(selected===1?"":"s")+" · el mapa solo dibuja los seleccionados que estén dentro del zoom actual."
+        :"Listado de "+scope+". Puedes seleccionar individualmente o usar Seleccionar todos.";
     }
+  }
+
+  function setBarrioListMode(mode){
+    const next=mode==="all"?"all":"visible";
+    if(state.barrioListMode===next)return;
+    state.barrioListMode=next;
+    if($("mapBarrioSearch"))$("mapBarrioSearch").value="";
+    renderBarrioControls();
+    if(state.polygonActive.barrios)loadLayerIndex("barrios");
+  }
+
+  function selectAllBarrios(){
+    const items=state.polygonIndexData.barrios||[];
+    if(!items.length)return;
+    if(state.barrioListMode==="all"){
+      state.barrioAllSelected=true;
+      state.barrioExcluded.clear();
+      state.polygonSelections.barrios.clear();
+    }else{
+      for(const item of items)state.polygonSelections.barrios.add(String(item.id));
+    }
+    renderBarrioControls();
+    loadPolygonLayer("barrios");
   }
 
   function renderLayerControls(){
@@ -856,7 +930,8 @@
     if(!silent){state.polygonStatus[layer]="actualizando índice…";updatePolygonStatus();}
     const {bbox,zoom}=mapViewportQuery();
     try{
-      const url="/api/map-polygons?mode=index&layer="+encodeURIComponent(layer)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom);
+      const scope=layer==="barrios"?state.barrioListMode:"visible";
+      const url="/api/map-polygons?mode=index&layer="+encodeURIComponent(layer)+"&scope="+encodeURIComponent(scope)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom);
       const data=await authorizedFetch(url,controller);
       if(data.requiresZoom){
         state.polygonIndexData[layer]=[];
@@ -867,7 +942,9 @@
       }
       state.polygonIndexData[layer]=Array.isArray(data.items)?data.items:[];
       const visibleCount=layer==="barrios"?state.polygonIndexData[layer].length:Number(data.totalVisible||0);
-      state.polygonStatus[layer]=visibleCount+" visibles"+(state.polygonSelections[layer].size?" · cargando selección…":" · elige qué mostrar");
+      const hasSelection=layer==="barrios"?(state.barrioAllSelected||state.polygonSelections.barrios.size>0):state.polygonSelections[layer].size>0;
+      const noun=layer==="barrios"&&state.barrioListMode==="all"?" en base":" visibles";
+      state.polygonStatus[layer]=visibleCount+noun+(hasSelection?" · cargando selección…":" · elige qué mostrar");
       renderLayerControls();
       await loadPolygonLayer(layer,{silent:true});
     }catch(error){
@@ -891,10 +968,11 @@
     state.polygonControllers[layer]?.abort();
     state.polygonControllers[layer]=null;
 
-    if(!selection?.size){
+    const hasSelection=layer==="barrios"?(state.barrioAllSelected||selection?.size):selection?.size;
+    if(!hasSelection){
       clearPolygonLayer(layer,{keepStatus:true});
       const visible=layer==="barrios"?(state.polygonIndexData.barrios||[]).length:(state.polygonIndexData.estratos||[]).reduce((sum,item)=>sum+(Number(item.count)||0),0);
-      state.polygonStatus[layer]=visible+" visibles · elige qué mostrar";
+      state.polygonStatus[layer]=visible+(layer==="barrios"&&state.barrioListMode==="all"?" en base":" visibles")+" · elige qué mostrar";
       renderLayerControls();
       return;
     }
@@ -906,7 +984,9 @@
     const {bbox,zoom}=mapViewportQuery();
     const selected=[...selection];
     const filter=layer==="barrios"
-      ?("&ids="+encodeURIComponent(selected.join(",")))
+      ?(state.barrioAllSelected
+        ?("&allBarrios=1&excludeIds="+encodeURIComponent([...state.barrioExcluded].join(",")))
+        :("&ids="+encodeURIComponent(selected.join(","))))
       :("&estratos="+encodeURIComponent(selected.join(",")));
     try{
       const url="/api/map-polygons?mode=geometry&layer="+encodeURIComponent(layer)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom)+filter;
@@ -948,22 +1028,34 @@
     if(state.polygonReloadTimer)clearTimeout(state.polygonReloadTimer);
     state.polygonReloadTimer=setTimeout(()=>{
       for(const layer of ["barrios","estratos"]){
-        if(state.polygonActive[layer])refreshPolygonLayer(layer,{silent:true});
+        if(!state.polygonActive[layer])continue;
+        if(layer==="barrios"&&state.barrioListMode==="all")loadPolygonLayer(layer,{silent:true});
+        else refreshPolygonLayer(layer,{silent:true});
       }
     },380);
   }
 
   function clearLayerSelection(layer){
     state.polygonSelections[layer].clear();
+    if(layer==="barrios"){
+      state.barrioAllSelected=false;
+      state.barrioExcluded.clear();
+    }
     clearPolygonLayer(layer,{keepStatus:true});
     renderLayerControls();
     loadPolygonLayer(layer,{silent:true});
   }
 
   function setLayerSelection(layer,value,checked){
+    const key=String(value);
     const set=state.polygonSelections[layer];
-    if(checked)set.add(String(value));
-    else set.delete(String(value));
+    if(layer==="barrios"&&state.barrioAllSelected){
+      if(checked)state.barrioExcluded.delete(key);
+      else state.barrioExcluded.add(key);
+    }else{
+      if(checked)set.add(key);
+      else set.delete(key);
+    }
     renderLayerControls();
     loadPolygonLayer(layer,{silent:true});
   }
@@ -977,6 +1069,10 @@
     if(next){
       state.polygonSelections[layer].clear();
       state.polygonIndexData[layer]=[];
+      if(layer==="barrios"){
+        state.barrioAllSelected=false;
+        state.barrioExcluded.clear();
+      }
       if(!state.map.hasLayer(group))group.addTo(state.map);
       state.polygonStatus[layer]="actualizando índice…";
       updateLayerButtons();
@@ -993,6 +1089,10 @@
       state.polygonIndexControllers[layer]=null;
       state.polygonSelections[layer].clear();
       state.polygonIndexData[layer]=[];
+      if(layer==="barrios"){
+        state.barrioAllSelected=false;
+        state.barrioExcluded.clear();
+      }
       clearPolygonLayer(layer);
       if(state.map.hasLayer(group))state.map.removeLayer(group);
       updateLayerButtons();
@@ -1007,6 +1107,66 @@
     if(ref.bounds?.isValid())state.map.fitBounds(ref.bounds,{padding:[28,28],maxZoom:17});
     const child=ref.leaflet?.getLayers?.()[0];
     if(child?.openPopup)setTimeout(()=>child.openPopup(),220);
+  }
+
+  function hideMapSearchResults(){
+    const host=$("mapSearchResults");
+    if(host){host.hidden=true;host.innerHTML="";}
+  }
+
+  function renderMapSearchResults(results){
+    const host=$("mapSearchResults");
+    if(!host)return;
+    const rows=Array.isArray(results)?results:[];
+    host.hidden=false;
+    host.innerHTML=rows.length?rows.map((item,index)=>{
+      const type=String(item.type||"mapa");
+      const label={ciudad:"Ciudad / municipio",barrio:"Barrio FIBRAZO",troncal:"Troncal FIBRAZO",coordenada:"Coordenada",mapa:"Mapa"}[type]||"Mapa";
+      return '<button type="button" data-search-index="'+index+'">'+
+        '<span><b>'+esc(item.name||"Resultado")+'</b><small>'+esc(label)+(item.city?' · '+esc(item.city):'')+'</small></span>'+
+        '<em>'+esc(item.source||"")+'</em>'+
+      '</button>';
+    }).join(""):'<div class="map-search-empty">No encontramos coincidencias.</div>';
+    host._results=rows;
+  }
+
+  async function performMapSearch(){
+    const input=$("mapSearchInput"),query=String(input?.value||"").trim();
+    if(query.length<2){hideMapSearchResults();return;}
+    state.searchController?.abort();
+    const controller=new AbortController();
+    state.searchController=controller;
+    const busyToken=beginMapBusy("Buscando en el mapa…");
+    try{
+      const data=await authorizedFetch("/api/map-search?q="+encodeURIComponent(query),controller);
+      renderMapSearchResults(data.results||[]);
+    }catch(error){
+      if(error?.name!=="AbortError")renderMapSearchResults([]);
+    }finally{
+      endMapBusy(busyToken);
+      if(state.searchController===controller)state.searchController=null;
+    }
+  }
+
+  function selectMapSearchResult(item){
+    if(!item||!ensureMap())return;
+    hideMapSearchResults();
+    state.follow=false;
+    if($("mapFollowToggle"))$("mapFollowToggle").checked=false;
+    const bounds=Array.isArray(item.bounds)&&item.bounds.length===2?L.latLngBounds(item.bounds):null;
+    if(bounds?.isValid())state.map.fitBounds(bounds,{padding:[30,30],maxZoom:item.type==="ciudad"?13:17});
+    else if(Number.isFinite(Number(item.lat))&&Number.isFinite(Number(item.lng)))state.map.setView([Number(item.lat),Number(item.lng)],item.type==="ciudad"?13:17);
+
+    if(state.searchMarker){state.map.removeLayer(state.searchMarker);state.searchMarker=null;}
+    if(Number.isFinite(Number(item.lat))&&Number.isFinite(Number(item.lng))&&item.type!=="ciudad"){
+      state.searchMarker=L.marker([Number(item.lat),Number(item.lng)],{
+        pane:"surveyPane",
+        zIndexOffset:900,
+        icon:L.divIcon({className:"map-search-marker",html:"<span>⌕</span>",iconSize:[28,28],iconAnchor:[14,14]})
+      }).addTo(state.map);
+      state.searchMarker.bindTooltip(String(item.name||"Resultado"),{direction:"top"}).openTooltip();
+    }
+    mapStatus("Mostrando "+String(item.name||"resultado")+" · "+String(item.source||"mapa")+".","success");
   }
 
   async function loadPoints({fit=false,silent=false}={}){
@@ -1087,36 +1247,65 @@
     updateRouteMetrics();
   }
 
+  function updateTrackingUi(){
+    const active=state.watchId!==null;
+    const start=$("mapStartTracking"),stop=$("mapStopTracking"),status=$("mapTrackingState");
+    if(start){
+      start.textContent=active?"● Recorrido activo":"▶ Iniciar recorrido";
+      start.classList.toggle("tracking-active",active);
+      start.disabled=active;
+    }
+    if(stop){
+      stop.disabled=!active;
+      stop.classList.toggle("tracking-stop-ready",active);
+    }
+    if(status){
+      status.textContent=active?"Seguimiento activo":"Seguimiento detenido";
+      status.classList.toggle("active",active);
+    }
+  }
+
   function updateRouteMetrics(){
     const distance=routeDistance();
     if($("mapRouteDistance"))$("mapRouteDistance").textContent=formatDistance(distance)||"0 m";
     if($("mapRoutePoints"))$("mapRoutePoints").textContent=state.route.length;
-    if($("mapTrackingState"))$("mapTrackingState").textContent=state.watchId!==null?"Seguimiento activo":"Seguimiento detenido";
+    updateTrackingUi();
   }
 
-  function locateMe(){
+  function locateMe({auto=false}={}){
     if(!navigator.geolocation){
-      mapStatus("Este dispositivo no ofrece ubicación GPS.","error");return;
+      if(!auto)mapStatus("Este dispositivo no ofrece ubicación GPS.","error");
+      return;
     }
-    mapStatus("Buscando tu ubicación…","loading");
+    mapStatus(auto?"Buscando tu ubicación automáticamente…":"Buscando tu ubicación…","loading");
     navigator.geolocation.getCurrentPosition(
-      position=>{updateCurrentLocation(position,{center:true});mapStatus("Ubicación actual encontrada.","success");},
-      error=>mapStatus(error.code===1?"Permiso de ubicación denegado. Actívalo para este sitio.":"No se pudo obtener tu ubicación.","error"),
+      position=>{
+        updateCurrentLocation(position,{center:true});
+        mapStatus(auto?"Mapa centrado en tu ubicación actual.":"Ubicación actual encontrada.","success");
+      },
+      error=>{
+        const message=error.code===1?"Permiso de ubicación denegado. Actívalo para este sitio.":"No se pudo obtener tu ubicación.";
+        mapStatus(auto?"Ubicación automática no disponible · puedes usar Mi ubicación cuando quieras.":message,auto?"warning":"error");
+      },
       {enableHighAccuracy:true,timeout:15000,maximumAge:5000}
     );
   }
 
   function startTracking(){
-    if(state.watchId!==null)return;
+    if(state.watchId!==null){
+      mapStatus("El recorrido ya está activo.","success");
+      return;
+    }
     if(!navigator.geolocation){mapStatus("Este dispositivo no ofrece ubicación GPS.","error");return;}
     state.follow=true;
     if($("mapFollowToggle"))$("mapFollowToggle").checked=true;
-    mapStatus("Iniciando seguimiento del recorrido…","loading");
+    mapStatus("Recorrido activo · esperando la primera lectura GPS…","loading");
+
     state.watchId=navigator.geolocation.watchPosition(
       position=>{
         updateCurrentLocation(position,{center:false});
         addRoutePoint(position);
-        mapStatus("Recorrido activo · GPS "+(Number.isFinite(position.coords.accuracy)?"± "+Math.round(position.coords.accuracy)+" m":"activo"),"success");
+        mapStatus("Recorrido activo · GPS "+(Number.isFinite(position.coords.accuracy)?"± "+Math.round(position.coords.accuracy)+" m":"activo")+" · los metros aumentan al desplazarte.","success");
       },
       error=>{
         stopTracking(false);
@@ -1125,6 +1314,16 @@
       {enableHighAccuracy:true,timeout:20000,maximumAge:3000}
     );
     updateRouteMetrics();
+
+    navigator.geolocation.getCurrentPosition(
+      position=>{
+        updateCurrentLocation(position,{center:true});
+        addRoutePoint(position);
+        mapStatus("Recorrido activo · punto inicial registrado. Comienza a desplazarte para dibujar la ruta.","success");
+      },
+      ()=>{},
+      {enableHighAccuracy:true,timeout:12000,maximumAge:3000}
+    );
   }
 
   function stopTracking(show=true){
@@ -1166,10 +1365,15 @@
     state.viewActive=true;
     if(!ensureMap())return;
     setTimeout(()=>state.map.invalidateSize(),100);
-    loadPoints({fit:!state.loadedOnce});
+    loadPoints({fit:false});
     updateLayerButtons();
     updatePolygonStatus();
+    updateTrackingUi();
     for(const layer of ["barrios","estratos"])if(state.polygonActive[layer])refreshPolygonLayer(layer,{silent:true});
+    if(!state.autoLocated){
+      state.autoLocated=true;
+      setTimeout(()=>locateMe({auto:true}),220);
+    }
     startAutoRefresh();
   }
   function onMapClose(){
@@ -1190,6 +1394,9 @@
     $("mapViewBucaramanga")?.addEventListener("click",viewBucaramanga);
     $("mapClearEstratos")?.addEventListener("click",()=>clearLayerSelection("estratos"));
     $("mapClearBarrios")?.addEventListener("click",()=>clearLayerSelection("barrios"));
+    $("mapSelectAllBarrios")?.addEventListener("click",selectAllBarrios);
+    $("mapBarrioModeVisible")?.addEventListener("click",()=>setBarrioListMode("visible"));
+    $("mapBarrioModeAll")?.addEventListener("click",()=>setBarrioListMode("all"));
     $("mapBarrioSearch")?.addEventListener("input",renderBarrioControls);
     $("mapEstratoOptions")?.addEventListener("change",event=>{
       const input=event.target.closest('input[data-layer-option="estratos"]');
@@ -1198,6 +1405,14 @@
     $("mapBarrioOptions")?.addEventListener("change",event=>{
       const input=event.target.closest('input[data-layer-option="barrios"]');
       if(input)setLayerSelection("barrios",input.value,input.checked);
+    });
+    $("mapSearchButton")?.addEventListener("click",performMapSearch);
+    $("mapSearchInput")?.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();performMapSearch();}});
+    $("mapSearchResults")?.addEventListener("click",event=>{
+      const button=event.target.closest("[data-search-index]");
+      if(!button)return;
+      const results=$("mapSearchResults")?._results||[];
+      selectMapSearchResult(results[Number(button.dataset.searchIndex)]);
     });
     $("mapBaseStreet")?.addEventListener("click",()=>setBaseMap("street"));
     $("mapBaseSatellite")?.addEventListener("click",()=>setBaseMap("satellite"));
@@ -1217,7 +1432,11 @@
         state.points=[];
         state.filtered=[];
         state.loadedOnce=false;
+        state.autoLocated=false;
         state.route=user?routeStorage():[];
+        state.barrioListMode="visible";
+        state.barrioAllSelected=false;
+        state.barrioExcluded.clear();
         for(const layer of ["barrios","estratos"]){
           state.polygonActive[layer]=false;
           state.polygonSelections[layer].clear();
@@ -1233,6 +1452,7 @@
       });
     }
     window.FIBRAZO_MAP_REFRESH=()=>loadPoints({fit:false});
+    updateTrackingUi();
   }
 
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",bind);

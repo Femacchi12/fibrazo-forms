@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.css">
-  <link rel="stylesheet" href="/styles.css?v=2026.10.05.22">
+  <link rel="stylesheet" href="/styles.css?v=2026.10.05.23">
 </head>
 <body class="auth-pending">
   <section id="authGate" class="auth-gate" aria-live="polite">
@@ -38,7 +38,7 @@
         <p>Formularios, relevamientos y resultados en un único espacio.</p>
       </div>
       <div class="update-cards">
-        <article><span>Versión</span><b>0.8.22 · Polígonos SVG · Motor territorial v3.2</b></article>
+        <article><span>Versión</span><b>0.8.23 · Mapa inteligente · Motor territorial v3.2</b></article>
         <article><span>Formularios activos</span><b id="activeFormsCount">2</b></article>
       </div>
       <div id="authSession" class="auth-session" hidden>
@@ -290,6 +290,15 @@
           </div>
         </div>
 
+        <div class="map-search-shell">
+          <div class="map-search-box">
+            <span>⌕</span>
+            <input id="mapSearchInput" type="search" placeholder="Buscar ciudad, barrio, troncal o coordenada…" autocomplete="off" aria-label="Buscar en el mapa">
+            <button id="mapSearchButton" class="secondary-button compact" type="button">Buscar</button>
+          </div>
+          <div id="mapSearchResults" class="map-search-results" hidden></div>
+        </div>
+
         <div id="mapFiltersPanel" class="map-filters-panel" hidden>
           <div class="map-filters">
             <select id="mapCityFilter" aria-label="Filtrar ciudad"><option value="all">Todas las ciudades</option></select>
@@ -341,12 +350,19 @@
 
           <section id="mapBarrioControls" class="map-selective-layer" hidden>
             <div class="map-selective-layer-head">
-              <div><span>BARRIOS</span><strong>Barrios visibles en esta vista</strong></div>
+              <div><span>BARRIOS</span><strong id="mapBarrioListTitle">Barrios visibles en esta vista</strong></div>
               <span id="mapBarrioVisibleCount" class="map-layer-count">0</span>
             </div>
+            <div class="map-barrio-mode" role="group" aria-label="Alcance del listado de barrios">
+              <button id="mapBarrioModeVisible" class="active" type="button">Vista actual</button>
+              <button id="mapBarrioModeAll" type="button">Todos</button>
+            </div>
             <div class="map-barrio-search">
-              <input id="mapBarrioSearch" type="search" placeholder="Buscar barrio visible…" autocomplete="off">
-              <button id="mapClearBarrios" class="secondary-button compact" type="button">Apagar todos</button>
+              <input id="mapBarrioSearch" type="search" placeholder="Buscar barrio…" autocomplete="off">
+              <div class="map-barrio-actions">
+                <button id="mapSelectAllBarrios" class="secondary-button compact" type="button">Seleccionar todos</button>
+                <button id="mapClearBarrios" class="secondary-button compact" type="button">Apagar todos</button>
+              </div>
             </div>
             <div id="mapBarrioOptions" class="map-barrio-options"></div>
             <small id="mapBarrioHint" class="map-selective-hint">Mueve o acerca el mapa para actualizar este listado.</small>
@@ -411,18 +427,18 @@
     </section>
   </main>
 
-  <footer>FIBRAZO · Growth <span>Forms v0.8.22 · Polígonos SVG · Motor territorial v3.2 · 2026</span></footer>
+  <footer>FIBRAZO · Growth <span>Forms v0.8.23 · Mapa inteligente · Motor territorial v3.2 · 2026</span></footer>
 
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
-  <script src="/forms-config.js?v=2026.10.05.22"></script>
-  <script src="/app.js?v=2026.10.05.22"></script>
-  <script src="/access-v03.js?v=2026.10.05.22"></script>
-  <script src="/offline-v04.js?v=2026.10.05.22"></script>
-  <script src="/ux-v04.js?v=2026.10.05.22"></script>
-  <script src="/admin-v03.js?v=2026.10.05.22"></script>
+  <script src="/forms-config.js?v=2026.10.05.23"></script>
+  <script src="/app.js?v=2026.10.05.23"></script>
+  <script src="/access-v03.js?v=2026.10.05.23"></script>
+  <script src="/offline-v04.js?v=2026.10.05.23"></script>
+  <script src="/ux-v04.js?v=2026.10.05.23"></script>
+  <script src="/admin-v03.js?v=2026.10.05.23"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.umd.min.js"></script>
-  <script src="/map-v01.js?v=2026.10.05.22"></script>
+  <script src="/map-v01.js?v=2026.10.05.23"></script>
 </body>
 </html>

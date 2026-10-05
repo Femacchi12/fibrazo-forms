@@ -237,6 +237,10 @@ function applySelection(layer,rows,query){
       return !!match&&selected.has(match[1]);
     });
   }
+  const excluded=new Set(parseList(query.excludeIds));
+  if(String(query.allBarrios||"")==="1"){
+    return rows.filter(row=>!excluded.has(safeValue(row,"ID_Barrio")));
+  }
   const selected=new Set(parseList(query.ids));
   if(!selected.size)return [];
   return rows.filter(row=>selected.has(safeValue(row,"ID_Barrio")));
@@ -261,6 +265,22 @@ module.exports=async(req,res)=>{
     ]);
     if(!canUseDashboard(user,caps.adminActive,forms))throw httpError("DASHBOARD_ACCESS_DENIED",403);
 
+    const mode=String(req.query.mode||"geometry").toLowerCase();
+    const indexScope=String(req.query.scope||"visible").toLowerCase();
+
+    if(mode==="index"&&layer==="barrios"&&indexScope==="all"){
+      return res.status(200).json({
+        ok:true,
+        mode:"index",
+        layer,
+        scope:"BUC_AMB_ALL",
+        minZoom:cfg.minZoom,
+        requiresZoom:false,
+        totalVisible:meta.rows.length,
+        items:indexItems(layer,meta.rows)
+      });
+    }
+
     if(Number.isFinite(zoom)&&zoom<cfg.minZoom){
       return res.status(200).json({
         ok:true,layer,minZoom:cfg.minZoom,requiresZoom:true,truncated:false,totalVisible:0,features:[]
@@ -268,14 +288,13 @@ module.exports=async(req,res)=>{
     }
 
     let visible=meta.rows.filter(row=>intersects(row,bbox));
-    const mode=String(req.query.mode||"geometry").toLowerCase();
 
     if(mode==="index"){
       return res.status(200).json({
         ok:true,
         mode:"index",
         layer,
-        scope:"BUC_AMB",
+        scope:"BUC_AMB_VISIBLE",
         minZoom:cfg.minZoom,
         requiresZoom:false,
         totalVisible:visible.length,

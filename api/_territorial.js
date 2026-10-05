@@ -439,6 +439,117 @@ async function resolveTerritorial(auth,latValue,lonValue){
   };
 }
 
+async function searchTerritorial(auth,queryValue,{limit=18}={}){
+  const query=norm(queryValue);
+  if(query.length<2)return[];
+
+  const rank=value=>{
+    const v=norm(value);
+    if(v===query)return 0;
+    if(v.startsWith(query))return 1;
+    if(v.includes(query))return 2;
+    return 99;
+  };
+  const center=item=>({
+    lat:(Number(item.minLat)+Number(item.maxLat))/2,
+    lng:(Number(item.minLon)+Number(item.maxLon))/2
+  });
+  const bounds=item=>[
+    [Number(item.minLat),Number(item.minLon)],
+    [Number(item.maxLat),Number(item.maxLon)]
+  ];
+  const out=[],seen=new Set();
+  const add=result=>{
+    const key=[result.type,norm(result.name),norm(result.city||""),result.id||""].join("|");
+    if(seen.has(key))return;
+    seen.add(key);
+    out.push(result);
+  };
+
+  const [catalog,cityItems]=await Promise.all([loadCatalog(auth),loadCityItems(auth)]);
+
+  for(const item of cityItems){
+    const labels=[item.name,item.catalog?.city,...(item.catalog?.municipalities||[])].filter(Boolean);
+    const best=Math.min(...labels.map(rank));
+    if(best>=99)continue;
+    add({
+      type:"ciudad",
+      id:item.id,
+      name:item.name||item.catalog?.city||"",
+      city:item.catalog?.city||"",
+      catalogId:item.catalog?.id||"",
+      source:"Base territorial FIBRAZO",
+      rank:best,
+      ...center(item),
+      bounds:bounds(item)
+    });
+  }
+
+  const matchingCatalog=catalog.filter(cat=>
+    [cat.city,...cat.municipalities].some(value=>rank(value)<99)
+  );
+  for(const cat of matchingCatalog){
+    if(out.some(x=>x.type==="ciudad"&&x.catalogId===cat.id))continue;
+    const metas=await Promise.all([
+      loadLayerMeta(auth,cat.fileId,"barrio").catch(()=>null),
+      loadLayerMeta(auth,cat.fileId,"troncal").catch(()=>null)
+    ]);
+    const items=metas.flatMap(meta=>meta?.items||[]);
+    if(!items.length)continue;
+    const box={
+      minLon:Math.min(...items.map(x=>x.minLon)),
+      minLat:Math.min(...items.map(x=>x.minLat)),
+      maxLon:Math.max(...items.map(x=>x.maxLon)),
+      maxLat:Math.max(...items.map(x=>x.maxLat))
+    };
+    add({
+      type:"ciudad",
+      id:cat.id,
+      name:cat.city,
+      city:cat.city,
+      catalogId:cat.id,
+      source:"Catálogo territorial FIBRAZO",
+      rank:Math.min(...[cat.city,...cat.municipalities].map(rank)),
+      ...center(box),
+      bounds:bounds(box)
+    });
+  }
+
+  const layerJobs=[];
+  for(const cat of catalog){
+    for(const kind of ["barrio","troncal"]){
+      layerJobs.push(
+        loadLayerMeta(auth,cat.fileId,kind)
+          .then(meta=>({cat,kind,meta}))
+          .catch(()=>({cat,kind,meta:null}))
+      );
+    }
+  }
+  const layerData=await Promise.all(layerJobs);
+  for(const {cat,kind,meta} of layerData){
+    for(const item of meta?.items||[]){
+      const r=rank(item.name);
+      if(r>=99)continue;
+      add({
+        type:kind,
+        id:item.id,
+        name:item.name,
+        city:cat.city,
+        catalogId:cat.id,
+        source:item.source||"Base territorial FIBRAZO",
+        rank:r,
+        ...center(item),
+        bounds:bounds(item)
+      });
+    }
+  }
+
+  return out
+    .sort((a,b)=>a.rank-b.rank||({ciudad:0,barrio:1,troncal:2}[a.type]??9)-({ciudad:0,barrio:1,troncal:2}[b.type]??9)||a.name.localeCompare(b.name,"es",{sensitivity:"base"}))
+    .slice(0,Math.max(1,Math.min(Number(limit)||18,30)))
+    .map(({rank,...item})=>item);
+}
+
 function flattenTerritorial(t){
   const value=(layer,prefix)=>({
     [prefix+"Estado"]:layer?.status||"",
@@ -466,6 +577,7 @@ module.exports={
   TERRITORIAL_MASTER_SHEET_ID,
   TERRITORIAL_VERSION,
   resolveTerritorial,
+  searchTerritorial,
   flattenTerritorial,
   _internals:{parseWkt,inGeometry,geometryDistance,bboxDistance}
 };
