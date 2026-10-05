@@ -104,10 +104,53 @@
     if(stepper)stepper.hidden=policy.showProgress===false;
     if(counter)counter.hidden=policy.showProgress===false;
     clearValidation();renderSection();window.FIBRAZO_OFFLINE?.refreshUi?.();
-    if(form.id==="CHURN")setTimeout(captureChurnGpsAutomatically,250);
+    const mapPreset=window.FIBRAZO_MAP_COORDINATE_PRESET;
+    if(mapPreset){
+      window.FIBRAZO_MAP_COORDINATE_PRESET=null;
+      setTimeout(()=>applyMapCoordinatePreset(mapPreset),120);
+    }else if(form.id==="CHURN"){
+      setTimeout(captureChurnGpsAutomatically,250);
+    }
     window.scrollTo({top:0,behavior:"smooth"});
   }
   window.FIBRAZO_UX_OPEN_FORM=openForm;
+
+  async function applyMapCoordinatePreset(preset){
+    if(!state.form)return;
+    const lat=Number(preset?.lat),lng=Number(preset?.lng);
+    if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat<-90||lat>90||lng<-180||lng>180)return;
+    const text=lat.toFixed(6)+", "+lng.toFixed(6);
+    const direct=document.querySelector('[name="coordenadas"]');
+    if(direct){
+      direct.value=text;
+      direct.dispatchEvent(new Event("input",{bubbles:true}));
+      direct.focus({preventScroll:true});
+      return;
+    }
+
+    const field=document.querySelector('[data-key="coordenadas"]');
+    const value=field?.querySelector(".gps-value");
+    const manual=field?.querySelector(".gps-manual-editor input");
+    state.gps={lat,lng,accuracy:null,cityDetected:"",citySource:"map-selection"};
+    if(value)value.textContent=text+" · seleccionado en mapa";
+    if(manual)manual.value=text;
+
+    if(state.form?.id==="CHURN"){
+      const fallback=detectConfiguredCityOffline(lat,lng);
+      if(fallback)applyDetectedCity(fallback,"map-selection");
+      const cityStatus=document.querySelector('[data-gps-city-for="coordenadas"]');
+      if(cityStatus&&!fallback)cityStatus.textContent=navigator.onLine?"Ciudad GPS: identificando…":"Ciudad GPS: sin conexión · selección manual disponible";
+      if(navigator.onLine){
+        try{
+          const resolved=await reverseGeocodeCity(lat,lng);
+          if(resolved)applyDetectedCity(resolved,"map-selection");
+        }catch(_){}
+      }
+    }else if(isExplorationForm()){
+      await resolveExplorationMunicipality(lat,lng,"coordenadas");
+    }
+    clearError("coordenadas");
+  }
 
   function exitForm(){
     if(publicMode){location.reload();return;}
