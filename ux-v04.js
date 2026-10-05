@@ -477,9 +477,13 @@
       if(geoState){
         const base=String(fieldValue(field.key)||"—");
         const near=String(state.gps[prefix+"Nearby"]||"");
-        const distance=Number(state.gps[prefix+"DistanceM"]);
-        if(geoState==="DENTRO")return base+" · coincidencia exacta";
-        if(geoState==="FUERA")return base+" · sin asignación"+(near?" · más cercano: "+near:"")+(Number.isFinite(distance)?" · ~"+Math.round(distance)+" m":"");
+        const distance=distanceNumber(state.gps[prefix+"DistanceM"]);
+        const baseNorm=base.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+        if(geoState==="DENTRO"){
+          if(prefix==="estrato"&&baseNorm==="sin informacion")return base+" · dentro de un polígono cuyo estrato no está informado";
+          return base+" · coincidencia exacta";
+        }
+        if(geoState==="FUERA")return base+" · sin asignación"+(near?" · más cercano: "+near:"")+(distance!==null?" · distancia: "+Math.round(distance)+" m":"");
         if(geoState==="SIN_CAPA_CANONICA")return base+" · sin capa canónica disponible";
         if(geoState==="SIN_CAPA")return base+" · sin capa disponible";
       }
@@ -730,12 +734,30 @@
     clearError(key);
   }
 
-  function geoLayerDetail(status,nearby,distance,source,label){
+  function distanceNumber(value){
+    if(value===null||value===undefined||value==="")return null;
+    const n=Number(value);
+    return Number.isFinite(n)?n:null;
+  }
+
+  function geoLayerDetail(status,assigned,nearby,distance,source,label){
     const stateCode=String(status||"");
+    const current=String(assigned||"").trim();
     const near=String(nearby||"").trim();
-    const meters=Number(distance);
-    if(stateCode==="DENTRO")return"Coincidencia exacta"+(source?" · "+source:"");
-    if(stateCode==="FUERA")return"Fuera del polígono"+(near?" · "+label+" más cercano: "+near:"")+(Number.isFinite(meters)?" · ~"+Math.round(meters)+" m":"");
+    const meters=distanceNumber(distance);
+    const currentNorm=current.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+
+    if(stateCode==="DENTRO"){
+      if(label==="Estrato"&&(!current||currentNorm==="sin informacion")){
+        return"Dentro de un polígono de estrato, pero ese polígono no tiene estrato informado"+(source?" · "+source:"");
+      }
+      return"Coincidencia exacta"+(source?" · "+source:"");
+    }
+    if(stateCode==="FUERA"){
+      return"Fuera del polígono"
+        +(near?" · "+label+" más cercano: "+near:"")
+        +(meters!==null?" · Distancia al polígono: "+Math.round(meters)+" m":"");
+    }
     if(stateCode==="SIN_CAPA_CANONICA")return"Sin capa canónica disponible para "+label.toLowerCase();
     if(stateCode==="SIN_CAPA")return"Sin capa disponible para "+label.toLowerCase();
     return"";
@@ -773,20 +795,20 @@
           territorialFileId:data.territorialFileId||"",
           cityStatus:data.cityStatus||"",
           cityNearby:data.cityNearby||"",
-          cityDistanceM:Number.isFinite(Number(data.cityDistanceM))?Number(data.cityDistanceM):null,
+          cityDistanceM:distanceNumber(data.cityDistanceM),
           barrioSource:data.barrioSource||"",
           barrioStatus:data.barrioStatus||"",
           barrioNearby:data.barrioNearby||"",
-          barrioDistanceM:Number.isFinite(Number(data.barrioDistanceM))?Number(data.barrioDistanceM):null,
+          barrioDistanceM:distanceNumber(data.barrioDistanceM),
           estratoSource:data.estratoSource||"",
           estratoStatus:data.estratoStatus||"",
           estratoNearby:data.estratoNearby||"",
           estratoMatch:data.estratoMatch||"",
-          estratoDistanceM:Number.isFinite(Number(data.estratoDistanceM))?Number(data.estratoDistanceM):null,
+          estratoDistanceM:distanceNumber(data.estratoDistanceM),
           troncalSource:data.troncalSource||"",
           troncalStatus:data.troncalStatus||"",
           troncalNearby:data.troncalNearby||"",
-          troncalDistanceM:Number.isFinite(Number(data.troncalDistanceM))?Number(data.troncalDistanceM):null
+          troncalDistanceM:distanceNumber(data.troncalDistanceM)
         });
       }
 
@@ -795,18 +817,21 @@
 
       const barrioInfo=document.querySelector('[data-geo-info-for="sector_barrio"]');
       if(barrioInfo){
-        const detail=geoLayerDetail(data.barrioStatus,data.barrioNearby,data.barrioDistanceM,data.barrioSource,"Barrio");
+        const detail=geoLayerDetail(data.barrioStatus,data.barrio,data.barrioNearby,data.barrioDistanceM,data.barrioSource,"Barrio");
         barrioInfo.textContent=detail;barrioInfo.hidden=!detail;
       }
       const estratoInfo=document.querySelector('[data-geo-info-for="estrato"]');
       if(estratoInfo){
-        const detail=geoLayerDetail(data.estratoStatus,data.estratoNearby,data.estratoDistanceM,data.estratoSource,"Estrato");
+        const detail=geoLayerDetail(data.estratoStatus,data.estrato,data.estratoNearby,data.estratoDistanceM,data.estratoSource,"Estrato");
         estratoInfo.textContent=detail;estratoInfo.hidden=!detail;
       }
       const cityStatus=document.querySelector('[data-gps-city-for="coordenadas"]');
       if(cityStatus){
+        const cityDistance=distanceNumber(data.cityDistanceM);
         if(data.cityStatus==="DENTRO"&&data.city)cityStatus.textContent="Municipio: "+data.city+" · coincidencia exacta";
-        else if(data.cityStatus==="FUERA")cityStatus.textContent="Fuera del ámbito territorial"+(data.cityNearby?" · municipio más cercano: "+data.cityNearby:"")+(Number.isFinite(Number(data.cityDistanceM))?" · ~"+Math.round(Number(data.cityDistanceM))+" m":"");
+        else if(data.cityStatus==="FUERA")cityStatus.textContent="Fuera del límite municipal"
+          +(data.cityNearby?" · Municipio más cercano: "+data.cityNearby:"")
+          +(cityDistance!==null?" · Distancia al límite: "+Math.round(cityDistance)+" m":"");
         else if(data.cityStatus==="SIN_CAPA_CANONICA")cityStatus.textContent="Municipio: sin capa canónica disponible";
         else if(data.cityStatus==="SIN_CAPA")cityStatus.textContent="Municipio: sin capa territorial disponible";
       }
