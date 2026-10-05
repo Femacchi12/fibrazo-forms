@@ -288,7 +288,7 @@
     }).addTo(state.map);
     state.selectedMarker.bindTooltip("Punto seleccionado · toca para abrir acciones",{direction:"top"});
     state.selectedMarker.on("click",event=>{
-      L.DomEvent.stopPropagation(event);
+      if(event?.originalEvent)L.DomEvent.stopPropagation(event.originalEvent);
       if(state.selectedLatLng)openCoordinateSheet(state.selectedLatLng);
     });
 
@@ -956,7 +956,6 @@
       const requiredZoom=layer==="estratos"?11:10;
       if(!viewTouchesBucaramanga()||state.map.getZoom()<requiredZoom){
         viewBucaramanga();
-        setTimeout(()=>{if(state.polygonActive[layer])refreshPolygonLayer(layer);},650);
       }else{
         refreshPolygonLayer(layer);
       }
