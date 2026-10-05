@@ -22,7 +22,7 @@ const CONFIG={
     wktCol:"K",
     id:"ID_Estrato_Poligono",
     name:"Estrato",
-    minZoom:12,
+    minZoom:11,
     maxFeatures:1200
   }
 };
