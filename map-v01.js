@@ -366,7 +366,17 @@
     });
     window.addEventListener("fibrazo:submission-saved",()=>{if(state.viewActive)loadPoints({silent:true});});
     if(window.firebase?.auth){
-      firebase.auth().onAuthStateChanged(user=>{if(!user)stopTracking(false);});
+      firebase.auth().onAuthStateChanged(user=>{
+        stopTracking(false);
+        state.points=[];
+        state.filtered=[];
+        state.loadedOnce=false;
+        state.route=user?routeStorage():[];
+        if(state.map){
+          redrawRoute();
+          renderMarkers();
+        }
+      });
     }
     window.FIBRAZO_MAP_REFRESH=()=>loadPoints({fit:false});
   }
