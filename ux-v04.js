@@ -111,6 +111,13 @@
       setTimeout(()=>applyMapCoordinatePreset(mapPreset),120);
     }else if(form.id==="CHURN"){
       setTimeout(captureChurnGpsAutomatically,250);
+    }else if(form.id==="EXPLORACION_PRESENCIAL"){
+      setTimeout(()=>{
+        const field=document.querySelector('[data-key="coordenadas"]');
+        const value=field?.querySelector(".gps-value");
+        const button=field?.querySelector(".gps-box > button");
+        if(value&&button&&!state.gps)captureGps(value,button,"coordenadas");
+      },250);
     }
     window.scrollTo({top:0,behavior:"smooth"});
   }
@@ -336,6 +343,11 @@
     const box=document.createElement("div");box.className="gps-box";const value=document.createElement("div");value.className="gps-value";value.textContent="Ubicación pendiente";
     const btn=document.createElement("button");btn.type="button";btn.className="secondary-button";btn.textContent="Tomar coordenadas";btn.addEventListener("click",()=>captureGps(value,btn,field.key));
     box.append(value,btn);
+    if(field.key==="coordenadas"&&state.form?.id==="EXPLORACION_PRESENCIAL"){
+      const improve=document.createElement("button");improve.type="button";improve.className="secondary-button compact gps-improve-button";improve.textContent="◎ Mejorar precisión";
+      improve.addEventListener("click",()=>captureGps(value,btn,field.key));
+      box.appendChild(improve);
+    }
     if(field.key==="coordenadas"&&(state.form?.id==="CHURN"||isExplorationForm())){
       const city=document.createElement("div");city.className="gps-city";city.dataset.gpsCityFor=field.key;
       city.textContent=state.form?.id==="CHURN"?"Ciudad GPS: pendiente":"Municipio: pendiente";
@@ -394,8 +406,23 @@
     const limit=publicMode?Math.max(0,Math.min(3,Number(window.FIBRAZO_PUBLIC_POLICY?.maxPhotos??3))):3;
     const slots=document.createElement("div");slots.className="photo-slots";
     const makePicker=(capture,onFile)=>{
-      const picker=document.createElement("input");picker.type="file";picker.accept="image/*";if(capture)picker.capture="environment";picker.hidden=true;
-      picker.addEventListener("change",async()=>{const file=picker.files?.[0];if(!file)return;try{const data=await compressImage(file,1280,publicMode?.68:.72);onFile({name:file.name||"foto.jpg",data});clearError(field.key);}catch(_){}});
+      const picker=document.createElement("input");picker.type="file";picker.accept="image/*";if(capture)picker.capture="environment";else picker.multiple=true;picker.hidden=true;
+      picker.addEventListener("change",async()=>{
+        const files=[...(picker.files||[])];if(!files.length)return;
+        const available=Math.max(0,limit-state.photos.length+(capture?0:0));
+        const selected=capture?files.slice(0,1):files.slice(0,Math.max(1,available));
+        try{
+          const photos=[];
+          for(const file of selected){const data=await compressImage(file,1280,publicMode?.68:.72);photos.push({name:file.name||"foto.jpg",data});}
+          if(capture)onFile(photos[0]);
+          else{
+            for(const photo of photos){if(state.photos.length<limit)state.photos.push(photo);}
+            render();
+          }
+          clearError(field.key);
+        }catch(_){}
+        picker.value="";
+      });
       return picker;
     };
     const render=()=>{
