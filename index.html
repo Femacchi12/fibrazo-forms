@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.css">
-  <link rel="stylesheet" href="/styles.css?v=2026.10.06.29">
+  <link rel="stylesheet" href="/styles.css?v=2026.10.06.30">
 </head>
 <body class="auth-pending">
   <section id="authGate" class="auth-gate" aria-live="polite">
@@ -218,6 +218,12 @@
         <article class="kpi"><span>RESPUESTAS EXPLORACIÓN</span><strong id="explorationCount">0</strong><small>registros</small></article>
         <article class="kpi"><span>TOTAL</span><strong id="totalCount">0</strong><small>respuestas</small></article>
         <article class="kpi"><span>ESTADO</span><strong class="status-value" id="backendState">LISTO</strong><small id="backendDetail">sincronización</small></article>
+      </section>
+
+      <section class="panel operator-library">
+        <div class="section-title"><div><span>BIBLIOTECA DE IDENTIFICACIÓN</span><h2>Inteligencia de operadores</h2><p>Consulta fichas técnicas y visuales para reconocer ISPs durante el trabajo de campo.</p></div></div>
+        <div class="operator-library-tools"><input id="operatorLibrarySearch" type="search" placeholder="Buscar operador, caja, marquilla, tensor…" autocomplete="off"></div>
+        <div id="operatorLibraryCards" class="operator-library-cards"><div class="empty-state">Todavía no hay fichas de operadores registradas.</div></div>
       </section>
 
       <section class="panel competition-analysis">
@@ -447,18 +453,18 @@
     </section>
   </main>
 
-  <footer>FIBRAZO · Growth <span>Forms v0.8.29 · Análisis de competencia · Motor territorial v3.2 · 2026</span></footer>
+  <footer>FIBRAZO · Growth <span>Forms v0.8.30 · Biblioteca de operadores · Motor territorial v3.2 · 2026</span></footer>
 
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
-  <script src="/forms-config.js?v=2026.10.06.29"></script>
-  <script src="/app.js?v=2026.10.06.29"></script>
-  <script src="/access-v03.js?v=2026.10.06.29"></script>
-  <script src="/offline-v04.js?v=2026.10.06.29"></script>
-  <script src="/ux-v04.js?v=2026.10.06.29"></script>
-  <script src="/admin-v03.js?v=2026.10.06.29"></script>
+  <script src="/forms-config.js?v=2026.10.06.30"></script>
+  <script src="/app.js?v=2026.10.06.30"></script>
+  <script src="/access-v03.js?v=2026.10.06.30"></script>
+  <script src="/offline-v04.js?v=2026.10.06.30"></script>
+  <script src="/ux-v04.js?v=2026.10.06.30"></script>
+  <script src="/admin-v03.js?v=2026.10.06.30"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.umd.min.js"></script>
-  <script src="/map-v01.js?v=2026.10.06.29"></script>
+  <script src="/map-v01.js?v=2026.10.06.30"></script>
 </body>
 </html>
