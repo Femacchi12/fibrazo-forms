@@ -2124,3 +2124,30 @@ body.form-mode main{width:min(1180px,96%);padding-top:14px}
 .binary-toggle.brand-movistar .binary-toggle-button{border-color:#aab3b8!important;background:#25292b!important}.binary-toggle.brand-movistar .binary-toggle-button.is-yes{background:#4b5357!important;border-color:#e0e5e8!important}
 .isp-field-state{padding:6px;border-radius:12px;border:2px solid #59645f}.isp-field-state.isp-none{background:#050706;border-color:#59645f}.isp-field-state.isp-unknown{background:#3a3000;border-color:#ffd84a}.isp-field-state.isp-known{background:#073c2b;border-color:#00fe9c}
 .operator-memory-inline{display:flex;gap:8px;grid-column:1/-1;margin:0 0 12px;padding:10px;background:#080d0a;border:2px solid #42524b;border-radius:14px}.operator-memory-inline button{flex:1;min-height:48px;border-radius:12px;background:#121b17;color:#fff;font-weight:900;border:2px solid #66756e}.operator-memory-inline button:first-child{border-color:#00fe9c}.operator-memory-inline button:last-child{border-color:#ff6464}
+
+/* v0.8.34 · modo campo de alto contraste global */
+:root{--field-bg:#000;--field-surface:#0b100d;--field-surface-2:#111914;--field-border:#64736c;--field-text:#fff;--field-muted:#c3cec8;--field-accent:#00fe9c}
+body{background:#000;color:#fff;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body,.app-shell,.page-shell,.main-content,.dashboard,.results-view,.map-view{color:#fff}
+.panel,.card,.metric-card,.result-card,.map-panel,.records,.competition-analysis,.operator-library,.filters-panel,.summary-card{background:#0b100d!important;border-color:#56645e!important}
+h1,h2,h3,h4,.section-title h2,.form-title,.metric-value,.result-title{color:#fff!important;font-weight:850}
+p,small,.muted,.helper,.field-help,.section-description,.section-title p{color:#c3cec8}
+input,select,textarea{background:#111914!important;color:#fff!important;border:2px solid #64736c!important;min-height:46px;font-size:15px!important}
+input::placeholder,textarea::placeholder{color:#aebbb4!important;opacity:1}
+button,.button,.primary-button,.secondary-button{font-weight:850;min-height:44px}
+.primary-button{border:2px solid #00fe9c!important}
+table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weight:850}td{border-color:#3e4b45!important}
+.field,.form-card,.review-section,.form-section{border-width:2px!important;border-color:#56645e!important}
+.field-label,label{color:#fff!important;font-weight:800}
+.step{border-width:2px!important}.step.active{box-shadow:0 0 0 2px rgba(0,254,156,.25)}
+.geo-inside{color:#79ffc6!important;font-weight:800}.geo-outside{color:#ff8b8b!important;font-weight:800}.geo-missing{color:#d0d7d3!important}
+.map-toolbar select,.map-toolbar button,.competition-filters select{background:#090e0b!important;color:#fff!important;border:2px solid #64736c!important}
+.leaflet-control a,.leaflet-control button{font-weight:900}
+.empty-state{color:#c3cec8!important;border-color:#56645e!important}
+@media(max-width:760px){
+  body{font-size:15px}
+  .panel,.card,.form-card{border-radius:14px}
+  input,select,textarea{font-size:16px!important}
+  button,.button,.primary-button,.secondary-button{min-height:48px}
+  .field-help,.section-description,.section-title p{font-size:12px!important;line-height:1.45}
+}
