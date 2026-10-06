@@ -364,7 +364,8 @@ async function readRows(auth,forms,requested,limit,user,caps){
       range:`${form.sheet}!A2:BT`
     });
     for(const row of (r.data.values||[]).slice(-limit).reverse()){
-      const rowEmail=String(row[form.id==="CHURN"?25:24]||"").trim().toLowerCase();
+      const emailIndex=form.id==="CHURN"?25:form.id==="INTELIGENCIA_OPERADOR"?16:24;
+      const rowEmail=String(row[emailIndex]||"").trim().toLowerCase();
       if(!caps.adminActive&&rowEmail!==email)continue;
       if(form.id==="CHURN"){
         out.push({
@@ -472,7 +473,7 @@ module.exports=async(req,res)=>{
     const sheets=google.sheets({version:"v4",auth});
     const appended=await sheets.spreadsheets.values.append({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!${isExploration(form.id)?"A:AD":"A:AB"}`,
+      range:`${form.sheet}!${isExploration(form.id)?"A:AD":form.id==="INTELIGENCIA_OPERADOR"?"A:Q":"A:AB"}`,
       valueInputOption:"RAW",
       insertDataOption:"INSERT_ROWS",
       requestBody:{values:[buildRow(form,payload,id,links,recordedEmail)]}
