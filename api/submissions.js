@@ -529,6 +529,23 @@ module.exports=async(req,res)=>{
           valueInputOption:"RAW",
           requestBody:{values:[territorialAuditRow(territorial)]}
         });
+
+        await sheets.spreadsheets.values.update({
+          spreadsheetId:SHEET_ID,
+          range:`${form.sheet}!BL${rawRow}:BT${rawRow}`,
+          valueInputOption:"RAW",
+          requestBody:{values:[[
+            String(payload.data?.zona_empresarial||""),
+            String(payload.data?.estrato_observado||""),
+            String(payload.data?.nivel_seguridad||""),
+            String(payload.data?.tipo_despliegue||""),
+            String(payload.data?.isp_1_calidad||""),
+            String(payload.data?.isp_2_calidad||""),
+            String(payload.data?.isp_3_calidad||""),
+            String(payload.data?.isp_4_calidad||""),
+            String(payload.data?.estrato||"")
+          ]]}
+        });
       }
     }
 
