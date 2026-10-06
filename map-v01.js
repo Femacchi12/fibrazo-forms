@@ -371,7 +371,10 @@
       const nearby=String(layer?.nearby?.name||"").trim();
       const distance=formatDistance(layer?.distanceM);
       if(status==="DENTRO")return {label,value:assigned||"Disponible",state:"ok"};
-      if(status==="FUERA")return {label,value:"Fuera del polígono"+(nearby?" · cercano: "+nearby:"")+(distance?" · "+distance:""),state:"near"};
+      if(status==="FUERA"){
+        if(label==="Barrio"&&nearby)return {label,value:"Barrio más cercano: "+nearby+(distance?" · "+distance:""),state:"near"};
+        return {label,value:"Fuera del polígono"+(nearby?" · cercano: "+nearby:"")+(distance?" · "+distance:""),state:"near"};
+      }
       return {label,value:"No disponible en nuestra base",state:"missing"};
     };
 
