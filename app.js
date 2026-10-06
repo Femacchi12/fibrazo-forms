@@ -699,8 +699,45 @@
       $("backendDetail").textContent = local.length?"mostrando historial local":(error.message||"sin conexión");
       renderResults();
       renderCompetitionAnalysis();
+      renderOperatorLibrary();
     }
   }
+
+
+  function intelligenceRows(){
+    return (state.rows||[]).filter(r=>r.formId==="INTELIGENCIA_OPERADOR");
+  }
+  function normalizeOperatorName(v){
+    return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase().replace(/\s+/g," ");
+  }
+  function drivePhotoView(url){
+    const raw=String(url||"").trim();if(!raw)return{href:"",thumb:""};
+    const m=raw.match(/\/d\/([a-zA-Z0-9_-]+)/)||raw.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if(!m)return{href:raw,thumb:raw};
+    const id=m[1];
+    return{href:raw,thumb:"https://drive.google.com/thumbnail?id="+encodeURIComponent(id)+"&sz=w500"};
+  }
+  function photoMarkup(url,alt){
+    const p=drivePhotoView(url);if(!p.href)return"";
+    return '<a href="'+escapeHtml(p.href)+'" target="_blank" rel="noopener"><img src="'+escapeHtml(p.thumb)+'" loading="lazy" alt="'+escapeHtml(alt||"Evidencia")+'" onerror="this.style.display=\'none\';this.parentElement.classList.add(\'photo-fallback\');this.parentElement.textContent=\'Abrir foto ↗\'"></a>';
+  }
+  function renderOperatorLibrary(focusOperator=""){
+    const host=$("operatorLibraryCards");if(!host)return;
+    const q=normalizeOperatorName($("operatorLibrarySearch")?.value||"");
+    const focus=normalizeOperatorName(focusOperator);
+    const rows=intelligenceRows().filter(r=>{
+      const d=r.data||{},hay=normalizeOperatorName([d.operador,d.modelo_caja,d.nomenclatura_caja,d.marquilla,d.tipo_tensor,d.tipo_despliegue,d.observaciones].join(" "));
+      return(!q||hay.includes(q))&&(!focus||normalizeOperatorName(d.operador)===focus);
+    });
+    const groups=new Map();
+    rows.forEach(r=>{const name=String(r.data?.operador||"Sin identificar").trim();const key=normalizeOperatorName(name);if(!groups.has(key))groups.set(key,{name,items:[]});groups.get(key).items.push(r);});
+    host.innerHTML=[...groups.values()].sort((a,b)=>a.name.localeCompare(b.name,"es")).map(g=>{
+      const latest=g.items[0],d=latest.data||{},ratings=g.items.map(x=>Number(x.data?.calidad_tendido)).filter(n=>Number.isFinite(n)&&n>0),avg=ratings.length?(ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(1):"—";
+      const photos=g.items.flatMap(x=>x.photos||[]).filter(Boolean).slice(0,8);
+      return '<article class="operator-library-card"><div class="operator-library-head"><div><span>ISP / OPERADOR</span><h3>'+escapeHtml(g.name)+'</h3></div><div class="operator-rating"><b>'+avg+'/5</b><small>calidad</small></div></div><div class="operator-specs"><div><span>Caja</span><b>'+escapeHtml(d.modelo_caja||"—")+'</b></div><div><span>Nomenclatura</span><b>'+escapeHtml(d.nomenclatura_caja||"—")+'</b></div><div><span>Marquilla</span><b>'+escapeHtml(d.marquilla||"—")+'</b></div><div><span>Tensor / herraje</span><b>'+escapeHtml(d.tipo_tensor||"—")+'</b></div><div><span>Despliegue</span><b>'+escapeHtml(d.tipo_despliegue||"—")+'</b></div><div><span>Fichas</span><b>'+g.items.length+'</b></div></div>'+(d.observaciones?'<p class="operator-library-note">'+escapeHtml(d.observaciones)+'</p>':'')+'<div class="operator-library-photos">'+photos.map(p=>photoMarkup(p,"Referencia "+g.name)).join("")+(photos.length?'':'<small>Sin fotos</small>')+'</div></article>';
+    }).join("")||'<div class="empty-state">No hay fichas que coincidan con la búsqueda.</div>';
+  }
+  $("operatorLibrarySearch")?.addEventListener("input",()=>renderOperatorLibrary());
 
 
   function explorationRows(){
@@ -742,7 +779,7 @@
     if(!selectedOperator){evidence.innerHTML='<div class="empty-state">Selecciona un operador para ver puntos y fotografías.</div>';return;}
     const matches=rows.filter(r=>operatorNames(r.data).includes(selectedOperator));
     evidence.innerHTML='<div class="competition-evidence-head"><strong>'+escapeHtml(selectedOperator)+'</strong><span>'+matches.length+' puntos relevados</span></div>'+
-      matches.map(r=>{const d=r.data||{},loc=r.location||{},photos=(r.photos||[]).filter(Boolean);return '<article class="competition-point"><div><b>'+escapeHtml(d.barrio||d.sector_barrio||d.municipio||d.ciudad||"Punto")+'</b><small>Estrato '+escapeHtml(d.estrato_observado||d.estrato||"—")+(d.troncal?' · '+escapeHtml(d.troncal):'')+'</small><small>'+escapeHtml(formatDate(r.timestamp||r.clientTimestamp))+'</small></div><div class="competition-point-actions">'+(loc.lat&&loc.lng?'<a target="_blank" rel="noopener" href="https://www.google.com/maps?q='+encodeURIComponent(loc.lat+','+loc.lng)+'">↗ Maps</a>':'')+'</div><div class="competition-photo-strip">'+photos.map(p=>'<a href="'+escapeHtml(p)+'" target="_blank" rel="noopener"><img src="'+escapeHtml(p)+'" alt="Evidencia '+escapeHtml(selectedOperator)+'" loading="lazy"></a>').join("")+(photos.length?'':'<small>Sin fotos</small>')+'</div></article>';}).join("");
+      matches.map(r=>{const d=r.data||{},loc=r.location||{},photos=(r.photos||[]).filter(Boolean);return '<article class="competition-point"><div><b>'+escapeHtml(d.barrio||d.sector_barrio||d.municipio||d.ciudad||"Punto")+'</b><small>Estrato '+escapeHtml(d.estrato_observado||d.estrato||"—")+(d.troncal?' · '+escapeHtml(d.troncal):'')+'</small><small>'+escapeHtml(formatDate(r.timestamp||r.clientTimestamp))+'</small></div><div class="competition-point-actions">'+(loc.lat&&loc.lng?'<a target="_blank" rel="noopener" href="https://www.google.com/maps?q='+encodeURIComponent(loc.lat+','+loc.lng)+'">↗ Maps</a>':'')+'</div><div class="competition-photo-strip">'+photos.map(p=>photoMarkup(p,"Evidencia "+selectedOperator)).join("")+(photos.length?'':'<small>Sin fotos</small>')+'</div></article>';}).join("");
   }
   ["compCity","compBarrio","compEstrato","compTroncal"].forEach(id=>$(id)?.addEventListener("change",()=>renderCompetitionAnalysis()));
 
