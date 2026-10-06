@@ -104,7 +104,7 @@ window.FIBRAZO_FORMS = {
 
       {key:"link_evidencia",section:"cierre",label:"Link de evidencia",type:"text",full:true,help:"Opcional. Pega el enlace de Street View, Google Maps o My Maps que respalda la observación."},
       {key:"nota",section:"cierre",label:"Nota",type:"textarea",full:true,help:"Agrega cualquier condición relevante que no haya quedado registrada en los campos anteriores."},
-      {key:"fotos",section:"cierre",label:"Fotos",type:"photos",full:true,help:"Opcional. Carga hasta 3 fotos de forma secuencial. Cada foto muestra vista previa y permite cambiarla o eliminarla antes de agregar la siguiente."}
+      {key:"fotos",section:"cierre",label:"Fotos",type:"photos",full:true,help:"Opcional. Carga hasta 3 fotos. Desde galería puedes seleccionar varias de una vez; también puedes tomar fotos con la cámara."}
     ]
   },
 
