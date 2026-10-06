@@ -692,6 +692,7 @@
       }
       renderResults();
       renderCompetitionAnalysis();
+      renderOperatorLibrary();
     } catch (error) {
       state.rows=local;
       $("backendState").textContent = navigator.onLine?"ERROR":"SIN CONEXIÓN";
@@ -732,7 +733,11 @@
     const counts=new Map();rows.forEach(r=>operatorNames(r.data).forEach(o=>counts.set(o,(counts.get(o)||0)+1)));
     const host=$("competitionOperators");if(!host)return;
     host.innerHTML=[...counts.entries()].sort((a,b)=>b[1]-a[1]).map(([o,n])=>'<button type="button" class="operator-analysis-chip'+(selectedOperator===o?' active':'')+'" data-operator="'+escapeHtml(o)+'"><strong>'+escapeHtml(o)+'</strong><span>'+n+' punto'+(n===1?'':'s')+'</span></button>').join("")||'<div class="empty-state">No hay operadores para este filtro.</div>';
-    host.querySelectorAll("[data-operator]").forEach(b=>b.addEventListener("click",()=>renderCompetitionAnalysis(b.dataset.operator)));
+    host.querySelectorAll("[data-operator]").forEach(b=>b.addEventListener("click",()=>{
+      renderCompetitionAnalysis(b.dataset.operator);
+      const hasKnowledge=intelligenceRows().some(r=>String(r.data?.operador||"").toLowerCase()===String(b.dataset.operator||"").toLowerCase());
+      if(hasKnowledge){renderOperatorLibrary(b.dataset.operator);$("operatorLibraryCards")?.scrollIntoView({behavior:"smooth",block:"start"});}
+    }));
     const evidence=$("competitionEvidence");if(!evidence)return;
     if(!selectedOperator){evidence.innerHTML='<div class="empty-state">Selecciona un operador para ver puntos y fotografías.</div>';return;}
     const matches=rows.filter(r=>operatorNames(r.data).includes(selectedOperator));
