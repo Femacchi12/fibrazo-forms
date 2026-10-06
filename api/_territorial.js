@@ -412,7 +412,26 @@ async function resolveTerritorial(auth,latValue,lonValue){
   }
   const cityItems=await loadCityItems(auth);
   const cityResolved=await resolveCityItems(cityItems,lon,lat);
-  const selected=cityResolved.catalog;
+  let selected=cityResolved.catalog;
+
+  // Some city files can have usable canonical barrio/estrato/troncal layers before
+  // their municipal polygon is available in 11_POLIGONOS_CIUDAD. In that case,
+  // choose the territorial catalog whose canonical layer footprint contains the
+  // coordinate. This enables layer resolution without falsely changing cityStatus.
+  if(!selected){
+    const catalog=await loadCatalog(auth);
+    const candidates=[];
+    for(const cat of catalog){
+      let score=0;
+      for(const kind of ["barrio","estrato","troncal"]){
+        const meta=await loadLayerMeta(auth,cat.fileId,kind).catch(()=>null);
+        if(meta?.items?.some(item=>lon>=item.minLon&&lon<=item.maxLon&&lat>=item.minLat&&lat<=item.maxLat))score++;
+      }
+      if(score)candidates.push({cat,score});
+    }
+    candidates.sort((a,b)=>b.score-a.score);
+    if(candidates.length)selected=candidates[0].cat;
+  }
 
   let barrio=empty("SIN_CAPA"),estrato=empty("SIN_CAPA"),troncal=empty("SIN_CAPA");
   if(selected){
