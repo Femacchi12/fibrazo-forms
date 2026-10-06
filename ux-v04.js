@@ -139,6 +139,24 @@
     if(state.form?.id==="CHURN"){
       const fallback=detectConfiguredCityOffline(lat,lng);
       if(fallback)applyDetectedCity(fallback,"map-selection");
+      const territorialSummary=document.querySelector('[data-territorial-summary="1"]');
+      if(territorialSummary){
+        const layerRow=(label,status,assigned,nearby,distance)=>{
+          const exact=status==="DENTRO",outside=status==="FUERA";
+          const value=exact?assigned:(outside?nearby:"");
+          const meters=distanceNumber(distance);
+          const detail=exact?"Dentro del polígono":outside?("Fuera del polígono"+(meters!==null?" · "+Math.round(meters)+" m":"")):(status==="SIN_CAPA_CANONICA"?"Sin capa canónica":"Sin capa disponible");
+          const cls=exact?"inside":outside?"outside":"missing";
+          return '<div class="territorial-summary-row '+cls+'"><b>'+esc(label)+'</b><span>'+esc(value||"No disponible")+'</span><small>'+esc(detail)+'</small></div>';
+        };
+        territorialSummary.innerHTML=
+          '<span class="territorial-summary-title">LECTURA TERRITORIAL</span>'+
+          layerRow("Municipio",data.cityStatus,data.city,data.cityNearby,data.cityDistanceM)+
+          layerRow("Barrio",data.barrioStatus,data.barrio,data.barrioNearby,data.barrioDistanceM)+
+          layerRow("Estrato",data.estratoStatus,data.estrato,data.estratoNearby,data.estratoDistanceM)+
+          layerRow("Troncal",data.troncalStatus,data.troncal,data.troncalNearby,data.troncalDistanceM);
+        territorialSummary.hidden=false;
+      }
       const cityStatus=document.querySelector('[data-gps-city-for="coordenadas"]');
       if(cityStatus&&!fallback)cityStatus.textContent=navigator.onLine?"Ciudad GPS: identificando…":"Ciudad GPS: sin conexión · selección manual disponible";
       if(navigator.onLine){
@@ -179,7 +197,12 @@
     else if(field.type==="isp-autocomplete"){wrap.appendChild(ispAutocompleteInput(field));}
     else if(field.type==="photos"){wrap.appendChild(photoInput(field));}
 
-    if(field.key==="sector_barrio"||field.key==="estrato"){const info=document.createElement("div");info.className="field-geo-info";info.dataset.geoInfoFor=field.key;info.hidden=true;wrap.appendChild(info);}
+    if(field.key==="sector_barrio"||field.key==="estrato"){
+      const info=document.createElement("div");info.className="field-geo-info";info.dataset.geoInfoFor=field.key;info.hidden=true;wrap.appendChild(info);
+      if(field.key==="estrato"){
+        const summary=document.createElement("div");summary.className="territorial-layer-summary";summary.dataset.territorialSummary="1";summary.hidden=true;wrap.appendChild(summary);
+      }
+    }
     const err=document.createElement("div");err.className="field-error";err.dataset.errorFor=field.key;err.hidden=true;wrap.appendChild(err);
     if(field.default!==undefined)queueMicrotask(()=>{const n=document.querySelector('[name="'+css(field.key)+'"]');if(n&&!n.value)n.value=String(field.default);});
     return wrap;
@@ -832,8 +855,10 @@
       if(lookupId!==state.geoLookupId||state.geoLookupCancelled)return null;
 
       if(data.cityStatus==="DENTRO"&&data.city)applyDetectedCity(data.city,"territorial");
-      setGeoField("sector_barrio",data.barrio||"","");
-      setGeoField("estrato",data.estrato||"","Sin información");
+      const barrioDisplay=data.barrioStatus==="DENTRO"?data.barrio:(data.barrioStatus==="FUERA"?data.barrioNearby:"");
+      const estratoDisplay=data.estratoStatus==="DENTRO"?data.estrato:(data.estratoStatus==="FUERA"?data.estratoNearby:"");
+      setGeoField("sector_barrio",barrioDisplay||"","");
+      setGeoField("estrato",estratoDisplay||"","Sin información");
 
       if(state.gps){
         Object.assign(state.gps,{
@@ -866,11 +891,13 @@
       if(barrioInfo){
         const detail=geoLayerDetail(data.barrioStatus,data.barrio,data.barrioNearby,data.barrioDistanceM,data.barrioSource,"Barrio");
         barrioInfo.textContent=detail;barrioInfo.hidden=!detail;
+        barrioInfo.className="field-geo-info "+(data.barrioStatus==="DENTRO"?"geo-inside":data.barrioStatus==="FUERA"?"geo-outside":"geo-missing");
       }
       const estratoInfo=document.querySelector('[data-geo-info-for="estrato"]');
       if(estratoInfo){
         const detail=geoLayerDetail(data.estratoStatus,data.estrato,data.estratoNearby,data.estratoDistanceM,data.estratoSource,"Estrato");
         estratoInfo.textContent=detail;estratoInfo.hidden=!detail;
+        estratoInfo.className="field-geo-info "+(data.estratoStatus==="DENTRO"?"geo-inside":data.estratoStatus==="FUERA"?"geo-outside":"geo-missing");
       }
       const cityStatus=document.querySelector('[data-gps-city-for="coordenadas"]');
       if(cityStatus){
