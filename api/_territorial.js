@@ -282,7 +282,8 @@ async function loadLayerMeta(auth,fileId,kind){
     };
   }).filter(x=>x.id&&x.preferred&&stateOk(x.quality)&&[x.minLon,x.minLat,x.maxLon,x.maxLat].every(Number.isFinite));
 
-  const value={hasData:all.length>0,items,cfg,fileId};
+  const usableItems=kind==="estrato"?items.filter(item=>/^[1-6]$/.test(String(item.name||"").trim())):items;
+  const value={hasData:all.length>0,items:usableItems,cfg,fileId,kind};
   cache.layerMeta.set(key,{expires:now+CACHE_MS,value});
   return value;
 }
