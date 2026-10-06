@@ -2151,3 +2151,5 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
   button,.button,.primary-button,.secondary-button{min-height:48px}
   .field-help,.section-description,.section-title p{font-size:12px!important;line-height:1.45}
 }
+
+.photo-fallback{display:flex!important;align-items:center;justify-content:center;min-width:112px;min-height:86px;padding:8px;border:2px dashed #728078;border-radius:10px;color:#fff!important;background:#111914;font-weight:800;text-align:center;text-decoration:none}
