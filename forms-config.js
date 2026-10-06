@@ -3,6 +3,31 @@ window.FIBRAZO_PENDING = [];
 const FIBRAZO_CURRENT_YEAR = new Date().getFullYear();
 
 window.FIBRAZO_FORMS = {
+  INTELIGENCIA_OPERADOR: {
+    id:"INTELIGENCIA_OPERADOR",
+    name:"Inteligencia de operadores",
+    description:"Biblioteca de identificación visual y técnica de ISPs locales/regionales observados en campo.",
+    eyebrow:"COMPETENCIA",
+    meta:["Ficha técnica","Fotos de referencia","Identificación en campo"],
+    sections:[
+      {id:"identificacion",title:"Operador",description:"Identifica el ISP y el lugar donde se observó."},
+      {id:"elementos",title:"Elementos de red",description:"Registra cómo reconocer su infraestructura."},
+      {id:"calidad",title:"Calidad del despliegue",description:"Evalúa la ejecución visible del tendido."},
+      {id:"evidencia",title:"Evidencia",description:"Guarda fotografías de referencia y observaciones."}
+    ],
+    fields:[
+      {key:"coordenadas",section:"identificacion",label:"Coordenadas de referencia",type:"gps",required:true,full:true,auto:true,help:"Se toman por GPS y puedes volver a mejorar la precisión."},
+      {key:"operador",section:"identificacion",label:"ISP / operador",type:"isp-autocomplete",required:true,help:"Busca un ISP existente o escribe un nombre nuevo. El nombre quedará disponible para futuros relevamientos."},
+      {key:"modelo_caja",section:"elementos",label:"Modelo / tipo de caja",type:"text",help:"Modelo, fabricante o descripción visual de la caja."},
+      {key:"nomenclatura_caja",section:"elementos",label:"Nomenclatura / identificación de cajas",type:"text",help:"Ejemplo de código, prefijo o patrón utilizado por el operador."},
+      {key:"marquilla",section:"elementos",label:"Marquilla / identificación del cable",type:"text",help:"Describe colores, texto, placas, cintas u otros elementos distintivos."},
+      {key:"tipo_tensor",section:"elementos",label:"Tensor / herraje observado",type:"text",help:"Describe el tipo de tensor, herraje o forma de sujeción que ayude a identificarlo."},
+      {key:"tipo_despliegue",section:"elementos",label:"Tipo de despliegue",type:"select",default:"Aéreo",options:["Aéreo","Canalizado","Mixto"]},
+      {key:"calidad_tendido",section:"calidad",label:"Calidad de tendido e instalación",type:"segmented",required:true,options:["1","2","3","4","5"],details:{"1":"Muy mala: instalación desordenada, improvisada o con deficiencias evidentes.","2":"Mala: varias deficiencias visibles de orden, fijación o ejecución.","3":"Aceptable: instalación funcional con calidad media.","4":"Buena: tendido ordenado y bien ejecutado.","5":"Muy buena: instalación prolija, consistente y de alta calidad visual."},help:"Selecciona 1 a 5; la descripción queda visible para mantener un criterio consistente."},
+      {key:"observaciones",section:"evidencia",label:"Observaciones para identificarlo en campo",type:"textarea",full:true,help:"Registra cualquier rasgo que ayude a reconocer rápidamente este operador."},
+      {key:"fotos",section:"evidencia",label:"Fotos de referencia",type:"photos",full:true,help:"Carga hasta 3 fotos. Desde galería puedes seleccionar varias de una vez."}
+    ]
+  },
   CHURN: {
     id: "CHURN",
     name: "Visita clientes churn",
