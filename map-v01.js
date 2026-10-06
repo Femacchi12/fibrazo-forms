@@ -606,6 +606,7 @@
     const city=$("mapCityFilter")?.value||"all";
     const type=$("mapTypeFilter")?.value||"all";
     const user=$("mapUserFilter")?.value||"all";
+    const operator=$("mapOperatorFilter")?.value||"all";
     const from=$("mapDateFrom")?.value?new Date($("mapDateFrom").value+"T00:00:00"):null;
     const to=$("mapDateTo")?.value?new Date($("mapDateTo").value+"T23:59:59.999"):null;
     return state.points.filter(point=>{
@@ -614,6 +615,14 @@
       if(city!=="all"&&pointCity!==city)return false;
       if(type!=="all"&&formType(point.type)!==type)return false;
       if(user!=="all"&&String(point.user||"")!==user)return false;
+      if(operator!=="all"){
+        const profile=operatorProfile(point);
+        if(operator==="tigo"&&!profile.incumbents.includes("tigo"))return false;
+        if(operator==="claro"&&!profile.incumbents.includes("claro"))return false;
+        if(operator==="movistar"&&!profile.incumbents.includes("movistar"))return false;
+        if(operator==="isps"&&!(profile.others.length>0&&profile.incumbents.length===0))return false;
+        if(operator.startsWith("isp:")&&!profile.others.some(x=>norm(x)===operator.slice(4)))return false;
+      }
       if(from&&!Number.isNaN(when.getTime())&&when<from)return false;
       if(to&&!Number.isNaN(when.getTime())&&when>to)return false;
       return true;
@@ -621,12 +630,18 @@
   }
 
   function updateFilters(){
-    const city=$("mapCityFilter"),user=$("mapUserFilter");
+    const city=$("mapCityFilter"),user=$("mapUserFilter"),operator=$("mapOperatorFilter");
     if(city){
       const current=city.value||"all";
       const cities=[...new Set(state.points.map(p=>String(p.city?.assigned||p.observedCity||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
       city.innerHTML='<option value="all">Todas las ciudades</option>'+cities.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join("");
       if(cities.includes(current))city.value=current;
+    }
+    if(operator){
+      const current=operator.value||"all";
+      const isps=[...new Set(state.points.flatMap(p=>operatorProfile(p).others).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
+      operator.innerHTML='<option value="all">Todos los operadores</option><option value="tigo">Tigo · esté solo o acompañado</option><option value="claro">Claro · esté solo o acompañado</option><option value="movistar">Movistar · esté solo o acompañado</option><option value="isps">Solo ISPs · sin incumbentes</option>'+isps.map(v=>'<option value="isp:'+esc(norm(v))+'">ISP · '+esc(v)+'</option>').join("");
+      if([...operator.options].some(o=>o.value===current))operator.value=current;
     }
     if(user){
       const current=user.value||"all";
@@ -661,6 +676,7 @@
     let count=0;
     if(($("mapCityFilter")?.value||"all")!=="all")count++;
     if(($("mapTypeFilter")?.value||"all")!=="all")count++;
+    if(($("mapOperatorFilter")?.value||"all")!=="all")count++;
     if(state.visibility==="team"&&($("mapUserFilter")?.value||"all")!=="all")count++;
     if($("mapDateFrom")?.value)count++;
     if($("mapDateTo")?.value)count++;
@@ -698,6 +714,7 @@
     if($("mapCityFilter"))$("mapCityFilter").value="all";
     if($("mapTypeFilter"))$("mapTypeFilter").value="all";
     if($("mapUserFilter"))$("mapUserFilter").value="all";
+    if($("mapOperatorFilter"))$("mapOperatorFilter").value="all";
     if($("mapDateFrom"))$("mapDateFrom").value="";
     if($("mapDateTo"))$("mapDateTo").value="";
     updateFilterCount();
@@ -1483,7 +1500,7 @@
   }
 
   function bind(){
-    ["mapCityFilter","mapTypeFilter","mapUserFilter","mapDateFrom","mapDateTo"].forEach(id=>$(id)?.addEventListener("change",()=>{updateFilterCount();renderMarkers();}));
+    ["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter","mapDateFrom","mapDateTo"].forEach(id=>$(id)?.addEventListener("change",()=>{updateFilterCount();renderMarkers();}));
     $("mapRefresh")?.addEventListener("click",refreshMapNow);
     $("mapQuickRefresh")?.addEventListener("click",refreshMapNow);
     $("mapQuickReset")?.addEventListener("click",clearAllMapFilters);
