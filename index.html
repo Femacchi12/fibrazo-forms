@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.css">
-  <link rel="stylesheet" href="/styles.css?v=2026.10.06.28">
+  <link rel="stylesheet" href="/styles.css?v=2026.10.06.29">
 </head>
 <body class="auth-pending">
   <section id="authGate" class="auth-gate" aria-live="polite">
@@ -220,6 +220,18 @@
         <article class="kpi"><span>ESTADO</span><strong class="status-value" id="backendState">LISTO</strong><small id="backendDetail">sincronización</small></article>
       </section>
 
+      <section class="panel competition-analysis">
+        <div class="section-title"><div><span>LECTURA DE COMPETENCIA</span><h2>Operadores por territorio</h2><p>Filtra territorio y abre un operador para revisar los puntos y sus evidencias.</p></div></div>
+        <div class="competition-filters">
+          <select id="compCity"><option value="all">Todas las ciudades</option></select>
+          <select id="compBarrio"><option value="all">Todos los barrios</option></select>
+          <select id="compEstrato"><option value="all">Todos los estratos</option></select>
+          <select id="compTroncal"><option value="all">Todas las troncales</option></select>
+        </div>
+        <div id="competitionOperators" class="competition-operators"></div>
+        <div id="competitionEvidence" class="competition-evidence"><div class="empty-state">Selecciona un operador para ver puntos y fotografías.</div></div>
+      </section>
+
       <section class="panel records">
         <div class="section-title records-head">
           <div><span>BASE DETALLADA</span><h2>Últimas respuestas</h2></div>
@@ -229,6 +241,7 @@
               <option value="CHURN">Churn</option>
               <option value="EXPLORACION">Exploración virtual</option>
               <option value="EXPLORACION_PRESENCIAL">Exploración presencial</option>
+              <option value="INTELIGENCIA_OPERADOR">Inteligencia de operadores</option>
             </select>
             <select id="resultUserFilter" data-admin-filter hidden><option value="all">Todos los usuarios</option></select>
             <select id="resultCityFilter"><option value="all">Todas las ciudades</option></select>
@@ -434,18 +447,18 @@
     </section>
   </main>
 
-  <footer>FIBRAZO · Growth <span>Forms v0.8.28 · Inteligencia de competencia · Motor territorial v3.2 · 2026</span></footer>
+  <footer>FIBRAZO · Growth <span>Forms v0.8.29 · Análisis de competencia · Motor territorial v3.2 · 2026</span></footer>
 
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
-  <script src="/forms-config.js?v=2026.10.06.28"></script>
-  <script src="/app.js?v=2026.10.06.28"></script>
-  <script src="/access-v03.js?v=2026.10.06.28"></script>
-  <script src="/offline-v04.js?v=2026.10.06.28"></script>
-  <script src="/ux-v04.js?v=2026.10.06.28"></script>
-  <script src="/admin-v03.js?v=2026.10.06.28"></script>
+  <script src="/forms-config.js?v=2026.10.06.29"></script>
+  <script src="/app.js?v=2026.10.06.29"></script>
+  <script src="/access-v03.js?v=2026.10.06.29"></script>
+  <script src="/offline-v04.js?v=2026.10.06.29"></script>
+  <script src="/ux-v04.js?v=2026.10.06.29"></script>
+  <script src="/admin-v03.js?v=2026.10.06.29"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.umd.min.js"></script>
-  <script src="/map-v01.js?v=2026.10.06.28"></script>
+  <script src="/map-v01.js?v=2026.10.06.29"></script>
 </body>
 </html>
