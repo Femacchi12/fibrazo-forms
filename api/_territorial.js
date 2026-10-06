@@ -260,7 +260,10 @@ async function loadLayerMeta(auth,fileId,kind){
   const all=[];
   for(let i=0;i<max;i++){
     const merged={__row:i+2};
-    for(const rows of maps)Object.assign(merged,rows[i]||{});
+    for(const rows of maps){
+      const part=rows[i]||{};
+      for(const [key,value] of Object.entries(part))if(key!=="__row")merged[key]=value;
+    }
     const id=String(merged[cfg.id]||"").trim();
     if(id)all.push(merged);
   }
