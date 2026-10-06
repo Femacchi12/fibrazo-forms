@@ -201,7 +201,9 @@
     // Todas las capas geograficas propias deben vivir dentro del pane rotatorio
     // de leaflet-rotate. Si se crean directamente bajo mapPane, el mapa base gira
     // pero barrios/estratos quedan visualmente fijos y pierden alineacion.
-    const geographicPane=state.map._rotatePane||state.map.getPane("mapPane");
+    // leaflet-rotate moves geographic content through rotatePane. Using mapPane here
+    // makes DOM markers appear visually fixed while the tile layer rotates.
+    const geographicPane=rotateSupported&&state.map._rotatePane?state.map._rotatePane:state.map.getPane("mapPane");
     state.map.createPane("barriosPane",geographicPane);
     state.map.getPane("barriosPane").style.zIndex="350";
     state.map.getPane("barriosPane").style.pointerEvents="auto";
@@ -218,6 +220,17 @@
     state.polygonGroups={barrios:L.layerGroup(),estratos:L.layerGroup()};
     state.surveyLayer=L.layerGroup().addTo(state.map);
     state.map.on("moveend zoomend",schedulePolygonReload);
+    // Keep every custom geographic overlay synchronized after a bearing gesture.
+    // Some mobile browsers/plugins can leave DOM/SVG layers one frame behind.
+    const syncBearingLayers=()=>{
+      state.surveyLayer?.eachLayer?.(layer=>layer.update?.());
+      state.polygonRenderers?.barrios?._update?.();
+      state.polygonRenderers?.estratos?._update?.();
+      state.routeLine?.redraw?.();
+      state.accuracyCircle?.redraw?.();
+      state.currentMarker?.redraw?.();
+    };
+    state.map.on("rotate rotateend",()=>requestAnimationFrame(syncBearingLayers));
     state.route=routeStorage();
     redrawRoute();
     updateBaseMapButtons();
@@ -1263,11 +1276,11 @@
     const lat=position.coords.latitude,lng=position.coords.longitude,accuracy=position.coords.accuracy;
     state.lastLocation={lat,lng,accuracy,ts:position.timestamp||Date.now()};
     if(!state.currentMarker){
-      state.currentMarker=L.circleMarker([lat,lng],{radius:9,weight:3,color:"#FFFFFF",fillColor:"#00FE9C",fillOpacity:1}).addTo(state.map);
+      state.currentMarker=L.circleMarker([lat,lng],{radius:9,weight:3,color:"#FFFFFF",fillColor:"#00FE9C",fillOpacity:1,pane:"surveyPane"}).addTo(state.map);
       state.currentMarker.bindTooltip("Mi ubicación",{permanent:false,direction:"top"});
     }else state.currentMarker.setLatLng([lat,lng]);
     if(!state.accuracyCircle){
-      state.accuracyCircle=L.circle([lat,lng],{radius:Math.max(accuracy||0,1),weight:1,color:"#00FE9C",fillOpacity:.08}).addTo(state.map);
+      state.accuracyCircle=L.circle([lat,lng],{radius:Math.max(accuracy||0,1),weight:1,color:"#00FE9C",fillOpacity:.08,pane:"surveyPane"}).addTo(state.map);
     }else{
       state.accuracyCircle.setLatLng([lat,lng]);
       state.accuracyCircle.setRadius(Math.max(accuracy||0,1));
@@ -1297,7 +1310,7 @@
     if(!ensureMap())return;
     if(state.routeLine){state.map.removeLayer(state.routeLine);state.routeLine=null;}
     if(state.route.length>=2){
-      state.routeLine=L.polyline(state.route.map(p=>[p.lat,p.lng]),{weight:5,opacity:.9,color:"#00FE9C"}).addTo(state.map);
+      state.routeLine=L.polyline(state.route.map(p=>[p.lat,p.lng]),{weight:5,opacity:.9,color:"#00FE9C",pane:"surveyPane"}).addTo(state.map);
     }
     updateRouteMetrics();
   }
