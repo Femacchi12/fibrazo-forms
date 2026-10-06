@@ -259,9 +259,10 @@
     bar.append(reuse,clear);section.prepend(bar);
   }
   function ispAutocompleteInput(field){
-    const shell=document.createElement("div");shell.className="isp-autocomplete";
+    const shell=document.createElement("div");shell.className="isp-autocomplete isp-field-state";
+    const updateIspState=()=>{const v=String(input?.value||"").trim();shell.classList.toggle("isp-none",!v||v==="Sin ISP");shell.classList.toggle("isp-unknown",v==="Sin Identificar");shell.classList.toggle("isp-known",!!v&&v!=="Sin ISP"&&v!=="Sin Identificar");};
     const input=document.createElement("input");input.type="text";input.name=field.key;input.autocomplete="off";
-    input.value=String(field.default??"Sin ISP");input.placeholder="Sin ISP";
+    input.value=String(field.default??"Sin ISP");input.placeholder="Sin ISP";queueMicrotask(updateIspState);
     const list=document.createElement("div");list.className="isp-suggestion-list";list.hidden=true;
     const options=()=>{
       const query=normalizeCityName(input.value==="Sin ISP"?"":input.value);
@@ -270,7 +271,7 @@
     };
     const choose=name=>{
       input.value=name;
-      rememberIspName(name);
+      rememberIspName(name);updateIspState();
       list.hidden=true;
       clearError(field.key);
       updateVisibility();
@@ -291,12 +292,12 @@
       list.hidden=false;
     };
     input.addEventListener("focus",()=>{if(input.value==="Sin ISP")input.select();paint();});
-    input.addEventListener("input",()=>{paint();clearError(field.key);updateVisibility();});
+    input.addEventListener("input",()=>{paint();updateIspState();clearError(field.key);updateVisibility();});
     input.addEventListener("change",()=>{rememberIspName(input.value);refreshIspSuggestions();});
     input.addEventListener("blur",()=>setTimeout(()=>{rememberIspName(input.value);list.hidden=true;},220));
     const clear=document.createElement("button");clear.type="button";clear.className="isp-clear-button";clear.textContent="×";clear.title="Borrar selección";clear.setAttribute("aria-label","Borrar selección de ISP");
     clear.addEventListener("pointerdown",e=>e.preventDefault());
-    clear.addEventListener("click",e=>{e.preventDefault();input.value="";input.focus();paint();clearError(field.key);updateVisibility();});
+    clear.addEventListener("click",e=>{e.preventDefault();input.value="";updateIspState();input.focus();paint();clearError(field.key);updateVisibility();});
     shell.append(input,clear,list);return shell;
   }
 
@@ -359,6 +360,8 @@
   }
   function toggleInput(field){
     const holder=document.createElement("div");holder.className="binary-toggle";
+    const brand=field.key.startsWith("tigo_")?"brand-tigo":field.key.startsWith("claro_")?"brand-claro":field.key==="movistar"?"brand-movistar":"";
+    if(brand)holder.classList.add(brand);
     const hidden=document.createElement("input");hidden.type="hidden";hidden.name=field.key;hidden.value=String(field.default??"No");
     const b=document.createElement("button");b.type="button";b.className="binary-toggle-button";
     const paint=()=>{const yes=hidden.value==="Sí";b.classList.toggle("is-yes",yes);b.setAttribute("aria-pressed",String(yes));b.innerHTML='<span class="toggle-state">'+(yes?"Sí":"No")+'</span><span class="toggle-hint">Toca para cambiar</span>';};
@@ -543,6 +546,17 @@
     $("formStepCounter").hidden=state.policy?.showProgress===false;
     $("prevSection").hidden=state.sectionIndex===0;const last=state.sectionIndex===sections.length-1;$("nextSection").hidden=last;$("reviewForm").hidden=!last;
     clearValidation();updateVisibility();
+    if(state.form?.id==="EXPLORACION_PRESENCIAL"&&section.id==="operadores"){
+      requestAnimationFrame(()=>{
+        const first=document.querySelector('[data-key="tigo_hfc"]');
+        if(first&&!document.querySelector(".operator-memory-inline")){
+          const bar=document.createElement("div");bar.className="operator-memory-inline";
+          const reuse=document.createElement("button");reuse.type="button";reuse.textContent="↻ Últimos operadores";reuse.addEventListener("click",restoreLastOperators);
+          const clear=document.createElement("button");clear.type="button";clear.textContent="✕ Limpiar";clear.addEventListener("click",clearOperators);
+          bar.append(reuse,clear);first.parentElement?.insertBefore(bar,first);
+        }
+      });
+    }
     requestAnimationFrame(()=>{
       if(activeStep&&stepper.scrollWidth>stepper.clientWidth){
         const left=Math.max(0,activeStep.offsetLeft-(stepper.clientWidth-activeStep.offsetWidth)/2);
