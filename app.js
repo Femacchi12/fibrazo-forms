@@ -700,7 +700,11 @@
   }
 
   function renderResults() {
-    const rows = state.rows || [];
+    const productionStart=new Date("2026-10-06T00:00:00-05:00");
+    const rows = (state.rows || []).filter(row=>{
+      const when=new Date(row.clientTimestamp||row.timestamp||0);
+      return !Number.isNaN(when.getTime())&&when>=productionStart;
+    });
     const isAdmin=!!window.FIBRAZO_ACCESS_META?.admin;
     const userFilter=$("resultUserFilter"),cityFilter=$("resultCityFilter");
     if(userFilter){
