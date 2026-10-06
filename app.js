@@ -691,13 +691,55 @@
         $("backendDetail").textContent = localOnly.some(r=>r.localStatus!=="sent")?"hay respuestas locales por sincronizar":"Google Sheets + historial local";
       }
       renderResults();
+      renderCompetitionAnalysis();
     } catch (error) {
       state.rows=local;
       $("backendState").textContent = navigator.onLine?"ERROR":"SIN CONEXIÓN";
       $("backendDetail").textContent = local.length?"mostrando historial local":(error.message||"sin conexión");
       renderResults();
+      renderCompetitionAnalysis();
     }
   }
+
+
+  function explorationRows(){
+    return (state.rows||[]).filter(r=>String(r.formId||"").startsWith("EXPLORACION"));
+  }
+  function operatorNames(d={}){
+    const out=[];
+    if(String(d.tigo_hfc||"").toLowerCase()==="sí"||String(d.tigo_ftth||"").toLowerCase()==="sí")out.push("Tigo");
+    if(String(d.claro_hfc||"").toLowerCase()==="sí"||String(d.claro_ftth||"").toLowerCase()==="sí")out.push("Claro");
+    if(String(d.movistar||"").toLowerCase()==="sí")out.push("Movistar");
+    ["isp_1","isp_2","isp_3","isp_4"].forEach(k=>{const v=String(d[k]||"").trim();if(v&&v!=="Sin ISP"&&v!=="Sin Identificar")out.push(v);});
+    return [...new Set(out)];
+  }
+  function fillCompSelect(id,values,label){
+    const s=$(id);if(!s)return;const current=s.value||"all",clean=[...new Set(values.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"es"));
+    s.innerHTML='<option value="all">'+label+'</option>'+clean.map(v=>'<option value="'+escapeHtml(v)+'">'+escapeHtml(v)+'</option>').join("");
+    if(clean.includes(current))s.value=current;
+  }
+  function renderCompetitionAnalysis(selectedOperator){
+    const all=explorationRows(), city=$("compCity")?.value||"all",barrio=$("compBarrio")?.value||"all",estrato=$("compEstrato")?.value||"all",troncal=$("compTroncal")?.value||"all";
+    fillCompSelect("compCity",all.map(r=>String(r.data?.municipio||r.data?.ciudad||"")),"Todas las ciudades");
+    const byCity=all.filter(r=>city==="all"||String(r.data?.municipio||r.data?.ciudad||"")===city);
+    fillCompSelect("compBarrio",byCity.map(r=>String(r.data?.barrio||r.data?.sector_barrio||"")),"Todos los barrios");
+    fillCompSelect("compEstrato",byCity.map(r=>String(r.data?.estrato_observado||r.data?.estrato||"")),"Todos los estratos");
+    fillCompSelect("compTroncal",byCity.map(r=>String(r.data?.troncal||"")),"Todas las troncales");
+    const rows=byCity.filter(r=>{
+      const d=r.data||{};
+      return (barrio==="all"||String(d.barrio||d.sector_barrio||"")===barrio)&&(estrato==="all"||String(d.estrato_observado||d.estrato||"")===estrato)&&(troncal==="all"||String(d.troncal||"")===troncal);
+    });
+    const counts=new Map();rows.forEach(r=>operatorNames(r.data).forEach(o=>counts.set(o,(counts.get(o)||0)+1)));
+    const host=$("competitionOperators");if(!host)return;
+    host.innerHTML=[...counts.entries()].sort((a,b)=>b[1]-a[1]).map(([o,n])=>'<button type="button" class="operator-analysis-chip'+(selectedOperator===o?' active':'')+'" data-operator="'+escapeHtml(o)+'"><strong>'+escapeHtml(o)+'</strong><span>'+n+' punto'+(n===1?'':'s')+'</span></button>').join("")||'<div class="empty-state">No hay operadores para este filtro.</div>';
+    host.querySelectorAll("[data-operator]").forEach(b=>b.addEventListener("click",()=>renderCompetitionAnalysis(b.dataset.operator)));
+    const evidence=$("competitionEvidence");if(!evidence)return;
+    if(!selectedOperator){evidence.innerHTML='<div class="empty-state">Selecciona un operador para ver puntos y fotografías.</div>';return;}
+    const matches=rows.filter(r=>operatorNames(r.data).includes(selectedOperator));
+    evidence.innerHTML='<div class="competition-evidence-head"><strong>'+escapeHtml(selectedOperator)+'</strong><span>'+matches.length+' puntos relevados</span></div>'+
+      matches.map(r=>{const d=r.data||{},loc=r.location||{},photos=(r.photos||[]).filter(Boolean);return '<article class="competition-point"><div><b>'+escapeHtml(d.barrio||d.sector_barrio||d.municipio||d.ciudad||"Punto")+'</b><small>Estrato '+escapeHtml(d.estrato_observado||d.estrato||"—")+(d.troncal?' · '+escapeHtml(d.troncal):'')+'</small><small>'+escapeHtml(formatDate(r.timestamp||r.clientTimestamp))+'</small></div><div class="competition-point-actions">'+(loc.lat&&loc.lng?'<a target="_blank" rel="noopener" href="https://www.google.com/maps?q='+encodeURIComponent(loc.lat+','+loc.lng)+'">↗ Maps</a>':'')+'</div><div class="competition-photo-strip">'+photos.map(p=>'<a href="'+escapeHtml(p)+'" target="_blank" rel="noopener"><img src="'+escapeHtml(p)+'" alt="Evidencia '+escapeHtml(selectedOperator)+'" loading="lazy"></a>').join("")+(photos.length?'':'<small>Sin fotos</small>')+'</div></article>';}).join("");
+  }
+  ["compCity","compBarrio","compEstrato","compTroncal"].forEach(id=>$(id)?.addEventListener("change",()=>renderCompetitionAnalysis()));
 
   function renderResults() {
     const productionStart=new Date("2026-10-06T00:00:00-05:00");
