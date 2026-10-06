@@ -104,7 +104,7 @@
     const stepper=$("sectionStepper"),counter=$("formStepCounter");
     if(stepper)stepper.hidden=policy.showProgress===false;
     if(counter)counter.hidden=policy.showProgress===false;
-    clearValidation();renderSection();window.FIBRAZO_OFFLINE?.refreshUi?.();
+    clearValidation();loadLocalIsps();renderSection();setTimeout(operatorSectionTools,50);window.FIBRAZO_OFFLINE?.refreshUi?.();
     const mapPreset=window.FIBRAZO_MAP_COORDINATE_PRESET;
     if(mapPreset){
       window.FIBRAZO_MAP_COORDINATE_PRESET=null;
@@ -236,6 +236,28 @@
       clearError(field.key);updateVisibility();
     });return i;
   }
+  function rememberIspName(name){
+    const v=String(name||"").trim();if(!v||v==="Sin ISP"||v==="Sin Identificar")return;
+    if(!(state.ispOptions||[]).some(x=>normalizeCityName(x)===normalizeCityName(v)))state.ispOptions=[...(state.ispOptions||[]),v].sort((a,b)=>a.localeCompare(b,"es"));
+    try{const saved=JSON.parse(localStorage.getItem("fibrazo:custom-isps")||"[]");const next=[...new Set([...saved,v])];localStorage.setItem("fibrazo:custom-isps",JSON.stringify(next));}catch(_){}
+  }
+  function loadLocalIsps(){
+    try{const saved=JSON.parse(localStorage.getItem("fibrazo:custom-isps")||"[]");state.ispOptions=[...new Set([...(state.ispOptions||[]),...saved])].sort((a,b)=>a.localeCompare(b,"es"));}catch(_){}
+  }
+  function clearOperators(){
+    ["tigo_hfc","tigo_ftth","claro_hfc","claro_ftth","movistar"].forEach(key=>{const n=document.querySelector('[name="'+css(key)+'"]');if(n){n.value="No";n.closest(".binary-toggle,.segmented-control")?.querySelectorAll("button").forEach(b=>{const on=normalizeCityName(b.textContent)==="no";b.classList.toggle("selected",on);b.classList.toggle("is-yes",false);b.setAttribute("aria-pressed",String(on));});}});
+    ["isp_1","isp_2","isp_3","isp_4"].forEach(key=>{const n=document.querySelector('[name="'+css(key)+'"]');if(n)n.value="Sin ISP";});
+    updateVisibility();
+  }
+  function operatorSectionTools(){
+    if(state.form?.id!=="EXPLORACION_PRESENCIAL")return;
+    const section=document.querySelector('[data-section-id="operadores"],.form-section[data-section="operadores"]')||document.querySelector('[data-key="tigo_hfc"]')?.parentElement;
+    if(!section||section.querySelector(".operator-memory-tools"))return;
+    const bar=document.createElement("div");bar.className="operator-memory-tools";
+    const reuse=document.createElement("button");reuse.type="button";reuse.textContent="↻ Usar última selección";reuse.addEventListener("click",restoreLastOperators);
+    const clear=document.createElement("button");clear.type="button";clear.textContent="✕ Limpiar operadores";clear.addEventListener("click",clearOperators);
+    bar.append(reuse,clear);section.prepend(bar);
+  }
   function ispAutocompleteInput(field){
     const shell=document.createElement("div");shell.className="isp-autocomplete";
     const input=document.createElement("input");input.type="text";input.name=field.key;input.autocomplete="off";
@@ -248,6 +270,7 @@
     };
     const choose=name=>{
       input.value=name;
+      rememberIspName(name);
       list.hidden=true;
       clearError(field.key);
       updateVisibility();
@@ -269,7 +292,8 @@
     };
     input.addEventListener("focus",()=>{if(input.value==="Sin ISP")input.select();paint();});
     input.addEventListener("input",()=>{paint();clearError(field.key);updateVisibility();});
-    input.addEventListener("blur",()=>setTimeout(()=>{list.hidden=true;},220));
+    input.addEventListener("change",()=>{rememberIspName(input.value);refreshIspSuggestions();});
+    input.addEventListener("blur",()=>setTimeout(()=>{rememberIspName(input.value);list.hidden=true;},220));
     const clear=document.createElement("button");clear.type="button";clear.className="isp-clear-button";clear.textContent="×";clear.title="Borrar selección";clear.setAttribute("aria-label","Borrar selección de ISP");
     clear.addEventListener("pointerdown",e=>e.preventDefault());
     clear.addEventListener("click",e=>{e.preventDefault();input.value="";input.focus();paint();clearError(field.key);updateVisibility();});
