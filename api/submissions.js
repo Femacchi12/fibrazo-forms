@@ -361,7 +361,7 @@ async function readRows(auth,forms,requested,limit,user,caps){
   for(const form of allowed){
     const r=await sheets.spreadsheets.values.get({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!A2:AB`
+      range:`${form.sheet}!A2:BT`
     });
     for(const row of (r.data.values||[]).slice(-limit).reverse()){
       const rowEmail=String(row[form.id==="CHURN"?25:24]||"").trim().toLowerCase();
@@ -374,14 +374,28 @@ async function readRows(auth,forms,requested,limit,user,caps){
         });
       }else if(isExploration(form.id)){
         const tipo=String(row[26]||"").trim();
-        const belongs=form.id==="EXPLORACION"
-          ?(!tipo||tipo==="Virtual")
-          :tipo==="Presencial";
+        const belongs=form.id==="EXPLORACION"?(!tipo||tipo==="Virtual"):tipo==="Presencial";
         if(!belongs)continue;
         out.push({
           formId:form.id,timestamp:row[0],id:row[1],
-          data:{ciudad:row[2],sector_barrio:row[3],tigo_hfc:row[7],claro_hfc:row[9],movistar:row[11],tipo},
+          data:{
+            ciudad:row[2],municipio:row[2],sector_barrio:row[3],
+            tigo_hfc:row[7],tigo_ftth:row[8],claro_hfc:row[9],claro_ftth:row[10],movistar:row[11],
+            isp_1:row[12],isp_2:row[13],isp_3:row[14],isp_4:row[15],tipo,
+            barrio:row[47]||row[3],estrato:row[53]||row[55]||row[71]||"",troncal:row[59]||row[61]||"",
+            zona_empresarial:row[63]||"",estrato_observado:row[64]||"",nivel_seguridad:row[65]||""
+          },
+          location:{lat:row[17],lng:row[18],accuracy:row[19]},
+          photos:[row[21],row[22],row[23]].filter(Boolean),
           user:row[24]||""
+        });
+      }else if(form.id==="INTELIGENCIA_OPERADOR"){
+        out.push({
+          formId:form.id,timestamp:row[0],id:row[1],
+          data:{operador:row[2],modelo_caja:row[3],nomenclatura_caja:row[4],marquilla:row[5],tipo_tensor:row[6],tipo_despliegue:row[7],calidad_tendido:row[8],observaciones:row[9]},
+          location:{lat:row[10],lng:row[11],accuracy:row[12]},
+          photos:[row[13],row[14],row[15]].filter(Boolean),
+          user:row[16]||""
         });
       }
     }
