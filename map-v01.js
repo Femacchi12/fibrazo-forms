@@ -632,6 +632,18 @@
     button.classList.toggle("active",open);
   }
 
+  function clearAllMapFilters(){
+    clearFilters();
+    if($("mapSearchInput"))$("mapSearchInput").value="";
+    if($("mapSearchResults")){$("mapSearchResults").hidden=true;$("mapSearchResults").innerHTML="";}
+    mapStatus("Filtros del mapa restablecidos.","success");
+  }
+
+  function refreshMapNow(){
+    loadPoints({fit:false});
+    for(const layer of ["barrios","estratos"])if(state.polygonActive[layer])refreshPolygonLayer(layer,{silent:false});
+  }
+
   function clearFilters(){
     if($("mapCityFilter"))$("mapCityFilter").value="all";
     if($("mapTypeFilter"))$("mapTypeFilter").value="all";
@@ -1386,7 +1398,9 @@
 
   function bind(){
     ["mapCityFilter","mapTypeFilter","mapUserFilter","mapDateFrom","mapDateTo"].forEach(id=>$(id)?.addEventListener("change",()=>{updateFilterCount();renderMarkers();}));
-    $("mapRefresh")?.addEventListener("click",()=>loadPoints({fit:false}));
+    $("mapRefresh")?.addEventListener("click",refreshMapNow);
+    $("mapQuickRefresh")?.addEventListener("click",refreshMapNow);
+    $("mapQuickReset")?.addEventListener("click",clearAllMapFilters);
     $("mapFitPoints")?.addEventListener("click",fitVisible);
     $("mapFiltersToggle")?.addEventListener("click",()=>toggleFilters());
     $("mapClearFilters")?.addEventListener("click",clearFilters);
