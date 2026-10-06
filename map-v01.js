@@ -6,7 +6,9 @@
     const email=String(window.firebase?.auth?.().currentUser?.email||"anonimo").trim().toLowerCase();
     return base+":"+email;
   }
-  const REFRESH_MS=30000;
+  const REFRESH_MS=60000;
+  const REFRESH_SLOW_MS=150000;
+  const TERRITORIAL_CACHE_KEY="fibrazoTerritorialPointCacheV1";
   const BUCARAMANGA_BOUNDS=[[7.070607677,-73.172095278],[7.195892798,-73.093548025]];
 
   const state={
@@ -51,7 +53,10 @@
     follow:true,
     lastLocation:null,
     lastRefresh:null,
-    viewActive:false
+    viewActive:false,
+    pointsLoading:false,
+    lastPointsAttempt:0,
+    fullscreen:false
   };
 
   const $=id=>document.getElementById(id);
@@ -94,6 +99,23 @@
     }catch(_){return[];}
   };
   const saveRoute=()=>{try{localStorage.setItem(userScopedKey(ROUTE_KEY),JSON.stringify(state.route.slice(-5000)));}catch(_){}};
+  function territorialCacheKey(lat,lng){return Number(lat).toFixed(5)+","+Number(lng).toFixed(5);}
+  function readTerritorialCache(lat,lng){
+    try{
+      const raw=JSON.parse(localStorage.getItem(userScopedKey(TERRITORIAL_CACHE_KEY))||"{}");
+      const hit=raw?.[territorialCacheKey(lat,lng)];
+      return hit&&hit.data?hit.data:null;
+    }catch(_){return null;}
+  }
+  function writeTerritorialCache(lat,lng,data){
+    try{
+      const key=userScopedKey(TERRITORIAL_CACHE_KEY);
+      const raw=JSON.parse(localStorage.getItem(key)||"{}");
+      raw[territorialCacheKey(lat,lng)]={ts:Date.now(),data};
+      const entries=Object.entries(raw).sort((a,b)=>(b[1]?.ts||0)-(a[1]?.ts||0)).slice(0,120);
+      localStorage.setItem(key,JSON.stringify(Object.fromEntries(entries)));
+    }catch(_){}
+  }
 
   function renderMapBusy(){
     const overlay=$("mapLoadingOverlay"),text=$("mapLoadingText");
@@ -357,7 +379,19 @@
       const host=sheet?.querySelector("[data-map-territorial]");
       if(!host)return;
       try{
+        const cached=readTerritorialCache(lat,lng);
+        if(cached){
+          const territorial=cached?.territorial||cached||{};
+          const rows=[
+            territorialLayerText(territorial.city,"Ciudad / municipio"),
+            territorialLayerText(territorial.barrio,"Barrio"),
+            territorialLayerText(territorial.estrato,"Estrato"),
+            territorialLayerText(territorial.troncal,"Troncal")
+          ];
+          host.innerHTML=rows.map(row=>'<div class="map-coordinate-territorial-row '+esc(row.state)+'"><b>'+esc(row.label)+'</b><span>'+esc(row.value)+'</span></div>').join("");
+        }
         const data=await authorizedFetch("/api/exploration?lat="+encodeURIComponent(lat)+"&lng="+encodeURIComponent(lng));
+        writeTerritorialCache(lat,lng,data);
         if(!document.body.contains(sheet))return;
         const territorial=data?.territorial||{};
         const rows=[
@@ -1185,8 +1219,10 @@
   }
 
   async function loadPoints({fit=false,silent=false}={}){
-    if(!firebase?.auth?.().currentUser)return;
-    const busyToken=beginMapBusy("Cargando puntos de exploración…");
+    if(!firebase?.auth?.().currentUser||state.pointsLoading)return;
+    state.pointsLoading=true;
+    state.lastPointsAttempt=Date.now();
+    const busyToken=silent?null:beginMapBusy("Cargando puntos de exploración…");
     if(!silent)mapStatus("Actualizando puntos…","loading");
     try{
       const token=await firebase.auth().currentUser.getIdToken();
@@ -1215,6 +1251,7 @@
       }
     }finally{
       endMapBusy(busyToken);
+      state.pointsLoading=false;
     }
   }
 
@@ -1371,7 +1408,14 @@
 
   function startAutoRefresh(){
     if(state.refreshTimer)return;
-    state.refreshTimer=setInterval(()=>{if(state.viewActive)loadPoints({silent:true});},REFRESH_MS);
+    const tick=()=>{
+      if(!state.viewActive||document.visibilityState!=="visible"||!navigator.onLine)return;
+      const connection=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+      const slow=connection?.saveData||["slow-2g","2g"].includes(connection?.effectiveType);
+      const wait=slow?REFRESH_SLOW_MS:REFRESH_MS;
+      if(Date.now()-state.lastPointsAttempt>=wait)loadPoints({silent:true});
+    };
+    state.refreshTimer=setInterval(tick,15000);
   }
   function stopAutoRefresh(){
     if(state.refreshTimer){clearInterval(state.refreshTimer);state.refreshTimer=null;}
@@ -1380,7 +1424,17 @@
     state.viewActive=true;
     if(!ensureMap())return;
     setTimeout(()=>state.map.invalidateSize(),100);
-    loadPoints({fit:false});
+    if(!state.loadedOnce){
+      const cached=cachedPoints();
+      if(cached.length){
+        state.points=cached;
+        updateFilters();
+        renderMarkers({fit:false});
+        state.loadedOnce=true;
+        mapStatus("Mostrando "+cached.length+" puntos guardados · actualizando en segundo plano…","warning");
+      }
+    }
+    if(navigator.onLine)loadPoints({fit:false,silent:state.loadedOnce});
     updateLayerButtons();
     updatePolygonStatus();
     updateTrackingUi();
@@ -1396,11 +1450,28 @@
     stopAutoRefresh();
   }
 
+  function setMapFullscreen(force){
+    const wrap=$("mapCanvasWrap");
+    if(!wrap||!ensureMap())return;
+    const next=typeof force==="boolean"?force:!state.fullscreen;
+    state.fullscreen=next;
+    wrap.classList.toggle("map-fullscreen",next);
+    document.body.classList.toggle("map-fullscreen-open",next);
+    const button=$("mapFullscreen");
+    if(button){
+      button.innerHTML=next?'↙ <span>Volver</span>':'⛶ <span>Pantalla completa</span>';
+      button.title=next?"Volver a la vista anterior":"Ver mapa en pantalla completa";
+      button.setAttribute("aria-pressed",String(next));
+    }
+    setTimeout(()=>state.map?.invalidateSize(),80);
+  }
+
   function bind(){
     ["mapCityFilter","mapTypeFilter","mapUserFilter","mapDateFrom","mapDateTo"].forEach(id=>$(id)?.addEventListener("change",()=>{updateFilterCount();renderMarkers();}));
     $("mapRefresh")?.addEventListener("click",refreshMapNow);
     $("mapQuickRefresh")?.addEventListener("click",refreshMapNow);
     $("mapQuickReset")?.addEventListener("click",clearAllMapFilters);
+    $("mapFullscreen")?.addEventListener("click",()=>setMapFullscreen());
     $("mapFitPoints")?.addEventListener("click",fitVisible);
     $("mapFiltersToggle")?.addEventListener("click",()=>toggleFilters());
     $("mapClearFilters")?.addEventListener("click",clearFilters);
