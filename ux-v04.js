@@ -111,12 +111,13 @@
       setTimeout(()=>applyMapCoordinatePreset(mapPreset),120);
     }else if(form.id==="CHURN"){
       setTimeout(captureChurnGpsAutomatically,250);
-    }else if(form.id==="EXPLORACION_PRESENCIAL"){
+    }else if(form.id==="EXPLORACION_PRESENCIAL"||form.id==="INTELIGENCIA_OPERADOR"){
       setTimeout(()=>{
         const field=document.querySelector('[data-key="coordenadas"]');
         const value=field?.querySelector(".gps-value");
         const button=field?.querySelector(".gps-box > button");
         if(value&&button&&!state.gps)captureGps(value,button,"coordenadas");
+        if(form.id==="EXPLORACION_PRESENCIAL")restoreLastOperators();
       },250);
     }
     window.scrollTo({top:0,behavior:"smooth"});
@@ -189,6 +190,11 @@
   function renderField(field){
     const wrap=document.createElement("div");wrap.className="field"+(field.full?" full":"");wrap.dataset.key=field.key;wrap.dataset.section=field.section||"default";
     const label=document.createElement("label");label.className="field-label";label.innerHTML=esc(field.label)+(field.required?'<span class="required">*</span>':"");wrap.appendChild(label);
+    if(["municipio","sector_barrio","estrato"].includes(field.key)){
+      const tools=document.createElement("div");tools.className="field-quick-tools";
+      const copy=document.createElement("button");copy.type="button";copy.textContent="⧉ Copiar";copy.addEventListener("click",async()=>{const v=fieldValue(field.key);if(v){try{await navigator.clipboard.writeText(String(v));copy.textContent="✓ Copiado";setTimeout(()=>copy.textContent="⧉ Copiar",1000);}catch(_){}}});
+      tools.appendChild(copy);wrap.appendChild(tools);
+    }
     if(field.help){const h=document.createElement("span");h.className="field-help field-help-top";h.textContent=field.help;wrap.appendChild(h);}
 
     if(field.type==="text"){wrap.appendChild(textInput(field));}
@@ -343,6 +349,10 @@
     const box=document.createElement("div");box.className="gps-box";const value=document.createElement("div");value.className="gps-value";value.textContent="Ubicación pendiente";
     const btn=document.createElement("button");btn.type="button";btn.className="secondary-button";btn.textContent="Tomar coordenadas";btn.addEventListener("click",()=>captureGps(value,btn,field.key));
     box.append(value,btn);
+    const quick=document.createElement("div");quick.className="gps-quick-tools";
+    const copyGps=document.createElement("button");copyGps.type="button";copyGps.textContent="⧉ Copiar coordenada";copyGps.addEventListener("click",async()=>{if(!state.gps)return;const v=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6);try{await navigator.clipboard.writeText(v);}catch(_){}});
+    const mapsGps=document.createElement("button");mapsGps.type="button";mapsGps.textContent="↗ Google Maps";mapsGps.addEventListener("click",()=>{if(!state.gps)return;window.open("https://www.google.com/maps?q="+state.gps.lat+","+state.gps.lng,"_blank","noopener");});
+    quick.append(copyGps,mapsGps);box.appendChild(quick);
     if(field.key==="coordenadas"&&state.form?.id==="EXPLORACION_PRESENCIAL"){
       const improve=document.createElement("button");improve.type="button";improve.className="secondary-button compact gps-improve-button";improve.textContent="◎ Mejorar precisión";
       improve.addEventListener("click",()=>captureGps(value,btn,field.key));
@@ -589,6 +599,7 @@
   async function submit(){
     const u=currentUser();if(!state.form||(!u&&!publicMode))return;
     const btn=$("confirmSubmit");btn.disabled=true;setStatus("Guardando respuesta…","");
+    if(state.form.id==="EXPLORACION_PRESENCIAL")saveLastOperators();
     const payload={
       formId:state.form.id,
       data:collectData(),
@@ -701,6 +712,23 @@
   }
 
   function collectData(){const d={};state.form.fields.forEach(f=>{if(f.type==="gps"||f.type==="coordinates"||f.type==="photos"||!conditionMet(f))return;d[f.key]=fieldValue(f.key);});return d;}
+  function operatorSnapshot(){
+    const keys=["tigo_hfc","tigo_ftth","claro_hfc","claro_ftth","movistar","isp_1","isp_2","isp_3","isp_4"];
+    return Object.fromEntries(keys.map(k=>[k,fieldValue(k)]).filter(([,v])=>v!==undefined&&v!==null&&v!==""));
+  }
+  function saveLastOperators(){
+    if(state.form?.id!=="EXPLORACION_PRESENCIAL")return;
+    try{localStorage.setItem("fibrazo:last-operators",JSON.stringify(operatorSnapshot()));}catch(_){}
+  }
+  function restoreLastOperators(){
+    let saved={};try{saved=JSON.parse(localStorage.getItem("fibrazo:last-operators")||"{}");}catch(_){}
+    for(const [key,value] of Object.entries(saved)){
+      const node=document.querySelector('[name="'+css(key)+'"]');if(!node)continue;
+      if(node.type==="hidden"){node.value=value;const holder=node.closest(".binary-toggle,.segmented-control");holder?.querySelectorAll("button").forEach(b=>{const on=normalizeCityName(b.textContent)===normalizeCityName(value);b.classList.toggle("selected",on);b.classList.toggle("is-yes",on&&normalizeCityName(value)==="si");b.setAttribute("aria-pressed",String(on));});}
+      else node.value=value;
+    }
+    updateVisibility();
+  }
   function setStatus(m,t){if(!$("saveStatus"))return;$("saveStatus").textContent=m;$("saveStatus").className="save-status"+(t?" "+t:"");}
 
   function captureChurnGpsAutomatically(){
