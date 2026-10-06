@@ -116,8 +116,8 @@
         const field=document.querySelector('[data-key="coordenadas"]');
         const value=field?.querySelector(".gps-value");
         const button=field?.querySelector(".gps-box > button");
-        if(value&&button&&!state.gps)captureGps(value,button,"coordenadas");
-        if(form.id==="EXPLORACION_PRESENCIAL")restoreLastOperators();
+        if(value&&button&&!state.gps&&form.id!=="EXPLORACION_PRESENCIAL")captureGps(value,button,"coordenadas");
+        if(form.id==="EXPLORACION_PRESENCIAL"){restoreLastOperators();setTimeout(()=>showCoordinateModeChoice(value,button),40);}
       },250);
     }
     window.scrollTo({top:0,behavior:"smooth"});
@@ -368,6 +368,16 @@
   function choiceInput(field){
     const grid=document.createElement("div");grid.className="choice-grid";
     (field.options||[]).forEach(o=>{const l=document.createElement("label");l.className="choice";const i=document.createElement("input");i.type=field.type;i.name=field.key;i.value=o;i.addEventListener("change",()=>{clearError(field.key);updateVisibility();});l.append(i,document.createTextNode(o));grid.appendChild(l);});return grid;
+  }
+  function showCoordinateModeChoice(value,btn){
+    const box=value?.closest(".gps-box");if(!box||box.querySelector(".coordinate-mode-choice"))return;
+    const choice=document.createElement("div");choice.className="coordinate-mode-choice";
+    choice.innerHTML='<b>¿Cómo quieres cargar la ubicación?</b><small>La búsqueda territorial continuará mientras completas el resto del formulario.</small>';
+    const auto=document.createElement("button");auto.type="button";auto.textContent="📍 Automática por GPS";
+    const manual=document.createElement("button");manual.type="button";manual.textContent="⌨ Manual";
+    auto.addEventListener("click",()=>{choice.remove();captureGps(value,btn,"coordenadas");});
+    manual.addEventListener("click",()=>{choice.remove();box.querySelector(".gps-manual-editor input")?.focus();});
+    choice.append(auto,manual);box.prepend(choice);
   }
   function gpsInput(field){
     const box=document.createElement("div");box.className="gps-box";const value=document.createElement("div");value.className="gps-value";value.textContent="Ubicación pendiente";
@@ -768,8 +778,11 @@
 
   function captureGps(value,btn,key){
     if(!navigator.geolocation){value.textContent="GPS no disponible en este navegador.";return;}
-    btn.disabled=true;btn.textContent="Obteniendo…";
-    navigator.geolocation.getCurrentPosition(async p=>{
+    btn.disabled=true;btn.textContent="Buscando mejor señal…";
+    let best=null,finished=false;
+    const finish=async p=>{
+      if(finished)return;finished=true;if(watchId!==null)navigator.geolocation.clearWatch(watchId);clearTimeout(timer);
+      if(!p){value.textContent="No se pudo obtener la ubicación. Revisa el permiso del navegador.";btn.disabled=false;btn.textContent="Reintentar";return;}
       state.gps={lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy,cityDetected:"",citySource:""};
       value.textContent=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+" · ±"+Math.round(state.gps.accuracy)+" m";
       if(state.form?.id==="CHURN"&&key==="coordenadas"){
@@ -786,10 +799,16 @@
         await resolveExplorationMunicipality(state.gps.lat,state.gps.lng,key);
       }
       btn.disabled=false;btn.textContent="Actualizar ubicación";clearError(key);
-    },()=>{
-      value.textContent="No se pudo obtener la ubicación. Revisa el permiso del navegador.";
-      btn.disabled=false;btn.textContent="Reintentar";
-    },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
+    };
+    const onPosition=p=>{
+      if(!best||Number(p.coords.accuracy)<Number(best.coords.accuracy))best=p;
+      if(best){value.textContent="Buscando precisión… mejor lectura ±"+Math.round(best.coords.accuracy)+" m";}
+      if(Number(p.coords.accuracy)<=12)finish(p);
+    };
+    let watchId=null;
+    try{watchId=navigator.geolocation.watchPosition(onPosition,()=>{}, {enableHighAccuracy:true,maximumAge:0,timeout:18000});}
+    catch(_){watchId=null;}
+    const timer=setTimeout(()=>finish(best),10000);
   }
 
   function normalizeCityName(value){
