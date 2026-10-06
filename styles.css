@@ -2057,3 +2057,26 @@ body.form-mode main{width:min(1180px,96%);padding-top:14px}
 }
 
 .map-canvas-wrap{position:relative}.map-quick-actions{position:absolute;top:12px;right:58px;z-index:900;display:flex;gap:6px;pointer-events:auto}.map-quick-actions button{border:1px solid rgba(255,255,255,.28);background:rgba(18,27,24,.92);color:#fff;border-radius:9px;padding:8px 10px;font:700 11px Inter,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.28);backdrop-filter:blur(5px)}.map-quick-actions button:active{transform:scale(.97)}@media(max-width:560px){.map-quick-actions{top:10px;right:54px}.map-quick-actions button{padding:8px}.map-quick-actions button span{display:none}}
+
+/* v0.8.24 · modo terreno y mapa pantalla completa */
+.map-fullscreen-open{overflow:hidden!important}
+.map-canvas-wrap.map-fullscreen{
+  position:fixed!important;inset:0!important;z-index:7900!important;
+  width:100vw!important;height:100dvh!important;background:#0f1714!important;
+  padding:0!important;margin:0!important
+}
+.map-canvas-wrap.map-fullscreen .exploration-map{
+  width:100%!important;height:100%!important;min-height:100%!important;
+  border:0!important;border-radius:0!important
+}
+.map-canvas-wrap.map-fullscreen .map-quick-actions{
+  position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:10px;z-index:7950
+}
+.map-canvas-wrap.map-fullscreen .map-loading-overlay{
+  position:fixed;top:calc(58px + env(safe-area-inset-top,0px));z-index:7940
+}
+@media(max-width:560px){
+  .map-canvas-wrap.map-fullscreen .map-quick-actions{right:8px}
+  .map-canvas-wrap.map-fullscreen .map-quick-actions button{padding:9px 10px}
+  .map-canvas-wrap.map-fullscreen #mapFullscreen span{display:inline}
+}
