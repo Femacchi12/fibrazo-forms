@@ -9,7 +9,8 @@ const {resolveTerritorial,TERRITORIAL_VERSION}=require("./_territorial");
 const LEGACY_PHOTO_FOLDER_ENV={
   CHURN:"DRIVE_CHURN_FOLDER_ID",
   EXPLORACION:"DRIVE_EXPLORACION_FOLDER_ID",
-  EXPLORACION_PRESENCIAL:"DRIVE_EXPLORACION_FOLDER_ID"
+  EXPLORACION_PRESENCIAL:"DRIVE_EXPLORACION_FOLDER_ID",
+  INTELIGENCIA_OPERADOR:"DRIVE_EXPLORACION_FOLDER_ID"
 };
 const MASTER_SHEET_ID=process.env.BUCARAMANGA_EXPLORACION_SHEET_ID||"1LKNNf7a1VlUGpr9SlRqJGAkZq4NprW-wvdjNIlmB4E4";
 let masterPolygonCache=null;
@@ -117,6 +118,9 @@ function isExploration(formId){
 
 function buildRow(form,p,id,links,email){
   const d=p.data||{},l=p.location||{},now=new Date().toISOString();
+  if(form.id==="INTELIGENCIA_OPERADOR"){
+    return [now,id,d.operador||"",d.modelo_caja||"",d.nomenclatura_caja||"",d.marquilla||"",d.tipo_tensor||"",d.tipo_despliegue||"",d.calidad_tendido||"",d.observaciones||"",l.lat||"",l.lng||"",l.accuracy||"",links[0]||"",links[1]||"",links[2]||"",email||"ANONIMO"];
+  }
   if(form.id==="CHURN"){
     return [
       now,id,d.ciudad||"",d.cliente_id||"",d.fecha_visita||"",d.motivo_principal||"",
