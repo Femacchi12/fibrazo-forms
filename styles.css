@@ -2095,3 +2095,13 @@ body.form-mode main{width:min(1180px,96%);padding-top:14px}
 .territorial-summary-row.inside small{color:var(--fz-green)}
 .territorial-summary-row.outside small{color:#ff7676}
 .territorial-summary-row.missing small{color:var(--fz-muted)}
+
+/* v0.8.27 · legibilidad de campo */
+.form-mode,.form-mode .app-shell{background:#000!important;color:#fff}
+.form-mode .field,.form-mode .form-card,.form-mode .review-section{background:#101613!important;border-color:#52605a!important}
+.form-mode label,.form-mode .field-label,.form-mode h1,.form-mode h2,.form-mode h3,.form-mode strong{color:#fff}
+.form-mode input,.form-mode select,.form-mode textarea{background:#171f1b!important;color:#fff!important;border-color:#66756e!important}
+.form-mode .binary-toggle-button{border:2px solid #8a3f3f!important;background:#281414!important}
+.form-mode .binary-toggle-button.is-yes{border-color:#00fe9c!important;background:#073c2b!important}
+.form-mode .segment-option{border-width:2px!important}
+.gps-improve-button{margin-top:8px;width:100%}
