@@ -2105,3 +2105,7 @@ body.form-mode main{width:min(1180px,96%);padding-top:14px}
 .form-mode .binary-toggle-button.is-yes{border-color:#00fe9c!important;background:#073c2b!important}
 .form-mode .segment-option{border-width:2px!important}
 .gps-improve-button{margin-top:8px;width:100%}
+
+.field-quick-tools,.gps-quick-tools{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.field-quick-tools button,.gps-quick-tools button{min-height:42px;padding:8px 12px;border:1px solid #52605a;border-radius:12px;background:#111916;color:#fff;font-weight:800}
+.gps-quick-tools button:last-child{border-color:#00fe9c}
