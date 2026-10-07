@@ -608,7 +608,7 @@
     window.scrollTo({top:0,behavior:"smooth"});
   }
   function prev(){if(state.sectionIndex>0){state.sectionIndex--;renderSection();}}
-  function next(){if(isExplorationForm()&&currentSection()?.id==="ubicacion"&&state.locationBusy){state.sectionIndex++;state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);renderSection();return;}const e=validateSection(state.sectionIndex,true);if(e.length)return showValidation(e);if(state.form?.id==="EXPLORACION_PRESENCIAL"){if(currentSection()?.id==="infraestructura")saveLastInfrastructure();if(currentSection()?.id==="operadores")saveLastOperators();}state.sectionIndex++;state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);renderSection();}
+  function next(){if(isExplorationForm()&&currentSection()?.id==="coordenada"&&state.locationBusy){state.sectionIndex++;state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);renderSection();return;}const e=validateSection(state.sectionIndex,true);if(e.length)return showValidation(e);if(state.form?.id==="EXPLORACION_PRESENCIAL"){if(currentSection()?.id==="infraestructura")saveLastInfrastructure();if(currentSection()?.id==="operadores")saveLastOperators();}state.sectionIndex++;state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);renderSection();}
 
   function hasExplorationOperator(){
     if(!isExplorationForm())return true;
@@ -816,8 +816,24 @@
     let saved={};try{saved=JSON.parse(localStorage.getItem("fibrazo:last-operators")||"{}");}catch(_){}
     for(const [key,value] of Object.entries(saved)){
       const node=document.querySelector('[name="'+css(key)+'"]');if(!node)continue;
-      if(node.type==="hidden"){node.value=value;const holder=node.closest(".binary-toggle,.segmented-control");holder?.querySelectorAll("button").forEach(b=>{const on=normalizeCityName(b.textContent)===normalizeCityName(value);b.classList.toggle("selected",on);b.classList.toggle("is-yes",on&&normalizeCityName(value)==="si");b.setAttribute("aria-pressed",String(on));});}
-      else node.value=value;
+      if(node.type==="hidden"){
+        node.value=value;
+        const holder=node.closest(".binary-toggle,.segmented-control");
+        if(holder?.classList.contains("binary-toggle")){
+          const b=holder.querySelector(".binary-toggle-button");
+          if(b){
+            const yes=normalizeCityName(value)==="si";
+            b.classList.toggle("is-yes",yes);
+            b.setAttribute("aria-pressed",String(yes));
+            b.innerHTML='<span class="toggle-state">'+(yes?"Sí":"No")+'</span><span class="toggle-hint">Toca para cambiar</span>';
+          }
+        }else{
+          holder?.querySelectorAll(".segment-option").forEach(b=>{const on=normalizeCityName(b.textContent)===normalizeCityName(value);b.classList.toggle("selected",on);b.setAttribute("aria-pressed",String(on));});
+        }
+      } else {
+        node.value=value;
+        node.dispatchEvent(new Event("input",{bubbles:true}));
+      }
     }
     updateVisibility();
   }
