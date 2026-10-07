@@ -229,7 +229,7 @@
     const i=document.createElement("input");i.type="text";i.name=field.key;
     i.addEventListener("input",()=>{
       if(field.autoGeo&&i.dataset.geoWriting!=="1")i.dataset.geoManual="1";
-      if(state.form?.id==="EXPLORACION_PRESENCIAL"&&field.key==="municipio"){
+      if((state.form?.id==="EXPLORACION_PRESENCIAL"||state.form?.id==="INTELIGENCIA_OPERADOR")&&field.key==="municipio"){
         i.dataset.geoManual="1";
         const city=String(i.value||"").trim();
         state.detectedCity=city;state.citySource="manual";
@@ -358,7 +358,7 @@
     (field.options||[]).forEach(o=>{const x=document.createElement("option");x.value=o;x.textContent=o;s.appendChild(x);});
     s.addEventListener("change",()=>{
       if(field.autoGeo&&s.dataset.geoWriting!=="1")s.dataset.geoManual="1";
-      const isManualCity=(state.form?.id==="CHURN"&&field.key==="ciudad")||(state.form?.id==="EXPLORACION_PRESENCIAL"&&field.key==="municipio");
+      const isManualCity=(state.form?.id==="CHURN"&&field.key==="ciudad")||((state.form?.id==="EXPLORACION_PRESENCIAL"||state.form?.id==="INTELIGENCIA_OPERADOR")&&field.key==="municipio");
       if(isManualCity&&s.dataset.autoGps!=="1"){
         const city=String(s.value||"").trim();
         state.detectedCity=city;state.citySource="manual";
@@ -943,7 +943,7 @@
   function applyDetectedCity(cityName,source="gps"){
     const city=String(cityName||"").trim();
     if(!city)return;
-    const fieldKey=state.form?.id==="CHURN"?"ciudad":state.form?.id==="EXPLORACION_PRESENCIAL"?"municipio":"";
+    const fieldKey=state.form?.id==="CHURN"?"ciudad":(state.form?.id==="EXPLORACION_PRESENCIAL"||state.form?.id==="INTELIGENCIA_OPERADOR")?"municipio":"";
     const control=fieldKey?document.querySelector('[name="'+css(fieldKey)+'"]'):null;
     if(control?.dataset.geoManual==="1"&&source!=="manual"){
       if(state.gps){state.gps.cityTerritorialSuggested=city;state.gps.cityTerritorialSource=source;}
