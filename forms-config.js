@@ -122,7 +122,7 @@ window.FIBRAZO_FORMS = {
       { id: "ubicacion", title: "Validación territorial", description: "Confirma al final los datos obtenidos para la coordenada y completa la lectura de campo." }
     ],
     fields: [
-      {key:"coordenadas",section:"ubicacion",label:"Ubicación actual",type:"gps",required:true,full:true,manualEdit:true,help:"Toma la ubicación con el GPS. Si es necesario, puedes corregir manualmente la coordenada antes de continuar."},
+      {key:"coordenadas",section:"coordenada",label:"Ubicación actual",type:"gps",required:true,full:true,manualEdit:true,help:"Toma la ubicación con el GPS. Si es necesario, puedes corregir manualmente la coordenada antes de continuar."},
       {key:"municipio",section:"ubicacion",label:"Municipio / ciudad",type:"text",required:true,autoCity:true,help:"Se detecta primero contra el Maestro Territorial FIBRAZO. Si queda fuera del ámbito cargado, se muestra el municipio más cercano con su distancia y puedes registrar manualmente el municipio observado."},
       {key:"sector_barrio",section:"ubicacion",label:"Barrio",type:"text",autoGeo:"barrio",help:"Muestra el barrio identificado por el Motor Territorial. Si la coordenada queda fuera, muestra el barrio más cercano como referencia y debajo indica en rojo la distancia al polígono. El estado territorial se guarda por separado para análisis y filtros."},
       {key:"estrato",section:"ubicacion",label:"Estrato",type:"select",options:["1","2","3","4","5","6","Sin información"],autoGeo:"estrato",help:"Muestra el estrato identificado por el Motor Territorial. Si la coordenada queda fuera, muestra el estrato más cercano como referencia y debajo indica en rojo la distancia al polígono. El estado territorial se guarda por separado para análisis y filtros."},
