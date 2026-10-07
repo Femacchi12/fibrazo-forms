@@ -2,7 +2,7 @@
   const forms=window.FIBRAZO_FORMS||{};
   const $=id=>document.getElementById(id);
   const publicMode=document.body.classList.contains("public-mode");
-  const state={form:null,policy:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:"",ispOptions:[],geoController:null,geoLookupId:0,geoLookupCancelled:false,locationBusy:false,maxSectionReached:0};
+  const state={form:null,policy:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:"",ispOptions:[],geoController:null,geoLookupId:0,geoLookupCancelled:false,locationBusy:false,maxSectionReached:0,locationValidated:false,geoPromise:null};
   const pending=window.FIBRAZO_PENDING||[];
 
   function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
@@ -75,7 +75,7 @@
     const form=forms[id];if(!form)return;
     if(!publicMode&&window.FIBRAZO_ACCESS&&window.FIBRAZO_ACCESS[id]===false)return;
     const policy=policyFor(id);
-    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.gps=null;state.photos=[];state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.maxSectionReached=0;
+    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.gps=null;state.photos=[];state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
     document.body.classList.add("form-mode");
     $("formTitle").textContent=form.name;
     $("formDescription").textContent=form.description||"";
@@ -104,7 +104,9 @@
     const stepper=$("sectionStepper"),counter=$("formStepCounter");
     if(stepper)stepper.hidden=policy.showProgress===false;
     if(counter)counter.hidden=policy.showProgress===false;
-    clearValidation();loadLocalIsps();renderSection();window.FIBRAZO_OFFLINE?.refreshUi?.();
+    clearValidation();loadLocalIsps();renderSection();
+    if(form.id==="EXPLORACION_PRESENCIAL"){requestAnimationFrame(()=>{restoreLastInfrastructure();restoreLastOperators();});}
+    window.FIBRAZO_OFFLINE?.refreshUi?.();
     const mapPreset=window.FIBRAZO_MAP_COORDINATE_PRESET;
     if(mapPreset){
       window.FIBRAZO_MAP_COORDINATE_PRESET=null;
@@ -438,7 +440,7 @@
         input.setCustomValidity("");
         state.gps={lat:parsed.lat,lng:parsed.lng,accuracy:null,cityDetected:"",citySource:"manual-coordinate"};
         value.textContent=parsed.lat.toFixed(6)+", "+parsed.lng.toFixed(6)+" · corrección manual";
-        state.locationBusy=true;resolveExplorationMunicipality(parsed.lat,parsed.lng,field.key).finally(()=>{state.locationBusy=false;});
+        state.locationBusy=true;state.locationValidated=false;state.geoPromise=resolveExplorationMunicipality(parsed.lat,parsed.lng,field.key);state.geoPromise.finally(()=>{state.locationBusy=false;state.geoPromise=null;});
         clearError(field.key);
       });
       row.append(input,apply);editor.append(label,row);box.appendChild(editor);
@@ -463,9 +465,9 @@
       const raw=String(input.value||"").trim(),parsed=parseCoordinateText(raw);
       if(!raw){state.gps=null;state.detectedCity="";state.citySource="";status.textContent="Municipio: pendiente";return;}
       if(!parsed){state.gps=null;state.detectedCity="";state.citySource="";status.textContent="Formato esperado: latitud, longitud";return;}
-      state.gps={lat:parsed.lat,lng:parsed.lng,accuracy:null,cityDetected:"",citySource:"manual-coordinate"};
+      state.gps={lat:parsed.lat,lng:parsed.lng,accuracy:null,cityDetected:"",citySource:"manual-coordinate"};state.locationValidated=false;
       status.textContent="Municipio: identificando…";
-      timer=setTimeout(()=>resolveExplorationMunicipality(parsed.lat,parsed.lng,field.key),350);
+      timer=setTimeout(()=>{state.locationBusy=true;state.geoPromise=resolveExplorationMunicipality(parsed.lat,parsed.lng,field.key);state.geoPromise.finally(()=>{state.locationBusy=false;state.geoPromise=null;});},350);
     });
     const geo=document.createElement("div");geo.className="geo-enrichment";geo.dataset.geoEnrichment="1";geo.hidden=true;
     const txt=document.createElement("span");txt.dataset.geoEnrichmentText="1";
@@ -606,7 +608,7 @@
     window.scrollTo({top:0,behavior:"smooth"});
   }
   function prev(){if(state.sectionIndex>0){state.sectionIndex--;renderSection();}}
-  function next(){if(isExplorationForm()&&currentSection()?.id==="ubicacion"&&state.locationBusy){state.sectionIndex++;state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);renderSection();return;}const e=validateSection(state.sectionIndex,true);if(e.length)return showValidation(e);state.sectionIndex++;state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);renderSection();}
+  function next(){if(isExplorationForm()&&currentSection()?.id==="ubicacion"&&state.locationBusy){state.sectionIndex++;state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);renderSection();return;}const e=validateSection(state.sectionIndex,true);if(e.length)return showValidation(e);if(state.form?.id==="EXPLORACION_PRESENCIAL"){if(currentSection()?.id==="infraestructura")saveLastInfrastructure();if(currentSection()?.id==="operadores")saveLastOperators();}state.sectionIndex++;state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);renderSection();}
 
   function hasExplorationOperator(){
     if(!isExplorationForm())return true;
@@ -649,9 +651,9 @@
   function showValidation(errors){const list=$("validationList");list.innerHTML="";errors.forEach(x=>{setError(x.field.key,x.message);const li=document.createElement("li");li.textContent=x.field.label+": "+x.message;list.appendChild(li);});$("validationSummary").hidden=false;document.querySelector("#dynamicFields .field.invalid:not([hidden])")?.scrollIntoView({behavior:"smooth",block:"center"});}
 
   async function review(){
-    if(isExplorationForm()&&state.locationBusy){setStatus("Terminando ubicación y datos territoriales…","");const started=Date.now();while(state.locationBusy&&Date.now()-started<18000)await new Promise(done=>setTimeout(done,250));}
-    if(isExplorationForm()&&state.gps&&(!String(fieldValue("municipio")||"").trim())){setStatus("Validando datos territoriales antes del resumen…","");try{await resolveExplorationMunicipality(state.gps.lat,state.gps.lng,"coordenadas");}catch(_){}}
-    const errors=validateAll();if(errors.length){const sections=activeSections(),idx=sections.findIndex(s=>s.id===errors[0].field.section);if(idx>=0)state.sectionIndex=idx;renderSection();showValidation(errors.filter(x=>x.field.section===currentSection().id));return;}
+    if(isExplorationForm()&&state.locationBusy){setStatus("Terminando ubicación y datos territoriales…","");try{await state.geoPromise;}catch(_){}}
+    if(isExplorationForm()&&state.gps&&!state.locationValidated){setStatus("Validando datos territoriales antes del resumen…","");try{state.geoPromise=resolveExplorationMunicipality(state.gps.lat,state.gps.lng,"coordenadas");await state.geoPromise;}catch(_){}finally{state.geoPromise=null;}}
+    const errors=validateAll();if(errors.length){const sections=activeSections(),idx=sections.findIndex(s=>s.id===errors[0].field.section);if(idx>=0)state.sectionIndex=idx;state.maxSectionReached=Math.max(state.maxSectionReached,sections.length-1);renderSection();showValidation(errors.filter(x=>x.field.section===currentSection().id));return;}
     $("formWorkspace").hidden=true;$("reviewWorkspace").hidden=false;$("successWorkspace").hidden=true;buildReview();setStatus("","");window.scrollTo({top:0,behavior:"smooth"});
   }
   function edit(){$("reviewWorkspace").hidden=true;$("formWorkspace").hidden=false;renderSection();}
@@ -834,7 +836,7 @@
 
   function captureGps(value,btn,key){
     if(!navigator.geolocation){value.textContent="GPS no disponible en este navegador.";return;}
-    btn.disabled=true;btn.textContent="Buscando mejor señal…";state.locationBusy=isExplorationForm()&&key==="coordenadas";
+    btn.disabled=true;btn.textContent="Buscando mejor señal…";state.locationBusy=isExplorationForm()&&key==="coordenadas";state.locationValidated=false;
     let best=null,finished=false,watchId=null,timer=null;
     const finish=async p=>{
       if(finished)return;finished=true;if(watchId!==null)navigator.geolocation.clearWatch(watchId);clearTimeout(timer);
@@ -852,7 +854,7 @@
           else if(cityStatus&&!fallback)cityStatus.textContent="Ciudad GPS: no se pudo identificar · selección manual disponible";
         }
       }else if(isExplorationForm()&&key==="coordenadas"){
-        await resolveExplorationMunicipality(state.gps.lat,state.gps.lng,key);
+        state.geoPromise=resolveExplorationMunicipality(state.gps.lat,state.gps.lng,key);await state.geoPromise;state.geoPromise=null;
       }
       btn.disabled=false;btn.textContent="Actualizar ubicación";state.locationBusy=false;clearError(key);
     };
@@ -1063,6 +1065,7 @@
         else if(data.cityStatus==="SIN_CAPA")cityStatus.textContent="Municipio: sin capa territorial disponible";
       }
       geoStatus("",{hidden:true});
+      state.locationValidated=true;
       return data;
     }catch(error){
       if(lookupId!==state.geoLookupId)return null;
