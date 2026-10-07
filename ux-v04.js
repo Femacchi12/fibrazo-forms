@@ -793,7 +793,7 @@
   function captureGps(value,btn,key){
     if(!navigator.geolocation){value.textContent="GPS no disponible en este navegador.";return;}
     btn.disabled=true;btn.textContent="Buscando mejor señal…";
-    let best=null,finished=false;
+    let best=null,finished=false,watchId=null,timer=null;
     const finish=async p=>{
       if(finished)return;finished=true;if(watchId!==null)navigator.geolocation.clearWatch(watchId);clearTimeout(timer);
       if(!p){value.textContent="No se pudo obtener la ubicación. Revisa el permiso del navegador.";btn.disabled=false;btn.textContent="Reintentar";return;}
@@ -819,10 +819,9 @@
       if(best){value.textContent="Buscando precisión… mejor lectura ±"+Math.round(best.coords.accuracy)+" m";}
       if(Number(p.coords.accuracy)<=12)finish(p);
     };
-    let watchId=null;
     try{watchId=navigator.geolocation.watchPosition(onPosition,()=>{}, {enableHighAccuracy:true,maximumAge:0,timeout:18000});}
     catch(_){watchId=null;}
-    const timer=setTimeout(()=>finish(best),10000);
+    timer=setTimeout(()=>finish(best),10000);
   }
 
   function normalizeCityName(value){
