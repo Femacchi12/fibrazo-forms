@@ -2,7 +2,7 @@
   const forms=window.FIBRAZO_FORMS||{};
   const $=id=>document.getElementById(id);
   const publicMode=document.body.classList.contains("public-mode");
-  const state={form:null,policy:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:"",ispOptions:[],geoController:null,geoLookupId:0,geoLookupCancelled:false};
+  const state={form:null,policy:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:"",ispOptions:[],geoController:null,geoLookupId:0,geoLookupCancelled:false,locationBusy:false};
   const pending=window.FIBRAZO_PENDING||[];
 
   function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
@@ -104,7 +104,7 @@
     const stepper=$("sectionStepper"),counter=$("formStepCounter");
     if(stepper)stepper.hidden=policy.showProgress===false;
     if(counter)counter.hidden=policy.showProgress===false;
-    clearValidation();loadLocalIsps();renderSection();setTimeout(operatorSectionTools,50);window.FIBRAZO_OFFLINE?.refreshUi?.();
+    clearValidation();loadLocalIsps();renderSection();window.FIBRAZO_OFFLINE?.refreshUi?.();
     const mapPreset=window.FIBRAZO_MAP_COORDINATE_PRESET;
     if(mapPreset){
       window.FIBRAZO_MAP_COORDINATE_PRESET=null;
@@ -249,6 +249,32 @@
     ["isp_1","isp_2","isp_3","isp_4"].forEach(key=>{const n=document.querySelector('[name="'+css(key)+'"]');if(n)n.value="Sin ISP";});
     updateVisibility();
   }
+  const infraMemoryKey="fibrazo:last-infrastructure";
+  function paintSegmentedValue(key,value){
+    const n=document.querySelector('[name="'+css(key)+'"]');if(!n)return;
+    n.value=String(value||"");
+    const holder=n.closest(".segmented-control");
+    holder?.querySelectorAll(".segment-option").forEach(b=>{const on=String(b.textContent||"").trim()===String(value||"");b.classList.toggle("selected",on);b.setAttribute("aria-pressed",String(on));});
+    clearError(key);updateVisibility();
+  }
+  function saveLastInfrastructure(){
+    if(state.form?.id!=="EXPLORACION_PRESENCIAL")return;
+    const data={tipo_despliegue:String(fieldValue("tipo_despliegue")||"Aéreo"),condicion_ocupacion_tendido:String(fieldValue("condicion_ocupacion_tendido")||""),condicion_fisica_posteria:String(fieldValue("condicion_fisica_posteria")||"")};
+    try{localStorage.setItem(infraMemoryKey,JSON.stringify(data));}catch(_){}
+  }
+  function restoreLastInfrastructure(){
+    if(state.form?.id!=="EXPLORACION_PRESENCIAL")return;
+    let data=null;try{data=JSON.parse(localStorage.getItem(infraMemoryKey)||"null");}catch(_){}
+    if(!data)return;
+    const type=document.querySelector('[name="tipo_despliegue"]');if(type){type.value=data.tipo_despliegue||"Aéreo";type.dispatchEvent(new Event("change",{bubbles:true}));}
+    paintSegmentedValue("condicion_ocupacion_tendido",data.condicion_ocupacion_tendido);
+    paintSegmentedValue("condicion_fisica_posteria",data.condicion_fisica_posteria);
+  }
+  function clearInfrastructure(){
+    const type=document.querySelector('[name="tipo_despliegue"]');if(type){type.value="Aéreo";type.dispatchEvent(new Event("change",{bubbles:true}));}
+    paintSegmentedValue("condicion_ocupacion_tendido","");
+    paintSegmentedValue("condicion_fisica_posteria","");
+  }
   function operatorSectionTools(){
     if(state.form?.id!=="EXPLORACION_PRESENCIAL")return;
     const section=document.querySelector('[data-section-id="operadores"],.form-section[data-section="operadores"]')||document.querySelector('[data-key="tigo_hfc"]')?.parentElement;
@@ -361,7 +387,7 @@
   function toggleInput(field){
     const holder=document.createElement("div");holder.className="binary-toggle";
     const brand=field.key.startsWith("tigo_")?"brand-tigo":field.key.startsWith("claro_")?"brand-claro":field.key==="movistar"?"brand-movistar":"";
-    if(brand)holder.classList.add(brand);
+    if(brand){holder.classList.add(brand);queueMicrotask(()=>holder.closest(".field")?.classList.add(brand,"operator-brand-field"));}
     const hidden=document.createElement("input");hidden.type="hidden";hidden.name=field.key;hidden.value=String(field.default??"No");
     const b=document.createElement("button");b.type="button";b.className="binary-toggle-button";
     const paint=()=>{const yes=hidden.value==="Sí";b.classList.toggle("is-yes",yes);b.setAttribute("aria-pressed",String(yes));b.innerHTML='<span class="toggle-state">'+(yes?"Sí":"No")+'</span><span class="toggle-hint">Toca para cambiar</span>';};
@@ -546,6 +572,18 @@
     $("formStepCounter").hidden=state.policy?.showProgress===false;
     $("prevSection").hidden=state.sectionIndex===0;const last=state.sectionIndex===sections.length-1;$("nextSection").hidden=last;$("reviewForm").hidden=!last;
     clearValidation();updateVisibility();
+    if(state.form?.id==="EXPLORACION_PRESENCIAL"&&section.id==="infraestructura"){
+      requestAnimationFrame(()=>{
+        const first=document.querySelector('[data-key="tipo_despliegue"]');
+        if(first&&!document.querySelector(".infrastructure-memory-inline")){
+          const bar=document.createElement("div");bar.className="operator-memory-inline infrastructure-memory-inline";
+          const reuse=document.createElement("button");reuse.type="button";reuse.textContent="↻ Usar última postería";reuse.addEventListener("click",restoreLastInfrastructure);
+          const clear=document.createElement("button");clear.type="button";clear.textContent="✕ Limpiar";clear.addEventListener("click",clearInfrastructure);
+          bar.append(reuse,clear);first.parentElement?.insertBefore(bar,first);
+          restoreLastInfrastructure();
+        }
+      });
+    }
     if(state.form?.id==="EXPLORACION_PRESENCIAL"&&section.id==="operadores"){
       requestAnimationFrame(()=>{
         const first=document.querySelector('[data-key="tigo_hfc"]');
@@ -566,7 +604,7 @@
     window.scrollTo({top:0,behavior:"smooth"});
   }
   function prev(){if(state.sectionIndex>0){state.sectionIndex--;renderSection();}}
-  function next(){const e=validateSection(state.sectionIndex,true);if(e.length)return showValidation(e);state.sectionIndex++;renderSection();}
+  function next(){if(isExplorationForm()&&currentSection()?.id==="ubicacion"&&state.locationBusy){geoStatus("Espera un momento: estamos terminando de cargar GPS y territorio.",{busy:true});return;}const e=validateSection(state.sectionIndex,true);if(e.length)return showValidation(e);state.sectionIndex++;renderSection();}
 
   function hasExplorationOperator(){
     if(!isExplorationForm())return true;
@@ -647,7 +685,7 @@
   async function submit(){
     const u=currentUser();if(!state.form||(!u&&!publicMode))return;
     const btn=$("confirmSubmit");btn.disabled=true;setStatus("Guardando respuesta…","");
-    if(state.form.id==="EXPLORACION_PRESENCIAL")saveLastOperators();
+    if(state.form.id==="EXPLORACION_PRESENCIAL"){saveLastOperators();saveLastInfrastructure();}
     const payload={
       formId:state.form.id,
       data:collectData(),
@@ -792,11 +830,11 @@
 
   function captureGps(value,btn,key){
     if(!navigator.geolocation){value.textContent="GPS no disponible en este navegador.";return;}
-    btn.disabled=true;btn.textContent="Buscando mejor señal…";
+    btn.disabled=true;btn.textContent="Buscando mejor señal…";state.locationBusy=isExplorationForm()&&key==="coordenadas";const nextBtn=$("nextSection");if(state.locationBusy&&nextBtn){nextBtn.disabled=true;nextBtn.textContent="Cargando ubicación…";}
     let best=null,finished=false,watchId=null,timer=null;
     const finish=async p=>{
       if(finished)return;finished=true;if(watchId!==null)navigator.geolocation.clearWatch(watchId);clearTimeout(timer);
-      if(!p){value.textContent="No se pudo obtener la ubicación. Revisa el permiso del navegador.";btn.disabled=false;btn.textContent="Reintentar";return;}
+      if(!p){value.textContent="No se pudo obtener la ubicación. Revisa el permiso del navegador.";btn.disabled=false;btn.textContent="Reintentar";state.locationBusy=false;const nextBtn=$("nextSection");if(nextBtn){nextBtn.disabled=false;nextBtn.textContent="Continuar →";}return;}
       state.gps={lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy,cityDetected:"",citySource:""};
       value.textContent=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+" · ±"+Math.round(state.gps.accuracy)+" m";
       if(state.form?.id==="CHURN"&&key==="coordenadas"){
@@ -812,7 +850,7 @@
       }else if(isExplorationForm()&&key==="coordenadas"){
         await resolveExplorationMunicipality(state.gps.lat,state.gps.lng,key);
       }
-      btn.disabled=false;btn.textContent="Actualizar ubicación";clearError(key);
+      btn.disabled=false;btn.textContent="Actualizar ubicación";state.locationBusy=false;const nextBtn=$("nextSection");if(nextBtn){nextBtn.disabled=false;nextBtn.textContent="Continuar →";}clearError(key);
     };
     const onPosition=p=>{
       if(!best||Number(p.coords.accuracy)<Number(best.coords.accuracy))best=p;
