@@ -387,7 +387,7 @@ async function readRows(auth,forms,requested,limit,user,caps){
             tigo_hfc:row[7],tigo_ftth:row[8],claro_hfc:row[9],claro_ftth:row[10],movistar:row[11],
             isp_1:row[12],isp_2:row[13],isp_3:row[14],isp_4:row[15],tipo,
             barrio:row[47]||row[3],estrato:row[53]||row[55]||row[71]||"",troncal:row[59]||row[61]||"",
-            zona_empresarial:row[63]||"",estrato_observado:row[64]||"",nivel_seguridad:row[65]||""
+            zona_empresarial:row[63]||"",estrato_observado:row[64]||"",nivel_seguridad:row[65]||"",tipo_terreno:row[73]||""
           },
           location:{lat:row[17],lng:row[18],accuracy:row[19]},
           photos:[row[21],row[22],row[23]].filter(Boolean),
@@ -602,7 +602,7 @@ module.exports=async(req,res)=>{
 
         await sheets.spreadsheets.values.update({
           spreadsheetId:SHEET_ID,
-          range:`${form.sheet}!BL${rawRow}:BT${rawRow}`,
+          range:`${form.sheet}!BL${rawRow}:BU${rawRow}`,
           valueInputOption:"RAW",
           requestBody:{values:[[
             String(payload.data?.zona_empresarial||""),
@@ -613,7 +613,8 @@ module.exports=async(req,res)=>{
             String(payload.data?.isp_2_calidad||""),
             String(payload.data?.isp_3_calidad||""),
             String(payload.data?.isp_4_calidad||""),
-            String(payload.data?.estrato||"")
+            String(payload.data?.estrato||""),
+            String(payload.data?.tipo_terreno||"")
           ]]}
         });
       }
