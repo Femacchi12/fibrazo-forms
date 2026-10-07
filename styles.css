@@ -2166,3 +2166,9 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
 .form-mode .binary-toggle-button.is-yes{border-color:#00fe9c!important;background:#073c2b!important}
 .form-mode .binary-toggle-button.is-yes .toggle-state{color:#00fe9c!important}
 .form-mode #nextSection:disabled{opacity:.7;cursor:wait}
+
+/* v0.8.39 · estados claros de campo */
+.form-mode .binary-toggle.brand-tigo .binary-toggle-button:not(.is-yes),.form-mode .binary-toggle.brand-claro .binary-toggle-button:not(.is-yes),.form-mode .binary-toggle.brand-movistar .binary-toggle-button:not(.is-yes){border-color:#ff666d!important;background:#351517!important}
+.form-mode .binary-toggle.brand-tigo .binary-toggle-button.is-yes,.form-mode .binary-toggle.brand-claro .binary-toggle-button.is-yes,.form-mode .binary-toggle.brand-movistar .binary-toggle-button.is-yes{border-color:#00fe9c!important;background:#073c2b!important}
+.form-mode [data-key="zona_empresarial"] .binary-toggle-button,.form-mode [data-key="zona_empresarial"] .binary-toggle-button.is-yes{border-color:#65746f!important;background:#17201d!important}
+.form-mode [data-key="zona_empresarial"] .binary-toggle-button .toggle-state{color:#f3f7f5!important}
