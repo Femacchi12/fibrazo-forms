@@ -2192,3 +2192,18 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
   .isp-suggestion-list{max-height:min(190px,29vh)}
   .isp-suggestion{padding:6px 9px;min-height:34px}
 }
+
+
+/* v0.8.42 · controles ISP siempre por encima de la navegación sticky */
+.isp-autocomplete{isolation:isolate}
+.isp-clear-button{
+  z-index:4!important;
+  width:30px!important;
+  height:30px!important;
+  right:9px!important;
+}
+.form-actions{z-index:40!important}
+.form-actions .primary-button,.form-actions .secondary-button{position:relative;z-index:41}
+@media(max-width:560px){
+  .isp-clear-button{width:28px!important;height:28px!important;font-size:19px!important}
+}
