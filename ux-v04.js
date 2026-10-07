@@ -2,7 +2,7 @@
   const forms=window.FIBRAZO_FORMS||{};
   const $=id=>document.getElementById(id);
   const publicMode=document.body.classList.contains("public-mode");
-  const state={form:null,policy:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:"",ispOptions:[],geoController:null,geoLookupId:0,geoLookupCancelled:false,locationBusy:false};
+  const state={form:null,policy:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:"",ispOptions:[],geoController:null,geoLookupId:0,geoLookupCancelled:false,locationBusy:false,maxSectionReached:0};
   const pending=window.FIBRAZO_PENDING||[];
 
   function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
@@ -75,7 +75,7 @@
     const form=forms[id];if(!form)return;
     if(!publicMode&&window.FIBRAZO_ACCESS&&window.FIBRAZO_ACCESS[id]===false)return;
     const policy=policyFor(id);
-    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.gps=null;state.photos=[];state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;
+    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.gps=null;state.photos=[];state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.maxSectionReached=0;
     document.body.classList.add("form-mode");
     $("formTitle").textContent=form.name;
     $("formDescription").textContent=form.description||"";
@@ -559,10 +559,10 @@
       x.type="button";
       x.className="step"+(i===state.sectionIndex?" active":i<state.sectionIndex?" complete":" future");
       x.innerHTML="<span>"+(i+1)+"</span><small>"+esc(s.title)+"</small>";
-      x.disabled=i>state.sectionIndex;
+      x.disabled=i>state.maxSectionReached;
       x.setAttribute("aria-current",i===state.sectionIndex?"step":"false");
-      if(i<state.sectionIndex){
-        x.title="Volver a "+s.title;
+      if(i!==state.sectionIndex&&i<=state.maxSectionReached){
+        x.title="Ir a "+s.title;
         x.addEventListener("click",()=>{state.sectionIndex=i;renderSection();});
       }
       if(i===state.sectionIndex)activeStep=x;
@@ -593,6 +593,7 @@
           const reuse=document.createElement("button");reuse.type="button";reuse.textContent="↻ Últimos operadores";reuse.addEventListener("click",restoreLastOperators);
           const clear=document.createElement("button");clear.type="button";clear.textContent="✕ Limpiar";clear.addEventListener("click",clearOperators);
           bar.append(reuse,clear);first.parentElement?.insertBefore(bar,first);
+          restoreLastOperators();
         }
       });
     }
@@ -605,7 +606,7 @@
     window.scrollTo({top:0,behavior:"smooth"});
   }
   function prev(){if(state.sectionIndex>0){state.sectionIndex--;renderSection();}}
-  function next(){if(isExplorationForm()&&currentSection()?.id==="ubicacion"&&state.locationBusy){state.sectionIndex++;renderSection();return;}const e=validateSection(state.sectionIndex,true);if(e.length)return showValidation(e);state.sectionIndex++;renderSection();}
+  function next(){if(isExplorationForm()&&currentSection()?.id==="ubicacion"&&state.locationBusy){state.sectionIndex++;state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);renderSection();return;}const e=validateSection(state.sectionIndex,true);if(e.length)return showValidation(e);state.sectionIndex++;state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);renderSection();}
 
   function hasExplorationOperator(){
     if(!isExplorationForm())return true;
