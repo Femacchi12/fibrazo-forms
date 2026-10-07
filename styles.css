@@ -2172,3 +2172,23 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
 .form-mode .binary-toggle.brand-tigo .binary-toggle-button.is-yes,.form-mode .binary-toggle.brand-claro .binary-toggle-button.is-yes,.form-mode .binary-toggle.brand-movistar .binary-toggle-button.is-yes{border-color:#00fe9c!important;background:#073c2b!important}
 .form-mode [data-key="zona_empresarial"] .binary-toggle-button,.form-mode [data-key="zona_empresarial"] .binary-toggle-button.is-yes{border-color:#65746f!important;background:#17201d!important}
 .form-mode [data-key="zona_empresarial"] .binary-toggle-button .toggle-state{color:#f3f7f5!important}
+
+
+/* v0.8.41 · ISP picker compacto hacia arriba */
+.isp-suggestion-list{
+  top:auto;
+  bottom:calc(100% + 6px);
+  max-height:min(210px,32vh);
+  padding:4px;
+}
+.isp-suggestion{
+  padding:7px 10px;
+  min-height:36px;
+  font-size:.94rem;
+  line-height:1.2;
+}
+.isp-custom-note{padding:7px 10px}
+@media(max-width:560px){
+  .isp-suggestion-list{max-height:min(190px,29vh)}
+  .isp-suggestion{padding:6px 9px;min-height:34px}
+}
