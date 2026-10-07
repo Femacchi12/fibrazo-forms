@@ -122,7 +122,7 @@ function usesTerritorialEngine(formId){
 function buildRow(form,p,id,links,email){
   const d=p.data||{},l=p.location||{},now=new Date().toISOString();
   if(form.id==="INTELIGENCIA_OPERADOR"){
-    return [now,id,d.operador||"",d.modelo_caja||"",d.nomenclatura_caja||"",d.marquilla||"",d.tipo_tensor||"",d.calidad_tendido||"",d.observaciones||"",l.lat||"",l.lng||"",l.accuracy||"",links[0]||"",links[1]||"",links[2]||"",links[3]||"",d.municipio||l.cityDetected||"",d.sector_barrio||"",d.estrato||"",email||"ANONIMO"];
+    return [now,id,d.operador||"",d.modelo_caja||"",d.nomenclatura_caja||"",d.marquilla||"",d.tipo_tensor||"",d.calidad_tendido||"",d.observaciones||"",l.lat||"",l.lng||"",l.accuracy||"",links[0]||"",links[1]||"",links[2]||"",links[3]||"",d.municipio||l.cityDetected||"",d.sector_barrio||"",d.estrato||"",email||"ANONIMO",d.calidad_servicio_percibida||"",d.precio_solo_internet||"",d.precio_internet_tv||"",d.incluye_tv||"",d.grilla_tv||""];
   }
   if(form.id==="CHURN"){
     return [
@@ -476,7 +476,7 @@ module.exports=async(req,res)=>{
     const sheets=google.sheets({version:"v4",auth});
     const appended=await sheets.spreadsheets.values.append({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!${isExploration(form.id)?"A:AD":form.id==="INTELIGENCIA_OPERADOR"?"A:T":"A:AB"}`,
+      range:`${form.sheet}!${isExploration(form.id)?"A:AD":form.id==="INTELIGENCIA_OPERADOR"?"A:Y":"A:AB"}`,
       valueInputOption:"RAW",
       insertDataOption:"INSERT_ROWS",
       requestBody:{values:[buildRow(form,payload,id,links,recordedEmail)]}
