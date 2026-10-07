@@ -298,7 +298,7 @@ function validateSubmission(formId,payload){
     if(d.incluye_tv&&!["Sí","No","No sabe"].includes(String(d.incluye_tv))) throw httpError("INVALID_TV_OPTION",400);
     if(d.grilla_tv&&!["Amplia","Reducida","No sabe"].includes(String(d.grilla_tv))) throw httpError("INVALID_TV_GRID",400);
     one(d.estrato,["1","2","3","4","5","6","Sin información"],"INVALID_STRATUM");
-    for(const key of ["operador","modelo_caja","nomenclatura_caja","marquilla","tipo_tensor","municipio","sector_barrio"]) short(d[key],120,"TEXT_TOO_LONG");
+    for(const key of ["operador","modelo_caja","nomenclatura_caja","marquilla","marquilla_drop","tipo_tensor","municipio","sector_barrio"]) short(d[key],120,"TEXT_TOO_LONG");
     short(d.observaciones,2000,"TEXT_TOO_LONG");
   }else{
     throw httpError("INVALID_FORM",400);
