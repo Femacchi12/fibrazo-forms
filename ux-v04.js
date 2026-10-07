@@ -605,7 +605,7 @@
     window.scrollTo({top:0,behavior:"smooth"});
   }
   function prev(){if(state.sectionIndex>0){state.sectionIndex--;renderSection();}}
-  function next(){if(isExplorationForm()&&currentSection()?.id==="ubicacion"&&state.locationBusy){geoStatus("Espera un momento: estamos terminando de cargar GPS y territorio.",{busy:true});return;}const e=validateSection(state.sectionIndex,true);if(e.length)return showValidation(e);state.sectionIndex++;renderSection();}
+  function next(){const e=validateSection(state.sectionIndex,true);if(e.length)return showValidation(e);state.sectionIndex++;renderSection();}
 
   function hasExplorationOperator(){
     if(!isExplorationForm())return true;
@@ -831,11 +831,11 @@
 
   function captureGps(value,btn,key){
     if(!navigator.geolocation){value.textContent="GPS no disponible en este navegador.";return;}
-    btn.disabled=true;btn.textContent="Buscando mejor señal…";state.locationBusy=isExplorationForm()&&key==="coordenadas";const nextBtn=$("nextSection");if(state.locationBusy&&nextBtn){nextBtn.disabled=true;nextBtn.textContent="Cargando ubicación…";}
+    btn.disabled=true;btn.textContent="Buscando mejor señal…";state.locationBusy=isExplorationForm()&&key==="coordenadas";
     let best=null,finished=false,watchId=null,timer=null;
     const finish=async p=>{
       if(finished)return;finished=true;if(watchId!==null)navigator.geolocation.clearWatch(watchId);clearTimeout(timer);
-      if(!p){value.textContent="No se pudo obtener la ubicación. Revisa el permiso del navegador.";btn.disabled=false;btn.textContent="Reintentar";state.locationBusy=false;const nextBtn=$("nextSection");if(nextBtn){nextBtn.disabled=false;nextBtn.textContent="Continuar →";}return;}
+      if(!p){value.textContent="No se pudo obtener la ubicación. Revisa el permiso del navegador.";btn.disabled=false;btn.textContent="Reintentar";state.locationBusy=false;return;}
       state.gps={lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy,cityDetected:"",citySource:""};
       value.textContent=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+" · ±"+Math.round(state.gps.accuracy)+" m";
       if(state.form?.id==="CHURN"&&key==="coordenadas"){
@@ -851,7 +851,7 @@
       }else if(isExplorationForm()&&key==="coordenadas"){
         await resolveExplorationMunicipality(state.gps.lat,state.gps.lng,key);
       }
-      btn.disabled=false;btn.textContent="Actualizar ubicación";state.locationBusy=false;const nextBtn=$("nextSection");if(nextBtn){nextBtn.disabled=false;nextBtn.textContent="Continuar →";}clearError(key);
+      btn.disabled=false;btn.textContent="Actualizar ubicación";state.locationBusy=false;clearError(key);
     };
     const onPosition=p=>{
       if(!best||Number(p.coords.accuracy)<Number(best.coords.accuracy))best=p;
