@@ -118,7 +118,8 @@
         const field=document.querySelector('[data-key="coordenadas"]');
         const value=field?.querySelector(".gps-value");
         const button=field?.querySelector(".gps-box > button");
-        if(value&&button&&!state.gps&&form.id!=="EXPLORACION_PRESENCIAL")captureGps(value,button,"coordenadas");
+        if(form.id==="INTELIGENCIA_OPERADOR"){setTimeout(()=>showCoordinateModeChoice(value,button),40);}
+        else if(value&&button&&!state.gps&&form.id!=="EXPLORACION_PRESENCIAL")captureGps(value,button,"coordenadas");
         if(form.id==="EXPLORACION_PRESENCIAL"){setTimeout(()=>showCoordinateModeChoice(value,button),40);}
       },250);
     }
@@ -211,6 +212,7 @@
     else if(field.type==="coordinates"){wrap.appendChild(coordinatesInput(field));}
     else if(field.type==="isp-autocomplete"){wrap.appendChild(ispAutocompleteInput(field));}
     else if(field.type==="photos"){wrap.appendChild(photoInput(field));}
+    else if(field.type==="photo-single"){wrap.appendChild(singlePhotoInput(field));}
 
     if(field.key==="sector_barrio"||field.key==="estrato"){
       const info=document.createElement("div");info.className="field-geo-info";info.dataset.geoInfoFor=field.key;info.hidden=true;wrap.appendChild(info);
@@ -476,6 +478,18 @@
     geo.append(txt,stop);
     box.append(input,status,geo);return box;
   }
+  function singlePhotoInput(field){
+    const holder=document.createElement("div");holder.className="single-photo-field";
+    const preview=document.createElement("div");preview.className="single-photo-preview";
+    const picker=document.createElement("input");picker.type="file";picker.accept="image/*";picker.hidden=true;
+    const button=document.createElement("button");button.type="button";button.className="secondary-button compact";button.textContent="＋ Anexar foto";
+    const remove=document.createElement("button");remove.type="button";remove.className="secondary-button compact";remove.textContent="✕ Quitar";remove.hidden=true;
+    const render=()=>{const photo=state.photos.find(p=>p.fieldKey===field.key);preview.innerHTML=photo?'<img src="'+photo.data+'" alt="'+esc(field.label)+'">':'<span>Sin foto</span>';button.textContent=photo?"Cambiar foto":"＋ Anexar foto";remove.hidden=!photo;};
+    button.addEventListener("click",()=>picker.click());
+    remove.addEventListener("click",()=>{state.photos=state.photos.filter(p=>p.fieldKey!==field.key);render();});
+    picker.addEventListener("change",async()=>{const file=picker.files?.[0];if(!file)return;try{const data=await compressImage(file,1280,publicMode?.68:.72);state.photos=state.photos.filter(p=>p.fieldKey!==field.key);state.photos.push({fieldKey:field.key,name:file.name||"foto.jpg",data});render();clearError(field.key);}catch(_){}picker.value="";});
+    holder.append(preview,button,remove,picker);render();return holder;
+  }
   function photoInput(field){
     const holder=document.createElement("div");holder.className="photo-sequence";
     const limit=publicMode?Math.max(0,Math.min(3,Number(window.FIBRAZO_PUBLIC_POLICY?.maxPhotos??3))):3;
@@ -575,7 +589,7 @@
     $("prevSection").hidden=state.sectionIndex===0;const last=state.sectionIndex===sections.length-1;$("nextSection").hidden=last;$("reviewForm").hidden=!last;
     document.querySelectorAll(".operator-memory-inline").forEach(el=>el.remove());
     clearValidation();updateVisibility();
-    if(state.form?.id==="EXPLORACION_PRESENCIAL"&&section.id==="ubicacion"){
+    if((state.form?.id==="EXPLORACION_PRESENCIAL"&&section.id==="ubicacion")||(state.form?.id==="INTELIGENCIA_OPERADOR"&&section.id==="validacion")){
       requestAnimationFrame(()=>{
         const first=document.querySelector('[data-key="municipio"]');
         if(first&&!document.querySelector(".territorial-coordinate-summary")){
@@ -650,7 +664,7 @@
   function validateField(field){
     if(field.type==="gps")return field.required&&!state.gps?"Debes tomar la ubicación antes de continuar.":"";
     if(field.type==="coordinates")return field.required&&!state.gps?"Pega una coordenada válida en formato latitud, longitud.":"";
-    if(field.type==="photos")return"";
+    if(field.type==="photos"||field.type==="photo-single")return"";
     const v=fieldValue(field.key),empty=Array.isArray(v)?v.length===0:String(v||"").trim()==="";
     if(field.required&&empty)return"Este campo es obligatorio.";
     if(!empty&&(field.type==="numeric"||field.type==="currency")&&!/^\d+$/.test(String(v)))return"Ingresa únicamente números.";
@@ -712,6 +726,7 @@
       }
     }
     if(field.type==="photos")return state.photos.length?state.photos.length+" foto"+(state.photos.length===1?"":"s"):"—";
+    if(field.type==="photo-single")return state.photos.some(p=>p.fieldKey===field.key)?"1 foto":"—";
     const v=fieldValue(field.key);if(Array.isArray(v))return v.length?v.join(", "):"—";if(!v)return"—";if(field.type==="currency")return"$ "+Number(v).toLocaleString("es-CO");if(field.type==="date-flex")return isoToDmy(v);if(field.suffix)return v+" "+field.suffix;return String(v);
   }
 
@@ -723,7 +738,9 @@
       formId:state.form.id,
       data:collectData(),
       location:state.gps,
-      photos:state.photos,
+      photos:state.form.id==="INTELIGENCIA_OPERADOR"
+        ?["foto_modelo_caja","foto_nomenclatura_caja","foto_marquilla","foto_tipo_tensor"].map(key=>state.photos.find(p=>p.fieldKey===key)).filter(Boolean)
+        :state.photos,
       user:{email:u?.email||""},
       clientTimestamp:new Date().toISOString(),
       startedAt:state.startedAt,
@@ -830,7 +847,7 @@
     return map[String(reason||"")]||String(reason||"pendiente");
   }
 
-  function collectData(){const d={};state.form.fields.forEach(f=>{if(f.type==="gps"||f.type==="coordinates"||f.type==="photos"||!conditionMet(f))return;d[f.key]=fieldValue(f.key);});return d;}
+  function collectData(){const d={};state.form.fields.forEach(f=>{if(f.type==="gps"||f.type==="coordinates"||f.type==="photos"||f.type==="photo-single"||!conditionMet(f))return;d[f.key]=fieldValue(f.key);});return d;}
   function operatorSnapshot(){
     const keys=["tigo_hfc","tigo_ftth","claro_hfc","claro_ftth","movistar","isp_1","isp_1_calidad","isp_2","isp_2_calidad","isp_3","isp_3_calidad","isp_4","isp_4_calidad"];
     return Object.fromEntries(keys.map(k=>[k,fieldValue(k)]).filter(([,v])=>v!==undefined&&v!==null&&v!==""));
@@ -956,7 +973,7 @@
   }
 
   function isExplorationForm(){
-    return state.form?.id==="EXPLORACION"||state.form?.id==="EXPLORACION_PRESENCIAL";
+    return state.form?.id==="EXPLORACION"||state.form?.id==="EXPLORACION_PRESENCIAL"||state.form?.id==="INTELIGENCIA_OPERADOR";
   }
 
   function parseCoordinateText(value){
