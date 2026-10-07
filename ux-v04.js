@@ -75,7 +75,7 @@
     const form=forms[id];if(!form)return;
     if(!publicMode&&window.FIBRAZO_ACCESS&&window.FIBRAZO_ACCESS[id]===false)return;
     const policy=policyFor(id);
-    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.gps=null;state.photos=[];state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;
+    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.gps=null;state.photos=[];state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;
     document.body.classList.add("form-mode");
     $("formTitle").textContent=form.name;
     $("formDescription").textContent=form.description||"";
@@ -117,7 +117,7 @@
         const value=field?.querySelector(".gps-value");
         const button=field?.querySelector(".gps-box > button");
         if(value&&button&&!state.gps&&form.id!=="EXPLORACION_PRESENCIAL")captureGps(value,button,"coordenadas");
-        if(form.id==="EXPLORACION_PRESENCIAL"){restoreLastOperators();setTimeout(()=>showCoordinateModeChoice(value,button),40);}
+        if(form.id==="EXPLORACION_PRESENCIAL"){setTimeout(()=>showCoordinateModeChoice(value,button),40);}
       },250);
     }
     window.scrollTo({top:0,behavior:"smooth"});
@@ -391,7 +391,7 @@
     const hidden=document.createElement("input");hidden.type="hidden";hidden.name=field.key;hidden.value=String(field.default??"No");
     const b=document.createElement("button");b.type="button";b.className="binary-toggle-button";
     const paint=()=>{const yes=hidden.value==="Sí";b.classList.toggle("is-yes",yes);b.setAttribute("aria-pressed",String(yes));b.innerHTML='<span class="toggle-state">'+(yes?"Sí":"No")+'</span><span class="toggle-hint">Toca para cambiar</span>';};
-    b.addEventListener("click",()=>{hidden.value=hidden.value==="Sí"?"No":"Sí";paint();clearError(field.key);updateVisibility();});
+    b.addEventListener("pointerup",e=>{e.preventDefault();e.stopPropagation();hidden.value=hidden.value==="Sí"?"No":"Sí";paint();clearError(field.key);updateVisibility();});
     paint();holder.append(hidden,b);return holder;
   }
   function choiceInput(field){
@@ -438,7 +438,7 @@
         input.setCustomValidity("");
         state.gps={lat:parsed.lat,lng:parsed.lng,accuracy:null,cityDetected:"",citySource:"manual-coordinate"};
         value.textContent=parsed.lat.toFixed(6)+", "+parsed.lng.toFixed(6)+" · corrección manual";
-        await resolveExplorationMunicipality(parsed.lat,parsed.lng,field.key);
+        state.locationBusy=true;resolveExplorationMunicipality(parsed.lat,parsed.lng,field.key).finally(()=>{state.locationBusy=false;});
         clearError(field.key);
       });
       row.append(input,apply);editor.append(label,row);box.appendChild(editor);
@@ -649,6 +649,7 @@
 
   async function review(){
     if(isExplorationForm()&&state.locationBusy){setStatus("Terminando ubicación y datos territoriales…","");const started=Date.now();while(state.locationBusy&&Date.now()-started<18000)await new Promise(done=>setTimeout(done,250));}
+    if(isExplorationForm()&&state.gps&&(!String(fieldValue("municipio")||"").trim())){setStatus("Validando datos territoriales antes del resumen…","");try{await resolveExplorationMunicipality(state.gps.lat,state.gps.lng,"coordenadas");}catch(_){}}
     const errors=validateAll();if(errors.length){const sections=activeSections(),idx=sections.findIndex(s=>s.id===errors[0].field.section);if(idx>=0)state.sectionIndex=idx;renderSection();showValidation(errors.filter(x=>x.field.section===currentSection().id));return;}
     $("formWorkspace").hidden=true;$("reviewWorkspace").hidden=false;$("successWorkspace").hidden=true;buildReview();setStatus("","");window.scrollTo({top:0,behavior:"smooth"});
   }
