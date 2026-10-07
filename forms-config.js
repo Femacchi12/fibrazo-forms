@@ -82,7 +82,7 @@ window.FIBRAZO_FORMS = {
       { id: "cierre", title: "Cierre", description: "Agrega evidencia y notas relevantes del punto." }
     ],
     fields: [
-      {key:"coordenadas",section:"ubicacion",label:"Coordenadas",type:"coordinates",required:true,full:true,help:"Pega la coordenada en formato latitud, longitud. Ejemplo: 7.10485, -73.10280. El municipio se mostrará automáticamente."},
+      {key:"coordenadas",section:"coordenada",label:"Coordenadas",type:"coordinates",required:true,full:true,help:"Pega la coordenada en formato latitud, longitud. Ejemplo: 7.10485, -73.10280. El municipio se mostrará automáticamente."},
       {key:"anio_imagen",section:"ubicacion",label:"Año de la imagen de Google Street View",type:"numeric",required:true,maxLength:4,max:FIBRAZO_CURRENT_YEAR,help:`Ingresa el año visible en la imagen de Street View. No puede ser posterior a ${FIBRAZO_CURRENT_YEAR}.`},
       {key:"sector_barrio",section:"ubicacion",label:"Barrio",type:"text",autoGeo:"barrio",help:"Muestra el barrio identificado por el Motor Territorial. Si la coordenada queda fuera, muestra el barrio más cercano como referencia y debajo indica en rojo la distancia al polígono. El estado territorial se guarda por separado para análisis y filtros."},
       {key:"estrato",section:"ubicacion",label:"Estrato",type:"select",options:["1","2","3","4","5","6","Sin información"],autoGeo:"estrato",help:"Muestra el estrato identificado por el Motor Territorial. Si la coordenada queda fuera, muestra el estrato más cercano como referencia y debajo indica en rojo la distancia al polígono. El estado territorial se guarda por separado para análisis y filtros."},
@@ -115,10 +115,11 @@ window.FIBRAZO_FORMS = {
     eyebrow: "EXPANSIÓN",
     meta: ["GPS", "Fotos opcionales", "Operadores / infraestructura"],
     sections: [
-      { id: "ubicacion", title: "Ubicación", description: "Toma las coordenadas del dispositivo y valida el municipio detectado." },
+      { id: "coordenada", title: "Coordenada", description: "Carga únicamente la ubicación del punto. La lectura territorial se procesa en segundo plano mientras continúas." },
       { id: "infraestructura", title: "Infraestructura", description: "Califica la postería y la ocupación del tendido aéreo." },
       { id: "operadores", title: "Operadores", description: "Marca incumbentes y registra ISP locales o regionales visibles." },
-      { id: "cierre", title: "Cierre", description: "Agrega notas y evidencia fotográfica del punto." }
+      { id: "cierre", title: "Evidencia", description: "Agrega notas y evidencia fotográfica del punto." },
+      { id: "ubicacion", title: "Validación territorial", description: "Confirma al final los datos obtenidos para la coordenada y completa la lectura de campo." }
     ],
     fields: [
       {key:"coordenadas",section:"ubicacion",label:"Ubicación actual",type:"gps",required:true,full:true,manualEdit:true,help:"Toma la ubicación con el GPS. Si es necesario, puedes corregir manualmente la coordenada antes de continuar."},
