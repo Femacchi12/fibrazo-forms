@@ -13,7 +13,7 @@ window.FIBRAZO_FORMS = {
       {id:"coordenada",title:"Coordenada",description:"Carga la ubicación por GPS o manualmente. La lectura territorial se procesa en segundo plano mientras continúas."},
       {id:"identificacion",title:"Operador",description:"Identifica el ISP observado."},
       {id:"elementos",title:"Elementos de red",description:"Registra cómo reconocer su infraestructura y anexa una foto por cada elemento cuando corresponda."},
-      {id:"calidad",title:"Calidad",description:"Evalúa la ejecución visible y agrega observaciones útiles."},
+      {id:"calidad",title:"Calidad y oferta comercial",description:"Evalúa la ejecución visible, la percepción del servicio y registra los precios regulares del operador."},
       {id:"validacion",title:"Validación territorial",description:"Confirma al final la coordenada y la información territorial procesada automáticamente."}
     ],
     fields:[
@@ -28,6 +28,11 @@ window.FIBRAZO_FORMS = {
       {key:"tipo_tensor",section:"elementos",label:"Tensor / herraje observado",type:"text",help:"Describe el tipo de tensor, herraje o forma de sujeción que ayude a identificarlo."},
       {key:"foto_tipo_tensor",section:"elementos",label:"Foto · tensor / herraje",type:"photo-single",help:"Opcional. Anexa una única foto de este elemento."},
       {key:"calidad_tendido",section:"calidad",label:"Calidad de tendido e instalación",type:"segmented",required:true,options:["1","2","3","4","5"],details:{"1":"Muy mala: instalación desordenada, improvisada o con deficiencias evidentes.","2":"Mala: varias deficiencias visibles de orden, fijación o ejecución.","3":"Aceptable: instalación funcional con calidad media.","4":"Buena: tendido ordenado y bien ejecutado.","5":"Muy buena: instalación prolija, consistente y de alta calidad visual."},help:"Selecciona 1 a 5; la descripción queda visible para mantener un criterio consistente."},
+      {key:"calidad_servicio_percibida",section:"calidad",label:"Calidad del servicio percibida por el cliente",type:"segmented",options:["1","2","3","4","5"],details:{"1":"Muy mala","2":"Mala","3":"Aceptable","4":"Buena","5":"Muy buena"},help:"Registra la percepción reportada por el cliente, si se cuenta con esta información."},
+      {key:"precio_solo_internet",section:"calidad",label:"Precio regular · solo Internet",type:"currency",help:"Valor mensual regular del plan únicamente de Internet."},
+      {key:"precio_internet_tv",section:"calidad",label:"Precio regular · Internet + TV",type:"currency",help:"Valor mensual regular del plan que combina Internet y televisión."},
+      {key:"incluye_tv",section:"calidad",label:"¿El operador ofrece / incluye TV?",type:"radio",options:["Sí","No","No sabe"],help:"Indica si la oferta del operador contempla servicio de televisión."},
+      {key:"grilla_tv",section:"calidad",label:"¿Cómo es la grilla de TV?",type:"radio",options:["Amplia","Reducida","No sabe"],showWhen:{field:"incluye_tv",equals:"Sí"},help:"Se muestra únicamente cuando el operador ofrece o incluye TV."},
       {key:"observaciones",section:"calidad",label:"Observaciones para identificarlo en campo",type:"textarea",full:true,help:"Registra cualquier rasgo adicional que ayude a reconocer rápidamente este operador."},
       {key:"municipio",section:"validacion",label:"Municipio / ciudad",type:"text",required:true,autoCity:true,help:"Resultado del Motor Territorial. Puedes corregirlo antes de finalizar."},
       {key:"sector_barrio",section:"validacion",label:"Barrio",type:"text",autoGeo:"barrio",help:"Barrio identificado automáticamente para la coordenada."},
