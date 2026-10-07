@@ -571,6 +571,7 @@
     stepper.hidden=state.policy?.showProgress===false;
     $("formStepCounter").hidden=state.policy?.showProgress===false;
     $("prevSection").hidden=state.sectionIndex===0;const last=state.sectionIndex===sections.length-1;$("nextSection").hidden=last;$("reviewForm").hidden=!last;
+    document.querySelectorAll(".operator-memory-inline").forEach(el=>el.remove());
     clearValidation();updateVisibility();
     if(state.form?.id==="EXPLORACION_PRESENCIAL"&&section.id==="infraestructura"){
       requestAnimationFrame(()=>{
