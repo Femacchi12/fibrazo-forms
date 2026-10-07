@@ -581,10 +581,24 @@
         if(first&&!document.querySelector(".territorial-coordinate-summary")){
           const box=document.createElement("div");box.className="territorial-coordinate-summary";
           const gps=state.gps;
-          box.innerHTML='<strong>Coordenada relevada</strong><span>'+(gps?(gps.lat.toFixed(6)+", "+gps.lng.toFixed(6)+(Number.isFinite(Number(gps.accuracy))?" · ±"+Math.round(Number(gps.accuracy))+" m":"")):"Sin coordenada")+'</span><small>Esta es la coordenada procesada en segundo plano. Puedes corregirla antes de finalizar.</small>';
-          const edit=document.createElement("button");edit.type="button";edit.className="secondary-button compact";edit.textContent="Modificar coordenada";
-          edit.addEventListener("click",()=>{state.sectionIndex=0;renderSection();});
-          box.appendChild(edit);first.parentElement?.insertBefore(box,first);
+          box.innerHTML='<strong>Coordenada relevada</strong><span class="territorial-coordinate-value">'+(gps?(gps.lat.toFixed(6)+", "+gps.lng.toFixed(6)+(Number.isFinite(Number(gps.accuracy))?" · ±"+Math.round(Number(gps.accuracy))+" m":"")):"Sin coordenada")+'</span><small>Puedes corregirla aquí antes de finalizar. Al cambiarla se recalcula la lectura territorial sin volver al primer paso.</small>';
+          const editRow=document.createElement("div");editRow.className="territorial-coordinate-edit";
+          const editInput=document.createElement("input");editInput.type="text";editInput.inputMode="decimal";editInput.placeholder="7.10485, -73.10280";editInput.value=gps?(gps.lat.toFixed(6)+", "+gps.lng.toFixed(6)):"";
+          const applyEdit=document.createElement("button");applyEdit.type="button";applyEdit.className="secondary-button compact";applyEdit.textContent="Aplicar y recalcular";
+          applyEdit.addEventListener("click",async()=>{
+            const parsed=parseCoordinateText(editInput.value);
+            if(!parsed){editInput.setCustomValidity("Coordenada inválida");editInput.reportValidity();return;}
+            editInput.setCustomValidity("");
+            state.gps={lat:parsed.lat,lng:parsed.lng,accuracy:null,cityDetected:"",citySource:"manual-coordinate"};
+            const valueNode=box.querySelector(".territorial-coordinate-value");if(valueNode)valueNode.textContent=parsed.lat.toFixed(6)+", "+parsed.lng.toFixed(6)+" · corrección manual";
+            state.locationBusy=true;state.locationValidated=false;
+            applyEdit.disabled=true;applyEdit.textContent="Recalculando…";
+            try{state.geoPromise=resolveExplorationMunicipality(parsed.lat,parsed.lng,"coordenadas");await state.geoPromise;}
+            finally{state.locationBusy=false;state.geoPromise=null;applyEdit.disabled=false;applyEdit.textContent="Aplicar y recalcular";}
+          });
+          const gpsEdit=document.createElement("button");gpsEdit.type="button";gpsEdit.className="secondary-button compact";gpsEdit.textContent="📍 Actualizar por GPS";
+          gpsEdit.addEventListener("click",()=>captureGps(box.querySelector(".territorial-coordinate-value"),gpsEdit,"coordenadas"));
+          editRow.append(editInput,applyEdit,gpsEdit);box.appendChild(editRow);first.parentElement?.insertBefore(box,first);
         }
       });
     }
@@ -845,7 +859,15 @@
         }
       } else {
         node.value=value;
-        node.dispatchEvent(new Event("input",{bubbles:true}));
+        const shell=node.closest(".isp-field-state");
+        if(shell){
+          const v=String(value||"").trim();
+          shell.classList.toggle("isp-none",!v||v==="Sin ISP");
+          shell.classList.toggle("isp-unknown",v==="Sin Identificar");
+          shell.classList.toggle("isp-known",!!v&&v!=="Sin ISP"&&v!=="Sin Identificar");
+          shell.querySelector(".isp-suggestion-list")?.setAttribute("hidden","");
+        }
+        node.dispatchEvent(new Event("change",{bubbles:true}));
       }
     }
     updateVisibility();
