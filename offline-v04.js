@@ -208,6 +208,7 @@
   function renderFormHistory(records){
     const host=$("formHistoryList");if(!host)return;
     const formId=String(window.FIBRAZO_ACTIVE_FORM_ID||"");
+    if(formId==="INTELIGENCIA_OPERADOR")return;
     const items=(records||[]).filter(r=>!formId||r.formId===formId).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,20);
     host.innerHTML=items.length?items.map(r=>'<article class="history-item '+escapeHtml(r.status||"pending")+'"><div><strong>'+escapeHtml(formReference(r))+'</strong><small>'+escapeHtml(formatTime(r.createdAt))+'</small></div><span>'+escapeHtml(statusLabel(r.status))+'</span></article>').join(""):'<div class="pending-empty">Todavía no hay respuestas de este formulario en este dispositivo.</div>';
   }
