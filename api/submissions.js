@@ -396,9 +396,9 @@ async function readRows(auth,forms,requested,limit,user,caps){
       }else if(form.id==="INTELIGENCIA_OPERADOR"){
         out.push({
           formId:form.id,timestamp:row[0],id:row[1],
-          data:{operador:row[2],modelo_caja:row[3],nomenclatura_caja:row[4],marquilla:row[5],tipo_tensor:row[6],calidad_tendido:row[7],observaciones:row[8],municipio:row[16]||"",sector_barrio:row[17]||"",estrato:row[18]||""},
+          data:{operador:row[2],modelo_caja:row[3],nomenclatura_caja:row[4],marquilla:row[5],tipo_tensor:row[6],calidad_tendido:row[7],observaciones:row[8],municipio:row[16]||"",sector_barrio:row[17]||"",estrato:row[18]||"",calidad_servicio_percibida:row[20]||"",precio_solo_internet:row[21]||"",precio_internet_tv:row[22]||"",incluye_tv:row[23]||"",grilla_tv:row[24]||""},
           location:{lat:row[9],lng:row[10],accuracy:row[11]},
-          photos:[row[12],row[13],row[14],row[15]].filter(Boolean),
+          photos:[row[12],row[13],row[14],row[15]].filter(Boolean),photoFields:{foto_modelo_caja:row[12]||"",foto_nomenclatura_caja:row[13]||"",foto_marquilla:row[14]||"",foto_tipo_tensor:row[15]||""},
           user:row[19]||""
         });
       }
@@ -462,6 +462,34 @@ module.exports=async(req,res)=>{
 
     validateSubmission(formId,payload);
     validatePhotos(payload.photos||[],form);
+
+    if(formId==="INTELIGENCIA_OPERADOR"&&payload.editId){
+      const editId=String(payload.editId||"").trim();
+      const caps=await userCapabilities(auth,user.email);
+      const permission=permissionFor(caps.permissions,String(user.email||"").toLowerCase(),form.id,caps.base);
+      if(!canAccess(form,user,caps.base,permission)) throw httpError("FORM_ACCESS_DENIED",403);
+      const sheets=google.sheets({version:"v4",auth});
+      const existing=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!A2:Y`});
+      const rows=existing.data.values||[];
+      const idx=rows.findIndex(row=>String(row[1]||"")===editId);
+      if(idx<0) throw httpError("SUBMISSION_NOT_FOUND",404);
+      const old=rows[idx];
+      const email=String(user?.email||"").trim().toLowerCase();
+      const owner=String(old[19]||"").trim().toLowerCase();
+      if(!caps.adminActive&&owner!==email) throw httpError("FORM_ACCESS_DENIED",403);
+      const uploaded=await uploadPhotos(auth,form,editId,payload.photos||[]);
+      const byKey=Object.fromEntries((payload.photos||[]).map((p,i)=>[String(p.fieldKey||""),uploaded[i]||""]));
+      const links=[
+        byKey.foto_modelo_caja||String(payload.existingPhotoFields?.foto_modelo_caja||old[12]||""),
+        byKey.foto_nomenclatura_caja||String(payload.existingPhotoFields?.foto_nomenclatura_caja||old[13]||""),
+        byKey.foto_marquilla||String(payload.existingPhotoFields?.foto_marquilla||old[14]||""),
+        byKey.foto_tipo_tensor||String(payload.existingPhotoFields?.foto_tipo_tensor||old[15]||"")
+      ];
+      const row=buildRow(form,payload,editId,links,owner||email);
+      row[0]=old[0]||row[0];
+      await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!A${idx+2}:Y${idx+2}`,valueInputOption:"RAW",requestBody:{values:[row]}});
+      return res.status(200).json({ok:true,id:editId,updated:true,photos:links});
+    }
 
     const id=resolveSubmissionId(payload,formId);
     if(await submissionExists(auth,form,id)){
