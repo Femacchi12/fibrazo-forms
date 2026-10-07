@@ -481,14 +481,35 @@
   function singlePhotoInput(field){
     const holder=document.createElement("div");holder.className="single-photo-field";
     const preview=document.createElement("div");preview.className="single-photo-preview";
-    const picker=document.createElement("input");picker.type="file";picker.accept="image/*";picker.hidden=true;
-    const button=document.createElement("button");button.type="button";button.className="secondary-button compact";button.textContent="＋ Anexar foto";
-    const remove=document.createElement("button");remove.type="button";remove.className="secondary-button compact";remove.textContent="✕ Quitar";remove.hidden=true;
-    const render=()=>{const photo=state.photos.find(p=>p.fieldKey===field.key);preview.innerHTML=photo?'<img src="'+photo.data+'" alt="'+esc(field.label)+'">':'<span>Sin foto</span>';button.textContent=photo?"Cambiar foto":"＋ Anexar foto";remove.hidden=!photo;};
-    button.addEventListener("click",()=>picker.click());
+    const actions=document.createElement("div");actions.className="photo-slot-actions";
+    const camera=document.createElement("input");camera.type="file";camera.accept="image/*";camera.capture="environment";camera.hidden=true;
+    const gallery=document.createElement("input");gallery.type="file";gallery.accept="image/*";gallery.hidden=true;
+    const take=document.createElement("button");take.type="button";take.className="photo-add-button";
+    const choose=document.createElement("button");choose.type="button";choose.className="photo-add-button secondary-photo";
+    const remove=document.createElement("button");remove.type="button";remove.className="secondary-button compact";remove.textContent="Eliminar";
+    const setPhoto=async file=>{
+      if(!file)return;
+      try{
+        const data=await compressImage(file,1280,publicMode?.68:.72);
+        state.photos=state.photos.filter(p=>p.fieldKey!==field.key);
+        state.photos.push({fieldKey:field.key,name:file.name||"foto.jpg",data});
+        render();clearError(field.key);
+      }catch(_){}
+    };
+    const render=()=>{
+      const photo=state.photos.find(p=>p.fieldKey===field.key);
+      preview.innerHTML=photo?'<img src="'+photo.data+'" alt="'+esc(field.label)+'">':'<span>Sin foto</span>';
+      take.textContent=photo?"📷 Tomar otra":"📷 Tomar foto";
+      choose.textContent=photo?"▣ Elegir otra":"▣ Elegir de galería";
+      remove.hidden=!photo;
+    };
+    take.addEventListener("click",()=>camera.click());
+    choose.addEventListener("click",()=>gallery.click());
     remove.addEventListener("click",()=>{state.photos=state.photos.filter(p=>p.fieldKey!==field.key);render();});
-    picker.addEventListener("change",async()=>{const file=picker.files?.[0];if(!file)return;try{const data=await compressImage(file,1280,publicMode?.68:.72);state.photos=state.photos.filter(p=>p.fieldKey!==field.key);state.photos.push({fieldKey:field.key,name:file.name||"foto.jpg",data});render();clearError(field.key);}catch(_){}picker.value="";});
-    holder.append(preview,button,remove,picker);render();return holder;
+    camera.addEventListener("change",async()=>{await setPhoto(camera.files?.[0]);camera.value="";});
+    gallery.addEventListener("change",async()=>{await setPhoto(gallery.files?.[0]);gallery.value="";});
+    actions.append(take,choose,remove,camera,gallery);
+    holder.append(preview,actions);render();return holder;
   }
   function photoInput(field){
     const holder=document.createElement("div");holder.className="photo-sequence";
