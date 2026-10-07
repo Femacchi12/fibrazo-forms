@@ -2,7 +2,7 @@
   const forms=window.FIBRAZO_FORMS||{};
   const $=id=>document.getElementById(id);
   const publicMode=document.body.classList.contains("public-mode");
-  const state={form:null,policy:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:"",ispOptions:[],geoController:null,geoLookupId:0,geoLookupCancelled:false,locationBusy:false,maxSectionReached:0,locationValidated:false,geoPromise:null};
+  const state={form:null,policy:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:"",ispOptions:[],geoController:null,geoLookupId:0,geoLookupCancelled:false,locationBusy:false,maxSectionReached:0,locationValidated:false,geoPromise:null,editId:"",existingPhotoFields:{},serverHistory:[]};
   const pending=window.FIBRAZO_PENDING||[];
 
   function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
@@ -75,7 +75,7 @@
     const form=forms[id];if(!form)return;
     if(!publicMode&&window.FIBRAZO_ACCESS&&window.FIBRAZO_ACCESS[id]===false)return;
     const policy=policyFor(id);
-    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.gps=null;state.photos=[];state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
+    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
     document.body.classList.add("form-mode");
     $("formTitle").textContent=form.name;
     $("formDescription").textContent=form.description||"";
@@ -104,7 +104,7 @@
     const stepper=$("sectionStepper"),counter=$("formStepCounter");
     if(stepper)stepper.hidden=policy.showProgress===false;
     if(counter)counter.hidden=policy.showProgress===false;
-    clearValidation();loadLocalIsps();renderSection();
+    clearValidation();loadLocalIsps();renderSection();if(form.id==="INTELIGENCIA_OPERADOR")loadIntelligenceHistory();
     if(form.id==="EXPLORACION_PRESENCIAL"){requestAnimationFrame(()=>{restoreLastInfrastructure();restoreLastOperators();});}
     window.FIBRAZO_OFFLINE?.refreshUi?.();
     const mapPreset=window.FIBRAZO_MAP_COORDINATE_PRESET;
@@ -126,6 +126,59 @@
     window.scrollTo({top:0,behavior:"smooth"});
   }
   window.FIBRAZO_UX_OPEN_FORM=openForm;
+
+  async function loadIntelligenceHistory(){
+    const host=$("formHistoryList");if(!host||state.form?.id!=="INTELIGENCIA_OPERADOR"||publicMode)return;
+    host.innerHTML='<div class="pending-empty">Cargando historial…</div>';
+    try{
+      const token=await currentUser()?.getIdToken?.();
+      const r=await fetch("/api/submissions?form=INTELIGENCIA_OPERADOR&limit=250",{headers:{Authorization:"Bearer "+token},cache:"no-store"});
+      const result=await r.json();if(!r.ok)throw new Error(result.error||"HISTORY_ERROR");
+      state.serverHistory=result.rows||[];renderIntelligenceHistory();
+    }catch(_){host.innerHTML='<div class="pending-empty">No se pudo cargar el historial del servidor.</div>';}
+  }
+  function renderIntelligenceHistory(){
+    const host=$("formHistoryList");if(!host)return;
+    const operators=[...new Set(state.serverHistory.map(r=>String(r.data?.operador||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
+    const selected=host.querySelector("[data-intel-operator-filter]")?.value||"all";
+    const rows=state.serverHistory.filter(r=>selected==="all"||r.data?.operador===selected);
+    host.innerHTML='<div class="intelligence-history-tools"><select data-intel-operator-filter><option value="all">Todos los operadores</option>'+operators.map(x=>'<option value="'+esc(x)+'"'+(x===selected?' selected':'')+'>'+esc(x)+'</option>').join("")+'</select></div>'+
+      '<div class="intelligence-history-table"><div class="intelligence-history-head"><span>Fecha</span><span>Operador</span><span>Municipio</span><span></span></div>'+
+      (rows.length?rows.map((r,i)=>'<button type="button" class="intelligence-history-row" data-history-id="'+esc(r.id)+'"><span>'+esc(new Date(r.timestamp).toLocaleDateString("es-CO"))+'</span><strong>'+esc(r.data?.operador||"Sin operador")+'</strong><span>'+esc(r.data?.municipio||"")+'</span><span>Ver →</span></button>').join(""):'<div class="pending-empty">No hay registros para este operador.</div>')+'</div>';
+    host.querySelector("[data-intel-operator-filter]")?.addEventListener("change",renderIntelligenceHistory);
+    host.querySelectorAll("[data-history-id]").forEach(b=>b.addEventListener("click",()=>showIntelligenceSummary(b.dataset.historyId)));
+  }
+  function showIntelligenceSummary(id){
+    const r=state.serverHistory.find(x=>x.id===id);if(!r)return;
+    const d=r.data||{},photos=r.photoFields||{};
+    const labels={operador:"Operador",modelo_caja:"Modelo / tipo de caja",nomenclatura_caja:"Nomenclatura",marquilla:"Marquilla / cable",tipo_tensor:"Tensor / herraje",calidad_tendido:"Calidad del tendido",calidad_servicio_percibida:"Calidad percibida",precio_solo_internet:"Precio solo Internet",precio_internet_tv:"Precio Internet + TV",incluye_tv:"Incluye TV",grilla_tv:"Grilla TV",observaciones:"Observaciones",municipio:"Municipio",sector_barrio:"Barrio",estrato:"Estrato"};
+    const detail=Object.entries(labels).filter(([k])=>d[k]!==undefined&&d[k]!=="").map(([k,l])=>'<div><span>'+esc(l)+'</span><strong>'+esc(d[k])+'</strong></div>').join("");
+    const imgs=Object.values(photos).filter(Boolean).map(url=>'<a href="'+esc(url)+'" target="_blank" rel="noopener">Ver foto ↗</a>').join("");
+    const host=$("formHistoryList");
+    host.innerHTML='<div class="intelligence-summary"><button type="button" class="secondary-button compact" data-history-back>← Historial</button><div class="intelligence-summary-grid">'+detail+'</div><div class="intelligence-summary-photos">'+imgs+'</div><button type="button" class="primary-button" data-history-edit>Editar registro</button></div>';
+    host.querySelector("[data-history-back]")?.addEventListener("click",renderIntelligenceHistory);
+    host.querySelector("[data-history-edit]")?.addEventListener("click",()=>editIntelligenceRecord(r));
+  }
+  function editIntelligenceRecord(r){
+    state.editId=r.id;state.existingPhotoFields={...(r.photoFields||{})};
+    state.gps={lat:Number(r.location?.lat),lng:Number(r.location?.lng),accuracy:Number(r.location?.accuracy)||null,cityDetected:r.data?.municipio||"",citySource:"history"};
+    for(const [key,value] of Object.entries(r.data||{}))setFieldValue(key,value);
+    const gps=document.querySelector('[data-key="coordenadas"] .gps-value');if(gps&&Number.isFinite(state.gps.lat)&&Number.isFinite(state.gps.lng))gps.textContent=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+(state.gps.accuracy?" · ±"+Math.round(state.gps.accuracy)+" m":"");
+    state.sectionIndex=0;state.maxSectionReached=(state.form.sections||[]).length-1;updateVisibility();renderSection();
+    document.querySelector(".form-history")?.removeAttribute("open");
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+  function setFieldValue(key,value){
+    const node=document.querySelector('[name="'+css(key)+'"]');if(!node)return;
+    if(node.type==="radio"){document.querySelectorAll('[name="'+css(key)+'"]').forEach(x=>x.checked=String(x.value)===String(value));return;}
+    if(node.type==="checkbox"){const vals=Array.isArray(value)?value:String(value||"").split(",").map(x=>x.trim());document.querySelectorAll('[name="'+css(key)+'"]').forEach(x=>x.checked=vals.includes(x.value));return;}
+    if(node.type==="hidden"){
+      node.value=value||"";const holder=node.closest(".segmented-control,.binary-toggle");
+      holder?.querySelectorAll(".segment-option").forEach(b=>{const on=normalizeCityName(b.textContent)===normalizeCityName(value);b.classList.toggle("selected",on);b.setAttribute("aria-pressed",String(on));});
+      return;
+    }
+    node.value=value??"";node.dispatchEvent(new Event("change",{bubbles:true}));
+  }
 
   async function applyMapCoordinatePreset(preset){
     if(!state.form)return;
