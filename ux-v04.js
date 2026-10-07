@@ -819,7 +819,9 @@
       clientTimestamp:new Date().toISOString(),
       startedAt:state.startedAt,
       website:$("publicWebsite")?.value||"",
-      publicMode
+      publicMode,
+      editId:state.editId||"",
+      existingPhotoFields:state.existingPhotoFields||{}
     };
     try{
       let result;
@@ -835,7 +837,7 @@
       }else if(location.hostname.endsWith("github.io")){
         const id="PREVIEW-"+Date.now(),saved=JSON.parse(localStorage.getItem("fibrazoFormsPreview")||"[]");
         saved.unshift({id,...payload});localStorage.setItem("fibrazoFormsPreview",JSON.stringify(saved.slice(0,100)));result={id,queued:false};
-      }else if(window.FIBRAZO_OFFLINE){
+      }else if(window.FIBRAZO_OFFLINE&&!state.editId){
         payload.clientSubmissionId=window.FIBRAZO_OFFLINE.createSubmissionId(state.form.id);
         result=await window.FIBRAZO_OFFLINE.submit(payload);
       }else{
