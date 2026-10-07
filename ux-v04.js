@@ -803,7 +803,7 @@
 
   function collectData(){const d={};state.form.fields.forEach(f=>{if(f.type==="gps"||f.type==="coordinates"||f.type==="photos"||!conditionMet(f))return;d[f.key]=fieldValue(f.key);});return d;}
   function operatorSnapshot(){
-    const keys=["tigo_hfc","tigo_ftth","claro_hfc","claro_ftth","movistar","isp_1","isp_2","isp_3","isp_4"];
+    const keys=["tigo_hfc","tigo_ftth","claro_hfc","claro_ftth","movistar","isp_1","isp_1_calidad","isp_2","isp_2_calidad","isp_3","isp_3_calidad","isp_4","isp_4_calidad"];
     return Object.fromEntries(keys.map(k=>[k,fieldValue(k)]).filter(([,v])=>v!==undefined&&v!==null&&v!==""));
   }
   function saveLastOperators(){
