@@ -265,6 +265,7 @@ function validateSubmission(formId,payload){
       if(!digits(d.anio_imagen,4)||Number(d.anio_imagen)>currentYear) throw httpError("INVALID_STREETVIEW_YEAR",400);
     }
     one(d.estrato,["1","2","3","4","5","6","Sin información"],"INVALID_STRATUM");
+    if(!["1","2","3","4","5"].includes(String(d.tipo_terreno||""))) throw httpError("INVALID_TERRAIN_TRANSITABILITY",400);
     if(formId==="EXPLORACION_PRESENCIAL"){
       if(!String(d.municipio||"").trim()) throw httpError("INVALID_MUNICIPALITY",400);
       short(d.municipio,120,"TEXT_TOO_LONG");
