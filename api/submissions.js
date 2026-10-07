@@ -115,6 +115,9 @@ async function uploadPhotos(auth,form,id,list){
 function isExploration(formId){
   return formId==="EXPLORACION"||formId==="EXPLORACION_PRESENCIAL";
 }
+function usesTerritorialEngine(formId){
+  return isExploration(formId)||formId==="INTELIGENCIA_OPERADOR";
+}
 
 function buildRow(form,p,id,links,email){
   const d=p.data||{},l=p.location||{},now=new Date().toISOString();
@@ -364,7 +367,7 @@ async function readRows(auth,forms,requested,limit,user,caps){
       range:`${form.sheet}!A2:BT`
     });
     for(const row of (r.data.values||[]).slice(-limit).reverse()){
-      const emailIndex=form.id==="CHURN"?25:form.id==="INTELIGENCIA_OPERADOR"?16:24;
+      const emailIndex=form.id==="CHURN"?25:form.id==="INTELIGENCIA_OPERADOR"?19:24;
       const rowEmail=String(row[emailIndex]||"").trim().toLowerCase();
       if(!caps.adminActive&&rowEmail!==email)continue;
       if(form.id==="CHURN"){
@@ -473,7 +476,7 @@ module.exports=async(req,res)=>{
     const sheets=google.sheets({version:"v4",auth});
     const appended=await sheets.spreadsheets.values.append({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!${isExploration(form.id)?"A:AD":form.id==="INTELIGENCIA_OPERADOR"?"A:Q":"A:AB"}`,
+      range:`${form.sheet}!${isExploration(form.id)?"A:AD":form.id==="INTELIGENCIA_OPERADOR"?"A:T":"A:AB"}`,
       valueInputOption:"RAW",
       insertDataOption:"INSERT_ROWS",
       requestBody:{values:[buildRow(form,payload,id,links,recordedEmail)]}
@@ -485,7 +488,7 @@ module.exports=async(req,res)=>{
     let masterSync=null;
     let territorial=null;
     let territorialError="";
-    if(isExploration(form.id)){
+    if(usesTerritorialEngine(form.id)){
       try{
         territorial=await resolveTerritorial(auth,payload.location?.lat,payload.location?.lng);
       }catch(geoError){
@@ -494,14 +497,33 @@ module.exports=async(req,res)=>{
       }
 
       try{
-        masterSync=await syncExplorationMaster(auth,form,payload,links,territorial);
+        masterSync=isExploration(form.id)
+          ?await syncExplorationMaster(auth,form,payload,links,territorial)
+          :{ok:true,scope:"INTELLIGENCE_ONLY",project:territorial?.catalogId||"GENERAL"};
       }catch(syncError){
         const reason=classifyMasterSyncError(syncError);
         console.error("MASTER_SYNC_FAILED",reason,syncError?.message||syncError);
         masterSync={ok:false,reason};
       }
 
-      if(rawRow){
+      if(rawRow&&form.id==="INTELIGENCIA_OPERADOR"){
+        const exactCity=territorial?.city?.status==="DENTRO"?String(territorial.city.assigned?.name||""):"";
+        const exactBarrio=territorial?.barrio?.status==="DENTRO"?String(territorial.barrio.assigned?.name||""):"";
+        const exactEstrato=territorial?.estrato?.status==="DENTRO"?String(territorial.estrato.assigned?.name||""):"";
+        const observedCity=String(payload.data?.municipio||payload.location?.cityDetected||"").trim();
+        await sheets.spreadsheets.values.update({
+          spreadsheetId:SHEET_ID,
+          range:`${form.sheet}!Q${rawRow}:S${rawRow}`,
+          valueInputOption:"RAW",
+          requestBody:{values:[[
+            observedCity||exactCity,
+            String(payload.data?.sector_barrio||exactBarrio||""),
+            String(payload.data?.estrato||exactEstrato||"Sin información")
+          ]]}
+        });
+      }
+
+      if(rawRow&&isExploration(form.id)){
         const exactBarrio=territorial?.barrio?.status==="DENTRO"?String(territorial.barrio.assigned?.name||""):"";
         if(!String(payload.data?.sector_barrio||"").trim()&&exactBarrio){
           await sheets.spreadsheets.values.update({
