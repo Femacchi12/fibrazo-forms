@@ -2214,3 +2214,9 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
 .territorial-coordinate-summary span{font-size:16px;font-weight:800;color:var(--green,#00efa9)}
 .territorial-coordinate-summary small{color:var(--muted,#a7afab);line-height:1.45}
 .territorial-coordinate-summary .secondary-button{justify-self:start}
+
+/* v0.8.46 · Inteligencia de operadores: foto única por elemento */
+.single-photo-field{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center}
+.single-photo-preview{min-height:52px;border:1px dashed rgba(255,255,255,.16);border-radius:10px;display:flex;align-items:center;padding:6px 10px;color:var(--muted,#a7afab)}
+.single-photo-preview img{width:54px;height:54px;object-fit:cover;border-radius:8px}
+@media(max-width:560px){.single-photo-field{grid-template-columns:1fr auto}.single-photo-preview{grid-column:1/-1}}
