@@ -142,9 +142,11 @@
     const operators=[...new Set(state.serverHistory.map(r=>String(r.data?.operador||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
     const selected=host.querySelector("[data-intel-operator-filter]")?.value||"all";
     const rows=state.serverHistory.filter(r=>selected==="all"||r.data?.operador===selected);
+    const dateTime=value=>{const d=new Date(value);return Number.isNaN(d.getTime())?String(value||""):d.toLocaleString("es-CO",{day:"2-digit",month:"2-digit",year:"numeric",hour:"numeric",minute:"2-digit"});};
+    host.closest(".form-history")?.classList.remove("intelligence-detail-open");
     host.innerHTML='<div class="intelligence-history-tools"><select data-intel-operator-filter><option value="all">Todos los operadores</option>'+operators.map(x=>'<option value="'+esc(x)+'"'+(x===selected?' selected':'')+'>'+esc(x)+'</option>').join("")+'</select></div>'+
-      '<div class="intelligence-history-table"><div class="intelligence-history-head"><span>Fecha</span><span>Operador</span><span>Municipio</span><span></span></div>'+
-      (rows.length?rows.map((r,i)=>'<button type="button" class="intelligence-history-row" data-history-id="'+esc(r.id)+'"><span>'+esc(new Date(r.timestamp).toLocaleDateString("es-CO"))+'</span><strong>'+esc(r.data?.operador||"Sin operador")+'</strong><span>'+esc(r.data?.municipio||"")+'</span><span>Ver →</span></button>').join(""):'<div class="pending-empty">No hay registros para este operador.</div>')+'</div>';
+      '<div class="intelligence-history-scroll"><div class="intelligence-history-table"><div class="intelligence-history-head"><span>Fecha y hora</span><span>Operador</span><span>Municipio</span><span></span></div>'+
+      (rows.length?rows.map(r=>'<button type="button" class="intelligence-history-row" data-history-id="'+esc(r.id)+'"><span>'+esc(dateTime(r.timestamp))+'</span><strong>'+esc(r.data?.operador||"Sin operador")+'</strong><span>'+esc(r.data?.municipio||"")+'</span><span>Ver →</span></button>').join(""):'<div class="pending-empty">No hay registros para este operador.</div>')+'</div></div>';
     host.querySelector("[data-intel-operator-filter]")?.addEventListener("change",renderIntelligenceHistory);
     host.querySelectorAll("[data-history-id]").forEach(b=>b.addEventListener("click",()=>showIntelligenceSummary(b.dataset.historyId)));
   }
@@ -153,9 +155,11 @@
     const d=r.data||{},photos=r.photoFields||{};
     const labels={operador:"Operador",modelo_caja:"Modelo / tipo de caja",nomenclatura_caja:"Nomenclatura",marquilla:"Marquilla / cable",tipo_tensor:"Tensor / herraje",calidad_tendido:"Calidad del tendido",calidad_servicio_percibida:"Calidad percibida",precio_solo_internet:"Precio solo Internet",precio_internet_tv:"Precio Internet + TV",incluye_tv:"Incluye TV",grilla_tv:"Grilla TV",observaciones:"Observaciones",municipio:"Municipio",sector_barrio:"Barrio",estrato:"Estrato"};
     const detail=Object.entries(labels).filter(([k])=>d[k]!==undefined&&d[k]!=="").map(([k,l])=>'<div><span>'+esc(l)+'</span><strong>'+esc(d[k])+'</strong></div>').join("");
-    const imgs=Object.values(photos).filter(Boolean).map(url=>'<a href="'+esc(url)+'" target="_blank" rel="noopener">Ver foto ↗</a>').join("");
+    const photoLabels={foto_modelo_caja:"Modelo / caja",foto_nomenclatura_caja:"Nomenclatura",foto_marquilla:"Marquilla / cable",foto_tipo_tensor:"Tensor / herraje"};
+    const imgs=Object.entries(photos).filter(([,url])=>Boolean(url)).map(([key,url])=>'<a class="intelligence-photo-button" href="'+esc(url)+'" target="_blank" rel="noopener"><span>'+esc(photoLabels[key]||"Evidencia")+'</span><strong>📷 Ver foto ↗</strong></a>').join("");
     const host=$("formHistoryList");
-    host.innerHTML='<div class="intelligence-summary"><button type="button" class="secondary-button compact" data-history-back>← Historial</button><div class="intelligence-summary-grid">'+detail+'</div><div class="intelligence-summary-photos">'+imgs+'</div><button type="button" class="primary-button" data-history-edit>Editar registro</button></div>';
+    host.closest(".form-history")?.classList.add("intelligence-detail-open");
+    host.innerHTML='<div class="intelligence-summary"><div class="intelligence-summary-top"><button type="button" class="secondary-button compact" data-history-back>← Historial</button><strong>'+esc(d.operador||"Operador")+'</strong></div><div class="intelligence-summary-grid">'+detail+'</div>'+(imgs?'<div class="intelligence-summary-evidence"><span>EVIDENCIA FOTOGRÁFICA</span><div class="intelligence-summary-photos">'+imgs+'</div></div>':'')+'<button type="button" class="primary-button" data-history-edit>Editar registro</button></div>';
     host.querySelector("[data-history-back]")?.addEventListener("click",renderIntelligenceHistory);
     host.querySelector("[data-history-edit]")?.addEventListener("click",()=>editIntelligenceRecord(r));
   }
