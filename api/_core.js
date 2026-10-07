@@ -47,7 +47,7 @@ async function loadForms(auth){
       status:String(row[3]||"Activo"),slug:String(row[4]||""),sheet:String(row[5]||""),
       allowsGps:toBool(row[6]),allowsPhotos:toBool(row[7]),access:legacyAccess,
       allowedEmails:splitEmails(row[9]),domains,domain:domains[0]||"",
-      rateLimit:clampInt(row[11],1,100,5),maxPhotos:clampInt(row[12],0,3,3),maxPhotoMb:clampNum(row[13],0.25,2,1.5),
+      rateLimit:clampInt(row[11],1,100,5),maxPhotos:clampInt(row[12],0,4,3),maxPhotoMb:clampNum(row[13],0.25,2,1.5),
       updatedBy:String(row[14]||""),updatedAt:String(row[15]||""),
       publicEnabled:boolAt(16,false),domainsEnabled:boolAt(17,legacyAccess==="DOMINIO"),emailsEnabled:boolAt(18,legacyAccess==="CORREOS"),
       introMessage:String(row[19]||"").slice(0,2000),completionMessage:String(row[20]||"").slice(0,2000),
@@ -287,6 +287,16 @@ function validateSubmission(formId,payload){
     for(const key of ["sector_barrio","isp_1","isp_2","isp_3","isp_4"]) short(d[key],120,"TEXT_TOO_LONG");
     short(d.link_evidencia,1000,"TEXT_TOO_LONG");
     short(d.nota,2000,"TEXT_TOO_LONG");
+  }else if(formId==="INTELIGENCIA_OPERADOR"){
+    const lat=Number(payload.location?.lat),lng=Number(payload.location?.lng),acc=Number(payload.location?.accuracy);
+    if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat<-90||lat>90||lng<-180||lng>180) throw httpError("GPS_REQUIRED",400);
+    if(Number.isFinite(acc)&&acc<0) throw httpError("INVALID_GPS",400);
+    if(!String(d.operador||"").trim()) throw httpError("OPERATOR_REQUIRED",400);
+    if(!String(d.municipio||payload.location?.cityDetected||"").trim()) throw httpError("INVALID_MUNICIPALITY",400);
+    if(!["1","2","3","4","5"].includes(String(d.calidad_tendido||""))) throw httpError("INVALID_NETWORK_QUALITY",400);
+    one(d.estrato,["1","2","3","4","5","6","Sin información"],"INVALID_STRATUM");
+    for(const key of ["operador","modelo_caja","nomenclatura_caja","marquilla","tipo_tensor","municipio","sector_barrio"]) short(d[key],120,"TEXT_TOO_LONG");
+    short(d.observaciones,2000,"TEXT_TOO_LONG");
   }else{
     throw httpError("INVALID_FORM",400);
   }
