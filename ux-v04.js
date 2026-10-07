@@ -605,7 +605,7 @@
     window.scrollTo({top:0,behavior:"smooth"});
   }
   function prev(){if(state.sectionIndex>0){state.sectionIndex--;renderSection();}}
-  function next(){const e=validateSection(state.sectionIndex,true);if(e.length)return showValidation(e);state.sectionIndex++;renderSection();}
+  function next(){if(isExplorationForm()&&currentSection()?.id==="ubicacion"&&state.locationBusy){state.sectionIndex++;renderSection();return;}const e=validateSection(state.sectionIndex,true);if(e.length)return showValidation(e);state.sectionIndex++;renderSection();}
 
   function hasExplorationOperator(){
     if(!isExplorationForm())return true;
