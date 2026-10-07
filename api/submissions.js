@@ -119,7 +119,7 @@ function isExploration(formId){
 function buildRow(form,p,id,links,email){
   const d=p.data||{},l=p.location||{},now=new Date().toISOString();
   if(form.id==="INTELIGENCIA_OPERADOR"){
-    return [now,id,d.operador||"",d.modelo_caja||"",d.nomenclatura_caja||"",d.marquilla||"",d.tipo_tensor||"",d.tipo_despliegue||"",d.calidad_tendido||"",d.observaciones||"",l.lat||"",l.lng||"",l.accuracy||"",links[0]||"",links[1]||"",links[2]||"",links[3]||"",d.municipio||l.cityDetected||"",d.sector_barrio||"",d.estrato||"",email||"ANONIMO"];
+    return [now,id,d.operador||"",d.modelo_caja||"",d.nomenclatura_caja||"",d.marquilla||"",d.tipo_tensor||"",d.calidad_tendido||"",d.observaciones||"",l.lat||"",l.lng||"",l.accuracy||"",links[0]||"",links[1]||"",links[2]||"",links[3]||"",d.municipio||l.cityDetected||"",d.sector_barrio||"",d.estrato||"",email||"ANONIMO"];
   }
   if(form.id==="CHURN"){
     return [
@@ -393,10 +393,10 @@ async function readRows(auth,forms,requested,limit,user,caps){
       }else if(form.id==="INTELIGENCIA_OPERADOR"){
         out.push({
           formId:form.id,timestamp:row[0],id:row[1],
-          data:{operador:row[2],modelo_caja:row[3],nomenclatura_caja:row[4],marquilla:row[5],tipo_tensor:row[6],tipo_despliegue:"",calidad_tendido:row[8],observaciones:row[9],municipio:row[17]||"",sector_barrio:row[18]||"",estrato:row[19]||""},
-          location:{lat:row[10],lng:row[11],accuracy:row[12]},
-          photos:[row[13],row[14],row[15],row[16]].filter(Boolean),
-          user:row[20]||""
+          data:{operador:row[2],modelo_caja:row[3],nomenclatura_caja:row[4],marquilla:row[5],tipo_tensor:row[6],calidad_tendido:row[7],observaciones:row[8],municipio:row[16]||"",sector_barrio:row[17]||"",estrato:row[18]||""},
+          location:{lat:row[9],lng:row[10],accuracy:row[11]},
+          photos:[row[12],row[13],row[14],row[15]].filter(Boolean),
+          user:row[19]||""
         });
       }
     }
