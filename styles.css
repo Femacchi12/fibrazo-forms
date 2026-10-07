@@ -2153,3 +2153,16 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
 }
 
 .photo-fallback{display:flex!important;align-items:center;justify-content:center;min-width:112px;min-height:86px;padding:8px;border:2px dashed #728078;border-radius:10px;color:#fff!important;background:#111914;font-weight:800;text-align:center;text-decoration:none}
+
+/* v0.8.38 · QA de campo */
+.form-mode .field-quick-tools{margin:4px 0 6px}
+.form-mode .field-quick-tools button{min-height:30px!important;padding:4px 8px!important;border-radius:8px!important;font-size:11px!important;width:auto!important}
+.form-mode .operator-brand-field>label{font-weight:950!important}
+.form-mode .operator-brand-field.brand-tigo>label{color:#45a3ff!important}
+.form-mode .operator-brand-field.brand-claro>label{color:#ff5b62!important}
+.form-mode .operator-brand-field.brand-movistar>label{color:#4dd7a7!important}
+.form-mode .binary-toggle-button:not(.is-yes){border-color:#ff666d!important;background:#351517!important}
+.form-mode .binary-toggle-button:not(.is-yes) .toggle-state{color:#ff8a8f!important}
+.form-mode .binary-toggle-button.is-yes{border-color:#00fe9c!important;background:#073c2b!important}
+.form-mode .binary-toggle-button.is-yes .toggle-state{color:#00fe9c!important}
+.form-mode #nextSection:disabled{opacity:.7;cursor:wait}
