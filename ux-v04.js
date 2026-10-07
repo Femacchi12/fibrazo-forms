@@ -575,6 +575,19 @@
     $("prevSection").hidden=state.sectionIndex===0;const last=state.sectionIndex===sections.length-1;$("nextSection").hidden=last;$("reviewForm").hidden=!last;
     document.querySelectorAll(".operator-memory-inline").forEach(el=>el.remove());
     clearValidation();updateVisibility();
+    if(state.form?.id==="EXPLORACION_PRESENCIAL"&&section.id==="ubicacion"){
+      requestAnimationFrame(()=>{
+        const first=document.querySelector('[data-key="municipio"]');
+        if(first&&!document.querySelector(".territorial-coordinate-summary")){
+          const box=document.createElement("div");box.className="territorial-coordinate-summary";
+          const gps=state.gps;
+          box.innerHTML='<strong>Coordenada relevada</strong><span>'+(gps?(gps.lat.toFixed(6)+", "+gps.lng.toFixed(6)+(Number.isFinite(Number(gps.accuracy))?" · ±"+Math.round(Number(gps.accuracy))+" m":"")):"Sin coordenada")+'</span><small>Esta es la coordenada procesada en segundo plano. Puedes corregirla antes de finalizar.</small>';
+          const edit=document.createElement("button");edit.type="button";edit.className="secondary-button compact";edit.textContent="Modificar coordenada";
+          edit.addEventListener("click",()=>{state.sectionIndex=0;renderSection();});
+          box.appendChild(edit);first.parentElement?.insertBefore(box,first);
+        }
+      });
+    }
     if(state.form?.id==="EXPLORACION_PRESENCIAL"&&section.id==="infraestructura"){
       requestAnimationFrame(()=>{
         const first=document.querySelector('[data-key="tipo_despliegue"]');
