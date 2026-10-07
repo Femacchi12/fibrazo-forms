@@ -647,7 +647,8 @@
   function clearValidation(){if(!$("validationSummary"))return;$("validationSummary").hidden=true;$("validationList").innerHTML="";document.querySelectorAll("#dynamicFields .field").forEach(f=>f.classList.remove("invalid"));document.querySelectorAll(".field-error").forEach(e=>{e.hidden=true;e.textContent="";});}
   function showValidation(errors){const list=$("validationList");list.innerHTML="";errors.forEach(x=>{setError(x.field.key,x.message);const li=document.createElement("li");li.textContent=x.field.label+": "+x.message;list.appendChild(li);});$("validationSummary").hidden=false;document.querySelector("#dynamicFields .field.invalid:not([hidden])")?.scrollIntoView({behavior:"smooth",block:"center"});}
 
-  function review(){
+  async function review(){
+    if(isExplorationForm()&&state.locationBusy){setStatus("Terminando ubicación y datos territoriales…","");const started=Date.now();while(state.locationBusy&&Date.now()-started<18000)await new Promise(done=>setTimeout(done,250));}
     const errors=validateAll();if(errors.length){const sections=activeSections(),idx=sections.findIndex(s=>s.id===errors[0].field.section);if(idx>=0)state.sectionIndex=idx;renderSection();showValidation(errors.filter(x=>x.field.section===currentSection().id));return;}
     $("formWorkspace").hidden=true;$("reviewWorkspace").hidden=false;$("successWorkspace").hidden=true;buildReview();setStatus("","");window.scrollTo({top:0,behavior:"smooth"});
   }
