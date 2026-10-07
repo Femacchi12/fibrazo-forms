@@ -2207,3 +2207,10 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
 @media(max-width:560px){
   .isp-clear-button{width:28px!important;height:28px!important;font-size:19px!important}
 }
+
+/* v0.8.44 · resumen de coordenada procesada en validación final */
+.territorial-coordinate-summary{display:grid;gap:8px;padding:14px 16px;margin:0 0 16px;border:1px solid rgba(0,239,169,.35);border-radius:14px;background:rgba(0,239,169,.06)}
+.territorial-coordinate-summary strong{font-size:14px}
+.territorial-coordinate-summary span{font-size:16px;font-weight:800;color:var(--green,#00efa9)}
+.territorial-coordinate-summary small{color:var(--muted,#a7afab);line-height:1.45}
+.territorial-coordinate-summary .secondary-button{justify-self:start}
