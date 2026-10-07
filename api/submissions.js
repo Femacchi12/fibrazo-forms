@@ -393,10 +393,10 @@ async function readRows(auth,forms,requested,limit,user,caps){
       }else if(form.id==="INTELIGENCIA_OPERADOR"){
         out.push({
           formId:form.id,timestamp:row[0],id:row[1],
-          data:{operador:row[2],modelo_caja:row[3],nomenclatura_caja:row[4],marquilla:row[5],tipo_tensor:row[6],tipo_despliegue:row[7],calidad_tendido:row[8],observaciones:row[9]},
+          data:{operador:row[2],modelo_caja:row[3],nomenclatura_caja:row[4],marquilla:row[5],tipo_tensor:row[6],tipo_despliegue:"",calidad_tendido:row[8],observaciones:row[9],municipio:row[17]||"",sector_barrio:row[18]||"",estrato:row[19]||""},
           location:{lat:row[10],lng:row[11],accuracy:row[12]},
-          photos:[row[13],row[14],row[15]].filter(Boolean),
-          user:row[16]||""
+          photos:[row[13],row[14],row[15],row[16]].filter(Boolean),
+          user:row[20]||""
         });
       }
     }
