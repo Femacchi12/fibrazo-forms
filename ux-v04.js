@@ -653,7 +653,7 @@
   async function review(){
     if(isExplorationForm()&&state.locationBusy){setStatus("Terminando ubicación y datos territoriales…","");try{await state.geoPromise;}catch(_){}}
     if(isExplorationForm()&&state.gps&&!state.locationValidated){setStatus("Validando datos territoriales antes del resumen…","");try{state.geoPromise=resolveExplorationMunicipality(state.gps.lat,state.gps.lng,"coordenadas");await state.geoPromise;}catch(_){}finally{state.geoPromise=null;}}
-    const errors=validateAll();if(errors.length){const sections=activeSections(),idx=sections.findIndex(s=>s.id===errors[0].field.section);if(idx>=0)state.sectionIndex=idx;state.maxSectionReached=Math.max(state.maxSectionReached,sections.length-1);renderSection();showValidation(errors.filter(x=>x.field.section===currentSection().id));return;}
+    const errors=validateAll();if(errors.length){const sections=activeSections(),idx=sections.findIndex(s=>s.id===errors[0].field.section);state.maxSectionReached=Math.max(state.maxSectionReached,sections.length-1);if(idx>=0&&idx!==state.sectionIndex){state.sectionIndex=idx;renderSection();}showValidation(errors.filter(x=>x.field.section===currentSection().id));return;}
     $("formWorkspace").hidden=true;$("reviewWorkspace").hidden=false;$("successWorkspace").hidden=true;buildReview();setStatus("","");window.scrollTo({top:0,behavior:"smooth"});
   }
   function edit(){$("reviewWorkspace").hidden=true;$("formWorkspace").hidden=false;renderSection();}
