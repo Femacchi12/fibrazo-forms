@@ -47,7 +47,7 @@ async function loadForms(auth){
       status:String(row[3]||"Activo"),slug:String(row[4]||""),sheet:String(row[5]||""),
       allowsGps:toBool(row[6]),allowsPhotos:toBool(row[7]),access:legacyAccess,
       allowedEmails:splitEmails(row[9]),domains,domain:domains[0]||"",
-      rateLimit:clampInt(row[11],1,100,5),maxPhotos:clampInt(row[12],0,4,3),maxPhotoMb:clampNum(row[13],0.25,2,1.5),
+      rateLimit:clampInt(row[11],1,100,5),maxPhotos:clampInt(row[12],0,6,3),maxPhotoMb:clampNum(row[13],0.25,2,1.5),
       updatedBy:String(row[14]||""),updatedAt:String(row[15]||""),
       publicEnabled:boolAt(16,false),domainsEnabled:boolAt(17,legacyAccess==="DOMINIO"),emailsEnabled:boolAt(18,legacyAccess==="CORREOS"),
       introMessage:String(row[19]||"").slice(0,2000),completionMessage:String(row[20]||"").slice(0,2000),
@@ -299,7 +299,7 @@ function validateSubmission(formId,payload){
     if(d.incluye_tv&&!["Sí","No","No sabe"].includes(String(d.incluye_tv))) throw httpError("INVALID_TV_OPTION",400);
     if(d.grilla_tv&&!["Amplia","Reducida","No sabe"].includes(String(d.grilla_tv))) throw httpError("INVALID_TV_GRID",400);
     one(d.estrato,["1","2","3","4","5","6","Sin información"],"INVALID_STRATUM");
-    for(const key of ["operador","modelo_caja","nomenclatura_caja","marquilla","marquilla_drop","tipo_tensor","municipio","sector_barrio"]) short(d[key],120,"TEXT_TOO_LONG");
+    for(const key of ["operador","modelo_caja","nomenclatura_caja","marquilla","marquilla_drop","tipo_tensor","tensor_acometida","municipio","sector_barrio"]) short(d[key],120,"TEXT_TOO_LONG");
     short(d.observaciones,2000,"TEXT_TOO_LONG");
   }else{
     throw httpError("INVALID_FORM",400);
