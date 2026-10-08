@@ -101,7 +101,7 @@
     $("dynamicFields").innerHTML="";
     shuffledFields(form,!!policy.shuffleQuestions).forEach(field=>$("dynamicFields").appendChild(renderField(field)));
     if(form.id==="INTELIGENCIA_OPERADOR"){
-      const pairs=[["modelo_caja","foto_modelo_caja"],["nomenclatura_caja","foto_nomenclatura_caja"],["marquilla","foto_marquilla"],["marquilla_drop","foto_marquilla_drop"],["tipo_tensor","foto_tipo_tensor"]];
+      const pairs=[["modelo_caja","foto_modelo_caja"],["nomenclatura_caja","foto_nomenclatura_caja"],["marquilla","foto_marquilla"],["marquilla_drop","foto_marquilla_drop"],["tipo_tensor","foto_tipo_tensor"],["tensor_acometida","foto_tensor_acometida"]];
       for(const [key,photo] of pairs){
         const main=$("dynamicFields").querySelector('[data-key="'+key+'"]');
         const companion=$("dynamicFields").querySelector('[data-key="'+photo+'"]');
@@ -163,9 +163,9 @@
   function showIntelligenceSummary(id){
     const r=state.serverHistory.find(x=>x.id===id);if(!r)return;
     const d=r.data||{},photos=r.photoFields||{};
-    const labels={operador:"Operador",modelo_caja:"Modelo / tipo de caja",nomenclatura_caja:"Nomenclatura",marquilla:"Marquilla despliegue",marquilla_drop:"Marquilla drop",tipo_tensor:"Tensor / herraje",calidad_tendido:"Calidad del tendido",calidad_servicio_percibida:"Calidad percibida",precio_solo_internet:"Precio solo Internet",precio_internet_tv:"Precio Internet + TV",incluye_tv:"Incluye TV",grilla_tv:"Grilla TV",observaciones:"Observaciones",municipio:"Municipio",sector_barrio:"Barrio",estrato:"Estrato"};
+    const labels={operador:"Operador",modelo_caja:"Modelo / tipo de caja",nomenclatura_caja:"Nomenclatura",marquilla:"Marquilla despliegue",marquilla_drop:"Marquilla drop",tipo_tensor:"Tensor de despliegue",tensor_acometida:"Tensor de acometida",calidad_tendido:"Calidad del tendido",calidad_servicio_percibida:"Calidad percibida",precio_solo_internet:"Precio solo Internet",precio_internet_tv:"Precio Internet + TV",incluye_tv:"Incluye TV",grilla_tv:"Grilla TV",observaciones:"Observaciones",municipio:"Municipio",sector_barrio:"Barrio",estrato:"Estrato"};
     const detail=Object.entries(labels).filter(([k])=>d[k]!==undefined&&d[k]!=="").map(([k,l])=>'<div><span>'+esc(l)+'</span><strong>'+esc(d[k])+'</strong></div>').join("");
-    const photoLabels={foto_modelo_caja:"Modelo / caja",foto_nomenclatura_caja:"Nomenclatura",foto_marquilla:"Marquilla despliegue",foto_marquilla_drop:"Marquilla drop",foto_tipo_tensor:"Tensor / herraje"};
+    const photoLabels={foto_modelo_caja:"Modelo / caja",foto_nomenclatura_caja:"Nomenclatura",foto_marquilla:"Marquilla despliegue",foto_marquilla_drop:"Marquilla drop",foto_tipo_tensor:"Tensor de despliegue",foto_tensor_acometida:"Tensor de acometida"};
     const imgs=Object.entries(photos).filter(([,url])=>Boolean(url)).map(([key,url])=>'<a class="intelligence-photo-button" href="'+esc(url)+'" target="_blank" rel="noopener"><span>'+esc(photoLabels[key]||"Evidencia")+'</span><strong>📷 Ver foto ↗</strong></a>').join("");
     const host=$("formHistoryList");
     host.closest(".form-history")?.classList.add("intelligence-detail-open");
@@ -865,7 +865,7 @@
       data:collectData(),
       location:state.gps,
       photos:state.form.id==="INTELIGENCIA_OPERADOR"
-        ?["foto_modelo_caja","foto_nomenclatura_caja","foto_marquilla","foto_tipo_tensor","foto_marquilla_drop"].map(key=>state.photos.find(p=>p.fieldKey===key)).filter(Boolean)
+        ?["foto_modelo_caja","foto_nomenclatura_caja","foto_marquilla","foto_tipo_tensor","foto_marquilla_drop","foto_tensor_acometida"].map(key=>state.photos.find(p=>p.fieldKey===key)).filter(Boolean)
         :state.photos,
       user:{email:u?.email||""},
       clientTimestamp:new Date().toISOString(),
