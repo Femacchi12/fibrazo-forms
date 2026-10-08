@@ -118,7 +118,7 @@ window.FIBRAZO_FORMS = {
       {key:"isp_4",section:"operadores",label:"ISP 4",type:"isp-autocomplete",default:"Sin ISP",showWhen:{field:"isp_3",notValues:["","Sin ISP"]},help:"Cuarto ISP local o regional identificado."},
 
       {key:"link_evidencia",section:"cierre",label:"Link de evidencia",type:"text",full:true,help:"Opcional. Pega el enlace de Street View, Google Maps o My Maps que respalda la observación."},
-      {key:"nota",section:"cierre",label:"Nota",type:"textarea",full:true,help:"Agrega cualquier condición relevante que no haya quedado registrada en los campos anteriores."},
+      
       {key:"fotos",section:"cierre",label:"Fotos",type:"photos",full:true,help:"Opcional. Carga hasta 3 fotos. Desde galería puedes seleccionar varias de una vez; también puedes tomar fotos con la cámara."}
     ]
   },
@@ -165,7 +165,7 @@ window.FIBRAZO_FORMS = {
       {key:"isp_4",section:"operadores",label:"ISP 4",type:"isp-autocomplete",default:"Sin ISP",showWhen:{field:"isp_3",notValues:["","Sin ISP"]},help:"Cuarto ISP local o regional identificado."},
       {key:"isp_4_calidad",section:"operadores",label:"Calidad de tendido · ISP 4",type:"segmented",showWhen:{field:"isp_4",notValues:["","Sin ISP"]},options:["1","2","3","4","5"],details:{"1":"Muy mala: tendido desordenado, improvisado o con deficiencias evidentes.","2":"Mala: varias deficiencias visibles de orden o instalación.","3":"Aceptable: instalación funcional con calidad media.","4":"Buena: tendido ordenado y bien ejecutado.","5":"Muy buena: instalación prolija, consistente y de alta calidad visual."},help:"Califica solo ISP locales/regionales. No aplica a Tigo, Claro o Movistar."},
 
-      {key:"nota",section:"cierre",label:"Nota",type:"textarea",full:true,help:"Agrega cualquier condición relevante observada en campo."},
+      
       {key:"fotos",section:"cierre",label:"Fotos",type:"photos",full:true,help:"Opcional. Toma hasta 3 fotos de forma secuencial. Cada foto muestra vista previa y permite cambiarla o eliminarla antes de agregar la siguiente."}
     ]
   }
