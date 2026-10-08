@@ -1087,7 +1087,7 @@
     const finish=async p=>{
       if(finished)return;finished=true;if(watchId!==null)navigator.geolocation.clearWatch(watchId);clearTimeout(timer);
       if(!p){value.textContent="No se pudo obtener la ubicación. Revisa el permiso del navegador.";btn.disabled=false;btn.textContent="Reintentar";state.locationBusy=false;return;}
-      const advanceAfterGps=state.form?.id==="EXPLORACION_PRESENCIAL"&&key==="coordenadas"&&currentSection()?.id==="coordenada"&&!state.gps;
+      const advanceAfterGps=(state.form?.id==="EXPLORACION_PRESENCIAL"||state.form?.id==="INTELIGENCIA_OPERADOR")&&key==="coordenadas"&&currentSection()?.id==="coordenada"&&!state.gps;
       state.gps={lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy,cityDetected:"",citySource:""};
       value.textContent=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+" · ±"+Math.round(state.gps.accuracy)+" m";
       const summaryValue=document.querySelector(".territorial-coordinate-summary .territorial-coordinate-value");
