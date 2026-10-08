@@ -300,7 +300,7 @@
     const storageKey="fibrazo:field-options:"+field.key;
     let custom=[];try{custom=JSON.parse(localStorage.getItem(storageKey)||"[]");if(!Array.isArray(custom))custom=[];}catch(_){}
     const options=[...new Set([...(field.options||[]),...custom])];
-    const hide=()=>{menu.hidden=true;input.setAttribute("aria-expanded","false");};
+    const hide=()=>{menu.hidden=true;input.setAttribute("aria-expanded","false");holder.querySelector(".editable-options-arrow")?.setAttribute("aria-expanded","false");};
     const save=()=>{const value=input.value.trim();if(!value)return;clearError(field.key);if(!options.some(x=>x.toLowerCase()===value.toLowerCase())){options.push(value);custom.push(value);try{localStorage.setItem(storageKey,JSON.stringify([...new Set(custom)]));}catch(_){}}};
     const paint=()=>{
       menu.innerHTML="";
@@ -313,14 +313,17 @@
         menu.appendChild(option);
       }
       if(!matching.length){const hint=document.createElement("div");hint.className="editable-options-hint";hint.textContent="Escribe tu opción nueva y continúa";menu.appendChild(hint);}
-      menu.hidden=false;input.setAttribute("aria-expanded","true");
+      menu.hidden=false;input.setAttribute("aria-expanded","true");holder.querySelector(".editable-options-arrow")?.setAttribute("aria-expanded","true");
     };
     input.addEventListener("focus",paint);
     input.addEventListener("input",()=>{paint();clearError(field.key);});
     input.addEventListener("change",save);
     input.addEventListener("keydown",e=>{if(e.key==="Escape")hide();if(e.key==="Enter"&&!menu.hidden){e.preventDefault();save();hide();input.blur();}});
     input.addEventListener("blur",()=>{save();setTimeout(hide,150);});
-    holder.append(input,menu);return holder;
+    const arrow=document.createElement("button");arrow.type="button";arrow.className="editable-options-arrow";arrow.textContent="▴";arrow.setAttribute("aria-label","Mostrar opciones de "+field.label);arrow.setAttribute("aria-expanded","false");
+    arrow.addEventListener("pointerdown",e=>e.preventDefault());
+    arrow.addEventListener("click",()=>{if(menu.hidden){paint();input.focus();}else hide();});
+    holder.append(input,arrow,menu);return holder;
   }
   function textInput(field){
     const i=document.createElement("input");i.type="text";i.name=field.key;
