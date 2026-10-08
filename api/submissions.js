@@ -122,7 +122,7 @@ function usesTerritorialEngine(formId){
 function buildRow(form,p,id,links,email){
   const d=p.data||{},l=p.location||{},now=new Date().toISOString();
   if(form.id==="INTELIGENCIA_OPERADOR"){
-    return [now,id,d.operador||"",d.modelo_caja||"",d.nomenclatura_caja||"",d.marquilla||"",d.tipo_tensor||"",d.calidad_tendido||"",d.observaciones||"",l.lat||"",l.lng||"",l.accuracy||"",links[0]||"",links[1]||"",links[2]||"",links[3]||"",d.municipio||l.cityDetected||"",d.sector_barrio||"",d.estrato||"",email||"ANONIMO",d.calidad_servicio_percibida||"",d.precio_solo_internet||"",d.precio_internet_tv||"",d.incluye_tv||"",d.grilla_tv||"",d.marquilla_drop||"",links[4]||""];
+    return [now,id,d.operador||"",d.modelo_caja||"",d.nomenclatura_caja||"",d.marquilla||"",d.tipo_tensor||"",d.calidad_tendido||"",d.observaciones||"",l.lat||"",l.lng||"",l.accuracy||"",links[0]||"",links[1]||"",links[2]||"",links[3]||"",d.municipio||l.cityDetected||"",d.sector_barrio||"",d.estrato||"",email||"ANONIMO",d.calidad_servicio_percibida||"",d.precio_solo_internet||"",d.precio_internet_tv||"",d.incluye_tv||"",d.grilla_tv||"",d.marquilla_drop||"",links[4]||"",d.tensor_acometida||"",links[5]||""];
   }
   if(form.id==="CHURN"){
     return [
@@ -396,9 +396,9 @@ async function readRows(auth,forms,requested,limit,user,caps){
       }else if(form.id==="INTELIGENCIA_OPERADOR"){
         out.push({
           formId:form.id,timestamp:row[0],id:row[1],
-          data:{operador:row[2],modelo_caja:row[3],nomenclatura_caja:row[4],marquilla:row[5],tipo_tensor:row[6],calidad_tendido:row[7],observaciones:row[8],municipio:row[16]||"",sector_barrio:row[17]||"",estrato:row[18]||"",calidad_servicio_percibida:row[20]||"",precio_solo_internet:row[21]||"",precio_internet_tv:row[22]||"",incluye_tv:row[23]||"",grilla_tv:row[24]||"",marquilla_drop:row[25]||""},
+          data:{operador:row[2],modelo_caja:row[3],nomenclatura_caja:row[4],marquilla:row[5],tipo_tensor:row[6],calidad_tendido:row[7],observaciones:row[8],municipio:row[16]||"",sector_barrio:row[17]||"",estrato:row[18]||"",calidad_servicio_percibida:row[20]||"",precio_solo_internet:row[21]||"",precio_internet_tv:row[22]||"",incluye_tv:row[23]||"",grilla_tv:row[24]||"",marquilla_drop:row[25]||"",tensor_acometida:row[27]||""},
           location:{lat:row[9],lng:row[10],accuracy:row[11]},
-          photos:[row[12],row[13],row[14],row[15]].filter(Boolean),photoFields:{foto_modelo_caja:row[12]||"",foto_nomenclatura_caja:row[13]||"",foto_marquilla:row[14]||"",foto_tipo_tensor:row[15]||"",foto_marquilla_drop:row[26]||""},
+          photos:[row[12],row[13],row[14],row[15]].filter(Boolean),photoFields:{foto_modelo_caja:row[12]||"",foto_nomenclatura_caja:row[13]||"",foto_marquilla:row[14]||"",foto_tipo_tensor:row[15]||"",foto_marquilla_drop:row[26]||"",foto_tensor_acometida:row[28]||""},
           user:row[19]||""
         });
       }
@@ -469,7 +469,7 @@ module.exports=async(req,res)=>{
       const permission=permissionFor(caps.permissions,String(user.email||"").toLowerCase(),form.id,caps.base);
       if(!canAccess(form,user,caps.base,permission)) throw httpError("FORM_ACCESS_DENIED",403);
       const sheets=google.sheets({version:"v4",auth});
-      const existing=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!A2:AA`});
+      const existing=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!A2:AC`});
       const rows=existing.data.values||[];
       const idx=rows.findIndex(row=>String(row[1]||"")===editId);
       if(idx<0) throw httpError("SUBMISSION_NOT_FOUND",404);
@@ -484,11 +484,12 @@ module.exports=async(req,res)=>{
         byKey.foto_nomenclatura_caja||String(payload.existingPhotoFields?.foto_nomenclatura_caja||old[13]||""),
         byKey.foto_marquilla||String(payload.existingPhotoFields?.foto_marquilla||old[14]||""),
         byKey.foto_tipo_tensor||String(payload.existingPhotoFields?.foto_tipo_tensor||old[15]||""),
-        byKey.foto_marquilla_drop||String(payload.existingPhotoFields?.foto_marquilla_drop||old[26]||"")
+        byKey.foto_marquilla_drop||String(payload.existingPhotoFields?.foto_marquilla_drop||old[26]||""),
+        byKey.foto_tensor_acometida||String(payload.existingPhotoFields?.foto_tensor_acometida||old[28]||"")
       ];
       const row=buildRow(form,payload,editId,links,owner||email);
       row[0]=old[0]||row[0];
-      await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!A${idx+2}:AA${idx+2}`,valueInputOption:"RAW",requestBody:{values:[row]}});
+      await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!A${idx+2}:AC${idx+2}`,valueInputOption:"RAW",requestBody:{values:[row]}});
       return res.status(200).json({ok:true,id:editId,updated:true,photos:links});
     }
 
@@ -505,7 +506,7 @@ module.exports=async(req,res)=>{
     const sheets=google.sheets({version:"v4",auth});
     const appended=await sheets.spreadsheets.values.append({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!${isExploration(form.id)?"A:AD":form.id==="INTELIGENCIA_OPERADOR"?"A:AA":"A:AB"}`,
+      range:`${form.sheet}!${isExploration(form.id)?"A:AD":form.id==="INTELIGENCIA_OPERADOR"?"A:AC":"A:AB"}`,
       valueInputOption:"RAW",
       insertDataOption:"INSERT_ROWS",
       requestBody:{values:[buildRow(form,payload,id,links,recordedEmail)]}
