@@ -19,7 +19,7 @@ window.FIBRAZO_FORMS = {
     fields:[
       {key:"coordenadas",section:"coordenada",label:"Coordenadas de referencia",type:"gps",required:true,full:true,manualEdit:true,help:"Toma la ubicación por GPS o ingrésala manualmente. Puedes continuar mientras se procesa la información territorial."},
       {key:"operador",section:"identificacion",label:"ISP / operador",type:"isp-autocomplete",required:true,help:"Busca un ISP existente o escribe un nombre nuevo. El nombre quedará disponible para futuros relevamientos."},
-      {key:"modelo_caja",section:"elementos",label:"Modelo / tipo de caja",type:"editable-options",options:["Caja negra estándar","Caja negra pequeña"],help:"Modelo, fabricante o descripción visual de la caja."},
+      {key:"modelo_caja",section:"elementos",label:"Modelo / tipo de caja",type:"editable-options",options:["Común negra","Pequeña negra"],help:"Modelo, fabricante o descripción visual de la caja."},
       {key:"foto_modelo_caja",section:"elementos",label:"Foto · modelo / tipo de caja",type:"photo-single",help:"Opcional. Anexa una única foto de este elemento."},
       {key:"nomenclatura_caja",section:"elementos",label:"Nomenclatura / identificación de cajas",type:"text",help:"Ejemplo de código, prefijo o patrón utilizado por el operador."},
       {key:"foto_nomenclatura_caja",section:"elementos",label:"Foto · nomenclatura / identificación",type:"photo-single",help:"Opcional. Anexa una única foto de este elemento."},
