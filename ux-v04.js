@@ -390,10 +390,24 @@
     input.addEventListener("blur",()=>setTimeout(()=>{rememberIspName(input.value);list.hidden=true;},220));
     const clear=document.createElement("button");clear.type="button";clear.className="isp-clear-button";clear.textContent="×";clear.title="Borrar selección";clear.setAttribute("aria-label","Borrar selección de ISP");
     clear.addEventListener("pointerdown",e=>e.preventDefault());
-    clear.addEventListener("click",e=>{e.preventDefault();input.value="";updateIspState();input.focus();paint();clearError(field.key);updateVisibility();});
+    clear.addEventListener("click",e=>{e.preventDefault();const position=Number(field.key.match(/^isp_([1-4])$/)?.[1]);if(position&&isExplorationForm()){removeExplorationIsp(position);list.hidden=true;return;}input.value="";updateIspState();input.focus();paint();clearError(field.key);updateVisibility();});
     shell.append(input,clear,list);return shell;
   }
 
+  function removeExplorationIsp(position){
+    const entries=[];
+    for(let i=1;i<=4;i++){
+      const name=String(fieldValue("isp_"+i)||"").trim();
+      if(i===position||!name||name==="Sin ISP")continue;
+      entries.push({name,quality:String(fieldValue("isp_"+i+"_calidad")||"")});
+    }
+    for(let i=1;i<=4;i++){
+      const item=entries[i-1];
+      setFieldValue("isp_"+i,item?.name||"Sin ISP");
+      paintSegmentedValue("isp_"+i+"_calidad",item?.quality||"");
+    }
+    updateVisibility();
+  }
   function refreshIspSuggestions(){
     document.querySelectorAll(".isp-autocomplete input").forEach(input=>{
       if(input.value==="Sin ISP"||!String(input.value||"").trim())input.placeholder=(state.ispOptions||[]).length?"Busca o escribe un ISP":"Escribe un ISP";
@@ -754,6 +768,7 @@
     if(field.type==="coordinates")return field.required&&!state.gps?"Pega una coordenada válida en formato latitud, longitud.":"";
     if(field.type==="photos"||field.type==="photo-single")return"";
     const v=fieldValue(field.key),empty=Array.isArray(v)?v.length===0:String(v||"").trim()==="";
+    if(field.key.endsWith("_calidad")&&/^isp_[1-4]_calidad$/.test(field.key)&&isExplorationForm()){const isp=String(fieldValue(field.key.replace("_calidad",""))||"").trim();if(isp&&isp!=="Sin ISP"&&empty)return"Selecciona la calidad del tendido de este ISP.";}
     if(field.required&&empty)return"Este campo es obligatorio.";
     if(!empty&&(field.type==="numeric"||field.type==="currency")&&!/^\d+$/.test(String(v)))return"Ingresa únicamente números.";
     if(!empty&&field.max!==undefined&&Number(v)>Number(field.max))return"No puede ser mayor a "+field.max+".";
