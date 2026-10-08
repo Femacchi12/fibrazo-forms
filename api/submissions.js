@@ -503,6 +503,10 @@ module.exports=async(req,res)=>{
     if(await hasExistingResponseForEmail(auth,form,recordedEmail)) throw httpError("ALREADY_RESPONDED",409);
 
     const links=await uploadPhotos(auth,form,id,payload.photos||[]);
+    if(formId==="INTELIGENCIA_OPERADOR"){
+      const keyed=Object.fromEntries((payload.photos||[]).map((p,i)=>[String(p.fieldKey||""),links[i]||""]));
+      links.splice(0,links.length,...["foto_modelo_caja","foto_nomenclatura_caja","foto_marquilla","foto_tipo_tensor","foto_marquilla_drop","foto_tensor_acometida"].map(key=>keyed[key]||""));
+    }
     const sheets=google.sheets({version:"v4",auth});
     const appended=await sheets.spreadsheets.values.append({
       spreadsheetId:SHEET_ID,
