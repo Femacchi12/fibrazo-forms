@@ -716,6 +716,7 @@
     clearValidation();updateVisibility();
     if((state.form?.id==="EXPLORACION_PRESENCIAL"&&section.id==="ubicacion")||(state.form?.id==="INTELIGENCIA_OPERADOR"&&section.id==="validacion")){
       requestAnimationFrame(()=>{
+        if(currentSection()?.id!==section.id)return;
         const first=document.querySelector('[data-key="municipio"]');
         if(first&&!document.querySelector(".territorial-coordinate-summary")){
           const box=document.createElement("div");box.className="territorial-coordinate-summary";
@@ -737,7 +738,9 @@
           });
           const gpsEdit=document.createElement("button");gpsEdit.type="button";gpsEdit.className="secondary-button compact";gpsEdit.textContent="📍 Actualizar por GPS";
           gpsEdit.addEventListener("click",()=>captureGps(box.querySelector(".territorial-coordinate-value"),gpsEdit,"coordenadas"));
-          editRow.append(editInput,applyEdit,gpsEdit);box.appendChild(editRow);first.parentElement?.insertBefore(box,first);
+          const copyCoord=document.createElement("button");copyCoord.type="button";copyCoord.className="secondary-button compact";copyCoord.textContent="⧉ Copiar";copyCoord.addEventListener("click",()=>{if(state.gps)navigator.clipboard?.writeText(state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)).catch(()=>{});});
+          const mapsCoord=document.createElement("button");mapsCoord.type="button";mapsCoord.className="secondary-button compact";mapsCoord.textContent="↗ Google Maps";mapsCoord.addEventListener("click",()=>{if(state.gps)window.open("https://www.google.com/maps?q="+state.gps.lat+","+state.gps.lng,"_blank","noopener");});
+          editRow.append(editInput,applyEdit,gpsEdit,copyCoord,mapsCoord);box.appendChild(editRow);first.parentElement?.insertBefore(box,first);
         }
       });
     }
