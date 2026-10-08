@@ -12,6 +12,11 @@ const LEGACY_PHOTO_FOLDER_ENV={
   EXPLORACION_PRESENCIAL:"DRIVE_EXPLORACION_FOLDER_ID",
   INTELIGENCIA_OPERADOR:"DRIVE_EXPLORACION_FOLDER_ID"
 };
+const DEDICATED_PHOTO_FOLDERS={
+  INTELIGENCIA_OPERADOR:"1HZHJCX2djj8_eodofN6__NOaljWPaz80",
+  EXPLORACION:"1kgW2ErhwsDQs229kD2CvYX5bm2C_oIDR",
+  EXPLORACION_PRESENCIAL:"1PxGBSzmC-pP4iYDxKzmQKMCibAdVt_7L"
+};
 const MASTER_SHEET_ID=process.env.BUCARAMANGA_EXPLORACION_SHEET_ID||"1LKNNf7a1VlUGpr9SlRqJGAkZq4NprW-wvdjNIlmB4E4";
 let masterPolygonCache=null;
 let masterBarrioCache=null;
@@ -32,6 +37,7 @@ function photoFolderName(form){
 
 async function resolvePhotoFolder(auth,form){
   if(photoFolderCache.has(form.id)) return photoFolderCache.get(form.id);
+  if(DEDICATED_PHOTO_FOLDERS[form.id])return DEDICATED_PHOTO_FOLDERS[form.id];
 
   const legacyEnv=LEGACY_PHOTO_FOLDER_ENV[form.id];
   const legacyFolder=legacyEnv?String(process.env[legacyEnv]||"").trim():"";
