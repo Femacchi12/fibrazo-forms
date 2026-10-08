@@ -100,6 +100,16 @@
 
     $("dynamicFields").innerHTML="";
     shuffledFields(form,!!policy.shuffleQuestions).forEach(field=>$("dynamicFields").appendChild(renderField(field)));
+    if(form.id==="INTELIGENCIA_OPERADOR"){
+      const pairs=[["modelo_caja","foto_modelo_caja"],["nomenclatura_caja","foto_nomenclatura_caja"],["marquilla","foto_marquilla"],["marquilla_drop","foto_marquilla_drop"],["tipo_tensor","foto_tipo_tensor"]];
+      for(const [key,photo] of pairs){
+        const main=$("dynamicFields").querySelector('[data-key="'+key+'"]');
+        const companion=$("dynamicFields").querySelector('[data-key="'+photo+'"]');
+        if(!main||!companion)continue;
+        const group=document.createElement("div");group.className="operator-element-group";group.dataset.section="elementos";
+        main.before(group);group.append(main,companion);companion.dataset.photoCompanion="1";
+      }
+    }
     $("formWorkspace").hidden=false;$("reviewWorkspace").hidden=true;$("successWorkspace").hidden=true;
     const stepper=$("sectionStepper"),counter=$("formStepCounter");
     if(stepper)stepper.hidden=policy.showProgress===false;
