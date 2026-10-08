@@ -1080,12 +1080,16 @@
     const finish=async p=>{
       if(finished)return;finished=true;if(watchId!==null)navigator.geolocation.clearWatch(watchId);clearTimeout(timer);
       if(!p){value.textContent="No se pudo obtener la ubicación. Revisa el permiso del navegador.";btn.disabled=false;btn.textContent="Reintentar";state.locationBusy=false;return;}
+      const advanceAfterGps=state.form?.id==="EXPLORACION_PRESENCIAL"&&key==="coordenadas"&&currentSection()?.id==="coordenada"&&!state.gps;
       state.gps={lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy,cityDetected:"",citySource:""};
       value.textContent=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+" · ±"+Math.round(state.gps.accuracy)+" m";
       const summaryValue=document.querySelector(".territorial-coordinate-summary .territorial-coordinate-value");
       if(summaryValue)summaryValue.textContent=value.textContent;
       const summaryInput=document.querySelector(".territorial-coordinate-summary .territorial-coordinate-edit input");
       if(summaryInput)summaryInput.value=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6);
+      if(advanceAfterGps&&currentSection()?.id==="coordenada"){
+        state.sectionIndex++;state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);renderSection();
+      }
       if(state.form?.id==="CHURN"&&key==="coordenadas"){
         const fallback=detectConfiguredCityOffline(state.gps.lat,state.gps.lng);
         if(fallback)applyDetectedCity(fallback);
