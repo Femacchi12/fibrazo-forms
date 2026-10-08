@@ -205,7 +205,7 @@ function validatePublicGuards(payload){
 
 function validatePhotos(list,form){
   const photos=Array.isArray(list)?list:[];
-  if(photos.length>form.maxPhotos) throw httpError("PHOTO_LIMIT",400);
+  if(photos.length>(form.id==="INTELIGENCIA_OPERADOR"?6:form.maxPhotos)) throw httpError("PHOTO_LIMIT",400);
   if(!form.allowsPhotos&&photos.length) throw httpError("PHOTOS_NOT_ALLOWED",400);
   let total=0;
   for(const photo of photos){
