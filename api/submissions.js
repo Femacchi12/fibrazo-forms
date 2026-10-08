@@ -398,7 +398,7 @@ async function readRows(auth,forms,requested,limit,user,caps){
           formId:form.id,timestamp:row[0],id:row[1],
           data:{operador:row[2],modelo_caja:row[3],nomenclatura_caja:row[4],marquilla:row[5],tipo_tensor:row[6],calidad_tendido:row[7],observaciones:row[8],municipio:row[16]||"",sector_barrio:row[17]||"",estrato:row[18]||"",calidad_servicio_percibida:row[20]||"",precio_solo_internet:row[21]||"",precio_internet_tv:row[22]||"",incluye_tv:row[23]||"",grilla_tv:row[24]||"",marquilla_drop:row[25]||"",tensor_acometida:row[27]||""},
           location:{lat:row[9],lng:row[10],accuracy:row[11]},
-          photos:[row[12],row[13],row[14],row[15]].filter(Boolean),photoFields:{foto_modelo_caja:row[12]||"",foto_nomenclatura_caja:row[13]||"",foto_marquilla:row[14]||"",foto_tipo_tensor:row[15]||"",foto_marquilla_drop:row[26]||"",foto_tensor_acometida:row[28]||""},
+          photos:[row[12],row[13],row[14],row[15],row[26],row[28]].filter(Boolean),photoFields:{foto_modelo_caja:row[12]||"",foto_nomenclatura_caja:row[13]||"",foto_marquilla:row[14]||"",foto_tipo_tensor:row[15]||"",foto_marquilla_drop:row[26]||"",foto_tensor_acometida:row[28]||""},
           user:row[19]||""
         });
       }
