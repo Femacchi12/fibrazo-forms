@@ -964,6 +964,7 @@
   function restoreLastOperators(){
     let saved={};try{saved=JSON.parse(localStorage.getItem("fibrazo:last-operators")||"{}");}catch(_){}
     for(const [key,value] of Object.entries(saved)){
+      if(/^isp_[1-4]_calidad$/.test(key))continue;
       const node=document.querySelector('[name="'+css(key)+'"]');if(!node)continue;
       if(node.type==="hidden"){
         node.value=value;
