@@ -327,7 +327,7 @@
     if(state.selectedMarker&&state.map)state.map.removeLayer(state.selectedMarker);
     state.selectedLatLng={lat,lng};
     state.selectedMarker=L.marker([lat,lng],{
-      pane:"surveyPane",
+      pane:"markerPane",
       zIndexOffset:1200,
       icon:L.divIcon({
         className:"map-selection-marker",
@@ -582,7 +582,7 @@
     const bounds=[];
     for(const point of filtered){
       try{
-        const marker=L.marker([point.lat,point.lng],{icon:markerIcon(point),pane:"surveyPane",keyboard:true});
+        const marker=L.marker([point.lat,point.lng],{icon:markerIcon(point),pane:"markerPane",keyboard:true});
         const profile=operatorProfile(point);
         const html=popupHtml(point).replace(
           '<div class="map-popup-row"><b>Fecha</b>',
@@ -1242,7 +1242,7 @@
     if(state.searchMarker){state.map.removeLayer(state.searchMarker);state.searchMarker=null;}
     if(Number.isFinite(Number(item.lat))&&Number.isFinite(Number(item.lng))&&item.type!=="ciudad"){
       state.searchMarker=L.marker([Number(item.lat),Number(item.lng)],{
-        pane:"surveyPane",
+        pane:"markerPane",
         zIndexOffset:900,
         icon:L.divIcon({className:"map-search-marker",html:"<span>⌕</span>",iconSize:[28,28],iconAnchor:[14,14]})
       }).addTo(state.map);
@@ -1293,11 +1293,11 @@
     const lat=position.coords.latitude,lng=position.coords.longitude,accuracy=position.coords.accuracy;
     state.lastLocation={lat,lng,accuracy,ts:position.timestamp||Date.now()};
     if(!state.currentMarker){
-      state.currentMarker=L.circleMarker([lat,lng],{radius:9,weight:3,color:"#FFFFFF",fillColor:"#00FE9C",fillOpacity:1,pane:"surveyPane"}).addTo(state.map);
+      state.currentMarker=L.circleMarker([lat,lng],{radius:9,weight:3,color:"#FFFFFF",fillColor:"#00FE9C",fillOpacity:1,pane:"overlayPane"}).addTo(state.map);
       state.currentMarker.bindTooltip("Mi ubicación",{permanent:false,direction:"top"});
     }else state.currentMarker.setLatLng([lat,lng]);
     if(!state.accuracyCircle){
-      state.accuracyCircle=L.circle([lat,lng],{radius:Math.max(accuracy||0,1),weight:1,color:"#00FE9C",fillOpacity:.08,pane:"surveyPane"}).addTo(state.map);
+      state.accuracyCircle=L.circle([lat,lng],{radius:Math.max(accuracy||0,1),weight:1,color:"#00FE9C",fillOpacity:.08,pane:"markerPane"}).addTo(state.map);
     }else{
       state.accuracyCircle.setLatLng([lat,lng]);
       state.accuracyCircle.setRadius(Math.max(accuracy||0,1));
@@ -1327,7 +1327,7 @@
     if(!ensureMap())return;
     if(state.routeLine){state.map.removeLayer(state.routeLine);state.routeLine=null;}
     if(state.route.length>=2){
-      state.routeLine=L.polyline(state.route.map(p=>[p.lat,p.lng]),{weight:5,opacity:.9,color:"#00FE9C",pane:"surveyPane"}).addTo(state.map);
+      state.routeLine=L.polyline(state.route.map(p=>[p.lat,p.lng]),{weight:5,opacity:.9,color:"#00FE9C",pane:"markerPane"}).addTo(state.map);
     }
     updateRouteMetrics();
   }
