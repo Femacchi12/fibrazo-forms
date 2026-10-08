@@ -116,6 +116,7 @@
     if(counter)counter.hidden=policy.showProgress===false;
     clearValidation();loadLocalIsps();renderSection();if(form.id==="INTELIGENCIA_OPERADOR")loadIntelligenceHistory();
     if(form.id==="EXPLORACION_PRESENCIAL"){requestAnimationFrame(()=>{restoreLastInfrastructure();restoreLastOperators();});}
+    if(form.id==="INTELIGENCIA_OPERADOR")requestAnimationFrame(restoreLastOperatorTendidoQuality);
     window.FIBRAZO_OFFLINE?.refreshUi?.();
     const mapPreset=window.FIBRAZO_MAP_COORDINATE_PRESET;
     if(mapPreset){
@@ -354,6 +355,18 @@
     for(let i=1;i<=4;i++)paintSegmentedValue("isp_"+i+"_calidad","");
     document.querySelectorAll(".isp-field-state").forEach(el=>{el.classList.add("isp-none");el.classList.remove("isp-known","isp-unknown");});
     updateVisibility();
+  }
+  const operatorTendidoQualityKey="fibrazo:last-operator-tendido-quality";
+  function saveLastOperatorTendidoQuality(){
+    if(state.form?.id!=="INTELIGENCIA_OPERADOR"||state.editId)return;
+    const value=String(fieldValue("calidad_tendido")||"");
+    if(!["1","2","3","4","5"].includes(value))return;
+    try{localStorage.setItem(operatorTendidoQualityKey,value);}catch(_){}
+  }
+  function restoreLastOperatorTendidoQuality(){
+    if(state.form?.id!=="INTELIGENCIA_OPERADOR"||state.editId)return;
+    let value="";try{value=localStorage.getItem(operatorTendidoQualityKey)||"";}catch(_){}
+    if(["1","2","3","4","5"].includes(value))paintSegmentedValue("calidad_tendido",value);
   }
   const infraMemoryKey="fibrazo:last-infrastructure";
   function paintSegmentedValue(key,value){
@@ -802,7 +815,7 @@
     window.scrollTo({top:0,behavior:"smooth"});
   }
   function prev(){if(state.sectionIndex>0){state.sectionIndex--;renderSection();}}
-  function next(){if(isExplorationForm()&&currentSection()?.id==="coordenada"&&state.locationBusy){state.sectionIndex++;state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);renderSection();return;}const e=validateSection(state.sectionIndex,true);if(e.length)return showValidation(e);if(state.form?.id==="EXPLORACION_PRESENCIAL"){if(currentSection()?.id==="infraestructura")saveLastInfrastructure();if(currentSection()?.id==="operadores")saveLastOperators();}state.sectionIndex++;state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);renderSection();}
+  function next(){if(state.form?.id==="INTELIGENCIA_OPERADOR"&&currentSection()?.id==="calidad")saveLastOperatorTendidoQuality();if(isExplorationForm()&&currentSection()?.id==="coordenada"&&state.locationBusy){state.sectionIndex++;state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);renderSection();return;}const e=validateSection(state.sectionIndex,true);if(e.length)return showValidation(e);if(state.form?.id==="EXPLORACION_PRESENCIAL"){if(currentSection()?.id==="infraestructura")saveLastInfrastructure();if(currentSection()?.id==="operadores")saveLastOperators();}state.sectionIndex++;state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);renderSection();}
 
   function hasExplorationOperator(){
     if(!isExplorationForm())return true;
@@ -888,6 +901,7 @@
     const u=currentUser();if(!state.form||(!u&&!publicMode))return;
     const btn=$("confirmSubmit");btn.disabled=true;setStatus("Guardando respuesta…","");
     if(state.form.id==="EXPLORACION_PRESENCIAL"){saveLastOperators();saveLastInfrastructure();}
+    if(state.form.id==="INTELIGENCIA_OPERADOR")saveLastOperatorTendidoQuality();
     const payload={
       formId:state.form.id,
       data:collectData(),
