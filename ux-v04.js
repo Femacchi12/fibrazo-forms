@@ -1058,6 +1058,13 @@
         node.dispatchEvent(new Event("change",{bubbles:true}));
       }
     }
+    for(let i=1;i<=4;i++){
+      const key="isp_"+i;
+      const current=String(fieldValue(key)||"").trim();
+      const original=String(saved[key]||"").trim();
+      const quality=String(saved[key+"_calidad"]||"");
+      paintSegmentedValue(key+"_calidad",current&&current!=="Sin ISP"&&normalizeCityName(current)===normalizeCityName(original)&&["1","2","3","4","5"].includes(quality)?quality:"");
+    }
     updateVisibility();
   }
   function setStatus(m,t){if(!$("saveStatus"))return;$("saveStatus").textContent=m;$("saveStatus").className="save-status"+(t?" "+t:"");}
