@@ -2270,3 +2270,5 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
 .operator-element-group>.field{margin:0!important}
 .operator-element-group>.field[data-photo-companion="1"]>.field-label,.operator-element-group>.field[data-photo-companion="1"]>.field-help{display:none}
 .editable-options input{width:100%}
+
+.operator-element-group:not(:has(.field:not([hidden]))){display:none}
