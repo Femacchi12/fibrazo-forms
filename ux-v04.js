@@ -295,15 +295,32 @@
 
   function editableOptionsInput(field){
     const holder=document.createElement("div");holder.className="editable-options";
-    const input=document.createElement("input");input.type="text";input.name=field.key;input.autocomplete="off";input.placeholder="Selecciona o escribe una opción";
-    const list=document.createElement("datalist");list.id="fibrazo-options-"+field.key;input.setAttribute("list",list.id);
+    const input=document.createElement("input");input.type="text";input.name=field.key;input.autocomplete="off";input.placeholder="Selecciona o escribe una opción";input.setAttribute("aria-haspopup","listbox");input.setAttribute("aria-expanded","false");
+    const menu=document.createElement("div");menu.className="editable-options-menu";menu.setAttribute("role","listbox");menu.hidden=true;
     const storageKey="fibrazo:field-options:"+field.key;
     let custom=[];try{custom=JSON.parse(localStorage.getItem(storageKey)||"[]");if(!Array.isArray(custom))custom=[];}catch(_){}
     const options=[...new Set([...(field.options||[]),...custom])];
-    for(const name of options){const option=document.createElement("option");option.value=name;list.appendChild(option);}
-    const save=()=>{const value=input.value.trim();if(!value)return;clearError(field.key);if(!options.some(x=>x.toLowerCase()===value.toLowerCase())){options.push(value);const option=document.createElement("option");option.value=value;list.appendChild(option);try{localStorage.setItem(storageKey,JSON.stringify([...new Set([...custom,value])]));}catch(_){}}};
-    input.addEventListener("change",save);input.addEventListener("blur",save);input.addEventListener("input",()=>clearError(field.key));
-    holder.append(input,list);return holder;
+    const hide=()=>{menu.hidden=true;input.setAttribute("aria-expanded","false");};
+    const save=()=>{const value=input.value.trim();if(!value)return;clearError(field.key);if(!options.some(x=>x.toLowerCase()===value.toLowerCase())){options.push(value);custom.push(value);try{localStorage.setItem(storageKey,JSON.stringify([...new Set(custom)]));}catch(_){}}};
+    const paint=()=>{
+      menu.innerHTML="";
+      const q=input.value.trim().toLocaleLowerCase("es");
+      const matching=options.filter(x=>!q||x.toLocaleLowerCase("es").includes(q));
+      for(const name of matching){
+        const option=document.createElement("button");option.type="button";option.className="editable-options-choice";option.setAttribute("role","option");option.textContent=name;
+        option.addEventListener("pointerdown",e=>e.preventDefault());
+        option.addEventListener("click",()=>{input.value=name;save();hide();clearError(field.key);input.dispatchEvent(new Event("change",{bubbles:true}));});
+        menu.appendChild(option);
+      }
+      if(!matching.length){const hint=document.createElement("div");hint.className="editable-options-hint";hint.textContent="Escribe tu opción nueva y continúa";menu.appendChild(hint);}
+      menu.hidden=false;input.setAttribute("aria-expanded","true");
+    };
+    input.addEventListener("focus",paint);
+    input.addEventListener("input",()=>{paint();clearError(field.key);});
+    input.addEventListener("change",save);
+    input.addEventListener("keydown",e=>{if(e.key==="Escape")hide();if(e.key==="Enter"&&!menu.hidden){e.preventDefault();save();hide();input.blur();}});
+    input.addEventListener("blur",()=>{save();setTimeout(hide,150);});
+    holder.append(input,menu);return holder;
   }
   function textInput(field){
     const i=document.createElement("input");i.type="text";i.name=field.key;
