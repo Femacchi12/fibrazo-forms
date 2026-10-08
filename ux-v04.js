@@ -865,7 +865,7 @@
       data:collectData(),
       location:state.gps,
       photos:state.form.id==="INTELIGENCIA_OPERADOR"
-        ?["foto_modelo_caja","foto_nomenclatura_caja","foto_marquilla","foto_tipo_tensor","foto_marquilla_drop","foto_tensor_acometida"].map(key=>state.photos.find(p=>p.fieldKey===key)).filter(Boolean)
+        ?["foto_modelo_caja","foto_nomenclatura_caja","foto_marquilla","foto_tipo_tensor","foto_marquilla_drop","foto_tensor_acometida"].map(key=>state.photos.find(p=>p.fieldKey===key)||null).filter(Boolean)
         :state.photos,
       user:{email:u?.email||""},
       clientTimestamp:new Date().toISOString(),
