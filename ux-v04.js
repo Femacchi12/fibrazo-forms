@@ -1043,6 +1043,10 @@
       if(!p){value.textContent="No se pudo obtener la ubicación. Revisa el permiso del navegador.";btn.disabled=false;btn.textContent="Reintentar";state.locationBusy=false;return;}
       state.gps={lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy,cityDetected:"",citySource:""};
       value.textContent=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+" · ±"+Math.round(state.gps.accuracy)+" m";
+      const summaryValue=document.querySelector(".territorial-coordinate-summary .territorial-coordinate-value");
+      if(summaryValue)summaryValue.textContent=value.textContent;
+      const summaryInput=document.querySelector(".territorial-coordinate-summary .territorial-coordinate-edit input");
+      if(summaryInput)summaryInput.value=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6);
       if(state.form?.id==="CHURN"&&key==="coordenadas"){
         const fallback=detectConfiguredCityOffline(state.gps.lat,state.gps.lng);
         if(fallback)applyDetectedCity(fallback);
