@@ -258,6 +258,7 @@
     if(field.help){const h=document.createElement("span");h.className="field-help field-help-top";h.textContent=field.help;wrap.appendChild(h);}
 
     if(field.type==="text"){wrap.appendChild(textInput(field));}
+    else if(field.type==="editable-options"){wrap.appendChild(editableOptionsInput(field));}
     else if(field.type==="numeric"||field.type==="currency"){wrap.appendChild(numericInput(field));}
     else if(field.type==="date-flex"){wrap.appendChild(dateInput(field));}
     else if(field.type==="select"){wrap.appendChild(selectInput(field));}
@@ -282,6 +283,18 @@
     return wrap;
   }
 
+  function editableOptionsInput(field){
+    const holder=document.createElement("div");holder.className="editable-options";
+    const input=document.createElement("input");input.type="text";input.name=field.key;input.autocomplete="off";input.placeholder="Selecciona o escribe una opción";
+    const list=document.createElement("datalist");list.id="fibrazo-options-"+field.key;input.setAttribute("list",list.id);
+    const storageKey="fibrazo:field-options:"+field.key;
+    let custom=[];try{custom=JSON.parse(localStorage.getItem(storageKey)||"[]");if(!Array.isArray(custom))custom=[];}catch(_){}
+    const options=[...new Set([...(field.options||[]),...custom])];
+    for(const name of options){const option=document.createElement("option");option.value=name;list.appendChild(option);}
+    const save=()=>{const value=input.value.trim();if(!value)return;clearError(field.key);if(!options.some(x=>x.toLowerCase()===value.toLowerCase())){options.push(value);const option=document.createElement("option");option.value=value;list.appendChild(option);try{localStorage.setItem(storageKey,JSON.stringify([...new Set([...custom,value])]));}catch(_){}}};
+    input.addEventListener("change",save);input.addEventListener("blur",save);input.addEventListener("input",()=>clearError(field.key));
+    holder.append(input,list);return holder;
+  }
   function textInput(field){
     const i=document.createElement("input");i.type="text";i.name=field.key;
     i.addEventListener("input",()=>{
