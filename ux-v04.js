@@ -331,6 +331,8 @@
   function clearOperators(){
     ["tigo_hfc","tigo_ftth","claro_hfc","claro_ftth","movistar"].forEach(key=>{const n=document.querySelector('[name="'+css(key)+'"]');if(n){n.value="No";n.closest(".binary-toggle,.segmented-control")?.querySelectorAll("button").forEach(b=>{const on=normalizeCityName(b.textContent)==="no";b.classList.toggle("selected",on);b.classList.toggle("is-yes",false);b.setAttribute("aria-pressed",String(on));});}});
     ["isp_1","isp_2","isp_3","isp_4"].forEach(key=>{const n=document.querySelector('[name="'+css(key)+'"]');if(n)n.value="Sin ISP";});
+    for(let i=1;i<=4;i++)paintSegmentedValue("isp_"+i+"_calidad","");
+    document.querySelectorAll(".isp-field-state").forEach(el=>{el.classList.add("isp-none");el.classList.remove("isp-known","isp-unknown");});
     updateVisibility();
   }
   const infraMemoryKey="fibrazo:last-infrastructure";
@@ -385,8 +387,11 @@
       const all=["Sin ISP","Sin Identificar",...(state.ispOptions||[])];
       return [...new Set(all)].filter((name,index)=>index<2||!query||normalizeCityName(name).includes(query));
     };
+    const qualityKey=/^isp_[1-4]$/.test(field.key)?field.key+"_calidad":null;
+    let previousName=String(input.value||"").trim();
+    const clearQualityIfChanged=()=>{const next=String(input.value||"").trim();if(qualityKey&&next!==previousName)paintSegmentedValue(qualityKey,"");previousName=next;};
     const choose=name=>{
-      input.value=name;
+      input.value=name;clearQualityIfChanged();
       rememberIspName(name);updateIspState();
       list.hidden=true;
       clearError(field.key);
@@ -408,12 +413,12 @@
       list.hidden=false;
     };
     input.addEventListener("focus",()=>{if(input.value==="Sin ISP")input.select();paint();});
-    input.addEventListener("input",()=>{paint();updateIspState();clearError(field.key);updateVisibility();});
+    input.addEventListener("input",()=>{clearQualityIfChanged();paint();updateIspState();clearError(field.key);updateVisibility();});
     input.addEventListener("change",()=>{rememberIspName(input.value);refreshIspSuggestions();});
     input.addEventListener("blur",()=>setTimeout(()=>{rememberIspName(input.value);list.hidden=true;},220));
     const clear=document.createElement("button");clear.type="button";clear.className="isp-clear-button";clear.textContent="×";clear.title="Borrar selección";clear.setAttribute("aria-label","Borrar selección de ISP");
     clear.addEventListener("pointerdown",e=>e.preventDefault());
-    clear.addEventListener("click",e=>{e.preventDefault();const position=Number(field.key.match(/^isp_([1-4])$/)?.[1]);if(position&&isExplorationForm()){removeExplorationIsp(position);list.hidden=true;return;}input.value="";updateIspState();input.focus();paint();clearError(field.key);updateVisibility();});
+    clear.addEventListener("click",e=>{e.preventDefault();const position=Number(field.key.match(/^isp_([1-4])$/)?.[1]);if(position&&isExplorationForm()){removeExplorationIsp(position);list.hidden=true;return;}input.value="";clearQualityIfChanged();updateIspState();input.focus();paint();clearError(field.key);updateVisibility();});
     shell.append(input,clear,list);return shell;
   }
 
