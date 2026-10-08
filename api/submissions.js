@@ -602,7 +602,7 @@ module.exports=async(req,res)=>{
 
         await sheets.spreadsheets.values.update({
           spreadsheetId:SHEET_ID,
-          range:`${form.sheet}!BL${rawRow}:BU${rawRow}`,
+          range:`${form.sheet}!BL${rawRow}:BV${rawRow}`,
           valueInputOption:"RAW",
           requestBody:{values:[[
             String(payload.data?.zona_empresarial||""),
@@ -614,7 +614,8 @@ module.exports=async(req,res)=>{
             String(payload.data?.isp_3_calidad||""),
             String(payload.data?.isp_4_calidad||""),
             String(payload.data?.estrato||""),
-            String(payload.data?.tipo_terreno||"")
+            String(payload.data?.tipo_terreno||""),
+            String(payload.data?.barrio_asentamiento_informal||"")
           ]]}
         });
       }
