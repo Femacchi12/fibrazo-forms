@@ -320,7 +320,7 @@
   }
   function saveLastInfrastructure(){
     if(state.form?.id!=="EXPLORACION_PRESENCIAL")return;
-    const data={tipo_despliegue:String(fieldValue("tipo_despliegue")||"Aéreo"),condicion_ocupacion_tendido:String(fieldValue("condicion_ocupacion_tendido")||""),condicion_fisica_posteria:String(fieldValue("condicion_fisica_posteria")||"")};
+    const data={tipo_despliegue:String(fieldValue("tipo_despliegue")||"Aéreo"),condicion_ocupacion_tendido:String(fieldValue("condicion_ocupacion_tendido")||""),condicion_fisica_posteria:String(fieldValue("condicion_fisica_posteria")||""),tipo_terreno:String(fieldValue("tipo_terreno")||""),nivel_seguridad:String(fieldValue("nivel_seguridad")||""),barrio_asentamiento_informal:String(fieldValue("barrio_asentamiento_informal")||"No")};
     try{localStorage.setItem(infraMemoryKey,JSON.stringify(data));}catch(_){}
   }
   function restoreLastInfrastructure(){
@@ -330,11 +330,17 @@
     const type=document.querySelector('[name="tipo_despliegue"]');if(type){type.value=data.tipo_despliegue||"Aéreo";type.dispatchEvent(new Event("change",{bubbles:true}));}
     paintSegmentedValue("condicion_ocupacion_tendido",data.condicion_ocupacion_tendido);
     paintSegmentedValue("condicion_fisica_posteria",data.condicion_fisica_posteria);
+    paintSegmentedValue("tipo_terreno",data.tipo_terreno);
+    paintSegmentedValue("nivel_seguridad",data.nivel_seguridad);
+    setFieldValue("barrio_asentamiento_informal",data.barrio_asentamiento_informal||"No");
   }
   function clearInfrastructure(){
     const type=document.querySelector('[name="tipo_despliegue"]');if(type){type.value="Aéreo";type.dispatchEvent(new Event("change",{bubbles:true}));}
     paintSegmentedValue("condicion_ocupacion_tendido","");
     paintSegmentedValue("condicion_fisica_posteria","");
+    paintSegmentedValue("tipo_terreno","");
+    paintSegmentedValue("nivel_seguridad","");
+    setFieldValue("barrio_asentamiento_informal","No");
   }
   function operatorSectionTools(){
     if(state.form?.id!=="EXPLORACION_PRESENCIAL")return;
@@ -533,7 +539,10 @@
     const stop=document.createElement("button");stop.type="button";stop.className="secondary-button compact";stop.textContent="Detener búsqueda";stop.dataset.geoStop="1";
     stop.addEventListener("click",handleGeoAction);
     geo.append(txt,stop);
-    box.append(input,status,geo);return box;
+    const quick=document.createElement("div");quick.className="gps-quick-tools";
+    const copy=document.createElement("button");copy.type="button";copy.textContent="⧉ Copiar coordenada";copy.addEventListener("click",async()=>{if(state.gps)try{await navigator.clipboard.writeText(state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6));}catch(_){}});
+    const maps=document.createElement("button");maps.type="button";maps.textContent="↗ Google Maps";maps.addEventListener("click",()=>{if(state.gps)window.open("https://www.google.com/maps?q="+state.gps.lat+","+state.gps.lng,"_blank","noopener");});
+    quick.append(copy,maps);box.append(input,quick,status,geo);return box;
   }
   function singlePhotoInput(field){
     const holder=document.createElement("div");holder.className="single-photo-field";
