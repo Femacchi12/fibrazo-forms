@@ -2272,3 +2272,13 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
 .editable-options input{width:100%}
 
 .operator-element-group:not(:has(.field:not([hidden]))){display:none}
+
+/* Opciones editables de inteligencia: despliegue ascendente y selección táctil */
+.editable-options{position:relative;isolation:isolate}
+.editable-options:focus-within{z-index:30}
+.editable-options-menu{position:absolute;bottom:calc(100% + 5px);left:0;right:0;z-index:100;max-height:min(240px,38vh);overflow-y:auto;overscroll-behavior:contain;background:var(--surface,#fff);color:var(--text,#14213d);border:1px solid var(--border,#b7c4d6);border-radius:10px;box-shadow:0 8px 26px rgba(0,0,0,.23);padding:4px}
+.editable-options-menu[hidden]{display:none}
+.editable-options-choice{display:block;width:100%;text-align:left;padding:11px 12px;border:0;background:transparent;color:inherit;border-radius:6px;font:inherit;cursor:pointer}
+.editable-options-choice:hover,.editable-options-choice:focus-visible{background:rgba(50,120,190,.13)}
+.editable-options-hint{padding:10px 12px;font-size:.85rem;opacity:.8}
+.operator-element-group:focus-within{position:relative;z-index:20}
