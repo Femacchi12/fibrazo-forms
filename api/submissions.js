@@ -142,8 +142,9 @@ function buildRow(form,p,id,links,email){
       d.comentario||"",l.lat||"",l.lng||"",l.accuracy||"",links.join(" | "),email||"ANONIMO",l.cityDetected||"",l.citySource||""
     ];
   }
-  const maps=Number.isFinite(Number(l.lat))&&Number.isFinite(Number(l.lng))
-    ?`https://www.google.com/maps?q=${l.lat},${l.lng}`:"";
+  const lat=Number(l.lat),lng=Number(l.lng);
+  const validCoordinates=l.lat!==null&&l.lat!==undefined&&String(l.lat).trim()!==""&&l.lng!==null&&l.lng!==undefined&&String(l.lng).trim()!==""&&Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180&&(lat!==0||lng!==0);
+  const maps=validCoordinates?`https://www.google.com/maps?q=${lat},${lng}`:"";
   const tipo=form.id==="EXPLORACION"?"Virtual":"Presencial";
   const rawIsp=value=>{
     const name=String(value||"").trim();
