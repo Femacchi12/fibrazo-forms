@@ -539,7 +539,7 @@
     const profile=operatorProfile(point);
     return L.divIcon({
       className:"exploration-point-marker",
-      html:'<span style="--point-color:'+esc(profile.category.color)+'"></span>',
+      html:'<span class="map-point-shape '+(formType(point.type)==="Virtual"?"shape-square":"shape-circle")+'" style="--point-color:'+esc(profile.category.color)+'"></span>',
       iconSize:[20,20],
       iconAnchor:[10,10],
       popupAnchor:[0,-11]
@@ -562,7 +562,7 @@
       '</div>'
     ).join("");
     const visible=(Array.isArray(filtered)?filtered:[]).length;
-    if(summary)summary.textContent=visible+" puntos visibles · colores por presencia de operadores";
+    if(summary)summary.textContent=visible+" puntos visibles · ■ Virtual · ● Presencial · color según operadores";
   }
 
   function togglePointLegend(){
