@@ -238,7 +238,7 @@ async function syncExplorationMaster(auth,form,payload,links,territorial){
   const estado=form.id==="EXPLORACION"?"Virtual":"Validado en campo";
   const evidence=form.id==="EXPLORACION"?(d.link_evidencia||""):(links.join(" | ")||"");
   const imageLink=form.id==="EXPLORACION"?(d.link_evidencia||""):(links[0]||"");
-  const accuracy=Number.isFinite(Number(l.accuracy))?Math.round(Number(l.accuracy)*10)/10:"";
+  const accuracy=l.accuracy!==null&&l.accuracy!==undefined&&String(l.accuracy).trim()!==""&&Number.isFinite(Number(l.accuracy))?Math.round(Number(l.accuracy)*10)/10:"";
   const municipio=exactName(territorial.city,observedMunicipality);
   const barrio=exactName(territorial.barrio);
   const estrato=exactName(territorial.estrato,"Sin información");
