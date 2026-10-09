@@ -505,6 +505,15 @@ module.exports=async(req,res)=>{
 
     const id=resolveSubmissionId(payload,formId);
     if(await submissionExists(auth,form,id)){
+      if(isExploration(form.id)){
+        const sheets=google.sheets({version:"v4",auth});
+        const existing=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!B2:AF`});
+        const row=(existing.data.values||[]).find(values=>String(values[0]||"")===id);
+        const syncState=String(row?.[28]||"").trim();
+        const pointId=String(row?.[27]||"").trim();
+        const ok=syncState==="OK"||syncState==="GLOBAL_ONLY";
+        return res.status(200).json({ok:true,id,duplicate:true,photos:[],masterSync:{ok,pointId,scope:syncState==="GLOBAL_ONLY"?"GLOBAL_ONLY":"PROJECT",reason:ok?"":syncState||"PENDIENTE"}});
+      }
       return res.status(200).json({ok:true,id,duplicate:true,photos:[]});
     }
 
