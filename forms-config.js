@@ -40,7 +40,8 @@ window.FIBRAZO_FORMS = {
       {key:"observaciones",section:"calidad",label:"Observaciones para identificarlo en campo",type:"textarea",full:true},
       {key:"municipio",section:"validacion",label:"Municipio / ciudad",type:"text",required:true,autoCity:true},
       {key:"sector_barrio",section:"validacion",label:"Barrio",type:"text",autoGeo:"barrio"},
-      {key:"estrato",section:"validacion",label:"Estrato automático (Motor Territorial)",type:"select",options:["1","2","3","4","5","6","Sin información"],autoGeo:"estrato"}
+      {key:"estrato",section:"validacion",label:"Estrato automático (Motor Territorial)",type:"select",options:["1","2","3","4","5","6","Sin información"],autoGeo:"estrato"},
+      {key:"estrato_observado",section:"validacion",label:"Estrato manual / observado en campo",type:"select",options:["","1","2","3","4","5","6"],help:"Opcional. Si observas una diferencia, registra aquí el estrato visto en terreno. No modifica el automático."}
     ]
   },
   CHURN: {
