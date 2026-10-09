@@ -291,13 +291,18 @@ async function syncExplorationMaster(auth,form,payload,links,territorial){
       "BGF_C"+String(compNo++).padStart(4,"0"),pointId,op.name,op.category,op.tech,
       "Cable identificado",confidence,d.nota||"",now
     ]);
-    await sheets.spreadsheets.values.append({
-      spreadsheetId:MASTER_SHEET_ID,
-      range:"02_COMPETENCIA_PUNTO!A:I",
-      valueInputOption:"USER_ENTERED",
-      insertDataOption:"INSERT_ROWS",
-      requestBody:{values:rows}
-    });
+    try{
+      await sheets.spreadsheets.values.append({
+        spreadsheetId:MASTER_SHEET_ID,
+        range:"02_COMPETENCIA_PUNTO!A:I",
+        valueInputOption:"USER_ENTERED",
+        insertDataOption:"INSERT_ROWS",
+        requestBody:{values:rows}
+      });
+    }catch(error){
+      console.error("MASTER_COMPETITION_SYNC_PENDING",pointId,error?.message||error);
+      return{ok:false,reason:"COMPETITION_SYNC_PENDING",scope:"PROJECT",project:"BUCARAMANGA_AMB",pointId};
+    }
   }
 
   return{
