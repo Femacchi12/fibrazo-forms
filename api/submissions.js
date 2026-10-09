@@ -372,7 +372,7 @@ async function readRows(auth,forms,requested,limit,user,caps){
   for(const form of allowed){
     const r=await sheets.spreadsheets.values.get({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!A2:BV`
+      range:`${form.sheet}!A2:BX`
     });
     for(const row of (r.data.values||[]).slice(-limit).reverse()){
       const emailIndex=form.id==="CHURN"?25:form.id==="INTELIGENCIA_OPERADOR"?19:24;
