@@ -148,6 +148,7 @@
       state.serverHistory=result.rows||[];renderIntelligenceHistory();
     }catch(_){host.innerHTML='<div class="pending-empty">No se pudo cargar el historial del servidor.</div>';}
   }
+  function normalizeOperatorName(value){return normalizeCityName(value).replace(/[^a-z0-9]+/g,"");}
   function renderIntelligenceHistory(){
     const host=$("formHistoryList");if(!host)return;
     const operators=[...new Set(state.serverHistory.map(r=>String(r.data?.operador||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
@@ -167,7 +168,7 @@
     const labels={operador:"Operador",modelo_caja:"Modelo / tipo de caja",nomenclatura_caja:"Nomenclatura",marquilla:"Marquilla despliegue",marquilla_drop:"Marquilla drop",tipo_tensor:"Tensor de despliegue",tensor_acometida:"Tensor de acometida",calidad_tendido:"Calidad del tendido",calidad_servicio_percibida:"Calidad percibida",precio_solo_internet:"Precio solo Internet",precio_internet_tv:"Precio Internet + TV",incluye_tv:"Incluye TV",grilla_tv:"Grilla TV",observaciones:"Observaciones",municipio:"Municipio",sector_barrio:"Barrio",estrato:"Estrato automático",estrato_observado:"Estrato observado en campo",estado_fotos:"Estado de fotografías"};
     const detail=Object.entries(labels).filter(([k])=>d[k]!==undefined&&d[k]!=="").map(([k,l])=>'<div><span>'+esc(l)+'</span><strong>'+esc(d[k])+'</strong></div>').join("");
     const photoLabels={foto_modelo_caja:"Modelo / caja",foto_nomenclatura_caja:"Nomenclatura",foto_marquilla:"Marquilla despliegue",foto_marquilla_drop:"Marquilla drop",foto_tipo_tensor:"Tensor de despliegue",foto_tensor_acometida:"Tensor de acometida"};
-    const related=state.serverHistory.filter(x=>x.id!==r.id&&String(x.data?.operador||"").trim().toLocaleLowerCase("es")===String(d.operador||"").trim().toLocaleLowerCase("es"));
+    const related=state.serverHistory.filter(x=>x.id!==r.id&&normalizeOperatorName(x.data?.operador)===normalizeOperatorName(d.operador));
     const relatedSummary=related.length?'<div class="intelligence-summary-evidence"><span>OTROS RELEVAMIENTOS DEL MISMO OPERADOR · '+related.length+'</span><div class="intelligence-history-scroll">'+related.map(x=>'<button type="button" class="intelligence-history-row" data-related-id="'+esc(x.id)+'"><span>'+esc(new Date(x.timestamp).toLocaleDateString("es-CO"))+'</span><strong>'+esc(x.data?.municipio||"Sin municipio")+'</strong><span>'+esc(x.data?.sector_barrio||"")+'</span><span>Ver →</span></button>').join("")+'</div></div>':"";
     const operatorRecords=[r,...related];
     const operatorPhotoCount=operatorRecords.reduce((total,item)=>total+Object.values(item.photoFields||{}).filter(Boolean).length,0);
