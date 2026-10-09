@@ -286,7 +286,7 @@
       const copy=document.createElement("button");copy.type="button";copy.textContent="⧉ Copiar";copy.addEventListener("click",async()=>{const v=fieldValue(field.key);if(v){try{await navigator.clipboard.writeText(String(v));copy.textContent="✓ Copiado";setTimeout(()=>copy.textContent="⧉ Copiar",1000);}catch(_){}}});
       tools.appendChild(copy);wrap.appendChild(tools);
     }
-    if(field.help&&!(state.form?.id==="INTELIGENCIA_OPERADOR"&&["identificacion","elementos","calidad","validacion"].includes(field.section))){const h=document.createElement("span");h.className="field-help field-help-top";h.textContent=field.help;wrap.appendChild(h);}
+    if(field.help&&field.section!=="operadores"&&!(state.form?.id==="INTELIGENCIA_OPERADOR"&&["identificacion","elementos","calidad","validacion"].includes(field.section))){const h=document.createElement("span");h.className="field-help field-help-top";h.textContent=field.help;wrap.appendChild(h);}
 
     if(field.type==="text"){wrap.appendChild(textInput(field));}
     else if(field.type==="editable-options"){wrap.appendChild(editableOptionsInput(field));}
