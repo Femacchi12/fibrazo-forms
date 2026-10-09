@@ -515,15 +515,16 @@
     const shell=document.createElement("div");shell.className="segmented-shell";
     const holder=document.createElement("div");holder.className="segmented-control";holder.setAttribute("role","radiogroup");
     const hidden=document.createElement("input");hidden.type="hidden";hidden.name=field.key;hidden.value="";
-    const detail=document.createElement("div");detail.className="segment-detail";detail.hidden=true;
+    const detail=document.createElement("div");detail.className="segment-detail";detail.hidden=false;
+    if(field.details){detail.classList.add("segment-scale-legend");detail.innerHTML=(field.options||[]).map(o=>'<div class="segment-scale-row" data-scale-option="'+esc(String(o))+'"><strong>'+esc(String(o))+'/5</strong><span>'+esc(field.details[String(o)]||"")+'</span></div>').join("");}
     (field.options||[]).forEach(o=>{
       const b=document.createElement("button");b.type="button";b.className="segment-option";b.textContent=o;b.setAttribute("aria-pressed","false");
       b.addEventListener("click",()=>{
         hidden.value=String(o);
         holder.querySelectorAll(".segment-option").forEach(x=>{const on=x===b;x.classList.toggle("selected",on);x.setAttribute("aria-pressed",String(on));});
         const text=field.details?.[String(o)]||"";
-        detail.textContent=text?"Puntuación "+String(o)+"/5 · "+text:"";
-        detail.hidden=!text;
+        if(!field.details){detail.textContent=text?"Puntuación "+String(o)+"/5 · "+text:"";detail.hidden=!text;}
+        else detail.querySelectorAll("[data-scale-option]").forEach(row=>row.classList.toggle("is-selected",row.dataset.scaleOption===String(o)));
         clearError(field.key);updateVisibility();
       });
       holder.appendChild(b);
