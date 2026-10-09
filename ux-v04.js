@@ -415,7 +415,7 @@
     holder?.querySelectorAll(".segment-option").forEach(b=>{const on=String(b.textContent||"").trim()===String(value||"");b.classList.toggle("selected",on);b.setAttribute("aria-pressed",String(on));});
     const field=state.form?.fields?.find(f=>f.key===key);
     const detail=n.closest(".segmented-shell")?.querySelector(".segment-detail");
-    if(detail){const description=field?.section==="operadores"?"":field?.details?.[String(value)]||"";detail.textContent=description?"Puntuación "+String(value)+"/5 · "+description:"";detail.hidden=!description;}
+    if(detail){const description=field?.details?.[String(value)]||"";detail.textContent=description?"Puntuación "+String(value)+"/5 · "+description:"";detail.hidden=!description;}
     clearError(key);updateVisibility();
   }
   function saveLastInfrastructure(){
@@ -560,7 +560,7 @@
       b.addEventListener("click",()=>{
         hidden.value=String(o);
         holder.querySelectorAll(".segment-option").forEach(x=>{const on=x===b;x.classList.toggle("selected",on);x.setAttribute("aria-pressed",String(on));});
-        const text=field.section==="operadores"?"":field.details?.[String(o)]||"";
+        const text=field.details?.[String(o)]||"";
         detail.textContent=text?"Puntuación "+String(o)+"/5 · "+text:"";detail.hidden=!text;
         clearError(field.key);updateVisibility();
       });
