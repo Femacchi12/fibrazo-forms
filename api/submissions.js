@@ -540,9 +540,9 @@ module.exports=async(req,res)=>{
     }
     const appended=await sheets.spreadsheets.values.append({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!${isExploration(form.id)?"A:BX":form.id==="INTELIGENCIA_OPERADOR"?"A:AE":"A:AB"}`,
+      range:`${form.sheet}!${isExploration(form.id)?"A:AB":form.id==="INTELIGENCIA_OPERADOR"?"A:AE":"A:AB"}`,
       valueInputOption:"RAW",
-      insertDataOption:"INSERT_ROWS",
+      insertDataOption:"OVERWRITE",
       requestBody:{values:[submissionRow]}
     });
     const rawUpdatedRange=String(appended.data.updates?.updatedRange||"");
