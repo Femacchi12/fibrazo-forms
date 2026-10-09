@@ -164,6 +164,7 @@
       (filteredRows.length?filteredRows.map(r=>'<button type="button" class="intelligence-history-row" data-history-id="'+esc(r.id)+'"><span>'+esc(dateTime(r.timestamp))+'</span><strong>'+esc(r.data?.operador||"Sin operador")+'</strong><span>'+esc(r.data?.municipio||"")+'</span><span>Ver →</span></button>').join(""):'<div class="pending-empty">No hay registros para este operador.</div>')+'</div></div>';
     host.querySelector("[data-intel-operator-filter]")?.addEventListener("change",renderIntelligenceHistory);
     host.querySelector("[data-intel-photo-filter]")?.addEventListener("change",renderIntelligenceHistory);
+    host.querySelector("[data-intel-missing-filter]")?.addEventListener("change",renderIntelligenceHistory);
     host.querySelectorAll("[data-history-id]").forEach(b=>b.addEventListener("click",()=>showIntelligenceSummary(b.dataset.historyId)));
   }
   function showIntelligenceSummary(id){
