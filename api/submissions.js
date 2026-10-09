@@ -399,6 +399,7 @@ async function readRows(auth,forms,requested,limit,user,caps){
           },
           location:{lat:row[17],lng:row[18],accuracy:row[19]},
           photos:[row[21],row[22],row[23]].filter(Boolean),
+          photoStatus:row[75]||photoStatus(form.id==="EXPLORACION"?[row[27],row[21],row[22],row[23]]:[row[21],row[22],row[23]]),
           user:row[24]||""
         });
       }else if(form.id==="INTELIGENCIA_OPERADOR"){
