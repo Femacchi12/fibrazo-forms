@@ -2310,3 +2310,5 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
 .fibrazo-photo-lightbox img{display:block;max-width:90vw;max-height:79vh;object-fit:contain;margin:12px auto}
 .fibrazo-photo-lightbox button{padding:9px 13px;border-radius:8px;background:#253a2d;color:white;border:1px solid #52605a}
 .single-photo-preview img,.photo-slot>img{cursor:zoom-in}
+
+.segment-scale-legend{display:grid;gap:5px;margin-top:9px}.segment-scale-row{display:flex;align-items:flex-start;gap:9px;padding:6px 8px;border-radius:7px;font-size:12px;line-height:1.35}.segment-scale-row strong{min-width:30px}.segment-scale-row.is-selected{outline:1px solid #27c88a;background:rgba(39,200,138,.11)}
