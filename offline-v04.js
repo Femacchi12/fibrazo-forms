@@ -134,14 +134,15 @@
     syncing=true;
     renderSyncing(true);
     const email=currentEmail();
-    const records=(await all()).filter(item=>item.userEmail===email&&item.status!=="sent").sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
+    const records=(await all()).filter(item=>item.userEmail===email&&item.status!=="sent"&&item.status!=="sent_master_pending").sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
     let synced=0,failed=0;
     for(const record of records){
       try{
         await put({...record,status:"syncing",attempts:(record.attempts||0)+1,lastError:""});
         const serverResult=await postPayload(record.payload);
         const compactPayload={...record.payload,photos:[]};
-        await put({...record,payload:compactPayload,status:"sent",syncedAt:new Date().toISOString(),serverId:serverResult?.id||record.clientSubmissionId,lastError:""});
+        const masterPending=(record.formId==="EXPLORACION"||record.formId==="EXPLORACION_PRESENCIAL")&&serverResult?.masterSync?.ok===false;
+        await put({...record,payload:compactPayload,status:masterPending?"sent_master_pending":"sent",masterSync:serverResult?.masterSync||null,syncedAt:new Date().toISOString(),serverId:serverResult?.id||record.clientSubmissionId,lastError:masterPending?"Respuesta recibida; sincronización territorial pendiente.":""});
         synced++;
       }catch(error){
         const permanent=error.httpStatus && !isTemporaryHttp(error.httpStatus);
@@ -171,7 +172,8 @@
   async function refreshUi(){
     const email=currentEmail();
     const records=(await all()).filter(item=>!email || item.userEmail===email);
-    const active=records.filter(item=>item.status!=="sent");
+    const active=records.filter(item=>item.status!=="sent"&&item.status!=="sent_master_pending");
+    const masterPending=records.filter(item=>item.status==="sent_master_pending").length;
     const pending=active.filter(item=>item.status!=="error").length;
     const errors=active.filter(item=>item.status==="error").length;
     const online=navigator.onLine;
@@ -181,20 +183,21 @@
     const formStatus=$("formNetworkStatus");
     if(btn){
       btn.classList.toggle("offline",!online);
-      btn.classList.toggle("has-pending",pending>0||errors>0);
+      btn.classList.toggle("has-pending",pending>0||errors>0||masterPending>0);
       btn.title=online?"Estado de sincronización":"Sin conexión";
     }
-    if(label) label.textContent=online?(pending||errors?"Pendientes":"En línea"):"Sin conexión";
-    if(count){count.textContent=String(pending+errors);count.hidden=(pending+errors)===0;}
-    if(formStatus) formStatus.textContent=online?(pending+errors?"🟡 "+(pending+errors)+" pendiente"+((pending+errors)===1?"":"s"):"🟢 En línea"):"🟠 Sin conexión · "+(pending+errors)+" pendiente"+((pending+errors)===1?"":"s");
+    if(label) label.textContent=online?(pending||errors?"Pendientes":masterPending?"Revisión territorial":"En línea"):"Sin conexión";
+    if(count){count.textContent=String(pending+errors+masterPending);count.hidden=(pending+errors+masterPending)===0;}
+    if(formStatus) formStatus.textContent=online?(pending+errors?"🟡 "+(pending+errors)+" envío(s) pendiente(s)":masterPending?"🟡 "+masterPending+" registro(s) por conciliar":"🟢 En línea"):"🟠 Sin conexión · "+(pending+errors)+" envío(s) pendiente(s)";
     const state=$("syncState");
     if(state) state.textContent=online?"Con conexión":"Sin conexión";
     const list=$("offlineQueueList");
     if(list){
-      list.innerHTML=active.length?active.map(record=>
+      const visible=[...active,...records.filter(item=>item.status==="sent_master_pending")];
+      list.innerHTML=visible.length?visible.map(record=>
         '<article class="offline-item '+(record.status==="error"?"error":"")+'">'+
         '<div><strong>'+escapeHtml(record.formId)+'</strong><p>'+escapeHtml(formReference(record))+'</p><small>'+escapeHtml(formatTime(record.createdAt))+'</small></div>'+
-        '<span>'+escapeHtml(record.status==="error"?"Error":record.status==="syncing"?"Sincronizando":"Pendiente")+'</span>'+
+        '<span>'+escapeHtml(record.status==="sent_master_pending"?"Conciliación territorial":record.status==="error"?"Error":record.status==="syncing"?"Sincronizando":"Pendiente")+'</span>'+
         (record.lastError?'<small class="offline-error">'+escapeHtml(record.lastError)+'</small>':"")+
         '</article>'
       ).join(""):'<div class="pending-empty">No hay respuestas pendientes.</div>';
@@ -204,7 +207,7 @@
     renderFormHistory(records);
   }
 
-  function statusLabel(status){return status==="sent"?"Enviado":status==="syncing"?"Enviando":status==="error"?"Error":"Pendiente";}
+  function statusLabel(status){return status==="sent_master_pending"?"Recibido · maestro pendiente":status==="sent"?"Enviado":status==="syncing"?"Enviando":status==="error"?"Error":"Pendiente";}
   function renderFormHistory(records){
     const host=$("formHistoryList");if(!host)return;
     const formId=String(window.FIBRAZO_ACTIVE_FORM_ID||"");
