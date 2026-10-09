@@ -543,7 +543,7 @@ module.exports=async(req,res)=>{
       spreadsheetId:SHEET_ID,
       range:`${form.sheet}!${isExploration(form.id)?"A:AB":form.id==="INTELIGENCIA_OPERADOR"?"A:AE":"A:AB"}`,
       valueInputOption:"RAW",
-      insertDataOption:"OVERWRITE",
+      insertDataOption:"INSERT_ROWS",
       requestBody:{values:[submissionRow]}
     });
     const rawUpdatedRange=String(appended.data.updates?.updatedRange||"");
