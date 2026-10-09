@@ -204,6 +204,10 @@ async function syncExplorationMaster(auth,form,payload,links,territorial){
 
   const observedMunicipality=String(d.municipio||l.cityDetected||"").trim();
   const resolvedMunicipality=exactName(territorial?.city,observedMunicipality);
+  const expectedAmb=/^(bucaramanga|floridablanca|gir[oó]n|piedecuesta)$/i.test(observedMunicipality.normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim());
+  if(expectedAmb&&(!territorial||territorial.city?.status!=="DENTRO"||territorial.catalogId!=="BUC_AMB")){
+    return{ok:false,scope:"PROJECT",project:"BUCARAMANGA_AMB",reason:"TERRITORIAL_UNRESOLVED",municipio:observedMunicipality};
+  }
 
   if(!territorial||territorial.catalogId!=="BUC_AMB"||territorial.city?.status!=="DENTRO"){
     return{
@@ -514,7 +518,12 @@ module.exports=async(req,res)=>{
       if(isExploration(form.id)){
         const sheets=google.sheets({version:"v4",auth});
         const existing=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!B2:AF`});
-        const row=(existing.data.values||[]).find(values=>String(values[0]||"")===id);
+        let row=(existing.data.values||[]).find(values=>String(values[0]||"")===id);
+        if(!row){
+          const legacy=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!BX2:CC`});
+          row=(legacy.data.values||[]).find(values=>String(values[1]||"")===id);
+          if(row)return res.status(200).json({ok:true,id,duplicate:true,photos:[],masterSync:{ok:false,scope:"PROJECT",reason:"LEGACY_MISALIGNED_REVIEW_REQUIRED"}});
+        }
         const syncState=String(row?.[28]||"").trim();
         const pointId=String(row?.[27]||"").trim();
         const ok=syncState==="OK"||syncState==="GLOBAL_ONLY";
