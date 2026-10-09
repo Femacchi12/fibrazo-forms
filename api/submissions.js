@@ -200,7 +200,7 @@ async function syncExplorationMaster(auth,form,payload,links,territorial){
   if(!isExploration(form.id))return{ok:false,reason:"NOT_APPLICABLE"};
   const d=payload.data||{},l=payload.location||{};
   const lat=num(l.lat),lon=num(l.lng);
-  if(l.lat==null||l.lon==null&&l.lng==null||String(l.lat).trim()===""||String(l.lng).trim()===""||!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180||(lat===0&&lon===0))return{ok:false,reason:"NO_COORDINATES"};
+  if(l.lat==null||l.lng==null||String(l.lat).trim()===""||String(l.lng).trim()===""||!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180||(lat===0&&lon===0))return{ok:false,reason:"NO_COORDINATES"};
 
   const observedMunicipality=String(d.municipio||l.cityDetected||"").trim();
   const resolvedMunicipality=exactName(territorial?.city,observedMunicipality);
