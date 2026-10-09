@@ -21,7 +21,7 @@ module.exports=async(req,res)=>{
     for(const raw of names){
       const name=clean(raw);
       if(!name||["sin isp","sin identificar","isp sin identificar"].includes(name.toLowerCase()))continue;
-      const key=name.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+      const key=name.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"");
       if(!byKey.has(key))byKey.set(key,name);
     }
     return res.status(200).json({isps:[...byKey.values()].sort((a,b)=>a.localeCompare(b,"es")),source:"shared-submissions"});
