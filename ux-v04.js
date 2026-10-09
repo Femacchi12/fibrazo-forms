@@ -266,7 +266,7 @@
       const copy=document.createElement("button");copy.type="button";copy.textContent="⧉ Copiar";copy.addEventListener("click",async()=>{const v=fieldValue(field.key);if(v){try{await navigator.clipboard.writeText(String(v));copy.textContent="✓ Copiado";setTimeout(()=>copy.textContent="⧉ Copiar",1000);}catch(_){}}});
       tools.appendChild(copy);wrap.appendChild(tools);
     }
-    if(field.help){const h=document.createElement("span");h.className="field-help field-help-top";h.textContent=field.help;wrap.appendChild(h);}
+    if(field.help&&!(state.form?.id==="INTELIGENCIA_OPERADOR"&&["identificacion","elementos","calidad","validacion"].includes(field.section))){const h=document.createElement("span");h.className="field-help field-help-top";h.textContent=field.help;wrap.appendChild(h);}
 
     if(field.type==="text"){wrap.appendChild(textInput(field));}
     else if(field.type==="editable-options"){wrap.appendChild(editableOptionsInput(field));}
@@ -290,6 +290,7 @@
       }
     }
     const err=document.createElement("div");err.className="field-error";err.dataset.errorFor=field.key;err.hidden=true;wrap.appendChild(err);
+    if(field.key==="coordenadas"&&field.type==="gps")wrap.classList.add("gps-unified-field");
     if(field.default!==undefined)queueMicrotask(()=>{const n=document.querySelector('[name="'+css(field.key)+'"]');if(n&&!n.value)n.value=String(field.default);});
     return wrap;
   }
@@ -413,11 +414,11 @@
     const shell=document.createElement("div");shell.className="isp-autocomplete isp-field-state";
     const updateIspState=()=>{const v=String(input?.value||"").trim();shell.classList.toggle("isp-none",!v||v==="Sin ISP");shell.classList.toggle("isp-unknown",v==="Sin Identificar");shell.classList.toggle("isp-known",!!v&&v!=="Sin ISP"&&v!=="Sin Identificar");};
     const input=document.createElement("input");input.type="text";input.name=field.key;input.autocomplete="off";
-    input.value=String(field.default??"Sin ISP");input.placeholder="Sin ISP";queueMicrotask(updateIspState);
+    input.value=String(field.default??(field.key==="operador"?"":"Sin ISP"));input.placeholder=field.key==="operador"?"Seleccionar o escribir operador":"Sin ISP";queueMicrotask(updateIspState);
     const list=document.createElement("div");list.className="isp-suggestion-list";list.hidden=true;
     const options=()=>{
       const query=normalizeCityName(input.value==="Sin ISP"?"":input.value);
-      const all=["Sin ISP","Sin Identificar",...(state.ispOptions||[])];
+      const all=field.key==="operador"?[...(state.ispOptions||[])]:["Sin ISP","Sin Identificar",...(state.ispOptions||[])];
       return [...new Set(all)].filter((name,index)=>index<2||!query||normalizeCityName(name).includes(query));
     };
     const qualityKey=/^isp_[1-4]$/.test(field.key)?field.key+"_calidad":null;
@@ -784,10 +785,10 @@
     }
     if(state.form?.id==="EXPLORACION_PRESENCIAL"&&section.id==="infraestructura"){
       requestAnimationFrame(()=>{
-        const first=document.querySelector('[data-key="tipo_despliegue"]');
+        const first=document.querySelector('[data-key="tipo_terreno"]');
         if(first&&!document.querySelector(".infrastructure-memory-inline")){
           const bar=document.createElement("div");bar.className="operator-memory-inline infrastructure-memory-inline";
-          const reuse=document.createElement("button");reuse.type="button";reuse.textContent="↻ Usar última postería";reuse.addEventListener("click",restoreLastInfrastructure);
+          const reuse=document.createElement("button");reuse.type="button";reuse.textContent="↻ Recuperar datos del formulario anterior";reuse.addEventListener("click",restoreLastInfrastructure);
           const clear=document.createElement("button");clear.type="button";clear.textContent="✕ Limpiar";clear.addEventListener("click",clearInfrastructure);
           bar.append(reuse,clear);first.parentElement?.insertBefore(bar,first);
           restoreLastInfrastructure();
