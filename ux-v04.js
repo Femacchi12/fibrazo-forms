@@ -624,6 +624,14 @@
     const maps=document.createElement("button");maps.type="button";maps.textContent="↗ Google Maps";maps.addEventListener("click",()=>{if(state.gps)window.open("https://www.google.com/maps?q="+state.gps.lat+","+state.gps.lng,"_blank","noopener");});
     quick.append(copy,maps);box.append(input,quick,status,geo);return box;
   }
+  function showPhotoPreview(src){
+    if(!src)return;
+    const dialog=document.createElement("dialog");dialog.className="fibrazo-photo-lightbox";
+    const image=document.createElement("img");image.src=src;image.alt="Vista ampliada de la fotografía";
+    const close=document.createElement("button");close.type="button";close.textContent="✕ Cerrar vista previa";close.addEventListener("click",()=>dialog.close());
+    dialog.addEventListener("close",()=>dialog.remove());
+    dialog.append(close,image);document.body.appendChild(dialog);dialog.showModal();
+  }
   function singlePhotoInput(field){
     const holder=document.createElement("div");holder.className="single-photo-field";
     const preview=document.createElement("div");preview.className="single-photo-preview";
@@ -644,7 +652,8 @@
     };
     const render=()=>{
       const photo=state.photos.find(p=>p.fieldKey===field.key);
-      preview.innerHTML=photo?'<img src="'+photo.data+'" alt="'+esc(field.label)+'">':'<span>Sin foto</span>';
+      preview.innerHTML=photo?'<img src="'+photo.data+'" alt="'+esc(field.label)+'" title="Toca para ampliar">':'<span>Sin foto</span>';
+      const thumb=preview.querySelector("img");if(thumb)thumb.addEventListener("click",()=>showPhotoPreview(photo.data));
       take.textContent=photo?"📷 Tomar otra":"📷 Tomar foto";
       choose.textContent=photo?"▣ Elegir otra":"▣ Elegir de galería";
       remove.hidden=!photo;
@@ -690,7 +699,7 @@
         const actions=document.createElement("div");actions.className="photo-slot-actions";
         const apply=photo=>{if(index<state.photos.length)state.photos[index]=photo;else state.photos.push(photo);render();};
         if(index<state.photos.length){
-          const img=document.createElement("img");img.src=state.photos[index].data;img.alt="Vista previa foto "+(index+1);
+          const img=document.createElement("img");img.src=state.photos[index].data;img.alt="Vista previa foto "+(index+1);img.title="Toca para ampliar";img.addEventListener("click",()=>showPhotoPreview(state.photos[index].data));
           const camera=makePicker(true,apply),gallery=makePicker(false,apply);
           const take=document.createElement("button");take.type="button";take.className="secondary-button compact";take.textContent="Tomar otra";take.addEventListener("click",()=>camera.click());
           const choose=document.createElement("button");choose.type="button";choose.className="secondary-button compact";choose.textContent="Elegir otra";choose.addEventListener("click",()=>gallery.click());
