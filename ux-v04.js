@@ -154,7 +154,7 @@
     const operators=[...new Set(state.serverHistory.map(r=>String(r.data?.operador||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
     const selected=host.querySelector("[data-intel-operator-filter]")?.value||"all";
     const photoFilter=host.querySelector("[data-intel-photo-filter]")?.value||"all";
-    const rows=state.serverHistory.filter(r=>(selected==="all"||r.data?.operador===selected)&&(photoFilter==="all"||(photoFilter==="without"?!Object.values(r.photoFields||{}).some(Boolean):Object.values(r.photoFields||{}).some(Boolean))));
+    const rows=state.serverHistory.filter(r=>(selected==="all"||normalizeOperatorName(r.data?.operador)===normalizeOperatorName(selected))&&(photoFilter==="all"||(photoFilter==="without"?!Object.values(r.photoFields||{}).some(Boolean):Object.values(r.photoFields||{}).some(Boolean))));
     const dateTime=value=>{const d=new Date(value);return Number.isNaN(d.getTime())?String(value||""):d.toLocaleString("es-CO",{day:"2-digit",month:"2-digit",year:"numeric",hour:"numeric",minute:"2-digit"});};
     host.closest(".form-history")?.classList.remove("intelligence-detail-open");
     host.innerHTML='<div class="intelligence-history-tools"><select data-intel-operator-filter><option value="all">Todos los operadores</option>'+operators.map(x=>'<option value="'+esc(x)+'"'+(x===selected?' selected':'')+'>'+esc(x)+'</option>').join("")+'</select><select data-intel-photo-filter><option value="all">Todas las evidencias</option><option value="without"'+(photoFilter==="without"?" selected":"")+'>Sin Fotos</option><option value="with"'+(photoFilter==="with"?" selected":"")+'>Con Fotos</option></select></div>'+
