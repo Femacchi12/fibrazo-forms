@@ -114,7 +114,7 @@
     const stepper=$("sectionStepper"),counter=$("formStepCounter");
     if(stepper)stepper.hidden=policy.showProgress===false;
     if(counter)counter.hidden=policy.showProgress===false;
-    clearValidation();loadLocalIsps();renderSection();if(form.id==="INTELIGENCIA_OPERADOR")loadIntelligenceHistory();
+    clearValidation();loadLocalIsps();loadSharedIsps();renderSection();if(form.id==="INTELIGENCIA_OPERADOR")loadIntelligenceHistory();
     if(form.id==="EXPLORACION_PRESENCIAL"){requestAnimationFrame(()=>{restoreLastInfrastructure();restoreLastOperators();});}
     if(form.id==="INTELIGENCIA_OPERADOR")requestAnimationFrame(restoreLastOperatorTendidoQuality);
     window.FIBRAZO_OFFLINE?.refreshUi?.();
@@ -349,6 +349,24 @@
     const v=String(name||"").trim();if(!v||v==="Sin ISP"||v==="Sin Identificar")return;
     if(!(state.ispOptions||[]).some(x=>normalizeCityName(x)===normalizeCityName(v)))state.ispOptions=[...(state.ispOptions||[]),v].sort((a,b)=>a.localeCompare(b,"es"));
     try{const saved=JSON.parse(localStorage.getItem("fibrazo:custom-isps")||"[]");const next=[...new Set([...saved,v])];localStorage.setItem("fibrazo:custom-isps",JSON.stringify(next));}catch(_){}
+  }
+  async function loadSharedIsps(){
+    if(publicMode)return;
+    try{
+      const token=await currentUser()?.getIdToken?.();
+      if(!token)return;
+      const response=await fetch("/api/isps",{headers:{Authorization:"Bearer "+token},cache:"no-store"});
+      if(!response.ok)return;
+      const result=await response.json();
+      const names=Array.isArray(result.isps)?result.isps:[];
+      const normalized=new Map();
+      for(const name of [...names,...(state.ispOptions||[])]){
+        const value=String(name||"").trim();
+        if(value&&!["Sin ISP","Sin Identificar"].includes(value))normalized.set(normalizeCityName(value),value);
+      }
+      state.ispOptions=[...normalized.values()].sort((a,b)=>a.localeCompare(b,"es"));
+      refreshIspSuggestions();
+    }catch(_){}
   }
   function loadLocalIsps(){
     try{const saved=JSON.parse(localStorage.getItem("fibrazo:custom-isps")||"[]");state.ispOptions=[...new Set([...(state.ispOptions||[]),...saved])].sort((a,b)=>a.localeCompare(b,"es"));}catch(_){}
@@ -1313,7 +1331,7 @@
         });
       }
 
-      state.ispOptions=Array.isArray(data.isps)?data.isps:[];
+      state.ispOptions=[...new Set([...(state.ispOptions||[]),...(Array.isArray(data.isps)?data.isps:[])])].sort((a,b)=>a.localeCompare(b,"es"));
       refreshIspSuggestions();
 
       const barrioInfo=document.querySelector('[data-geo-info-for="sector_barrio"]');
