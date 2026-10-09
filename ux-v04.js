@@ -1065,6 +1065,7 @@
       MASTER_NOT_FOUND:"no se encontró el Sheet maestro configurado",
       MASTER_RATE_LIMIT:"Google limitó temporalmente las solicitudes",
       MASTER_TIMEOUT:"la sincronización excedió el tiempo disponible",
+      COMPETITION_SYNC_PENDING:"el punto maestro se creó, pero falta registrar su información de competencia; requiere conciliación sin duplicar el punto",
       OUTSIDE_STUDY_AREA:"la coordenada está fuera del área de estudio de Bucaramanga, Floridablanca, Girón y Piedecuesta",
       NO_POLYGON_DATA:"no fue posible relacionar la coordenada con la base geográfica",
       SYNC_ERROR:"se produjo un error técnico en la integración",
