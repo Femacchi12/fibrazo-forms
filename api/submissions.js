@@ -526,6 +526,11 @@ module.exports=async(req,res)=>{
     const rawUpdatedRange=String(appended.data.updates?.updatedRange||"");
     const rawRowMatch=rawUpdatedRange.match(/!A(\d+):/i);
     const rawRow=rawRowMatch?Number(rawRowMatch[1]):null;
+    if(isExploration(form.id)&&rawRow){
+      const evidenceLinks=form.id==="EXPLORACION"?[payload.data?.link_evidencia,...links]:links;
+      try{await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!BX${rawRow}`,valueInputOption:"RAW",requestBody:{values:[[photoStatus(evidenceLinks)]]}});}
+      catch(error){console.error("EXPLORATION_PHOTO_STATUS_FAILED",error.message);}
+    }
 
     let masterSync=null;
     let territorial=null;
