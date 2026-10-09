@@ -208,6 +208,7 @@
     if(node.type==="radio"){document.querySelectorAll('[name="'+css(key)+'"]').forEach(x=>x.checked=String(x.value)===String(value));return;}
     if(node.type==="checkbox"){const vals=Array.isArray(value)?value:String(value||"").split(",").map(x=>x.trim());document.querySelectorAll('[name="'+css(key)+'"]').forEach(x=>x.checked=vals.includes(x.value));return;}
     if(node.type==="hidden"){
+      if(node.closest(".segmented-control")){paintSegmentedValue(key,value);return;}
       node.value=value||"";const holder=node.closest(".segmented-control,.binary-toggle");
       holder?.querySelectorAll(".segment-option").forEach(b=>{const on=normalizeCityName(b.textContent)===normalizeCityName(value);b.classList.toggle("selected",on);b.setAttribute("aria-pressed",String(on));});
       return;
