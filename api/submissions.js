@@ -517,22 +517,22 @@ module.exports=async(req,res)=>{
       links.splice(0,links.length,...["foto_modelo_caja","foto_nomenclatura_caja","foto_marquilla","foto_tipo_tensor","foto_marquilla_drop","foto_tensor_acometida"].map(key=>keyed[key]||""));
     }
     const sheets=google.sheets({version:"v4",auth});
+    const submissionRow=buildRow(form,payload,id,links,recordedEmail);
+    if(isExploration(form.id)){
+      const evidenceLinks=form.id==="EXPLORACION"?[payload.data?.link_evidencia,...links]:links;
+      while(submissionRow.length<75)submissionRow.push("");
+      submissionRow.push(photoStatus(evidenceLinks));
+    }
     const appended=await sheets.spreadsheets.values.append({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!${isExploration(form.id)?"A:AD":form.id==="INTELIGENCIA_OPERADOR"?"A:AE":"A:AB"}`,
+      range:`${form.sheet}!${isExploration(form.id)?"A:BX":form.id==="INTELIGENCIA_OPERADOR"?"A:AE":"A:AB"}`,
       valueInputOption:"RAW",
       insertDataOption:"INSERT_ROWS",
-      requestBody:{values:[buildRow(form,payload,id,links,recordedEmail)]}
+      requestBody:{values:[submissionRow]}
     });
     const rawUpdatedRange=String(appended.data.updates?.updatedRange||"");
     const rawRowMatch=rawUpdatedRange.match(/!A(\d+):/i);
     const rawRow=rawRowMatch?Number(rawRowMatch[1]):null;
-    if(isExploration(form.id)&&!rawRow)console.error("EXPLORATION_PHOTO_STATUS_ROW_NOT_FOUND",rawUpdatedRange);
-    if(isExploration(form.id)&&rawRow){
-      const evidenceLinks=form.id==="EXPLORACION"?[payload.data?.link_evidencia,...links]:links;
-      try{await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!BX${rawRow}`,valueInputOption:"RAW",requestBody:{values:[[photoStatus(evidenceLinks)]]}});}
-      catch(error){console.error("EXPLORATION_PHOTO_STATUS_FAILED",error.message);}
-    }
 
     let masterSync=null;
     let territorial=null;
