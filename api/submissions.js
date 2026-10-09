@@ -351,8 +351,9 @@ function resolveSubmissionId(payload,formId){
 
 async function submissionExists(auth,form,id){
   const sheets=google.sheets({version:"v4",auth});
-  const r=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!B2:B`});
-  return (r.data.values||[]).some(row=>String(row[0]||"")===id);
+  const ranges=isExploration(form.id)?[`${form.sheet}!B2:B`,`${form.sheet}!BY2:BY`]:[`${form.sheet}!B2:B`];
+  const results=await Promise.all(ranges.map(range=>sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range})));
+  return results.some(result=>(result.data.values||[]).some(row=>String(row[0]||"")===id));
 }
 
 async function hasExistingResponseForEmail(auth,form,email){
