@@ -2295,3 +2295,18 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
 .editable-options-arrow{position:absolute;right:4px;top:50%;transform:translateY(-50%);z-index:2;width:42px;height:38px;border:0;border-left:1px solid var(--fz-border);border-radius:0 8px 8px 0;background:transparent;color:var(--fz-green,#00f29a);font-size:23px;font-weight:800;cursor:pointer}
 .editable-options-arrow[aria-expanded="true"]{background:rgba(0,242,154,.1)}
 .editable-options-menu{background:#17221e;color:#fff;border-color:var(--fz-border-strong);box-shadow:0 -10px 30px rgba(0,0,0,.35)}
+
+/* Mejoras de campo · octubre 2026 */
+.exploration-point-marker .shape-square{border-radius:3px}
+.exploration-point-marker .shape-circle{border-radius:50%}
+.map-photos-filter{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;padding:9px 10px;border:1px solid var(--fz-border);border-radius:10px}
+.map-photos-filter input{width:18px;height:18px;accent-color:#00fe9c}
+.gps-unified-field .gps-manual-editor{order:-2}
+.gps-unified-field .gps-quick-tools{gap:6px}
+.gps-unified-field .gps-quick-tools button{min-height:34px;padding:6px 9px;font-size:12px}
+.gps-accuracy-notice{padding:8px 11px;border:1px solid #b18b2b;border-radius:9px;background:#392f14;color:#ffdb74;font-size:12px;font-weight:700}
+.fibrazo-photo-lightbox{max-width:96vw;max-height:94vh;padding:12px;border-radius:12px;background:#101510;color:white;border:1px solid #52605a}
+.fibrazo-photo-lightbox::backdrop{background:rgba(0,0,0,.86)}
+.fibrazo-photo-lightbox img{display:block;max-width:90vw;max-height:79vh;object-fit:contain;margin:12px auto}
+.fibrazo-photo-lightbox button{padding:9px 13px;border-radius:8px;background:#253a2d;color:white;border:1px solid #52605a}
+.single-photo-preview img,.photo-slot>img{cursor:zoom-in}
