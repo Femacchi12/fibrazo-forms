@@ -128,7 +128,7 @@ function usesTerritorialEngine(formId){
 function buildRow(form,p,id,links,email){
   const d=p.data||{},l=p.location||{},now=new Date().toISOString();
   if(form.id==="INTELIGENCIA_OPERADOR"){
-    return [now,id,d.operador||"",d.modelo_caja||"",d.nomenclatura_caja||"",d.marquilla||"",d.tipo_tensor||"",d.calidad_tendido||"",d.observaciones||"",l.lat||"",l.lng||"",l.accuracy||"",links[0]||"",links[1]||"",links[2]||"",links[3]||"",d.municipio||l.cityDetected||"",d.sector_barrio||"",d.estrato||"",email||"ANONIMO",d.calidad_servicio_percibida||"",d.precio_solo_internet||"",d.precio_internet_tv||"",d.incluye_tv||"",d.grilla_tv||"",d.marquilla_drop||"",links[4]||"",d.tensor_acometida||"",links[5]||""];
+    return [now,id,d.operador||"",d.modelo_caja||"",d.nomenclatura_caja||"",d.marquilla||"",d.tipo_tensor||"",d.calidad_tendido||"",d.observaciones||"",l.lat||"",l.lng||"",l.accuracy||"",links[0]||"",links[1]||"",links[2]||"",links[3]||"",d.municipio||l.cityDetected||"",d.sector_barrio||"",d.estrato||"",email||"ANONIMO",d.calidad_servicio_percibida||"",d.precio_solo_internet||"",d.precio_internet_tv||"",d.incluye_tv||"",d.grilla_tv||"",d.marquilla_drop||"",links[4]||"",d.tensor_acometida||"",links[5]||"",d.estrato_observado||""];
   }
   if(form.id==="CHURN"){
     return [
@@ -475,7 +475,7 @@ module.exports=async(req,res)=>{
       const permission=permissionFor(caps.permissions,String(user.email||"").toLowerCase(),form.id,caps.base);
       if(!canAccess(form,user,caps.base,permission)) throw httpError("FORM_ACCESS_DENIED",403);
       const sheets=google.sheets({version:"v4",auth});
-      const existing=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!A2:AC`});
+      const existing=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!A2:AD`});
       const rows=existing.data.values||[];
       const idx=rows.findIndex(row=>String(row[1]||"")===editId);
       if(idx<0) throw httpError("SUBMISSION_NOT_FOUND",404);
@@ -495,7 +495,7 @@ module.exports=async(req,res)=>{
       ];
       const row=buildRow(form,payload,editId,links,owner||email);
       row[0]=old[0]||row[0];
-      await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!A${idx+2}:AC${idx+2}`,valueInputOption:"RAW",requestBody:{values:[row]}});
+      await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!A${idx+2}:AD${idx+2}`,valueInputOption:"RAW",requestBody:{values:[row]}});
       return res.status(200).json({ok:true,id:editId,updated:true,photos:links});
     }
 
@@ -516,7 +516,7 @@ module.exports=async(req,res)=>{
     const sheets=google.sheets({version:"v4",auth});
     const appended=await sheets.spreadsheets.values.append({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!${isExploration(form.id)?"A:AD":form.id==="INTELIGENCIA_OPERADOR"?"A:AC":"A:AB"}`,
+      range:`${form.sheet}!${isExploration(form.id)?"A:AD":form.id==="INTELIGENCIA_OPERADOR"?"A:AD":"A:AB"}`,
       valueInputOption:"RAW",
       insertDataOption:"INSERT_ROWS",
       requestBody:{values:[buildRow(form,payload,id,links,recordedEmail)]}
