@@ -23,3 +23,6 @@ Consultar las referencias y documentar propuesta antes de tocar componentes. El 
 3. Revisar HEX directos y estilos `Inter` remanentes que anulen tokens por especificidad o estilos inline.
 4. Registrar evidencia de captura antes/después y contraste de estado: EN CÓDIGO / PUBLICADO / VERIFICADO.
 5. Si cambia el registro de marca, crear cambio controlado y actualizar los cuatro snapshots; no confiar en sincronización automática.
+
+## Ajuste móvil 2026-10-10 — capturas del usuario
+Se compactaron los botones de navegación, se limitaron tamaños KPI, se redujo padding en cards, se normalizó el ancho de filtros de lectura de competencia y de últimas respuestas, y se alinearon encabezados dentro del panel. Se implementó en `brand-alignment.css` commit `5f6d6a4c35a8f3fab9ca874d5526fe51d17b7d5b`, y se actualizó la versión de caché en `index.html` commit `101c8452a6ec9e0d27140213451db0a25d96c959`. Se conservaron funciones/datos. Estado: en código, pendiente revisión de todos los apartados sobre dispositivos y producción. No dar por cerrada la auditoría móvil hasta inspección visual.
