@@ -253,7 +253,7 @@ async function loadLayerMeta(auth,fileId,kind){
   const response=await sheets.spreadsheets.values.batchGet({
     spreadsheetId:fileId,
     ranges
-  }).catch(()=>({data:{valueRanges:[]}}));
+  });
   const parts=response.data.valueRanges||[];
   const maps=parts.map(vr=>tableRows(vr.values||[]));
   const max=Math.max(0,...maps.map(x=>x.length));
