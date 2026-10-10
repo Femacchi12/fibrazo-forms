@@ -107,3 +107,72 @@ table,table *, .table-scroll, .table-scroll *, .table-wrap, .table-wrap *, .reco
  .kpi,.map-kpis .kpi{padding:11px!important;}
  .app-nav .view-switch button{font-size:12px!important;}
 }
+
+
+/* FBZ-UX-20261010-02 · Compact, consistent field-use interface.
+   Scoped to small screens; no impact on form data or map behavior. */
+@media(max-width:680px){
+  .hero-header{padding:16px!important;min-height:0!important;}
+  .hero-copy p{margin-top:9px!important;line-height:1.45;}
+  .update-cards{gap:8px!important;margin-top:12px!important;}
+  .update-cards article{min-height:64px!important;padding:10px!important;text-align:left!important;}
+  .update-cards span{font-size:11px!important;}
+  .update-cards b{font-size:14px!important;line-height:1.3!important;overflow-wrap:anywhere;}
+  .auth-session{gap:7px!important;margin-top:10px!important;}
+  .view-switch button{min-height:46px!important;font-size:14px!important;}
+  .form-cards{gap:12px!important;margin-top:14px!important;}
+  .form-card{padding:15px!important;border-radius:14px!important;}
+  .form-card h2,.form-card h3{font-size:20px!important;line-height:1.28!important;}
+  .form-card .form-open-button{height:48px!important;min-height:48px!important;padding:9px 12px!important;font-size:15px!important;line-height:1.15!important;}
+  .form-card .secondary-button,.form-card .copy-private-link{min-height:38px!important;font-size:12px!important;padding:7px 11px!important;}
+  .form-card .status-badge,.form-card .form-tag{font-size:10px!important;padding:5px 9px!important;}
+  .form-workspace{padding:13px!important;}
+  .workspace-topbar{padding:8px!important;gap:8px!important;}
+  .workspace-topbar .secondary-button,.workspace-status .secondary-button{
+    min-height:38px!important;padding:7px 10px!important;font-size:12px!important;line-height:1.25!important;
+  }
+  .workspace-status{min-width:0;gap:5px!important;}
+  .section-stepper{margin-block:10px!important;}
+  .section-heading{padding:8px 0 12px!important;}
+  .section-heading>span,.map-head>div>span:first-child{display:block;padding-top:2px;line-height:1.45;}
+  .section-heading h2{font-size:22px!important;}
+  .operator-memory-inline.infrastructure-memory-inline{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important;padding:9px!important;}
+  .operator-memory-inline.infrastructure-memory-inline button{
+    min-width:0!important;min-height:46px!important;height:auto!important;padding:9px 8px!important;
+    font-size:13px!important;line-height:1.25!important;font-weight:700!important;white-space:normal!important;
+  }
+  .form-workspace .form-actions button,.form-workspace .step-actions button,
+  .form-workspace .wizard-actions button{min-height:46px!important;padding:9px 14px!important;font-size:14px!important;line-height:1.25!important;}
+  .exploration-map-panel{padding:16px!important;overflow:hidden;}
+  .exploration-map-panel .map-head{padding:0 0 10px!important;margin:0!important;align-items:flex-start!important;}
+  .exploration-map-panel .map-head>div:first-child{min-width:0;width:100%;padding:0!important;}
+  .exploration-map-panel .map-head h2{font-size:21px!important;line-height:1.25;margin-top:6px!important;}
+  .exploration-map-panel .map-head p{font-size:13px!important;line-height:1.45;margin-top:7px!important;}
+  .map-head-actions,.map-command-left{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;width:100%!important;}
+  .map-head-actions button,.map-command-left button,
+  .map-command-row button{min-width:0!important;min-height:42px!important;padding:8px 7px!important;font-size:12px!important;line-height:1.2!important;}
+  .map-command-row{gap:9px!important;}
+  .map-basemap-switch{min-height:42px!important;}
+  .map-basemap-switch button{min-height:38px!important;font-size:12px!important;}
+  .map-search-shell{min-width:0;margin-top:10px!important;}
+  .map-search-box{display:grid!important;grid-template-columns:20px minmax(0,1fr)!important;gap:8px!important;padding:8px 10px!important;border-radius:12px!important;box-sizing:border-box;}
+  .map-search-box input{
+    width:100%!important;max-width:100%!important;min-width:0!important;height:38px!important;min-height:38px!important;
+    padding:6px 2px!important;margin:0!important;border:0!important;border-radius:0!important;
+    background:transparent!important;box-shadow:none!important;outline:0!important;font-size:14px!important;
+  }
+  .map-search-box:focus-within{border-color:var(--brand-primary)!important;box-shadow:0 0 0 1px rgba(67,255,165,.35);}
+  .map-search-box #mapSearchButton{grid-column:1/-1;min-height:38px!important;font-size:13px!important;padding:7px!important;}
+  #mapLocateMe,#mapStartTracking,#mapStopTracking,#mapClearRoute{
+    min-width:0!important;min-height:45px!important;height:auto!important;padding:9px 8px!important;
+    font-size:13px!important;line-height:1.2!important;font-weight:700!important;
+  }
+  .map-follow-toggle{min-height:43px!important;padding:8px 10px!important;font-size:12px!important;}
+  .map-kpis .kpi{min-height:92px!important;padding:12px!important;}
+  .map-kpis .kpi strong{font-size:26px!important;}
+  .map-kpis .kpi span{font-size:10px!important;}
+  .map-kpis .kpi small{font-size:11px!important;}
+  .map-status,.map-footnote{font-size:11px!important;line-height:1.5!important;}
+  .records,.operator-library,.competition-analysis{padding:15px!important;}
+  .records .section-title,.operator-library .section-title,.competition-analysis .section-title{padding:0!important;margin:0 0 12px!important;}
+}
