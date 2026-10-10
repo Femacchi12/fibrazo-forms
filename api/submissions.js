@@ -526,8 +526,10 @@ module.exports=async(req,res)=>{
         }
         const syncState=String(row?.[28]||"").trim();
         const pointId=String(row?.[27]||"").trim();
-        const ok=syncState==="OK"||syncState==="GLOBAL_ONLY";
-        return res.status(200).json({ok:true,id,duplicate:true,photos:[],masterSync:{ok,pointId,scope:syncState==="GLOBAL_ONLY"?"GLOBAL_ONLY":"PROJECT",reason:ok?"":syncState||"PENDIENTE"}});
+        const observedCity=String(row?.[1]||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
+        const unresolvedAmb=syncState==="GLOBAL_ONLY"&&["bucaramanga","floridablanca","giron","piedecuesta"].includes(observedCity);
+        const ok=syncState==="OK"||(syncState==="GLOBAL_ONLY"&&!unresolvedAmb);
+        return res.status(200).json({ok:true,id,duplicate:true,photos:[],masterSync:{ok,pointId,scope:syncState==="GLOBAL_ONLY"&&!unresolvedAmb?"GLOBAL_ONLY":"PROJECT",reason:unresolvedAmb?"TERRITORIAL_UNRESOLVED":ok?"":syncState||"PENDIENTE"}});
       }
       return res.status(200).json({ok:true,id,duplicate:true,photos:[]});
     }
