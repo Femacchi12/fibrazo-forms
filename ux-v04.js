@@ -843,7 +843,7 @@
         const first=document.querySelector('[data-key="tipo_terreno"]');
         if(first&&!document.querySelector(".infrastructure-memory-inline")){
           const bar=document.createElement("div");bar.className="operator-memory-inline infrastructure-memory-inline";
-          const reuse=document.createElement("button");reuse.type="button";reuse.textContent="↻ Recuperar datos del formulario anterior";reuse.addEventListener("click",restoreLastInfrastructure);
+          const reuse=document.createElement("button");reuse.type="button";reuse.textContent="↻ Recuperar datos";reuse.addEventListener("click",restoreLastInfrastructure);
           const clear=document.createElement("button");clear.type="button";clear.textContent="✕ Limpiar";clear.addEventListener("click",clearInfrastructure);
           bar.append(reuse,clear);first.parentElement?.insertBefore(bar,first);
           restoreLastInfrastructure();
