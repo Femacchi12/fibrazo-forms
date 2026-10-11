@@ -38,3 +38,16 @@ Solicitud aprobada por usuario tras capturas: compactar Abrir formulario y bloqu
 - Commits: `1ad5f461` (preview), `b3eecb2b` (CSS), `e1bd407f` (asset versions), `91d5dda7` (SW cache).
 - Historial Drive: [FO-CHG-005](https://docs.google.com/spreadsheets/d/1InVJe0iR0-GAebf-SB5sa9fZRcNmm8N1ShU62Pu-YAc/edit), preferencias [VIS-006/007/008](https://docs.google.com/spreadsheets/d/1khSXy3s44k6wuRrIjP5-an9C5Kr1qPpAF6iWECKrI3c/edit).
 - Estado: **implementado y comprobado en repositorio**. Pendiente publicación verificada y QA móvil de apertura, despliegue, copiar, permisos de Base de datos, auth, GPS, respuestas, PWA/offline, y pruebas en tamaños pequeños. No afirmar cierre de producción.
+
+
+## FO-CHG-006 — Densidad ejecutiva móvil (2026-10-10)
+Estado: **implementado en código**, aún **sin verificar en producción**.
+
+Fuente: nuevas capturas de formularios de operadores, ISP, puntuaciones y navegación. Contrato visual aprobado por solicitud: compactar barra superior con identidad redundante omitida solo en esa barra, stepper 38px, sección 19px, tarjeta de pregunta 9px, toggle Sí/No 40px, memoria operadores 38px, rating 1–5 37px, input ISP 39px (tipografía 16px para zoom iOS), footer 39px, CTA preview 36px, KPI 74px y botones mapa 38px. Conservar el contraste semántico y el acceso a datos del formulario.
+
+Archivos modificados:
+- brand-alignment.css: commit 949943a119f7a160337e6afac98288e4440b503d
+- index.html: commit d3b8689c9f00a5465e645fbb28701076a1c51dcf
+- service-worker.js: commit 832ef23fd2eaf94d000544c1f41e984ea7ea8b5f
+
+Registros: [FO-CHG-006](https://docs.google.com/spreadsheets/d/1InVJe0iR0-GAebf-SB5sa9fZRcNmm8N1ShU62Pu-YAc/edit), [VIS-009](https://docs.google.com/spreadsheets/d/1khSXy3s44k6wuRrIjP5-an9C5Kr1qPpAF6iWECKrI3c/edit). CSS comprobado estáticamente, incluyendo balance de llaves, enlaces, cache bust y persistencia de lógica. Falta prueba manual de usabilidad, zoom, offline/PWA, permisos, pasos, mapa/GPS y publicación Vercel. Revertir 3 commits en caso de regresión.
