@@ -77,7 +77,12 @@
     if(Number.isNaN(d.getTime()))return String(value||"");
     return d.toLocaleString("es-CO",{dateStyle:"short",timeStyle:"short"});
   };
-  const formType=value=>norm(value)==="presencial"?"Presencial":"Virtual";
+  const formType=value=>{
+    const valueNorm=norm(value);
+    if(valueNorm==="presencial"||valueNorm==="exploracion_presencial")return "Presencial";
+    if(valueNorm==="inteligencia_operador"||valueNorm==="inteligencia de operadores")return "Inteligencia de operadores";
+    return "Virtual";
+  };
   const routeStorage=()=>{
     try{
       const raw=JSON.parse(localStorage.getItem(userScopedKey(ROUTE_KEY))||"[]");
@@ -539,7 +544,7 @@
     const profile=operatorProfile(point);
     return L.divIcon({
       className:"exploration-point-marker",
-      html:'<span class="map-point-shape '+(formType(point.type)==="Virtual"?"shape-square":"shape-circle")+'" style="--point-color:'+esc(profile.category.color)+'"></span>',
+      html:'<span class="map-point-shape '+(formType(point.type)==="Virtual"?"shape-square":formType(point.type)==="Presencial"?"shape-circle":"shape-triangle")+'" style="--point-color:'+esc(profile.category.color)+'"></span>',
       iconSize:[20,20],
       iconAnchor:[10,10],
       popupAnchor:[0,-11]
@@ -554,7 +559,19 @@
       const id=operatorProfile(point).id;
       counts.set(id,(counts.get(id)||0)+1);
     }
-    panel.innerHTML=POINT_CATEGORIES.map(item=>
+    const formCounts={virtual:0,presential:0,intelligence:0};
+    for(const point of (Array.isArray(filtered)?filtered:[])){
+      const typ=formType(point.type);
+      if(typ==="Presencial")formCounts.presential++;
+      else if(typ==="Inteligencia de operadores")formCounts.intelligence++;
+      else formCounts.virtual++;
+    }
+    const shapeLegend='<div class="map-form-type-legend">'+
+      '<span><i class="shape-square" aria-hidden="true"></i> Exploración virtual ('+formCounts.virtual+')</span>'+
+      '<span><i class="shape-circle" aria-hidden="true"></i> Exploración presencial ('+formCounts.presential+')</span>'+
+      (formCounts.intelligence?'<span><i class="shape-triangle" aria-hidden="true"></i> Inteligencia de operadores ('+formCounts.intelligence+')</span>':'')+
+    '</div>';
+    panel.innerHTML=shapeLegend+POINT_CATEGORIES.map(item=>
       '<div class="map-point-legend-item">'+
         '<i style="background:'+esc(item.color)+'"></i>'+
         '<span><b>'+esc(item.label)+'</b><small>'+esc(item.description)+'</small></span>'+
@@ -562,7 +579,7 @@
       '</div>'
     ).join("");
     const visible=(Array.isArray(filtered)?filtered:[]).length;
-    if(summary)summary.textContent=visible+" puntos visibles · ■ Virtual · ● Presencial · color según operadores";
+    if(summary)summary.textContent=visible+" puntos visibles · ■ Virtual · ● Presencial"+(formCounts.intelligence?" · ▲ Operadores":"")+" · color según operadores";
   }
 
   function togglePointLegend(){
@@ -1338,15 +1355,13 @@
 
   function updateTrackingUi(){
     const active=state.watchId!==null;
-    const start=$("mapStartTracking"),stop=$("mapStopTracking"),status=$("mapTrackingState");
+    const start=$("mapStartTracking"),status=$("mapTrackingState");
     if(start){
-      start.textContent=active?"● Recorrido activo":"▶ Iniciar recorrido";
+      start.textContent=active?"■ Detener recorrido":"▶ Iniciar recorrido";
       start.classList.toggle("tracking-active",active);
-      start.disabled=active;
-    }
-    if(stop){
-      stop.disabled=!active;
-      stop.classList.toggle("tracking-stop-ready",active);
+      start.classList.toggle("tracking-stop-ready",active);
+      start.setAttribute("aria-pressed",String(active));
+      start.disabled=false;
     }
     if(status){
       status.textContent=active?"Seguimiento activo":"Seguimiento detenido";
@@ -1406,6 +1421,7 @@
 
     navigator.geolocation.getCurrentPosition(
       position=>{
+        if(state.watchId===null)return; // Si se detuvo mientras cargaba, no anexar una ubicación tardía.
         updateCurrentLocation(position,{center:true});
         addRoutePoint(position);
         mapStatus("Recorrido activo · punto inicial registrado. Comienza a desplazarte para dibujar la ruta.","success");
@@ -1542,8 +1558,10 @@
     $("mapBaseStreet")?.addEventListener("click",()=>setBaseMap("street"));
     $("mapBaseSatellite")?.addEventListener("click",()=>setBaseMap("satellite"));
     $("mapLocateMe")?.addEventListener("click",locateMe);
-    $("mapStartTracking")?.addEventListener("click",startTracking);
-    $("mapStopTracking")?.addEventListener("click",()=>stopTracking(true));
+    $("mapStartTracking")?.addEventListener("click",()=>{
+      if(state.watchId!==null)stopTracking(true);
+      else startTracking();
+    });
     $("mapClearRoute")?.addEventListener("click",clearRoute);
     $("mapFollowToggle")?.addEventListener("change",event=>{state.follow=!!event.target.checked;});
     window.addEventListener("fibrazo:view-change",event=>{

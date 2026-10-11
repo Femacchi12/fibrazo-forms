@@ -663,8 +663,14 @@
     $("saveStatus").className = "save-status" + (type ? " " + type : "");
   }
 
+  let resultExpanded=false;
   $("refreshResults").addEventListener("click", loadResults);
-  ["resultFormFilter","resultUserFilter","resultCityFilter","resultStatusFilter","resultDateFrom","resultDateTo"].forEach(id=>$(id)?.addEventListener("change",renderResults));
+  ["resultFormFilter","resultUserFilter","resultCityFilter","resultStatusFilter","resultDateFrom","resultDateTo"].forEach(id=>$(id)?.addEventListener("change",()=>{resultExpanded=false;renderResults();}));
+  $("resultsShowMore")?.addEventListener("click",()=>{
+    resultExpanded=!resultExpanded;
+    renderResults();
+    if(!resultExpanded)$("resultsScroll")?.scrollTo({top:0});
+  });
 
   async function localHistoryRows() {
     if(!window.FIBRAZO_OFFLINE?.list)return[];
@@ -731,6 +737,7 @@
     const host=$("operatorLibraryCards");if(!host)return;
     const q=normalizeOperatorName($("operatorLibrarySearch")?.value||"");
     const focus=normalizeOperatorName(focusOperator);
+    const previouslyOpen=new Set([...host.querySelectorAll("details.operator-library-card[open]")].map(card=>card.dataset.operatorKey));
     const rows=intelligenceRows().filter(r=>{
       const d=r.data||{},hay=normalizeOperatorName([d.operador,d.modelo_caja,d.nomenclatura_caja,d.marquilla,d.tipo_tensor,d.tipo_despliegue,d.observaciones].join(" "));
       return(!q||hay.includes(q))&&(!focus||normalizeOperatorName(d.operador)===focus);
@@ -740,8 +747,17 @@
     host.innerHTML=[...groups.values()].sort((a,b)=>a.name.localeCompare(b.name,"es")).map(g=>{
       const latest=g.items[0],d=latest.data||{},ratings=g.items.map(x=>Number(x.data?.calidad_tendido)).filter(n=>Number.isFinite(n)&&n>0),avg=ratings.length?(ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(1):"—";
       const photos=g.items.flatMap(x=>x.photos||[]).filter(Boolean).slice(0,8);
-      return '<article class="operator-library-card"><div class="operator-library-head"><div><span>ISP / OPERADOR</span><h3>'+escapeHtml(g.name)+'</h3></div><div class="operator-rating"><b>'+avg+'/5</b><small>calidad</small></div></div><div class="operator-specs"><div><span>Caja</span><b>'+escapeHtml(d.modelo_caja||"—")+'</b></div><div><span>Nomenclatura</span><b>'+escapeHtml(d.nomenclatura_caja||"—")+'</b></div><div><span>Marquilla</span><b>'+escapeHtml(d.marquilla||"—")+'</b></div><div><span>Tensor / herraje</span><b>'+escapeHtml(d.tipo_tensor||"—")+'</b></div><div><span>Despliegue</span><b>'+escapeHtml(d.tipo_despliegue||"—")+'</b></div><div><span>Fichas</span><b>'+g.items.length+'</b></div></div>'+(d.observaciones?'<p class="operator-library-note">'+escapeHtml(d.observaciones)+'</p>':'')+'<div class="operator-library-photos">'+photos.map(p=>photoMarkup(p,"Referencia "+g.name)).join("")+(photos.length?'':'<small>Sin fotos</small>')+'</div></article>';
+      const isOpen=focus===normalizeOperatorName(g.name)||(!focus&&previouslyOpen.has(normalizeOperatorName(g.name)));
+      const key=escapeHtml(normalizeOperatorName(g.name));
+      return '<details class="operator-library-card" data-operator-key="'+key+'"'+(isOpen?' open':'')+'>'+
+        '<summary class="operator-library-head"><div><span>ISP / OPERADOR · '+g.items.length+' ficha'+(g.items.length===1?'':'s')+'</span><h3>'+escapeHtml(g.name)+'</h3></div><div class="operator-rating"><b>'+avg+'/5</b><small>calidad</small></div><span class="operator-disclosure-arrow" aria-hidden="true">▾</span></summary>'+
+        '<div class="operator-library-detail"><div class="operator-specs"><div><span>Caja</span><b>'+escapeHtml(d.modelo_caja||"—")+'</b></div><div><span>Nomenclatura</span><b>'+escapeHtml(d.nomenclatura_caja||"—")+'</b></div><div><span>Marquilla</span><b>'+escapeHtml(d.marquilla||"—")+'</b></div><div><span>Tensor / herraje</span><b>'+escapeHtml(d.tipo_tensor||"—")+'</b></div><div><span>Despliegue</span><b>'+escapeHtml(d.tipo_despliegue||"—")+'</b></div><div><span>Fichas</span><b>'+g.items.length+'</b></div></div>'+(d.observaciones?'<p class="operator-library-note">'+escapeHtml(d.observaciones)+'</p>':'')+'<div class="operator-library-photos">'+photos.map(p=>photoMarkup(p,"Referencia "+g.name)).join("")+(photos.length?'':'<small>Sin fotos</small>')+'</div></div></details>';
     }).join("")||'<div class="empty-state">No hay fichas que coincidan con la búsqueda.</div>';
+    // Apertura exclusiva: sólo un operador expandido, incluso al restaurar una búsqueda.
+    host.querySelectorAll("details.operator-library-card").forEach(card=>card.addEventListener("toggle",()=>{
+      if(!card.open)return;
+      host.querySelectorAll("details.operator-library-card[open]").forEach(other=>{if(other!==card)other.open=false;});
+    }));
   }
   $("operatorLibrarySearch")?.addEventListener("input",()=>renderOperatorLibrary());
 
@@ -775,8 +791,12 @@
     });
     const counts=new Map();rows.forEach(r=>operatorNames(r.data).forEach(o=>counts.set(o,(counts.get(o)||0)+1)));
     const host=$("competitionOperators");if(!host)return;
-    host.innerHTML=[...counts.entries()].sort((a,b)=>b[1]-a[1]).map(([o,n])=>'<button type="button" class="operator-analysis-chip'+(selectedOperator===o?' active':'')+'" data-operator="'+escapeHtml(o)+'"><strong>'+escapeHtml(o)+'</strong><span>'+n+' punto'+(n===1?'':'s')+'</span></button>').join("")||'<div class="empty-state">No hay operadores para este filtro.</div>';
+    const picker=$("competitionOperatorPicker"),summary=$("competitionOperatorSummary"),count=$("competitionOperatorCount");
+    if(summary)summary.textContent=selectedOperator||"Seleccionar operador";
+    if(count)count.textContent=selectedOperator?(counts.get(selectedOperator)||0)+" puntos":counts.size+" operadores disponibles";
+    host.innerHTML=[...counts.entries()].sort((a,b)=>b[1]-a[1]).map(([o,n])=>'<button type="button" role="option" aria-selected="'+String(selectedOperator===o)+'" class="operator-analysis-chip'+(selectedOperator===o?' active':'')+'" data-operator="'+escapeHtml(o)+'"><strong>'+escapeHtml(o)+'</strong><span>'+n+' punto'+(n===1?'':'s')+'</span></button>').join("")||'<div class="empty-state">No hay operadores para este filtro.</div>';
     host.querySelectorAll("[data-operator]").forEach(b=>b.addEventListener("click",()=>{
+      if(picker)picker.open=false;
       renderCompetitionAnalysis(b.dataset.operator);
       const hasKnowledge=intelligenceRows().some(r=>String(r.data?.operador||"").toLowerCase()===String(b.dataset.operator||"").toLowerCase());
       if(hasKnowledge){renderOperatorLibrary(b.dataset.operator);$("operatorLibraryCards")?.scrollIntoView({behavior:"smooth",block:"start"});}
@@ -829,7 +849,13 @@
     $("explorationCount").textContent = filtered.filter(r=>String(r.formId||"").startsWith("EXPLORACION")).length;
     $("totalCount").textContent = filtered.length;
     const body=$("resultsBody");body.innerHTML="";
-    filtered.forEach(row=>{
+    const ordered=filtered.slice().sort((a,b)=>new Date(b.clientTimestamp||b.timestamp||0)-new Date(a.clientTimestamp||a.timestamp||0));
+    const remaining=Math.max(0,ordered.length-10);
+    const countEl=$("resultsDisclosureCount"),more=$("resultsShowMore"),scroll=$("resultsScroll");
+    if(countEl)countEl.textContent=ordered.length+" registros";
+    if(more){more.hidden=remaining===0;more.textContent=resultExpanded?"Mostrar solo 10":"Ver más · "+remaining+" registros ocultos";more.setAttribute("aria-expanded",String(resultExpanded));}
+    if(scroll)scroll.classList.toggle("results-scroll-active",resultExpanded);
+    (resultExpanded?ordered:ordered.slice(0,10)).forEach(row=>{
       const data=row.data||{};
       const tr=document.createElement("tr");
       tr.innerHTML="<td>"+escapeHtml(formatDate(row.clientTimestamp||row.timestamp))+"</td>"+
