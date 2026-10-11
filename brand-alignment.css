@@ -1550,3 +1550,117 @@ body.form-mode #formWorkspace .operator-memory-inline button{
   .map-location-toolbar .map-follow-toggle{grid-column:auto!important;}
   .records .results-disclosure-summary{flex-wrap:wrap;}
 }
+
+
+/* FO-CHG-015 | VIS-017 application — 2026-10-11
+   One collapsed operator library, four equal map controls.
+   Pure UI changes; canonical standard stays in Docs. */
+.operator-library .operator-library-disclosure{
+  display:block;min-width:0;width:100%;box-sizing:border-box;
+}
+.operator-library .operator-library-disclosure-trigger{
+  box-sizing:border-box;list-style:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;min-width:0;min-height:52px;padding:8px 1px;
+  border-radius:9px;color:#F1FFF7;
+}
+.operator-library .operator-library-disclosure-trigger::-webkit-details-marker{display:none;}
+.operator-library .operator-library-disclosure-trigger:focus-visible{
+  outline:2px solid #43FFA5;outline-offset:3px;
+}
+.operator-library .operator-library-disclosure-copy{
+  flex:1 1 auto;min-width:0;
+  display:flex;flex-direction:column;gap:4px;
+}
+.operator-library .operator-library-disclosure-copy small{
+  font-size:10px;font-weight:750;line-height:1.2;
+  letter-spacing:.06em;color:#BDCEC3;
+}
+.operator-library .operator-library-disclosure-copy strong{
+  font-size:clamp(16px,4.1vw,19px);
+  font-weight:750;line-height:1.25;
+  overflow-wrap:anywhere;
+}
+.operator-library .operator-library-disclosure-action{
+  display:flex;align-items:center;gap:7px;flex:0 0 auto;
+  color:#51FCA2;font-size:11px;font-weight:750;
+}
+.operator-library .library-arrow{
+  display:inline-block;font-size:16px;
+  transition:transform .18s ease;
+}
+.operator-library .library-hide-label{display:none;}
+.operator-library .operator-library-disclosure[open] .library-show-label{display:none;}
+.operator-library .operator-library-disclosure[open] .library-hide-label{display:inline;}
+.operator-library .operator-library-disclosure[open] .library-arrow{transform:rotate(180deg);}
+.operator-library .operator-library-disclosure-content{
+  min-width:0;box-sizing:border-box;
+  border-top:1px solid #6C8374;padding-top:8px;
+}
+.operator-library .operator-library-intro{
+  margin:0 0 7px;color:#B8C8BE;
+  font-size:11px;line-height:1.4;
+}
+.operator-library .operator-library-disclosure-content .operator-library-tools{
+  margin:7px 0 10px!important;
+}
+.operator-library .operator-library-disclosure-content .operator-library-tools input{
+  box-sizing:border-box;max-width:100%;width:100%;
+  min-height:39px!important;height:39px!important;
+  border-radius:9px!important;font-size:13px!important;
+}
+/* Identical map-control footprints, two columns × two rows on phones. */
+.map-location-toolbar{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  grid-auto-flow:row!important;align-items:stretch!important;
+  gap:8px!important;
+}
+.map-location-toolbar>button,
+.map-location-toolbar>.map-follow-toggle{
+  box-sizing:border-box!important;min-width:0!important;
+  width:100%!important;max-width:100%!important;
+  height:40px!important;min-height:40px!important;max-height:40px!important;
+  margin:0!important;padding:6px 8px!important;
+  border-radius:9px!important;line-height:1.15!important;
+  font-size:12px!important;font-weight:700!important;
+}
+.map-location-toolbar>.map-follow-toggle{
+  grid-column:auto!important;grid-row:auto!important;
+  display:flex!important;justify-content:center!important;align-items:center!important;
+  gap:6px!important;cursor:pointer;
+  border:1px solid #859D8C!important;
+  color:#F0FFF5!important;background:#17241E!important;
+}
+.map-location-toolbar>.map-follow-toggle span{
+  display:block;min-width:0;text-align:center;
+  overflow-wrap:normal;font-size:11px!important;
+  line-height:1.1!important;
+}
+.map-location-toolbar>.map-follow-toggle input[type="checkbox"]{
+  appearance:auto;accent-color:#43FFA5;
+  flex:0 0 16px!important;width:16px!important;height:16px!important;
+  min-width:16px!important;min-height:16px!important;
+  margin:0!important;
+}
+.map-location-toolbar>.map-follow-toggle:focus-within{
+  outline:2px solid #43FFA5!important;outline-offset:2px!important;
+}
+.map-location-toolbar>.map-follow-toggle:has(input:checked){
+  border-color:#42DF96!important;background:#182A20!important;
+}
+@media(max-width:350px){
+  .map-location-toolbar{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:6px!important;
+  }
+  .map-location-toolbar>button,
+  .map-location-toolbar>.map-follow-toggle{
+    font-size:10.5px!important;padding:5px 3px!important;
+  }
+  .map-location-toolbar>.map-follow-toggle{gap:4px!important;}
+  .map-location-toolbar>.map-follow-toggle span{font-size:10px!important;}
+  .map-location-toolbar>.map-follow-toggle input[type="checkbox"]{
+    flex-basis:14px!important;width:14px!important;height:14px!important;min-width:14px!important;min-height:14px!important;
+  }
+  .operator-library .operator-library-disclosure-copy strong{font-size:15px!important;}
+}
