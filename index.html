@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.css">
   <link rel="stylesheet" href="/styles.css?v=2026.10.08.68">
-  <link rel="stylesheet" href="/brand-alignment.css?v=20261011-15">
+  <link rel="stylesheet" href="/brand-alignment.css?v=20261011-16">
 </head>
 <body class="auth-pending">
   <section id="authGate" class="auth-gate" aria-live="polite">
@@ -461,15 +461,15 @@
         <div class="section-title admin-head">
           <div>
             <span>ADMINISTRACIÓN</span>
-            <h2>Formularios y permisos</h2>
-            <p>Administra accesos, publicación y comportamiento de cada formulario.</p>
+            <div class="fz-title-with-help"><h2>Formularios y permisos</h2><button type="button" class="fz-help-button" data-admin-help="Administra accesos, publicación y comportamiento de cada formulario. Los cambios de permisos requieren que guardes la configuración correspondiente." aria-label="Ayuda: administración de formularios" aria-expanded="false" title="Ayuda: administración">?</button></div>
           </div>
           <a class="secondary-button compact admin-map-link" href="https://app.diagrams.net/?mode=github#HFemacchi12%2Ffibrazo-forms%2Fmain%2Fdocs%2FFIBRAZO_Forms_Flujos.drawio" target="_blank" rel="noopener">↗ Ver mapa en draw.io</a>
         </div>
         <div id="adminGlobal" class="admin-global"></div>
         <div class="admin-access-note compact-note">
           <strong>Regla de acceso</strong>
-          <span>Solo los administradores tienen acceso global. Para cada formulario puedes autorizar dominios, correos específicos y/o un enlace público.</span>
+          <span>Acceso global: administradores</span>
+          <button type="button" class="fz-help-button" data-admin-help="Solo los administradores tienen acceso global. Para cada formulario puedes autorizar dominios, correos específicos y/o un enlace público. Verifica el alcance antes de guardar permisos." aria-label="Ayuda: regla de acceso" aria-expanded="false" title="Ayuda: regla de acceso">?</button>
         </div>
         <div id="adminForms" class="admin-forms"></div>
         <div id="adminStatus" class="save-status"></div>
@@ -486,7 +486,7 @@
   <script src="/access-v03.js?v=2026.10.08.68"></script>
   <script src="/offline-v04.js?v=2026.10.08.68"></script>
   <script src="/ux-v04.js?v=2026.10.11.13"></script>
-  <script src="/admin-v03.js?v=2026.10.08.68"></script>
+  <script src="/admin-v03.js?v=2026.10.11.16"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.umd.min.js"></script>
   <script src="/map-v01.js?v=2026.10.11.14"></script>
