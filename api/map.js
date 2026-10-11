@@ -10,7 +10,8 @@ function norm(v){
   return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
 }
 function num(v){
-  const n=Number(String(v??"").replace(",","."));
+  if(v===null||v===undefined||String(v).trim()==="")return null;
+  const n=Number(String(v).replace(",","."));
   return Number.isFinite(n)?n:null;
 }
 function safeLink(v){
@@ -29,13 +30,14 @@ function isPresential(row){
 }
 function formAccess(forms,caps,user){
   const email=String(user?.email||"").trim().toLowerCase();
-  const out={virtual:false,presential:false};
+  const out={virtual:false,presential:false,intelligence:false};
   for(const form of forms){
-    if(!["EXPLORACION","EXPLORACION_PRESENCIAL"].includes(form.id))continue;
+    if(!["EXPLORACION","EXPLORACION_PRESENCIAL","INTELIGENCIA_OPERADOR"].includes(form.id))continue;
     const permission=permissionFor(caps.permissions,email,form.id,caps.base);
     const allowed=canAccess(form,user,caps.base,permission);
     if(form.id==="EXPLORACION"&&allowed)out.virtual=true;
     if(form.id==="EXPLORACION_PRESENCIAL"&&allowed)out.presential=true;
+    if(form.id==="INTELIGENCIA_OPERADOR"&&allowed)out.intelligence=true;
   }
   return out;
 }
@@ -66,13 +68,17 @@ module.exports=async(req,res)=>{
     if(!canUseDashboard(user,caps.adminActive,forms))throw httpError("DASHBOARD_ACCESS_DENIED",403);
 
     const access=formAccess(forms,caps,user);
-    if(!access.virtual&&!access.presential)throw httpError("MAP_ACCESS_DENIED",403);
+    if(!access.virtual&&!access.presential&&!access.intelligence)throw httpError("MAP_ACCESS_DENIED",403);
 
     const sheets=google.sheets({version:"v4",auth});
-    const response=await sheets.spreadsheets.values.get({
-      spreadsheetId:SHEET_ID,
-      range:"RESP_EXPLORACION!A2:BK"
-    });
+    const [response,intelResponse]=await Promise.all([
+      (access.virtual||access.presential)
+        ?sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"RESP_EXPLORACION!A2:BK"})
+        :Promise.resolve({data:{values:[]}}),
+      access.intelligence
+        ?sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"RESP_INTELIGENCIA_OPERADOR!A2:AE"})
+        :Promise.resolve({data:{values:[]}})
+    ]);
     const email=String(user.email||"").trim().toLowerCase();
     const admin=!!(caps.base||String(caps.user?.role||"").toUpperCase()==="ADMIN");
     const all=response.data.values||[];
@@ -82,6 +88,7 @@ module.exports=async(req,res)=>{
       const type=rowType(row);
       if(isVirtual(row)&&!access.virtual)continue;
       if(isPresential(row)&&!access.presential)continue;
+      if(!isVirtual(row)&&!isPresential(row))continue;
       const rowEmail=String(row[24]||"").trim().toLowerCase();
       if(!admin&&rowEmail!==email)continue;
 
@@ -144,6 +151,33 @@ module.exports=async(req,res)=>{
       });
     }
 
+    // Inteligencia de operadores: fuente autorizada separada y con columnas
+    // estables. No se reutilizan índices de RESP_EXPLORACION.
+    for(const row of (intelResponse.data.values||[]).slice(-MAX_POINTS)){
+      const rowEmail=String(row[19]||"").trim().toLowerCase();
+      if(!admin&&rowEmail!==email)continue;
+      const lat=num(row[9]),lng=num(row[10]);
+      if(lat===null||lng===null||lat<-90||lat>90||lng<-180||lng>180)continue;
+      const operator=String(row[2]||"").trim();
+      const observedCity=String(row[16]||"").trim();
+      const barrio=String(row[17]||"").trim();
+      const estrato=String(row[18]||row[29]||"").trim();
+      points.push({
+        id:String(row[1]||""),
+        timestamp:String(row[0]||""),
+        type:"INTELIGENCIA_OPERADOR",
+        user:String(row[19]||""),
+        lat,lng,accuracy:num(row[11]),
+        observedCity,sector:barrio,note:String(row[8]||""),
+        operators:operator?[operator]:[],maps:"",
+        evidence:"",photos:[12,13,14,15,26,28].map(i=>safeLink(row[i])).filter(Boolean),
+        territorialVersion:"",
+        city:{status:observedCity?"registro":"pendiente",assigned:observedCity,nearby:"",distanceM:null},
+        barrio:{status:barrio?"registro":"pendiente",assigned:barrio,nearby:"",distanceM:null},
+        estrato:{status:estrato?"registro":"pendiente",assigned:estrato,nearby:"",distanceM:null},
+        troncal:{status:"",assigned:"",nearby:"",distanceM:null}
+      });
+    }
     points.sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp));
     return res.status(200).json({
       ok:true,
