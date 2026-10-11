@@ -75,11 +75,13 @@
     const form=forms[id];if(!form)return;
     if(!publicMode&&window.FIBRAZO_ACCESS&&window.FIBRAZO_ACCESS[id]===false)return;
     const policy=policyFor(id);
-    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
+    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.gpsCapturePending=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
     document.body.classList.add("form-mode");
     $("formTitle").textContent=form.name;
     $("formDescription").textContent=form.description||"";
     $("formEyebrow").textContent=form.eyebrow||"FORMULARIO";
+    const formInfo=$("formDescriptionDetails");
+    if(formInfo){formInfo.open=false;formInfo.hidden=!String(form.description||"").trim()&&!String(policy.introMessage||"").trim();}
 
     const collect=policy.collectEmail!==false;
     const email=String(currentUser()?.email||"").trim();
@@ -889,7 +891,10 @@
     const sections=activeSections();if(!sections.length)return;
     if(state.sectionIndex>=sections.length)state.sectionIndex=sections.length-1;
     const section=sections[state.sectionIndex];
-    $("sectionTitle").textContent=section.title;$("sectionDescription").textContent=(section.id==="coordenada"&&isExplorationForm())?"":(section.description||"");$("sectionEyebrow").textContent="SECCIÓN "+(state.sectionIndex+1);$("formStepCounter").textContent=(state.sectionIndex+1)+" de "+sections.length;
+    const sectionInfo=$("sectionDescriptionDetails");
+    const sectionInfoText=(section.id==="coordenada"&&isExplorationForm())?"":(section.description||"");
+    if(sectionInfo){sectionInfo.open=false;sectionInfo.hidden=!sectionInfoText.trim();}
+    $("sectionTitle").textContent=section.title;$("sectionDescription").textContent=sectionInfoText;$("sectionEyebrow").textContent="SECCIÓN "+(state.sectionIndex+1);$("formStepCounter").textContent=(state.sectionIndex+1)+" de "+sections.length;
     const stepper=$("sectionStepper");stepper.innerHTML="";
     stepper.style.gridTemplateColumns="repeat("+sections.length+",minmax(0,1fr))";
     let activeStep=null;
@@ -908,6 +913,7 @@
       stepper.appendChild(x);
     });
     stepper.hidden=state.policy?.showProgress===false;
+    if(activeStep)requestAnimationFrame(()=>{if(activeStep.parentElement!==stepper||!window.matchMedia("(max-width:680px)").matches)return;stepper.scrollLeft=Math.max(0,activeStep.offsetLeft-(stepper.clientWidth-activeStep.offsetWidth)/2);});
     $("formStepCounter").hidden=state.policy?.showProgress===false;
     $("prevSection").hidden=state.sectionIndex===0;const last=state.sectionIndex===sections.length-1;$("nextSection").hidden=last;$("reviewForm").hidden=!last;
     document.querySelectorAll(".operator-memory-inline").forEach(el=>el.remove());
@@ -976,7 +982,7 @@
     window.scrollTo({top:0,behavior:"smooth"});
   }
   function prev(){if(state.sectionIndex>0){state.sectionIndex--;renderSection();}}
-  function next(){if(state.form?.id==="INTELIGENCIA_OPERADOR"&&currentSection()?.id==="calidad")saveLastOperatorTendidoQuality();if(isExplorationForm()&&currentSection()?.id==="coordenada"&&state.locationBusy&&!document.querySelector(".gps-one-field")){state.sectionIndex++;state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);renderSection();return;}const e=validateSection(state.sectionIndex,true);if(e.length)return showValidation(e);if(state.form?.id==="EXPLORACION_PRESENCIAL"){if(currentSection()?.id==="infraestructura")saveLastInfrastructure();if(currentSection()?.id==="operadores")saveLastOperators();}state.sectionIndex++;state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);renderSection();}
+  function next(){if(state.form?.id==="INTELIGENCIA_OPERADOR"&&currentSection()?.id==="calidad")saveLastOperatorTendidoQuality();const e=validateSection(state.sectionIndex,true);if(e.length)return showValidation(e);if(state.form?.id==="EXPLORACION_PRESENCIAL"){if(currentSection()?.id==="infraestructura")saveLastInfrastructure();if(currentSection()?.id==="operadores")saveLastOperators();}state.sectionIndex++;state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);renderSection();}
 
   function hasExplorationOperator(){
     if(!isExplorationForm())return true;
@@ -991,6 +997,7 @@
   function validateField(field){
     if(field.type==="gps"){
       if(field.key==="coordenadas"&&isExplorationForm()&&document.querySelector(".gps-exec-coordinate[data-coordinate-dirty='1']"))return "Presiona Buscar coordenada para aplicar el valor ingresado.";
+      if(field.key==="coordenadas"&&isExplorationForm()&&state.gpsCapturePending&&currentSection()?.id==="coordenada")return "";
       return field.required&&!state.gps?"Ingresa y busca una coordenada o utiliza el GPS.":"";
     }
     if(field.type==="coordinates")return field.required&&!state.gps?"Pega una coordenada válida en formato latitud, longitud.":"";
@@ -1247,12 +1254,13 @@
 
   function captureGps(value,btn,key){
     if(!navigator.geolocation){if(value._onGpsStatus)value._onGpsStatus("GPS no disponible en este navegador.");else value.textContent="GPS no disponible en este navegador.";return;}
-    btn.disabled=true;btn.textContent="Buscando mejor señal…";state.locationBusy=isExplorationForm()&&key==="coordenadas";state.locationValidated=false;
+    btn.disabled=true;btn.textContent="Buscando mejor señal…";state.locationBusy=isExplorationForm()&&key==="coordenadas";state.gpsCapturePending=isExplorationForm()&&key==="coordenadas";state.locationValidated=false;
     let best=null,finished=false,watchId=null,timer=null;
     const finish=async p=>{
       if(finished)return;finished=true;if(watchId!==null)navigator.geolocation.clearWatch(watchId);clearTimeout(timer);
-      if(!p){if(value._onGpsStatus)value._onGpsStatus("No se pudo obtener el GPS. Revisa el permiso del navegador.");else value.textContent="No se pudo obtener la ubicación. Revisa el permiso del navegador.";btn.disabled=false;btn.textContent=btn.dataset.gpsOriginalLabel||"Reintentar";state.locationBusy=false;if(value._onGpsSettled)value._onGpsSettled();return;}
+      if(!p){state.gpsCapturePending=false;if(value._onGpsStatus)value._onGpsStatus("No se pudo obtener el GPS. Revisa el permiso del navegador.");else value.textContent="No se pudo obtener la ubicación. Revisa el permiso del navegador.";btn.disabled=false;btn.textContent=btn.dataset.gpsOriginalLabel||"Reintentar";state.locationBusy=false;if(value._onGpsSettled)value._onGpsSettled();return;}
       const advanceAfterGps=(state.form?.id==="EXPLORACION_PRESENCIAL"||state.form?.id==="INTELIGENCIA_OPERADOR")&&key==="coordenadas"&&currentSection()?.id==="coordenada"&&!state.gps&&!value.closest(".gps-executive");
+      state.gpsCapturePending=false;
       state.gps={lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy,cityDetected:"",citySource:""};
       if(value._onGpsCaptured)value._onGpsCaptured(state.gps);
       else value.textContent=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+" · ±"+Math.round(state.gps.accuracy)+" m";

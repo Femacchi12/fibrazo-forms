@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.css">
   <link rel="stylesheet" href="/styles.css?v=2026.10.08.68">
-  <link rel="stylesheet" href="/brand-alignment.css?v=20261011-11">
+  <link rel="stylesheet" href="/brand-alignment.css?v=20261011-12">
 </head>
 <body class="auth-pending">
   <section id="authGate" class="auth-gate" aria-live="polite">
@@ -120,15 +120,17 @@
           <div>
             <span id="formEyebrow">FORMULARIO</span>
             <h1 id="formTitle"></h1>
-            <p id="formDescription"></p>
+            <details id="formDescriptionDetails" class="fbz-description-disclosure" hidden>
+              <summary>Descripción del formulario</summary>
+              <p id="formDescription"></p>
+              <div id="formIntroMessage" class="form-intro-message" hidden></div>
+            </details>
           </div>
           <div class="form-user-card">
             <span>COMPLETANDO COMO</span>
             <strong id="formUserEmail"></strong>
-            <small>Este correo quedará asociado automáticamente a la respuesta.</small>
           </div>
         </div>
-        <div id="formIntroMessage" class="form-intro-message" hidden></div>
         <details class="form-history">
           <summary>Historial de este formulario <span>ver estados</span></summary>
           <div id="formHistoryList" class="form-history-list"><div class="pending-empty">Cargando historial…</div></div>
@@ -140,7 +142,10 @@
           <div class="section-heading">
             <span id="sectionEyebrow">SECCIÓN</span>
             <h2 id="sectionTitle"></h2>
-            <p id="sectionDescription"></p>
+            <details id="sectionDescriptionDetails" class="fbz-description-disclosure fbz-section-help" hidden>
+              <summary>Descripción de la sección</summary>
+              <p id="sectionDescription"></p>
+            </details>
           </div>
 
           <div id="dynamicFields" class="form-grid"></div>
@@ -463,7 +468,7 @@
   <script src="/app.js?v=2026.10.10.05"></script>
   <script src="/access-v03.js?v=2026.10.08.68"></script>
   <script src="/offline-v04.js?v=2026.10.08.68"></script>
-  <script src="/ux-v04.js?v=2026.10.11.12"></script>
+  <script src="/ux-v04.js?v=2026.10.11.13"></script>
   <script src="/admin-v03.js?v=2026.10.08.68"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.umd.min.js"></script>
