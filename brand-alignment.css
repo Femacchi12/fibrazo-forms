@@ -1664,3 +1664,223 @@ body.form-mode #formWorkspace .operator-memory-inline button{
   }
   .operator-library .operator-library-disclosure-copy strong{font-size:15px!important;}
 }
+
+
+/* FO-CHG-016 / VIS-019 — Admin responsive + contextual help (2026-10-11).
+   Brand tokens from official Marca FIBRAZO; rule from visual standard v1.4.
+   Keep admin permissions semantics and API unchanged. */
+#adminView,#adminView *{min-width:0;}
+#adminView .admin-panel{overflow:visible;}
+#adminView .admin-global,
+#adminView .admin-system-card,
+#adminView .admin-system-body,
+#adminView .admin-permission-list{min-width:0;max-width:100%;}
+#adminView .admin-system-card{overflow:visible;border-color:var(--fz-border-strong);}
+#adminView .admin-system-card>summary{padding:10px 11px;gap:8px;}
+#adminView .admin-person-permissions{
+  display:block;min-width:0;width:100%;max-width:100%;
+  background:var(--fz-surface-raised)!important;
+  color:var(--fz-text)!important;
+  border:1.5px solid var(--fz-border-strong)!important;
+  border-radius:10px!important;
+  overflow:hidden!important;
+}
+#adminView .admin-person-permissions>summary{
+  background:var(--fz-surface-raised)!important;
+  color:var(--fz-text)!important;
+  padding:9px 10px!important;min-height:49px!important;
+  display:flex!important;align-items:center!important;gap:7px!important;
+}
+#adminView .admin-person-permissions>summary .admin-person-identity{
+  flex:1 1 auto;display:grid;gap:3px;min-width:0;
+}
+#adminView .admin-person-permissions>summary strong{
+  color:#F7FAF8!important;font-size:12px!important;
+  line-height:1.3!important;overflow-wrap:anywhere;
+}
+#adminView .admin-person-permissions>summary small{
+  color:#BBC6C0!important;font-size:10px!important;line-height:1.25!important;
+}
+#adminView .admin-person-permissions>summary .base-badge,
+#adminView .admin-person-permissions>summary .count-badge{
+  display:inline-flex;flex:0 0 auto;align-items:center;
+  border:1px solid var(--fz-green-border);
+  background:var(--fz-green-soft);color:var(--fz-green)!important;
+  font-size:9px!important;min-height:25px!important;
+  padding:4px 7px!important;
+}
+#adminView .admin-person-arrow{flex:0 0 auto;color:var(--fz-green);font-size:14px;}
+#adminView .admin-person-permissions[open] .admin-person-arrow{transform:rotate(180deg);}
+#adminView .admin-person-permission-body{
+  background:#121915!important;border-top:1px solid var(--fz-border-strong);
+  padding:9px 10px 10px!important;
+}
+#adminView .admin-create-toggle{
+  display:flex!important;justify-content:space-between!important;
+  gap:9px!important;align-items:center!important;
+  padding:7px 9px!important;min-height:39px!important;
+  background:#19251F!important;color:#F4FFF8!important;
+  border:1px solid #687F72!important;border-radius:8px!important;
+}
+#adminView .admin-create-label,#adminView .admin-toggle-title{
+  display:flex!important;align-items:center!important;gap:6px!important;
+  flex:1;min-width:0;
+}
+#adminView .admin-create-toggle strong,#adminView .admin-help-toggle strong{
+  color:#F4FFF8!important;font-size:12px!important;
+}
+#adminView .admin-create-control,#adminView .admin-toggle-control{
+  display:flex;flex:0 0 auto;align-items:center;justify-content:center;
+  padding:0;margin:0;background:none!important;border:0!important;
+  min-height:26px;cursor:pointer;
+}
+#adminView .admin-create-control .switch,
+#adminView .admin-toggle-control .switch{flex:0 0 auto;margin:0;}
+#adminView .admin-create-control input:disabled{cursor:not-allowed;}
+#adminView .admin-permission-grid{
+  display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+  gap:6px!important;margin:8px 0!important;
+}
+#adminView .admin-permission-row{
+  display:block!important;min-width:0!important;max-width:100%;
+  background:#17221C!important;border:1px solid #61796A!important;
+  border-radius:9px!important;padding:0!important;
+  color:#F7FAF8!important;overflow:hidden;
+}
+#adminView .admin-permission-row-summary{
+  display:flex;align-items:center;gap:8px;list-style:none;
+  padding:9px 10px;min-height:43px;cursor:pointer;
+}
+#adminView .admin-permission-row-summary::-webkit-details-marker{display:none;}
+#adminView .admin-permission-row .admin-permission-form{flex:1;min-width:0;display:grid;gap:3px;}
+#adminView .admin-permission-form strong{
+  color:#F7FAF8!important;font-size:12px!important;
+  line-height:1.3!important;overflow-wrap:anywhere;
+}
+#adminView .admin-permission-form small{
+  color:#A8BEB1!important;font-size:9px!important;line-height:1.2!important;
+  overflow-wrap:anywhere;
+}
+#adminView .admin-permission-count{
+  flex:0 0 auto;font-size:10px;font-weight:700;color:#C8D8CF;
+  white-space:nowrap;
+}
+#adminView .admin-permission-arrow{flex:0 0 auto;color:var(--fz-green);font-size:13px;}
+#adminView .admin-permission-row[open] .admin-permission-arrow{transform:rotate(180deg);}
+#adminView .admin-permission-options{
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:6px;padding:8px 9px 10px;border-top:1px solid #64796E;
+}
+#adminView .admin-permission-options label{
+  display:flex!important;align-items:center!important;justify-content:flex-start!important;
+  min-height:36px!important;min-width:0!important;
+  gap:6px!important;padding:7px 8px!important;
+  background:#1E2923!important;color:#F7FAF8!important;
+  border:1px solid #63776A!important;border-radius:8px!important;
+  font-size:11px!important;font-weight:650!important;
+  line-height:1.25!important;white-space:normal!important;overflow-wrap:anywhere;
+}
+#adminView .admin-permission-options input[type="checkbox"]{
+  appearance:auto!important;accent-color:var(--fz-green)!important;
+  margin:0!important;flex:0 0 15px!important;
+  width:15px!important;height:15px!important;min-width:15px!important;
+}
+#adminView .admin-permission-options label:has(input:checked){
+  background:rgba(67,255,165,.09)!important;border-color:rgba(67,255,165,.55)!important;
+}
+#adminView .admin-permission-options label:has(input:disabled){
+  opacity:.82!important;cursor:not-allowed;
+}
+#adminView .admin-add-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;}
+#adminView .admin-add-row input{
+  width:100%!important;min-width:0;min-height:38px!important;
+  font-size:13px!important;padding:7px 10px!important;
+  background:var(--fz-control)!important;color:var(--fz-text)!important;
+  border:1px solid var(--fz-border-strong)!important;
+}
+#adminView .admin-add-actions{display:flex;align-items:center;gap:6px;min-width:0;}
+#adminView .admin-add-actions button.secondary-button{
+  padding:7px 10px!important;min-height:38px!important;
+  font-size:12px!important;white-space:normal;line-height:1.2!important;
+}
+#adminView .admin-access-note{
+  display:flex!important;align-items:center!important;gap:8px!important;
+  padding:8px 10px!important;margin:10px 0!important;
+  background:rgba(67,255,165,.045)!important;
+  border:1px solid #617C6B!important;
+  border-radius:9px!important;
+}
+#adminView .admin-access-note strong{font-size:11px!important;color:#F4FFF8;}
+#adminView .admin-access-note span{
+  flex:1;color:#BED1C4!important;font-size:10px!important;
+  line-height:1.3!important;
+}
+#adminView .fz-title-with-help{display:flex;align-items:center;gap:6px;}
+#adminView .fz-title-with-help h2{margin:0!important;}
+#adminView .fz-help-button{
+  display:grid;place-items:center;flex:0 0 27px;
+  width:27px;height:27px;min-width:27px;min-height:27px;
+  padding:0!important;margin:0;
+  background:#20382C!important;color:var(--fz-green)!important;
+  border:1.5px solid var(--fz-green-border)!important;
+  border-radius:50%!important;
+  font-family:var(--brand-font-ui)!important;
+  font-size:13px!important;font-weight:800!important;line-height:1!important;
+  cursor:pointer;
+}
+#adminView .fz-help-button:hover,#adminView .fz-help-button:focus-visible{
+  background:#284B36!important;outline:2px solid var(--fz-green);
+  outline-offset:2px;
+}
+#adminView .admin-person-permissions>summary:focus-visible,
+#adminView .admin-permission-row-summary:focus-visible{
+  outline:2px solid var(--fz-green)!important;outline-offset:-3px!important;
+}
+#adminView .admin-toggle-title .fz-help-button{flex-basis:25px;width:25px;height:25px;min-width:25px;min-height:25px;}
+#adminView .compact-box-head small{display:none;}/* Tooltips replace auxiliary sentences in this section. */
+#adminView .admin-help-toggle{min-height:39px!important;}
+#adminView .admin-help-toggle .admin-toggle-title{font-size:12px;}
+.fz-help-popover{
+  position:fixed;bottom:max(16px,env(safe-area-inset-bottom,0px));
+  left:12px;right:12px;margin:0 auto;
+  max-width:375px;max-height:min(330px,70vh);
+  padding:12px 13px;z-index:99999;overflow:auto;
+  background:#19241F!important;color:#F4FFF8!important;
+  border:1.5px solid #93BBA1;border-radius:12px;
+  box-shadow:0 10px 35px rgba(0,0,0,.6);
+}
+.fz-help-popover[hidden]{display:none!important;}
+.fz-help-popover-top{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.fz-help-popover-top strong{font-size:12px;color:var(--fz-green);}
+.fz-help-popover .fz-help-close{
+  border:1px solid #708A78;background:#25372B;color:#fff;
+  width:30px;height:30px;min-width:30px;border-radius:8px;
+  font-size:19px;line-height:1;cursor:pointer;
+}
+.fz-help-popover .fz-help-popover-text{
+  margin:9px 0 0;font-size:12px;line-height:1.55;color:#E8F8ED;
+  overflow-wrap:anywhere;
+}
+.fz-help-popover .fz-help-close:focus-visible{outline:2px solid var(--fz-green);outline-offset:2px;}
+@media(max-width:700px){
+  #adminView .admin-permission-options{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  #adminView .admin-add-row{grid-template-columns:minmax(0,1fr)!important;}
+  #adminView .admin-add-actions{width:100%;justify-content:flex-end;}
+  #adminView .admin-add-actions button.secondary-button{flex:1;}
+  #adminView .admin-access-note{flex-wrap:wrap;}
+  #adminView .admin-access-note span{flex-basis:100%;order:3;}
+}
+@media(max-width:355px){
+  #adminView .admin-panel{padding:10px!important;}
+  #adminView .admin-permission-row-summary{padding:7px 8px;}
+  #adminView .admin-permission-options{gap:5px;padding:7px;}
+  #adminView .admin-permission-options label{font-size:10px!important;padding:5px 6px!important;}
+  #adminView .admin-person-permissions>summary{padding:7px 8px!important;}
+}
+
+
+/* FO-CHG-016: ensure title/help form heads align on all screen widths. */
+#adminView .admin-box-title{display:flex!important;align-items:center!important;gap:6px!important;flex-wrap:wrap;}
+#adminView .admin-box-title strong{min-width:0!important;overflow-wrap:anywhere;}
+#adminView .admin-box-title .fz-help-button{flex:0 0 25px;width:25px;height:25px;min-width:25px;min-height:25px;}
+#adminView .compact-box-head>div.admin-box-title{display:flex!important;}
