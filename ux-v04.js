@@ -678,7 +678,7 @@
         .finally(()=>{if(state.geoPromise===promise){state.locationBusy=false;state.geoPromise=null;}sync();});
     });
     input.addEventListener("keydown",event=>{
-      if(event.key==="Enter"&&!search.disabled){event.preventDefault();search.click();}
+      if(event.key==="Enter"){event.preventDefault();if(!search.disabled)search.click();}
     });
     actions.append(auto,search);box.appendChild(actions);
     const info=document.createElement("div");info.className="gps-exec-status";
@@ -1502,6 +1502,8 @@
 
   async function resolveExplorationMunicipality(lat,lng,key="coordenadas"){
     const status=document.querySelector('[data-gps-city-for="'+css(key)+'"]');
+    const currentCoordinate=()=>!!state.gps&&Number(state.gps.lat)===Number(lat)&&Number(state.gps.lng)===Number(lng);
+    if(!currentCoordinate())return"";
     const fallback=detectAmbMunicipalityOffline(lat,lng)||detectConfiguredCityOffline(lat,lng);
     state.geoLookupCancelled=false;
 
@@ -1514,7 +1516,7 @@
 
     if(status)status.textContent="Municipio: consultando Maestro Territorial…";
     const data=await queryExplorationEnrichment(lat,lng,"");
-    if(state.geoLookupCancelled)return"";
+    if(state.geoLookupCancelled||!currentCoordinate())return"";
     if(data?.cityStatus==="DENTRO"&&data.city)return data.city;
 
     let observed="";
@@ -1522,6 +1524,7 @@
     const timer=setTimeout(()=>controller.abort(),5500);
     try{observed=await reverseGeocodeCity(lat,lng,controller.signal);}catch(_){}
     finally{clearTimeout(timer);}
+    if(!currentCoordinate())return"";
 
     if(observed){
       applyDetectedCity(observed,"reverse-geocode");
