@@ -51,3 +51,8 @@ Archivos modificados:
 - service-worker.js: commit 832ef23fd2eaf94d000544c1f41e984ea7ea8b5f
 
 Registros: [FO-CHG-006](https://docs.google.com/spreadsheets/d/1InVJe0iR0-GAebf-SB5sa9fZRcNmm8N1ShU62Pu-YAc/edit), [VIS-009](https://docs.google.com/spreadsheets/d/1khSXy3s44k6wuRrIjP5-an9C5Kr1qPpAF6iWECKrI3c/edit). CSS comprobado estáticamente, incluyendo balance de llaves, enlaces, cache bust y persistencia de lógica. Falta prueba manual de usabilidad, zoom, offline/PWA, permisos, pasos, mapa/GPS y publicación Vercel. Revertir 3 commits en caso de regresión.
+
+
+### FO-CHG-006B — Extensión transversal a inicio, acceso, resultados, competencia y administración
+Con el mismo cambio aprobado se añadió una capa móvil final de consistencia (marcador `FBZ-DENSITY-20261010-06B`). Incluye caja de inicio Google, cabecera, navegación, KPI, filtros de resultados, tarjetas de biblioteca, títulos de mapa y resúmenes de administración. La versión desplegable final del CSS es `20261010-07`; caché PWA `fibrazo-forms-v0.8.90-20261010-07`.
+Commits: `5d3a0ee38e6684c1369ff49f590bc96675365327` (CSS), `022504418768836d67e9517b8cffcb31c3b49bc2` (HTML), `768403714be8db88ee2213140861b1e9b244b2d9` (SW). No se modificó backend o interpretación de respuestas. Verificación visual publicada aún pendiente por limitaciones de acceso a Vercel.
