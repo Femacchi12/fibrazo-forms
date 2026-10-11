@@ -69,3 +69,9 @@ Cambio solicitado con captura Android: diferenciar visualmente tarjetas de Infra
 - Cache PWA `fibrazo-forms-v0.8.90-20261010-08` commit `ef4e945b77b5cf1f31952846e5e0e8e72badd03a`.
 - Drive: [FO-CHG-007](https://docs.google.com/spreadsheets/d/1InVJe0iR0-GAebf-SB5sa9fZRcNmm8N1ShU62Pu-YAc/edit), [VIS-010](https://docs.google.com/spreadsheets/d/1khSXy3s44k6wuRrIjP5-an9C5Kr1qPpAF6iWECKrI3c/edit).
 - Verificación estática de archivos pendiente de cerrar; publicación Vercel y pruebas autenticadas/visuales de móvil, escritorio y PWA **no confirmadas**.
+
+## FO-CHG-008 — Bordes v2 después de verificar producción (2026-10-10)
+El usuario seguía viendo bordes similares. El alias Vercel retornó READY en commit ef4e945b, que incluía CSS v=20261010-08. La causa detectada fue el contraste insuficiente, no la ausencia de publicación.
+Se implementó el bloque CSS FBZ-FIELD-OUTLINES-V2-20261010-09: borde neutro de doble trazo visual #A5BFB0 más línea interior de 3 px #8CC5A5 por pregunta. Al foco se usa #43FFA5; con error #EF6B72. Paneles generales tienen borde #879E90. Sin cambios de tamaño, lógica o datos.
+Commits: CSS 830861bc861fb9a6cebf5de24d8a3e4ac7e6b617; index/cache CSS 11b2660e4207b6bcf01669c93706ea377625e166; PWA SW ef10f4582b83bdface980238940e3386c49ce45a.
+Registro en Drive: FO-CHG-008 (CAMBIOS) y VIS-011 (PREFERENCIAS_DASH). Publicación nueva versión 09 y prueba visual autenticada pendientes.
