@@ -239,3 +239,123 @@ table,table *, .table-scroll, .table-scroll *, .table-wrap, .table-wrap *, .reco
  .kpi strong,.map-kpis .kpi strong{font-size:24px!important;line-height:1.15!important;}
  .app-nav,.intro-panel,.form-workspace,.records{margin-bottom:12px!important;}
 }
+
+
+/* FBZ-FORMS-PREVIEW-COMPACT-20261010-05
+   Approved field-first layout: visible preview = title + open action + details disclosure.
+   Removed informational chips from the preview render function; old CSS kept for compatibility.
+   Every selector here is visual only, leaving GPS, submission and business logic untouched. */
+
+/* The new preview pattern applies to desktop and mobile. */
+#formCards .form-card{
+  display:flex;flex-direction:column;min-width:0;
+  padding:12px!important;gap:0;border-radius:13px;
+}
+#formCards .form-card .form-card-title{
+  display:block;margin:0 0 10px!important;
+  font-size:18px!important;font-weight:700;line-height:1.26!important;
+  letter-spacing:-.015em;overflow-wrap:anywhere;
+}
+#formCards .form-card .form-open-button{
+  display:block;width:100%;height:40px!important;min-height:40px!important;
+  padding:7px 12px!important;border-radius:10px!important;
+  font-size:13px!important;font-weight:750!important;line-height:1.2!important;
+  background:var(--brand-primary)!important;border-color:var(--brand-primary)!important;
+  color:#00160b!important;
+}
+#formCards .form-card-details{
+  display:block;min-width:0;margin-top:8px;
+  font-family:var(--brand-font-ui);
+}
+#formCards .form-card-details summary{
+  display:flex;align-items:center;justify-content:space-between;
+  list-style:none;cursor:pointer;min-height:32px;
+  padding:5px 2px!important;color:#bbd0c5;font-size:11px!important;
+  font-weight:650;letter-spacing:.01em;user-select:none;
+}
+#formCards .form-card-details summary::-webkit-details-marker{display:none}
+#formCards .form-card-details summary::after{content:"⌄";font-size:15px;line-height:1;}
+#formCards .form-card-details[open] summary::after{content:"⌃"}
+#formCards .form-card-details summary:focus-visible{outline:2px solid var(--brand-primary);outline-offset:2px;border-radius:5px;}
+#formCards .form-card-details-body{
+  display:grid;gap:10px;min-width:0;padding:12px 0 2px;
+  border-top:1px solid var(--fz-border);
+}
+#formCards .form-card-details-meta{
+  display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;
+}
+#formCards .form-card-details-body>p{
+  margin:0!important;color:var(--fz-muted);
+  font-size:12px!important;line-height:1.45!important;
+}
+#formCards .form-card-details .private-form-link{
+  min-width:0;margin:0!important;padding:9px!important;
+  border-radius:10px!important;
+}
+#formCards .form-card-details .private-form-link>div{min-width:0;overflow:hidden;}
+#formCards .form-card-details .private-form-link a{
+  display:block;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+#formCards .form-card-details .copy-private-link{
+  width:auto!important;min-width:68px!important;min-height:34px!important;height:34px!important;
+  padding:5px 9px!important;font-size:11px!important;border-radius:9px!important;
+}
+#formCards .form-card-details .form-db-link{
+  width:max-content!important;max-width:100%;min-height:34px!important;
+  padding:7px 10px!important;font-size:11px!important;
+  border-radius:9px!important;text-decoration:underline;
+}
+/* Keep all previous feature tags absent: renderCards no longer generates .form-meta. */
+#formCards .form-card .form-meta{display:none!important;}
+@media(max-width:680px){
+  :root{
+    --fzo-touch-primary:40px;
+    --fzo-touch-secondary:36px;
+    --fzo-touch-choice:46px;
+  }
+  #formCards .form-card{padding:10px!important;border-radius:12px!important;}
+  #formCards .form-card .form-card-title{font-size:16px!important;line-height:1.25!important;margin-bottom:8px!important;}
+  #formCards .form-card .form-open-button{
+    height:38px!important;min-height:38px!important;
+    padding:6px 10px!important;font-size:12px!important;border-radius:9px!important;
+  }
+  #formCards .form-card-details{margin-top:5px;}
+  #formCards .form-card-details summary{min-height:30px!important;font-size:11px!important;}
+  #formCards .form-card-details-body{padding-top:10px;gap:8px;}
+  #formCards .form-card-details .copy-private-link,
+  #formCards .form-card-details .form-db-link{min-height:34px!important;font-size:11px!important;}
+  .form-cards{gap:9px!important;margin-top:10px!important;}
+  .form-mode .operator-brand-field,
+  .form-workspace .operator-brand-field{
+    min-height:0!important;padding:9px!important;border-radius:12px!important;
+  }
+  .form-mode .operator-brand-field>label,
+  .form-workspace .operator-brand-field>label{
+    font-size:12px!important;line-height:1.25!important;margin-bottom:6px!important;
+  }
+  .form-mode .operator-brand-field .binary-toggle-button,
+  .form-mode .binary-toggle-button,
+  .form-workspace .binary-toggle-button{
+    height:46px!important;min-height:46px!important;
+    padding:7px 10px!important;border-radius:10px!important;
+  }
+  .form-mode .binary-toggle-button .toggle-state,
+  .form-workspace .binary-toggle-button .toggle-state{font-size:15px!important;line-height:1.2!important;}
+  .form-mode .binary-toggle-button .toggle-hint,
+  .form-workspace .binary-toggle-button .toggle-hint{font-size:10px!important;line-height:1.2!important;}
+  .operator-memory-inline button,
+  .operator-memory-inline.infrastructure-memory-inline button{
+    min-height:40px!important;padding:7px 8px!important;font-size:12px!important;
+  }
+  .form-actions .primary-button,.form-actions .secondary-button,
+  #mapLocateMe,#mapStartTracking,#mapStopTracking,#mapClearRoute{
+    min-height:40px!important;padding:7px 10px!important;font-size:12px!important;
+  }
+  .map-head-actions button,.map-command-left button,.map-command-row button{
+    min-height:38px!important;padding:6px 8px!important;font-size:12px!important;
+  }
+  .kpi,.map-kpis .kpi{min-height:79px!important;padding:10px!important;}
+  .kpi strong,.map-kpis .kpi strong{font-size:22px!important;margin:6px 0 3px!important;}
+  .kpi span,.map-kpis .kpi span{font-size:10px!important;}
+  .app-nav,.intro-panel,.form-workspace,.records{margin-bottom:9px!important;}
+}
