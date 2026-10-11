@@ -56,3 +56,16 @@ Registros: [FO-CHG-006](https://docs.google.com/spreadsheets/d/1InVJe0iR0-GAebf-
 ### FO-CHG-006B — Extensión transversal a inicio, acceso, resultados, competencia y administración
 Con el mismo cambio aprobado se añadió una capa móvil final de consistencia (marcador `FBZ-DENSITY-20261010-06B`). Incluye caja de inicio Google, cabecera, navegación, KPI, filtros de resultados, tarjetas de biblioteca, títulos de mapa y resúmenes de administración. La versión desplegable final del CSS es `20261010-07`; caché PWA `fibrazo-forms-v0.8.90-20261010-07`.
 Commits: `5d3a0ee38e6684c1369ff49f590bc96675365327` (CSS), `022504418768836d67e9517b8cffcb31c3b49bc2` (HTML), `768403714be8db88ee2213140861b1e9b244b2d9` (SW). No se modificó backend o interpretación de respuestas. Verificación visual publicada aún pendiente por limitaciones de acceso a Vercel.
+
+
+## FO-CHG-007 — Delimitación de ítems y contornos de paneles (2026-10-10)
+Cambio solicitado con captura Android: diferenciar visualmente tarjetas de Infraestructura, sin sacrificar la densidad v2 ni recalcular indicadores.
+- Normal: borde de pregunta #71877B y sombra interior suave, panel #62766B, ambos **colores auxiliares de interfaz**, no nuevos colores oficiales FIBRAZO.
+- Foco: #43FFA5. Error/invalid: #EF6B72 y prevalece sobre foco. Selecciones 1–5 conservan el verde; estados Sí/No mantienen sus colores y etiquetas. ISP sin operador se mantiene neutral, desconocido amarillo y conocido verde.
+- Cobertura: tarjeta de pregunta, rating con descripción, selección ISP, GPS, fotos, tarjeta preview, KPI, búsqueda del mapa, filtros, tabla y secciones de Administración.
+- No se cambió tamaño, altura, padding, lógica de formularios, datos ni APIs. No se bordea cada celda de tablas.
+- CSS: `brand-alignment.css` marcador `FBZ-FIELD-OUTLINES-20261010-08` commit `77c516ab10321b5bc9cd1172ef37b52ac4747d0b`.
+- HTML: CSS version `?v=20261010-08` commit `ef413916b389c5747b0a509f691d62b4a37dd63c`.
+- Cache PWA `fibrazo-forms-v0.8.90-20261010-08` commit `ef4e945b77b5cf1f31952846e5e0e8e72badd03a`.
+- Drive: [FO-CHG-007](https://docs.google.com/spreadsheets/d/1InVJe0iR0-GAebf-SB5sa9fZRcNmm8N1ShU62Pu-YAc/edit), [VIS-010](https://docs.google.com/spreadsheets/d/1khSXy3s44k6wuRrIjP5-an9C5Kr1qPpAF6iWECKrI3c/edit).
+- Verificación estática de archivos pendiente de cerrar; publicación Vercel y pruebas autenticadas/visuales de móvil, escritorio y PWA **no confirmadas**.
