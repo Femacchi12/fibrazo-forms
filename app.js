@@ -799,7 +799,13 @@
       if(picker)picker.open=false;
       renderCompetitionAnalysis(b.dataset.operator);
       const hasKnowledge=intelligenceRows().some(r=>String(r.data?.operador||"").toLowerCase()===String(b.dataset.operator||"").toLowerCase());
-      if(hasKnowledge){renderOperatorLibrary(b.dataset.operator);$("operatorLibraryCards")?.scrollIntoView({behavior:"smooth",block:"start"});}
+      if(hasKnowledge){
+        const library=$("operatorLibraryDisclosure"),search=$("operatorLibrarySearch");
+        if(search)search.value=""; // La selección territorial tiene prioridad sobre un filtro anterior de búsqueda.
+        if(library)library.open=true;
+        renderOperatorLibrary(b.dataset.operator);
+        (library||$("operatorLibraryCards"))?.scrollIntoView({behavior:"smooth",block:"start"});
+      }
     }));
     const evidence=$("competitionEvidence");if(!evidence)return;
     if(!selectedOperator){evidence.innerHTML='<div class="empty-state">Selecciona un operador para ver puntos y fotografías.</div>';return;}
