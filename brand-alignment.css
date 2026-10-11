@@ -811,3 +811,72 @@ body.form-mode #formWorkspace .operator-memory-inline{
     border-width:1px!important;
   }
 }
+
+
+/* FBZ-FIELD-OUTLINES-V2-20261010-09 · FO-CHG-008
+   Corrección visible tras comparar despliegue real con captura: la primera
+   diferencia resultó demasiado leve. Sin tocar tamaño, padding o datos. */
+:root{
+  --fz-outline-strong:#A5BFB0;
+  --fz-outline-secondary:#879E90;
+  --fz-outline-marker:#8CC5A5;
+}
+body.form-mode #formWorkspace .form-grid>.field{
+  position:relative!important;
+  border:1px solid var(--fz-outline-strong)!important;
+  box-shadow:inset 0 0 0 1px rgba(165,191,176,.65)!important;
+  background:#101714!important;
+}
+/* Línea lateral claramente reconocible, neutra con tinte de marca.
+   Se dibuja encima del fondo, sin ocupar tamaño adicional de la tarjeta. */
+body.form-mode #formWorkspace .form-grid>.field::before{
+  content:"";
+  position:absolute;
+  left:0;top:8px;bottom:8px;
+  width:3px;
+  background:var(--fz-outline-marker);
+  border-radius:0 3px 3px 0;
+  pointer-events:none;
+  opacity:.95;
+}
+body.form-mode #formWorkspace .form-grid>.field:focus-within{
+  border-color:#43FFA5!important;
+  box-shadow:inset 0 0 0 1px rgba(67,255,165,.75)!important;
+}
+body.form-mode #formWorkspace .form-grid>.field:focus-within::before{
+  background:#43FFA5;opacity:1;
+}
+body.form-mode #formWorkspace .form-grid>.field.invalid,
+body.form-mode #formWorkspace .form-grid>.field.invalid:focus-within{
+  border-color:#EF6B72!important;
+  box-shadow:inset 0 0 0 1px rgba(239,107,114,.65)!important;
+}
+body.form-mode #formWorkspace .form-grid>.field.invalid::before{
+  background:#EF6B72!important;opacity:1;
+}
+/* Bordes neutros reconocibles en el resto de las vistas. No se aplica barra
+   verde a paneles generales, porque se reserva para fichas de preguntas. */
+#formCards .form-card,
+.app-nav,.intro-panel,.records,
+.competition-analysis,.operator-library,.exploration-map-panel,
+.filters-panel,.summary-card,.kpi,.map-kpis .kpi,
+.operator-library-card,.auth-card,.hero-header,
+.admin-system-card,.admin-compact-section{
+  border-color:var(--fz-outline-secondary)!important;
+  box-shadow:inset 0 0 0 1px rgba(135,158,144,.20);
+}
+/* Las cajas auxiliares quedan delimitadas, no más grandes. */
+body.form-mode #formWorkspace .segment-detail:not([hidden]),
+body.form-mode #formWorkspace .gps-value,
+body.form-mode #formWorkspace .photo-slot,
+body.form-mode #formWorkspace .operator-memory-inline{
+  border-color:var(--fz-outline-strong)!important;
+}
+/* La respuesta/validación seleccionada conserva su borde funcional de color. */
+body.form-mode #formWorkspace .segment-option.selected,
+body.form-mode #formWorkspace .binary-toggle-button.is-yes{
+  border-color:#43FFA5!important;
+}
+body.form-mode #formWorkspace .field.invalid .segment-detail:not([hidden]){
+  border-color:#EF6B72!important;
+}
