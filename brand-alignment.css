@@ -359,3 +359,245 @@ table,table *, .table-scroll, .table-scroll *, .table-wrap, .table-wrap *, .reco
   .kpi span,.map-kpis .kpi span{font-size:10px!important;}
   .app-nav,.intro-panel,.form-workspace,.records{margin-bottom:9px!important;}
 }
+
+
+/* FBZ-DENSITY-20261010-06 — MOBILE EXECUTIVE FIELD UI
+   Documented as FO-CHG-006. This final override intentionally supersedes
+   previous mobile density experiments. Structure and field values unchanged.
+   Controls retain distinct red/green and selected state cues. */
+@media (max-width:680px) {
+  :root {
+    --fz-compact-gap:7px;
+    --fz-compact-radius:10px;
+    --fz-compact-control:40px;
+    --fz-compact-secondary:36px;
+  }
+  body.form-mode main {width:calc(100% - 20px)!important; padding-top:6px!important;}
+  body.form-mode #formWorkspace {
+    padding:9px!important; margin-bottom:9px!important;
+    border-radius:12px!important;
+  }
+  /* The old sticky toolbar obscured content and duplicated user email. */
+  body.form-mode #formWorkspace .workspace-topbar {
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    grid-template-areas:"back database" "network step";
+    gap:3px 7px!important;
+    position:sticky!important;top:0!important;z-index:44!important;
+    margin:0 0 7px!important;padding:5px 7px!important;
+    border-radius:9px!important;
+    min-height:0!important;align-items:center!important;
+    background:rgba(9,13,11,.96)!important;
+    backdrop-filter:blur(8px);
+  }
+  #formWorkspace .workspace-topbar #closeForm {
+    grid-area:back;
+    width:100%!important;min-width:0!important;
+    height:34px!important;min-height:34px!important;
+    padding:5px 7px!important;font-size:11px!important;
+    font-weight:650!important;line-height:1.2!important;
+    border-radius:8px!important;white-space:nowrap!important;
+  }
+  #formWorkspace .workspace-topbar .workspace-status {
+    display:contents!important;
+  }
+  #formWorkspace #formDatabaseLink {
+    grid-area:database;
+    width:100%!important;min-width:0!important;
+    min-height:34px!important;height:34px!important;
+    padding:5px 7px!important;font-size:11px!important;
+    border-radius:8px!important;line-height:1.2!important;
+    white-space:nowrap!important;
+  }
+  #formWorkspace #formIdentityBadge {display:none!important;}
+  #formWorkspace #formNetworkStatus {
+    grid-area:network;justify-self:start;
+    font-size:10px!important;line-height:1.1!important;
+  }
+  #formWorkspace #formStepCounter {
+    grid-area:step;justify-self:end;
+    font-size:10px!important;margin:0!important;line-height:1.1!important;
+  }
+  /* Stepper and headings form a compact but recognizable progress context. */
+  body.form-mode #formWorkspace .workspace-hero {
+    padding:9px!important;gap:7px!important;margin-bottom:7px!important;
+    border-radius:10px!important;
+  }
+  body.form-mode #formWorkspace .workspace-hero h1 {
+    font-size:17px!important;line-height:1.2!important;margin:3px 0!important;
+  }
+  body.form-mode #formWorkspace .workspace-hero p,
+  body.form-mode #formWorkspace .form-user-card small {
+    font-size:11px!important;line-height:1.35!important;
+  }
+  body.form-mode #formWorkspace .form-user-card {padding:8px!important;}
+  body.form-mode #formWorkspace .section-stepper {
+    gap:5px!important;margin:7px 0!important;padding:0 0 3px!important;
+  }
+  body.form-mode #formWorkspace .section-stepper .step {
+    height:38px!important;min-height:38px!important;
+    padding:5px 7px!important;gap:5px!important;
+    min-width:96px!important;border-radius:9px!important;
+  }
+  body.form-mode #formWorkspace .section-stepper .step.future {min-width:38px!important;}
+  body.form-mode #formWorkspace .section-stepper .step span {
+    width:21px!important;height:21px!important;font-size:10px!important;
+    flex:none;
+  }
+  body.form-mode #formWorkspace .section-stepper .step small {
+    font-size:10px!important;line-height:1.1!important;
+  }
+  body.form-mode #formWorkspace .section-heading {
+    margin:6px 0 9px!important;padding:3px 0!important;
+  }
+  body.form-mode #formWorkspace .section-heading>span {
+    font-size:9px!important;line-height:1.2!important;
+  }
+  body.form-mode #formWorkspace .section-heading h2 {
+    font-size:19px!important;margin:4px 0!important;line-height:1.17!important;
+  }
+  body.form-mode #formWorkspace .section-heading p {
+    font-size:11px!important;line-height:1.38!important;margin-top:3px!important;
+  }
+  /* Reduce vertical repetition across ALL form questions. */
+  body.form-mode #formWorkspace .form-grid {
+    gap:7px!important;margin-top:9px!important;
+  }
+  body.form-mode #formWorkspace .form-grid>.field {
+    min-width:0!important;min-height:0!important;
+    padding:9px!important;border-radius:10px!important;
+    border-width:1px!important;
+  }
+  body.form-mode #formWorkspace .form-grid>.field label.field-label {
+    margin:0 0 6px!important;
+    font-size:12px!important;font-weight:700!important;line-height:1.3!important;
+  }
+  body.form-mode #formWorkspace .field-help {
+    font-size:10px!important;line-height:1.3!important;margin-top:4px!important;
+  }
+  /* Operator yes/no: keep high contrast, drop oversized padding and labels. */
+  body.form-mode #formWorkspace .form-grid>.field.operator-brand-field {
+    padding:7px 9px!important;border-radius:10px!important;
+  }
+  body.form-mode #formWorkspace .field.operator-brand-field>label {
+    font-size:11.5px!important;margin-bottom:4px!important;
+    font-weight:750!important;line-height:1.2!important;
+  }
+  body.form-mode #formWorkspace .binary-toggle-button {
+    height:40px!important;min-height:40px!important;
+    padding:6px 10px!important;border-radius:9px!important;
+    gap:6px!important;box-sizing:border-box!important;
+  }
+  body.form-mode #formWorkspace .binary-toggle-button .toggle-state {
+    font-size:14px!important;font-weight:750!important;line-height:1.1!important;
+  }
+  body.form-mode #formWorkspace .binary-toggle-button .toggle-hint {
+    font-size:10px!important;line-height:1.1!important;
+    font-weight:500!important;
+  }
+  body.form-mode #formWorkspace .operator-memory-inline {
+    gap:6px!important;margin:0 0 7px!important;
+    padding:5px!important;border-width:1px!important;
+    border-radius:10px!important;
+  }
+  body.form-mode #formWorkspace .operator-memory-inline button {
+    height:38px!important;min-height:38px!important;
+    padding:4px 8px!important;font-size:11px!important;
+    font-weight:700!important;line-height:1.12!important;
+    border-radius:9px!important;
+  }
+  /* Five-point rating: concise score cards + explanatory label. */
+  body.form-mode #formWorkspace .segmented-control {
+    gap:5px!important;margin:0!important;
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  }
+  body.form-mode #formWorkspace .segment-option {
+    height:37px!important;min-height:37px!important;
+    padding:4px 2px!important;font-size:12px!important;
+    font-weight:750!important;border-radius:8px!important;
+  }
+  body.form-mode #formWorkspace .segment-detail {
+    min-height:0!important;padding:7px 9px!important;
+    margin:7px 0 0!important;border-radius:8px!important;
+    font-size:11px!important;font-weight:600!important;
+    line-height:1.37!important;
+  }
+  /* ISP selection and common controls stay single-line where possible. */
+  body.form-mode #formWorkspace .isp-field-state {
+    padding:4px!important;border-width:1px!important;border-radius:9px!important;
+  }
+  body.form-mode #formWorkspace .isp-autocomplete>input,
+  body.form-mode #formWorkspace input[type="text"],
+  body.form-mode #formWorkspace input[type="number"],
+  body.form-mode #formWorkspace input[type="date"],
+  body.form-mode #formWorkspace select {
+    min-height:39px!important;height:39px!important;
+    padding:7px 10px!important;border-radius:9px!important;
+    font-size:16px!important;line-height:1.15!important;
+    box-sizing:border-box!important;
+  }
+  body.form-mode #formWorkspace .isp-autocomplete>input {
+    padding-right:40px!important;
+  }
+  body.form-mode #formWorkspace .isp-clear-button {
+    width:29px!important;height:29px!important;
+    min-height:29px!important;font-size:18px!important;
+    right:5px!important;border-radius:7px!important;
+  }
+  body.form-mode #formWorkspace textarea {
+    min-height:68px!important;padding:7px 10px!important;
+    font-size:14px!important;line-height:1.4!important;
+  }
+  body.form-mode #formWorkspace .choice-grid {gap:6px!important;}
+  body.form-mode #formWorkspace .choice {
+    min-height:35px!important;padding:6px 8px!important;
+    font-size:11px!important;line-height:1.2!important;
+  }
+  /* Compact sticky footer without obscuring later questions. */
+  body.form-mode #formWorkspace .form-actions {
+    gap:8px!important;margin:7px 0 0!important;
+    padding:6px 0 max(5px,env(safe-area-inset-bottom))!important;
+    min-height:0!important;
+  }
+  body.form-mode #formWorkspace .form-actions .primary-button,
+  body.form-mode #formWorkspace .form-actions .secondary-button {
+    height:39px!important;min-height:39px!important;
+    width:auto!important;max-width:100%!important;
+    padding:6px 10px!important;
+    font-size:12px!important;line-height:1.15!important;
+    font-weight:700!important;border-radius:9px!important;
+  }
+  body.form-mode #formWorkspace .form-actions .primary-button {flex:1!important;}
+  /* Shared Forms menu, chips, results, maps and admin spacing. */
+  #formCards .form-card {padding:9px!important;}
+  #formCards .form-card .form-card-title {
+    font-size:15px!important;margin:0 0 6px!important;
+  }
+  #formCards .form-card .form-open-button {
+    height:36px!important;min-height:36px!important;
+    padding:6px 10px!important;font-size:12px!important;
+  }
+  #formCards .form-card-details {margin-top:3px!important;}
+  .app-nav .view-switch button {
+    min-height:39px!important;padding:6px 7px!important;
+    font-size:12px!important;border-radius:9px!important;
+  }
+  .kpis,.map-kpis {gap:7px!important;margin-bottom:9px!important;}
+  .kpi,.map-kpis .kpi {min-height:74px!important;padding:8px!important;border-radius:10px!important;}
+  .kpi strong,.map-kpis .kpi strong {
+    font-size:21px!important;margin:5px 0 3px!important;
+  }
+  .exploration-map-panel,.records,.operator-library,.competition-analysis {
+    padding:11px!important;border-radius:11px!important;
+  }
+  .map-head-actions button,.map-command-left button,.map-command-row button,
+  #mapLocateMe,#mapStartTracking,#mapStopTracking,#mapClearRoute,
+  .map-search-box #mapSearchButton {
+    min-height:38px!important;padding:5px 8px!important;
+    font-size:11px!important;line-height:1.2!important;
+  }
+  .map-search-box input {
+    min-height:35px!important;height:35px!important;
+    font-size:14px!important;padding:4px 3px!important;
+  }
+}
