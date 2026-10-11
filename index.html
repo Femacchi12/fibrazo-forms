@@ -287,7 +287,7 @@
   
     <section id="mapView" hidden>
       <section class="kpis map-kpis">
-        <article class="kpi"><span>PUNTOS VISIBLES</span><strong id="mapPointCount">0</strong><small>exploraciones</small></article>
+        <article class="kpi"><span>PUNTOS VISIBLES</span><strong id="mapPointCount">0</strong><small>registros geolocalizados</small></article>
         <article class="kpi"><span>VIRTUAL</span><strong id="mapVirtualCount">0</strong><small>puntos</small></article>
         <article class="kpi"><span>PRESENCIAL</span><strong id="mapPresentialCount">0</strong><small>puntos</small></article>
         <article class="kpi"><span>CIUDADES</span><strong id="mapCityCount">0</strong><small>en filtro</small></article>
@@ -337,10 +337,11 @@
         <div id="mapFiltersPanel" class="map-filters-panel" hidden>
           <div class="map-filters">
             <select id="mapCityFilter" aria-label="Filtrar ciudad"><option value="all">Todas las ciudades</option></select>
-            <select id="mapTypeFilter" aria-label="Filtrar tipo de exploración">
-              <option value="all">Virtual + presencial</option>
-              <option value="Virtual">Virtual</option>
-              <option value="Presencial">Presencial</option>
+            <select id="mapTypeFilter" aria-label="Filtrar tipo de formulario">
+              <option value="all">Todos los formularios con puntos</option>
+              <option value="Virtual">Exploración virtual · ■</option>
+              <option value="Presencial">Exploración presencial · ●</option>
+              <option value="Inteligencia de operadores">Inteligencia de operadores · ▲</option>
             </select>
             <select id="mapOperatorFilter" aria-label="Filtrar operador">
               <option value="all">Todos los operadores</option>
