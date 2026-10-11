@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.css">
   <link rel="stylesheet" href="/styles.css?v=2026.10.08.68">
-  <link rel="stylesheet" href="/brand-alignment.css?v=20261011-14">
+  <link rel="stylesheet" href="/brand-alignment.css?v=20261011-15">
 </head>
 <body class="auth-pending">
   <section id="authGate" class="auth-gate" aria-live="polite">
@@ -227,9 +227,17 @@
       </section>
 
       <section class="panel operator-library">
-        <div class="section-title"><div><span>BIBLIOTECA DE IDENTIFICACIÓN</span><h2>Inteligencia de operadores</h2><p>Consulta fichas técnicas y visuales para reconocer ISPs durante el trabajo de campo.</p></div></div>
-        <div class="operator-library-tools"><input id="operatorLibrarySearch" type="search" placeholder="Buscar operador, caja, marquilla, tensor…" autocomplete="off"></div>
-        <div id="operatorLibraryCards" class="operator-library-cards"><div class="empty-state">Todavía no hay fichas de operadores registradas.</div></div>
+        <details id="operatorLibraryDisclosure" class="operator-library-disclosure">
+          <summary class="operator-library-disclosure-trigger">
+            <span class="operator-library-disclosure-copy"><small>BIBLIOTECA DE IDENTIFICACIÓN</small><strong>Inteligencia de operadores</strong></span>
+            <span class="operator-library-disclosure-action"><span class="library-show-label">Ver fichas</span><span class="library-hide-label">Ocultar fichas</span><span class="library-arrow" aria-hidden="true">▾</span></span>
+          </summary>
+          <div class="operator-library-disclosure-content">
+            <p class="operator-library-intro">Consulta fichas técnicas y visuales para reconocer ISPs durante el trabajo de campo.</p>
+            <div class="operator-library-tools"><input id="operatorLibrarySearch" type="search" aria-label="Buscar fichas de inteligencia de operadores" placeholder="Buscar operador, caja, marquilla, tensor…" autocomplete="off"></div>
+            <div id="operatorLibraryCards" class="operator-library-cards"><div class="empty-state">Todavía no hay fichas de operadores registradas.</div></div>
+          </div>
+        </details>
       </section>
 
       <section class="panel competition-analysis">
@@ -417,7 +425,7 @@
           <button id="mapLocateMe" class="primary-button compact" type="button">◎ Mi ubicación</button>
           <button id="mapStartTracking" class="primary-button compact" type="button">▶ Iniciar recorrido</button>
           <button id="mapClearRoute" class="secondary-button compact" type="button">Limpiar recorrido</button>
-          <label class="map-follow-toggle"><input id="mapFollowToggle" type="checkbox" checked> Seguir mi ubicación</label>
+          <label class="map-follow-toggle"><input id="mapFollowToggle" type="checkbox" checked><span>Seguir mi ubicación</span></label>
         </div>
 
         <div id="mapCanvasWrap" class="map-canvas-wrap">
@@ -474,7 +482,7 @@
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
   <script src="/forms-config.js?v=2026.10.08.68"></script>
-  <script src="/app.js?v=2026.10.11.14"></script>
+  <script src="/app.js?v=2026.10.11.15"></script>
   <script src="/access-v03.js?v=2026.10.08.68"></script>
   <script src="/offline-v04.js?v=2026.10.08.68"></script>
   <script src="/ux-v04.js?v=2026.10.11.13"></script>
