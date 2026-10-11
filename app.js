@@ -293,7 +293,8 @@
     Object.values(forms).forEach((form) => {
       const card = document.createElement("article");
       card.className = "form-card";
-      const chips = (form.meta || []).map((x) => '<span class="meta-chip">' + escapeHtml(x) + "</span>").join("");
+      // Minimal preview: only the title and main action are visible initially.
+      // All descriptive and administrative fields remain available on demand.
       const privateSlug=String(form.slug||form.id||"").toLowerCase();
       const privateUrl=location.origin+"/form/"+encodeURIComponent(privateSlug);
       const policy=window.FIBRAZO_FORM_POLICIES?.[form.id]||{};
@@ -301,18 +302,23 @@
         ?'<a class="secondary-button compact form-db-link" href="'+escapeHtml(policy.databaseUrl)+'" target="_blank" rel="noopener">↗ Base de datos</a>'
         :"";
       card.innerHTML =
-        '<div class="form-card-top">' +
-          "<div><div class=\"eyebrow\">" + escapeHtml(form.eyebrow || "FORMULARIO") + "</div><h3>" + escapeHtml(form.name) + "</h3></div>" +
-          '<div class="status-badge">ACTIVO</div>' +
-        "</div>" +
-        "<p>" + escapeHtml(form.description || "") + "</p>" +
-        '<div class="form-meta">' + chips + "</div>" +
-        '<div class="private-form-link">' +
-          '<div><span>ACCESO DIRECTO PRIVADO</span><a href="'+escapeHtml(privateUrl)+'">'+escapeHtml(privateUrl)+'</a></div>' +
-          '<button class="copy-private-link" type="button" aria-label="Copiar acceso directo">Copiar</button>' +
-        "</div>" +
-        databaseHtml+
-        '<button class="primary-button form-open-button" type="button">Abrir formulario →</button>';
+        '<h3 class="form-card-title">' + escapeHtml(form.name) + '</h3>' +
+        '<button class="primary-button form-open-button" type="button">Abrir formulario →</button>' +
+        '<details class="form-card-details">' +
+          '<summary>Ver detalles</summary>' +
+          '<div class="form-card-details-body">' +
+            '<div class="form-card-details-meta">' +
+              '<span class="eyebrow">' + escapeHtml(form.eyebrow || "FORMULARIO") + '</span>' +
+              '<span class="status-badge">ACTIVO</span>' +
+            '</div>' +
+            '<p>' + escapeHtml(form.description || "") + '</p>' +
+            '<div class="private-form-link">' +
+              '<div><span>ACCESO DIRECTO PRIVADO</span><a href="' + escapeHtml(privateUrl) + '">' + escapeHtml(privateUrl) + '</a></div>' +
+              '<button class="copy-private-link" type="button" aria-label="Copiar acceso directo">Copiar</button>' +
+            '</div>' +
+            databaseHtml +
+          '</div>' +
+        '</details>';
       card.querySelector(".form-open-button").addEventListener("click", () => openForm(form.id));
       card.querySelector(".copy-private-link").addEventListener("click",async(event)=>{
         event.preventDefault();
