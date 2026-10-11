@@ -24,35 +24,93 @@
     }catch(_){forceForms();}
   }
 
+  /* VIS-019: Help text is informational, never a substitute for security warnings. */
+  const helpButton=(topic,copy)=>'<button type="button" class="fz-help-button" data-admin-help="'+esc(copy)+'" aria-label="Ayuda: '+esc(topic)+'" aria-expanded="false" title="Ayuda: '+esc(topic)+'">?</button>';
+  let activeHelpTrigger=null;
+  function closeAdminHelp(restoreFocus=false){
+    const panel=document.getElementById("fzHelpPopover");
+    if(panel)panel.hidden=true;
+    if(activeHelpTrigger?.isConnected){
+      activeHelpTrigger.setAttribute("aria-expanded","false");
+      if(restoreFocus)activeHelpTrigger.focus();
+    }
+    activeHelpTrigger=null;
+  }
+  function showAdminHelp(trigger){
+    if(activeHelpTrigger===trigger){closeAdminHelp();return;}
+    closeAdminHelp();
+    let panel=document.getElementById("fzHelpPopover");
+    if(!panel){
+      panel=document.createElement("div");panel.id="fzHelpPopover";
+      panel.className="fz-help-popover";panel.setAttribute("role","dialog");
+      panel.setAttribute("aria-modal","false");panel.setAttribute("aria-label","Ayuda contextual");
+      panel.innerHTML='<div class="fz-help-popover-top"><strong>Ayuda</strong><button type="button" class="fz-help-close" aria-label="Cerrar ayuda">×</button></div><p class="fz-help-popover-text"></p>';
+      document.body.appendChild(panel);
+    }
+    panel.querySelector(".fz-help-popover-text").textContent=trigger.getAttribute("data-admin-help")||"";
+    panel.hidden=false;trigger.setAttribute("aria-expanded","true");
+    activeHelpTrigger=trigger;
+    if(window.innerWidth>700){
+      const rect=trigger.getBoundingClientRect();
+      const left=Math.max(12,Math.min(rect.left-155,window.innerWidth-350));
+      const top=Math.min(window.innerHeight-panel.offsetHeight-12,rect.bottom+8);
+      panel.style.left=left+"px";panel.style.right="auto";panel.style.top=Math.max(12,top)+"px";panel.style.bottom="auto";
+    }else{
+      panel.style.removeProperty("left");panel.style.removeProperty("right");
+      panel.style.removeProperty("top");panel.style.removeProperty("bottom");
+    }
+    panel.querySelector(".fz-help-close").focus();
+  }
+  document.addEventListener("click",event=>{
+    const target=event.target instanceof Element?event.target:null;
+    if(!target)return;
+    const trigger=target.closest("[data-admin-help]");
+    if(trigger){event.preventDefault();showAdminHelp(trigger);return;}
+    if(target.closest(".fz-help-close")){closeAdminHelp(true);return;}
+    if(activeHelpTrigger&&!target.closest("#fzHelpPopover"))closeAdminHelp();
+  });
+  document.addEventListener("keydown",event=>{
+    if(event.key==="Escape"&&activeHelpTrigger){event.preventDefault();closeAdminHelp(true);}
+  });
+  window.addEventListener("resize",()=>{if(activeHelpTrigger)closeAdminHelp();});
+  window.addEventListener("scroll",()=>{if(activeHelpTrigger)closeAdminHelp();},true);
+
   function renderGlobal(){
     if(!globalHost)return;
     if(!adminMeta.canManageUsers){
       globalHost.hidden=true;globalHost.innerHTML="";return;
     }
     globalHost.hidden=false;
+    const expandedPeople=new Set([...globalHost.querySelectorAll(".admin-person-permissions[open]")].map(e=>e.dataset.adminEmail));
+    const expandedForms=new Set([...globalHost.querySelectorAll(".admin-permission-row[open]")].map(e=>e.dataset.email+"|"+e.dataset.formId));
     const rows=admins.map(a=>{
       const permissionMap=Object.fromEntries((a.permissions||[]).map(p=>[p.formId,p]));
       const formRows=items.map(f=>{
         const p=permissionMap[f.id]||{canView:false,canEditForm:false,canManagePermissions:false,canViewDatabase:false};
         const disabled=a.base?" disabled":"";
-        return '<div class="admin-permission-row" data-permission-row data-email="'+esc(a.email)+'" data-form-id="'+esc(f.id)+'">'+
-          '<div class="admin-permission-form"><strong>'+esc(f.name)+'</strong><small>'+esc(f.id)+'</small></div>'+
-          '<label title="Puede ver y abrir este formulario"><input type="checkbox" data-perm="canView" '+(p.canView?"checked ":"")+disabled+'> Ver</label>'+
-          '<label title="Puede editar estado, experiencia y evidencia del formulario; no modifica las preguntas."><input type="checkbox" data-perm="canEditForm" '+(p.canEditForm?"checked ":"")+disabled+'> Editar configuración</label>'+
-          '<label title="Puede modificar accesos, publicación y permisos del formulario"><input type="checkbox" data-perm="canManagePermissions" '+(p.canManagePermissions?"checked ":"")+disabled+'> Permisos</label>'+
-          '<label title="Puede abrir directamente la hoja donde se guardan las respuestas"><input type="checkbox" data-perm="canViewDatabase" '+(p.canViewDatabase?"checked ":"")+disabled+'> Base</label>'+
-        '</div>';
+        const count=["canView","canEditForm","canManagePermissions","canViewDatabase"].filter(key=>!!p[key]).length;
+        const expanded=expandedForms.has(a.email+"|"+f.id)?" open":"";
+        return '<details class="admin-permission-row" data-permission-row data-email="'+esc(a.email)+'" data-form-id="'+esc(f.id)+'"'+expanded+'>'+
+          '<summary class="admin-permission-row-summary"><div class="admin-permission-form"><strong>'+esc(f.name)+'</strong><small>'+esc(f.id)+'</small></div>'+
+          '<span class="admin-permission-count">'+count+'/4 permisos</span><span class="admin-permission-arrow" aria-hidden="true">▾</span></summary>'+
+          '<div class="admin-permission-options" role="group" aria-label="Permisos de '+esc(f.name)+'">'+
+          '<label><input type="checkbox" data-perm="canView" '+(p.canView?"checked ":"")+disabled+'> Ver</label>'+
+          '<label><input type="checkbox" data-perm="canEditForm" '+(p.canEditForm?"checked ":"")+disabled+'> Editar</label>'+
+          '<label><input type="checkbox" data-perm="canManagePermissions" '+(p.canManagePermissions?"checked ":"")+disabled+'> Permisos</label>'+
+          '<label><input type="checkbox" data-perm="canViewDatabase" '+(p.canViewDatabase?"checked ":"")+disabled+'> Base de datos</label>'+
+          '</div></details>';
       }).join("");
-      return '<details class="admin-person-permissions" '+(a.base?"":"")+'>'+
-        '<summary><div><strong>'+esc(a.email)+'</strong><small>'+(a.base?"Administrador base":"Administrador por permisos")+'</small></div>'+
+      return '<details class="admin-person-permissions" data-admin-email="'+esc(a.email)+'"'+(expandedPeople.has(a.email)?" open":"")+'>'+
+        '<summary><div class="admin-person-identity"><strong>'+esc(a.email)+'</strong><small>'+(a.base?"Administrador base · permisos fijos":"Administrador por permisos")+'</small></div>'+
           (a.base?'<span class="base-badge">BASE</span>':'<span class="count-badge">'+(a.permissions||[]).filter(p=>p.canView).length+' formularios</span>')+
-        '</summary>'+
+          '<span class="admin-person-arrow" aria-hidden="true">▾</span></summary>'+
         '<div class="admin-person-permission-body">'+
-          '<label class="compact-toggle-row admin-create-toggle"><div><strong>Crear formularios</strong><small>Habilita la creación de nuevos formularios desde el dashboard cuando el constructor esté disponible.</small></div><span class="switch"><input type="checkbox" data-user-create="'+esc(a.email)+'" '+(a.canCreateForms?"checked ":"")+(a.base?"disabled":"")+'><i></i></span></label>'+
+          '<div class="compact-toggle-row admin-create-toggle"><div class="admin-create-label"><strong>Crear formularios</strong>'+
+          helpButton("Crear formularios","Permite crear nuevos formularios cuando el constructor esté disponible. No modifica los permisos de acceso a los formularios actuales.")+
+          '</div><label class="admin-create-control" aria-label="Permitir crear formularios"><span class="switch"><input type="checkbox" data-user-create="'+esc(a.email)+'" '+(a.canCreateForms?"checked ":"")+(a.base?"disabled":"")+'><i></i></span></label></div>'+
           '<div class="admin-permission-grid">'+formRows+'</div>'+
           (a.base?"":'<button type="button" class="icon-action danger" data-remove-admin="'+esc(a.email)+'">Quitar administrador</button>')+
-        '</div>'+
-      '</details>';
+        '</div></details>';
     }).join("");
 
     globalHost.innerHTML=
@@ -60,8 +118,9 @@
         '<summary><div><span>ADMINISTRADORES</span><strong>Permisos por formulario</strong></div><div class="summary-right"><b>'+admins.length+' activos</b><i>⌄</i></div></summary>'+
         '<div class="admin-system-body">'+
           '<div class="admin-list-compact admin-permission-list">'+rows+'</div>'+
-          '<div class="compact-add-row"><input id="newAdminEmail" type="email" placeholder="nuevo.admin@empresa.com"><button id="addAdminButton" type="button" class="secondary-button compact">Agregar administrador</button></div>'+
-          '<small>Agregar un administrador no le otorga acceso automático. Después eliges formulario por formulario qué puede ver, editar en la configuración, administrar y si puede abrir la base de datos.</small>'+
+          '<div class="compact-add-row admin-add-row"><input id="newAdminEmail" type="email" placeholder="nuevo.admin@empresa.com" aria-label="Correo del nuevo administrador"><div class="admin-add-actions"><button id="addAdminButton" type="button" class="secondary-button compact">Agregar administrador</button>'+
+          helpButton("Agregar administrador","Agregar un administrador no le otorga acceso automático. Configura los permisos de cada formulario: Ver, Editar, Permisos y Base de datos.")+
+          '</div></div>'+
         '</div>'+
       '</details>';
 
@@ -219,7 +278,7 @@
   }
 
   function toggleRow(key,title,copy,checked){
-    return '<label class="compact-toggle-row"><div><strong>'+esc(title)+'</strong><small>'+esc(copy)+'</small></div><span class="switch"><input type="checkbox" data-field="'+key+'" '+(checked?"checked":"")+'><i></i></span></label>';
+    return '<div class="compact-toggle-row admin-help-toggle"><div class="admin-toggle-title"><strong>'+esc(title)+'</strong>'+helpButton(title,copy)+'</div><label class="admin-toggle-control" aria-label="'+esc(title)+'"><span class="switch"><input type="checkbox" data-field="'+key+'" '+(checked?"checked":"")+'><i></i></span></label></div>';
   }
   function photoSummary(count,mb){
     const n=Number(count||0);return n===0?"Fotos desactivadas":n+" foto"+(n===1?"":"s")+" · "+String(mb||1.5).replace(".",",")+" MB";
