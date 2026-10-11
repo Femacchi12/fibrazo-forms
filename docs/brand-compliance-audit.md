@@ -29,3 +29,12 @@ Se compactaron los botones de navegación, se limitaron tamaños KPI, se redujo 
 
 ## FBZ-UI-DENSITY-20261010-03 — tamaños móviles estandarizados
 Solicitud aprobada por usuario tras capturas: compactar Abrir formulario y bloques TIGO/CLARO Sí/No, aplicando reglas coherentes a Forms. Token CSS: primario 46px, secundario 44px, selector visual 54px, radio 12px, separación 10px. Nombres operador 13px, valor Sí/No 17px, hint 11px, padding tarjeta 12px, cards generales 14px, KPI 88px min. Mantener un área táctil ≥44px y semántica de operador. Archivo modificado: `brand-alignment.css` commit `eb7336d1bfb8ccd07fe11e123c856e27aa9a162f`. Cache bust `index.html` commit `10fbb8432f8fffcc837a966041b1a4c7850d5d2e`. Control de cambio: `FO-CHG-004` en hoja Cambios Forms. Estado: implementado en GitHub, pendiente prueba de móvil autenticada y despliegue; no se modificaron cálculos ni backend.
+
+
+## FO-CHG-005 — Previews minimizadas y escala móvil compacta (2026-10-10)
+- Solicitud: mostrar solo **título + Abrir formulario + Ver detalles** inicialmente. Descripción, categoría, estado, enlace, Copiar y Base de datos se consultan al desplegar; los chips informativos no se generan.
+- Implementación: `app.js` usa `<details>` nativo cerrado, mantiene `.form-card .form-open-button` y eventos de Copiar, junto a permisos existentes de Base de datos. CSS `brand-alignment.css` escala tarjeta a 10px de padding móvil, CTA 38px, controles Sí/No 46px, acciones generales ~40px.
+- Actualización de caché: `index.html` solicita `app.js?v=2026.10.10.05` y `brand-alignment.css?v=20261010-05`; `service-worker.js` cambia nombre de caché e incorpora CSS.
+- Commits: `1ad5f461` (preview), `b3eecb2b` (CSS), `e1bd407f` (asset versions), `91d5dda7` (SW cache).
+- Historial Drive: [FO-CHG-005](https://docs.google.com/spreadsheets/d/1InVJe0iR0-GAebf-SB5sa9fZRcNmm8N1ShU62Pu-YAc/edit), preferencias [VIS-006/007/008](https://docs.google.com/spreadsheets/d/1khSXy3s44k6wuRrIjP5-an9C5Kr1qPpAF6iWECKrI3c/edit).
+- Estado: **implementado y comprobado en repositorio**. Pendiente publicación verificada y QA móvil de apertura, despliegue, copiar, permisos de Base de datos, auth, GPS, respuestas, PWA/offline, y pruebas en tamaños pequeños. No afirmar cierre de producción.
