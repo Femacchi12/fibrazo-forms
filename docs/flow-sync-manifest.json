@@ -1,74 +1,83 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "diagram": "docs/FIBRAZO_Forms_Flujos.drawio",
   "forms": {
     "CHURN": {
       "page": "Churn",
+      "name": "Visita clientes churn",
       "sections": [
         {
           "id": "identificacion",
-          "title": "Identificación"
+          "title": "Identificación",
+          "description": "Datos básicos de la visita y del cliente."
         },
         {
           "id": "motivo",
-          "title": "Motivo del churn"
+          "title": "Motivo del churn",
+          "description": "Identifica la razón principal por la que dejó de recargar."
         },
         {
           "id": "servicio",
-          "title": "Servicio actual"
+          "title": "Servicio actual",
+          "description": "Conoce qué alternativa utiliza hoy y cuánto paga."
         },
         {
           "id": "tv",
-          "title": "TV y contenidos"
+          "title": "TV y contenidos",
+          "description": "Detalle de la oferta de televisión cuando corresponda."
         },
         {
           "id": "cierre",
-          "title": "Cierre de la visita"
+          "title": "Cierre de la visita",
+          "description": "Registra posibilidad de retorno y observaciones finales."
         }
       ],
       "fields": [
         {
           "key": "coordenadas",
           "section": "identificacion",
+          "label": "Ubicación de la visita",
           "type": "gps",
           "required": true,
           "options": [],
           "showWhen": null,
-          "label": "Ubicación de la visita"
+          "auto": true,
+          "full": true
         },
         {
           "key": "ciudad",
           "section": "identificacion",
+          "label": "Ciudad",
           "type": "select",
           "required": true,
           "options": [
             "Sincelejo",
             "Montería"
           ],
-          "showWhen": null,
-          "label": "Ciudad"
+          "showWhen": null
         },
         {
           "key": "cliente_id",
           "section": "identificacion",
+          "label": "N.º de cliente",
           "type": "numeric",
           "required": true,
           "options": [],
-          "showWhen": null,
-          "label": "N.º de cliente"
+          "showWhen": null
         },
         {
           "key": "fecha_visita",
           "section": "identificacion",
+          "label": "Fecha de visita",
           "type": "date-flex",
           "required": true,
           "options": [],
-          "showWhen": null,
-          "label": "Fecha de visita"
+          "showWhen": null
         },
         {
           "key": "motivo_principal",
           "section": "motivo",
+          "label": "Motivo por el cual dejó de recargar",
           "type": "select",
           "required": true,
           "options": [
@@ -81,12 +90,12 @@
             "Problemas de recarga / pago",
             "Otro"
           ],
-          "showWhen": null,
-          "label": "Motivo por el cual dejó de recargar"
+          "showWhen": null
         },
         {
           "key": "inconformidad_tipo",
           "section": "motivo",
+          "label": "¿Qué sucedió con el servicio?",
           "type": "checkbox",
           "required": false,
           "options": [
@@ -102,47 +111,48 @@
             "field": "motivo_principal",
             "equals": "Inconformidad con el servicio"
           },
-          "label": "¿Qué sucedió con el servicio?"
+          "full": true
         },
         {
           "key": "tiene_servicio_actual",
           "section": "servicio",
+          "label": "¿Actualmente tiene servicio de internet?",
           "type": "radio",
           "required": true,
           "options": [
             "Sí",
             "No"
           ],
-          "showWhen": null,
-          "label": "¿Actualmente tiene servicio de internet?"
+          "showWhen": null
         },
         {
           "key": "operador_actual",
           "section": "servicio",
+          "label": "Operador actual",
           "type": "text",
           "required": false,
           "options": [],
           "showWhen": {
             "field": "tiene_servicio_actual",
             "equals": "Sí"
-          },
-          "label": "Operador actual"
+          }
         },
         {
           "key": "precio_actual",
           "section": "servicio",
+          "label": "Precio mensual actual",
           "type": "currency",
           "required": false,
           "options": [],
           "showWhen": {
             "field": "tiene_servicio_actual",
             "equals": "Sí"
-          },
-          "label": "Precio mensual actual"
+          }
         },
         {
           "key": "velocidad_actual",
           "section": "servicio",
+          "label": "Velocidad contratada",
           "type": "numeric",
           "required": false,
           "options": [],
@@ -150,11 +160,12 @@
             "field": "tiene_servicio_actual",
             "equals": "Sí"
           },
-          "label": "Velocidad contratada"
+          "suffix": "Mbps"
         },
         {
           "key": "incluye_tv",
           "section": "servicio",
+          "label": "¿El servicio actual incluye TV?",
           "type": "radio",
           "required": false,
           "options": [
@@ -164,12 +175,12 @@
           "showWhen": {
             "field": "tiene_servicio_actual",
             "equals": "Sí"
-          },
-          "label": "¿El servicio actual incluye TV?"
+          }
         },
         {
           "key": "tecnologia_tv",
           "section": "tv",
+          "label": "Tecnología de TV",
           "type": "select",
           "required": false,
           "options": [
@@ -181,36 +192,36 @@
           "showWhen": {
             "field": "incluye_tv",
             "equals": "Sí"
-          },
-          "label": "Tecnología de TV"
+          }
         },
         {
           "key": "tv_coaxial",
           "section": "tv",
+          "label": "TV conectados por coaxial",
           "type": "numeric",
           "required": false,
           "options": [],
           "showWhen": {
             "field": "incluye_tv",
             "equals": "Sí"
-          },
-          "label": "TV conectados por coaxial"
+          }
         },
         {
           "key": "tv_box",
           "section": "tv",
+          "label": "Cantidad de TV Box",
           "type": "numeric",
           "required": false,
           "options": [],
           "showWhen": {
             "field": "incluye_tv",
             "equals": "Sí"
-          },
-          "label": "Cantidad de TV Box"
+          }
         },
         {
           "key": "tiene_disney",
           "section": "tv",
+          "label": "¿Tiene Disney?",
           "type": "radio",
           "required": false,
           "options": [
@@ -221,12 +232,12 @@
           "showWhen": {
             "field": "incluye_tv",
             "equals": "Sí"
-          },
-          "label": "¿Tiene Disney?"
+          }
         },
         {
           "key": "tiene_deportes",
           "section": "tv",
+          "label": "¿Tiene canales de deportes?",
           "type": "radio",
           "required": false,
           "options": [
@@ -237,12 +248,12 @@
           "showWhen": {
             "field": "incluye_tv",
             "equals": "Sí"
-          },
-          "label": "¿Tiene canales de deportes?"
+          }
         },
         {
           "key": "canales_destacados",
           "section": "tv",
+          "label": "Canales o contenidos destacados",
           "type": "textarea",
           "required": false,
           "options": [],
@@ -250,11 +261,12 @@
             "field": "incluye_tv",
             "equals": "Sí"
           },
-          "label": "Canales o contenidos destacados"
+          "full": true
         },
         {
           "key": "volveria",
           "section": "cierre",
+          "label": "¿Volvería a FIBRAZO?",
           "type": "radio",
           "required": false,
           "options": [
@@ -263,119 +275,126 @@
             "Tal vez"
           ],
           "showWhen": null,
-          "label": "¿Volvería a FIBRAZO?"
+          "full": true
         },
         {
           "key": "cambio_para_volver",
           "section": "cierre",
+          "label": "¿Qué tendría que cambiar para volver?",
           "type": "textarea",
           "required": false,
           "options": [],
           "showWhen": null,
-          "label": "¿Qué tendría que cambiar para volver?"
+          "full": true
         },
         {
           "key": "comentario",
           "section": "cierre",
+          "label": "Notas de la visita",
           "type": "textarea",
           "required": false,
           "options": [],
           "showWhen": null,
-          "label": "Notas de la visita"
+          "full": true
         }
       ]
     },
     "EXPLORACION": {
-      "page": "Exploración",
+      "page": "Exploración virtual",
+      "name": "Exploración virtual",
       "sections": [
         {
           "id": "ubicacion",
-          "title": "Ubicación"
+          "title": "Ubicación",
+          "description": "Pega la coordenada observada y valida el municipio detectado."
         },
         {
           "id": "infraestructura",
-          "title": "Infraestructura"
+          "title": "Infraestructura",
+          "description": "Califica la postería y la ocupación del tendido aéreo."
         },
         {
           "id": "operadores",
-          "title": "Operadores"
+          "title": "Operadores",
+          "description": "Marca incumbentes y registra ISP locales o regionales visibles."
         },
         {
-          "id": "evidencia",
-          "title": "Evidencia"
+          "id": "cierre",
+          "title": "Cierre",
+          "description": "Agrega evidencia y notas relevantes del punto."
         }
       ],
       "fields": [
         {
-          "key": "ciudad",
-          "section": "ubicacion",
-          "type": "text",
+          "key": "coordenadas",
+          "section": "coordenada",
+          "label": "Coordenadas",
+          "type": "coordinates",
           "required": true,
           "options": [],
           "showWhen": null,
-          "label": "Ciudad"
+          "full": true
         },
         {
-          "key": "sector_barrio",
+          "key": "anio_imagen",
           "section": "ubicacion",
-          "type": "text",
-          "required": false,
-          "options": [],
-          "showWhen": null,
-          "label": "Sector / barrio"
-        },
-        {
-          "key": "anio",
-          "section": "ubicacion",
+          "label": "Año de la imagen de Google Street View",
           "type": "numeric",
           "required": true,
           "options": [],
           "showWhen": null,
-          "label": "Año",
-          "default": 2026
+          "max": "FIBRAZO_CURRENT_YEAR",
+          "maxLength": 4
         },
         {
-          "key": "coordenadas",
+          "key": "sector_barrio",
           "section": "ubicacion",
-          "type": "gps",
-          "required": true,
+          "label": "Barrio",
+          "type": "text",
+          "required": false,
           "options": [],
           "showWhen": null,
-          "label": "Ubicación actual"
+          "autoGeo": "barrio"
         },
         {
-          "key": "e_postes",
-          "section": "infraestructura",
-          "type": "segmented",
+          "key": "estrato",
+          "section": "ubicacion",
+          "label": "Estrato automático (Motor Territorial)",
+          "type": "select",
           "required": false,
           "options": [
             "1",
             "2",
             "3",
             "4",
-            "5"
+            "5",
+            "6",
+            "Sin información"
           ],
           "showWhen": null,
-          "label": "E. Postes"
+          "autoGeo": "estrato"
         },
         {
-          "key": "s_postes",
-          "section": "infraestructura",
-          "type": "segmented",
+          "key": "estrato_observado",
+          "section": "ubicacion",
+          "label": "Estrato manual / observado en Street View",
+          "type": "select",
           "required": false,
           "options": [
+            "",
             "1",
             "2",
             "3",
             "4",
-            "5"
+            "5",
+            "6"
           ],
-          "showWhen": null,
-          "label": "S. Postes"
+          "showWhen": null
         },
         {
-          "key": "tigo_hfc",
-          "section": "operadores",
+          "key": "zona_empresarial",
+          "section": "ubicacion",
+          "label": "¿Zona empresarial / comercial?",
           "type": "toggle",
           "required": false,
           "options": [
@@ -383,12 +402,83 @@
             "No"
           ],
           "showWhen": null,
+          "default": "No"
+        },
+        {
+          "key": "tipo_terreno",
+          "section": "infraestructura",
+          "label": "Transitabilidad / complejidad del terreno",
+          "type": "segmented",
+          "required": true,
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "showWhen": null
+        },
+        {
+          "key": "barrio_asentamiento_informal",
+          "section": "infraestructura",
+          "label": "¿Barrio de origen informal o asentamiento no planificado?",
+          "type": "toggle",
+          "required": false,
+          "options": [
+            "Sí",
+            "No"
+          ],
+          "showWhen": null,
+          "default": "No"
+        },
+        {
+          "key": "condicion_ocupacion_tendido",
+          "section": "infraestructura",
+          "label": "Condición de ocupación del tendido",
+          "type": "segmented",
+          "required": true,
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "showWhen": null
+        },
+        {
+          "key": "condicion_fisica_posteria",
+          "section": "infraestructura",
+          "label": "Condición física de la postería",
+          "type": "segmented",
+          "required": true,
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "showWhen": null
+        },
+        {
+          "key": "tigo_hfc",
+          "section": "operadores",
           "label": "TIGO HFC",
+          "type": "toggle",
+          "required": false,
+          "options": [
+            "Sí",
+            "No"
+          ],
+          "showWhen": null,
           "default": "No"
         },
         {
           "key": "tigo_ftth",
           "section": "operadores",
+          "label": "TIGO FTTH",
           "type": "toggle",
           "required": false,
           "options": [
@@ -396,12 +486,12 @@
             "No"
           ],
           "showWhen": null,
-          "label": "TIGO FTTH",
           "default": "No"
         },
         {
           "key": "claro_hfc",
           "section": "operadores",
+          "label": "CLARO HFC",
           "type": "toggle",
           "required": false,
           "options": [
@@ -409,12 +499,12 @@
             "No"
           ],
           "showWhen": null,
-          "label": "CLARO HFC",
           "default": "No"
         },
         {
           "key": "claro_ftth",
           "section": "operadores",
+          "label": "CLARO FTTH",
           "type": "toggle",
           "required": false,
           "options": [
@@ -422,12 +512,12 @@
             "No"
           ],
           "showWhen": null,
-          "label": "CLARO FTTH",
           "default": "No"
         },
         {
           "key": "movistar",
           "section": "operadores",
+          "label": "Movistar",
           "type": "toggle",
           "required": false,
           "options": [
@@ -435,62 +525,856 @@
             "No"
           ],
           "showWhen": null,
-          "label": "Movistar",
           "default": "No"
         },
         {
           "key": "isp_1",
           "section": "operadores",
-          "type": "text",
+          "label": "ISP 1",
+          "type": "isp-autocomplete",
           "required": false,
           "options": [],
           "showWhen": null,
-          "label": "ISP 1"
+          "default": "Sin ISP"
         },
         {
           "key": "isp_2",
           "section": "operadores",
-          "type": "text",
+          "label": "ISP 2",
+          "type": "isp-autocomplete",
           "required": false,
           "options": [],
-          "showWhen": null,
-          "label": "ISP 2"
+          "showWhen": {
+            "field": "isp_1",
+            "notValues": [
+              "",
+              "Sin ISP"
+            ]
+          },
+          "default": "Sin ISP"
         },
         {
           "key": "isp_3",
           "section": "operadores",
-          "type": "text",
+          "label": "ISP 3",
+          "type": "isp-autocomplete",
           "required": false,
           "options": [],
-          "showWhen": null,
-          "label": "ISP 3"
+          "showWhen": {
+            "field": "isp_2",
+            "notValues": [
+              "",
+              "Sin ISP"
+            ]
+          },
+          "default": "Sin ISP"
         },
         {
           "key": "isp_4",
           "section": "operadores",
+          "label": "ISP 4",
+          "type": "isp-autocomplete",
+          "required": false,
+          "options": [],
+          "showWhen": {
+            "field": "isp_3",
+            "notValues": [
+              "",
+              "Sin ISP"
+            ]
+          },
+          "default": "Sin ISP"
+        },
+        {
+          "key": "link_evidencia",
+          "section": "cierre",
+          "label": "Link de evidencia",
           "type": "text",
           "required": false,
           "options": [],
           "showWhen": null,
-          "label": "ISP 4"
-        },
-        {
-          "key": "nota",
-          "section": "evidencia",
-          "type": "textarea",
-          "required": false,
-          "options": [],
-          "showWhen": null,
-          "label": "Nota"
+          "full": true
         },
         {
           "key": "fotos",
-          "section": "evidencia",
+          "section": "cierre",
+          "label": "Fotos",
           "type": "photos",
           "required": false,
           "options": [],
           "showWhen": null,
-          "label": "Fotos"
+          "full": true
+        },
+        {
+          "key": "nota",
+          "section": "cierre",
+          "label": "Nota",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "showWhen": null,
+          "full": true
+        }
+      ]
+    },
+    "EXPLORACION_PRESENCIAL": {
+      "page": "Exploración presencial",
+      "name": "Exploración presencial",
+      "sections": [
+        {
+          "id": "coordenada",
+          "title": "Coordenada",
+          "description": "Carga únicamente la ubicación del punto. La lectura territorial se procesa en segundo plano mientras continúas."
+        },
+        {
+          "id": "infraestructura",
+          "title": "Infraestructura",
+          "description": "Califica la postería y la ocupación del tendido aéreo."
+        },
+        {
+          "id": "operadores",
+          "title": "Operadores",
+          "description": "Marca incumbentes y registra ISP locales o regionales visibles."
+        },
+        {
+          "id": "cierre",
+          "title": "Evidencia",
+          "description": "Agrega evidencia fotográfica del punto."
+        },
+        {
+          "id": "ubicacion",
+          "title": "Validación territorial",
+          "description": "Confirma al final los datos obtenidos para la coordenada y completa la lectura de campo."
+        }
+      ],
+      "fields": [
+        {
+          "key": "coordenadas",
+          "section": "coordenada",
+          "label": "Ubicación actual",
+          "type": "gps",
+          "required": true,
+          "options": [],
+          "showWhen": null,
+          "manualEdit": true,
+          "full": true
+        },
+        {
+          "key": "municipio",
+          "section": "ubicacion",
+          "label": "Municipio / ciudad",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "showWhen": null,
+          "autoCity": true
+        },
+        {
+          "key": "sector_barrio",
+          "section": "ubicacion",
+          "label": "Barrio",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "showWhen": null,
+          "autoGeo": "barrio"
+        },
+        {
+          "key": "estrato",
+          "section": "ubicacion",
+          "label": "Estrato automático (Motor Territorial)",
+          "type": "select",
+          "required": false,
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "Sin información"
+          ],
+          "showWhen": null,
+          "autoGeo": "estrato"
+        },
+        {
+          "key": "estrato_observado",
+          "section": "ubicacion",
+          "label": "Estrato manual / observado en campo",
+          "type": "select",
+          "required": false,
+          "options": [
+            "",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+          ],
+          "showWhen": null
+        },
+        {
+          "key": "zona_empresarial",
+          "section": "ubicacion",
+          "label": "¿Zona empresarial / comercial?",
+          "type": "toggle",
+          "required": false,
+          "options": [
+            "Sí",
+            "No"
+          ],
+          "showWhen": null,
+          "default": "No"
+        },
+        {
+          "key": "tipo_terreno",
+          "section": "infraestructura",
+          "label": "Geografía / Complejidad del terreno",
+          "type": "segmented",
+          "required": true,
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "showWhen": null
+        },
+        {
+          "key": "tipo_despliegue",
+          "section": "infraestructura",
+          "label": "Tipo de despliegue observado",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Aéreo",
+            "Canalizado"
+          ],
+          "showWhen": null,
+          "default": "Aéreo"
+        },
+        {
+          "key": "condicion_fisica_posteria",
+          "section": "infraestructura",
+          "label": "Condición Física de la postería",
+          "type": "segmented",
+          "required": true,
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "showWhen": {
+            "field": "tipo_despliegue",
+            "equals": "Aéreo"
+          }
+        },
+        {
+          "key": "condicion_ocupacion_tendido",
+          "section": "infraestructura",
+          "label": "Saturación / Ocupación de la postería",
+          "type": "segmented",
+          "required": true,
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "showWhen": {
+            "field": "tipo_despliegue",
+            "equals": "Aéreo"
+          }
+        },
+        {
+          "key": "barrio_asentamiento_informal",
+          "section": "infraestructura",
+          "label": "¿Barrio de origen informal o asentamiento no planificado?",
+          "type": "toggle",
+          "required": false,
+          "options": [
+            "Sí",
+            "No"
+          ],
+          "showWhen": null,
+          "default": "No"
+        },
+        {
+          "key": "nivel_seguridad",
+          "section": "infraestructura",
+          "label": "Percepción de SEGURIDAD de la zona",
+          "type": "segmented",
+          "required": true,
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "showWhen": null
+        },
+        {
+          "key": "tigo_hfc",
+          "section": "operadores",
+          "label": "TIGO HFC",
+          "type": "toggle",
+          "required": false,
+          "options": [
+            "Sí",
+            "No"
+          ],
+          "showWhen": null,
+          "default": "No"
+        },
+        {
+          "key": "tigo_ftth",
+          "section": "operadores",
+          "label": "TIGO FTTH",
+          "type": "toggle",
+          "required": false,
+          "options": [
+            "Sí",
+            "No"
+          ],
+          "showWhen": null,
+          "default": "No"
+        },
+        {
+          "key": "claro_hfc",
+          "section": "operadores",
+          "label": "CLARO HFC",
+          "type": "toggle",
+          "required": false,
+          "options": [
+            "Sí",
+            "No"
+          ],
+          "showWhen": null,
+          "default": "No"
+        },
+        {
+          "key": "claro_ftth",
+          "section": "operadores",
+          "label": "CLARO FTTH",
+          "type": "toggle",
+          "required": false,
+          "options": [
+            "Sí",
+            "No"
+          ],
+          "showWhen": null,
+          "default": "No"
+        },
+        {
+          "key": "movistar",
+          "section": "operadores",
+          "label": "Movistar",
+          "type": "toggle",
+          "required": false,
+          "options": [
+            "Sí",
+            "No"
+          ],
+          "showWhen": null,
+          "default": "No"
+        },
+        {
+          "key": "isp_1",
+          "section": "operadores",
+          "label": "ISP 1",
+          "type": "isp-autocomplete",
+          "required": false,
+          "options": [],
+          "showWhen": null,
+          "default": "Sin ISP"
+        },
+        {
+          "key": "isp_1_calidad",
+          "section": "operadores",
+          "label": "Calidad de tendido · ISP 1",
+          "type": "segmented",
+          "required": false,
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "showWhen": {
+            "field": "isp_1",
+            "notValues": [
+              "",
+              "Sin ISP"
+            ]
+          }
+        },
+        {
+          "key": "isp_2",
+          "section": "operadores",
+          "label": "ISP 2",
+          "type": "isp-autocomplete",
+          "required": false,
+          "options": [],
+          "showWhen": {
+            "field": "isp_1",
+            "notValues": [
+              "",
+              "Sin ISP"
+            ]
+          },
+          "default": "Sin ISP"
+        },
+        {
+          "key": "isp_2_calidad",
+          "section": "operadores",
+          "label": "Calidad de tendido · ISP 2",
+          "type": "segmented",
+          "required": false,
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "showWhen": {
+            "field": "isp_2",
+            "notValues": [
+              "",
+              "Sin ISP"
+            ]
+          }
+        },
+        {
+          "key": "isp_3",
+          "section": "operadores",
+          "label": "ISP 3",
+          "type": "isp-autocomplete",
+          "required": false,
+          "options": [],
+          "showWhen": {
+            "field": "isp_2",
+            "notValues": [
+              "",
+              "Sin ISP"
+            ]
+          },
+          "default": "Sin ISP"
+        },
+        {
+          "key": "isp_3_calidad",
+          "section": "operadores",
+          "label": "Calidad de tendido · ISP 3",
+          "type": "segmented",
+          "required": false,
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "showWhen": {
+            "field": "isp_3",
+            "notValues": [
+              "",
+              "Sin ISP"
+            ]
+          }
+        },
+        {
+          "key": "isp_4",
+          "section": "operadores",
+          "label": "ISP 4",
+          "type": "isp-autocomplete",
+          "required": false,
+          "options": [],
+          "showWhen": {
+            "field": "isp_3",
+            "notValues": [
+              "",
+              "Sin ISP"
+            ]
+          },
+          "default": "Sin ISP"
+        },
+        {
+          "key": "isp_4_calidad",
+          "section": "operadores",
+          "label": "Calidad de tendido · ISP 4",
+          "type": "segmented",
+          "required": false,
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "showWhen": {
+            "field": "isp_4",
+            "notValues": [
+              "",
+              "Sin ISP"
+            ]
+          }
+        },
+        {
+          "key": "fotos",
+          "section": "cierre",
+          "label": "Fotos",
+          "type": "photos",
+          "required": false,
+          "options": [],
+          "showWhen": null,
+          "full": true
+        },
+        {
+          "key": "nota",
+          "section": "ubicacion",
+          "label": "Nota",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "showWhen": null,
+          "full": true
+        }
+      ]
+    },
+    "INTELIGENCIA_OPERADOR": {
+      "page": "Inteligencia de operadores",
+      "name": "Inteligencia de operadores",
+      "sections": [
+        {
+          "id": "coordenada",
+          "title": "Coordenada",
+          "description": "Carga la ubicación por GPS o manualmente. La lectura territorial se procesa en segundo plano mientras continúas."
+        },
+        {
+          "id": "identificacion",
+          "title": "Operador",
+          "description": "Identifica el ISP observado."
+        },
+        {
+          "id": "elementos",
+          "title": "Elementos de red",
+          "description": "Registra cómo reconocer su infraestructura y anexa una foto por cada elemento cuando corresponda."
+        },
+        {
+          "id": "calidad",
+          "title": "Calidad y oferta comercial",
+          "description": "Evalúa la ejecución visible, la percepción del servicio y registra los precios regulares del operador."
+        },
+        {
+          "id": "validacion",
+          "title": "Validación territorial",
+          "description": "Confirma al final la coordenada y la información territorial procesada automáticamente."
+        }
+      ],
+      "fields": [
+        {
+          "key": "coordenadas",
+          "section": "coordenada",
+          "label": "Coordenadas de referencia",
+          "type": "gps",
+          "required": true,
+          "options": [],
+          "showWhen": null,
+          "manualEdit": true,
+          "full": true
+        },
+        {
+          "key": "operador",
+          "section": "identificacion",
+          "label": "ISP / operador",
+          "type": "isp-autocomplete",
+          "required": true,
+          "options": [],
+          "showWhen": null
+        },
+        {
+          "key": "modelo_caja",
+          "section": "elementos",
+          "label": "Modelo / tipo de caja",
+          "type": "editable-options",
+          "required": false,
+          "options": [
+            "Común negra",
+            "Pequeña negra"
+          ],
+          "showWhen": null
+        },
+        {
+          "key": "foto_modelo_caja",
+          "section": "elementos",
+          "label": "Foto · modelo / tipo de caja",
+          "type": "photo-single",
+          "required": false,
+          "options": [],
+          "showWhen": null
+        },
+        {
+          "key": "nomenclatura_caja",
+          "section": "elementos",
+          "label": "Nomenclatura / identificación de cajas",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "showWhen": null
+        },
+        {
+          "key": "foto_nomenclatura_caja",
+          "section": "elementos",
+          "label": "Foto · nomenclatura / identificación",
+          "type": "photo-single",
+          "required": false,
+          "options": [],
+          "showWhen": null
+        },
+        {
+          "key": "marquilla",
+          "section": "elementos",
+          "label": "Marquilla despliegue",
+          "type": "editable-options",
+          "required": false,
+          "options": [
+            "Sin marquilla",
+            "Verde",
+            "Naranja",
+            "Roja",
+            "Azul",
+            "Blanca"
+          ],
+          "showWhen": null
+        },
+        {
+          "key": "foto_marquilla",
+          "section": "elementos",
+          "label": "Foto · marquilla despliegue",
+          "type": "photo-single",
+          "required": false,
+          "options": [],
+          "showWhen": null
+        },
+        {
+          "key": "marquilla_drop",
+          "section": "elementos",
+          "label": "Marquilla drop",
+          "type": "editable-options",
+          "required": false,
+          "options": [
+            "Sin marquilla",
+            "Verde",
+            "Naranja",
+            "Roja",
+            "Azul",
+            "Blanca"
+          ],
+          "showWhen": null
+        },
+        {
+          "key": "foto_marquilla_drop",
+          "section": "elementos",
+          "label": "Foto · marquilla drop",
+          "type": "photo-single",
+          "required": false,
+          "options": [],
+          "showWhen": null
+        },
+        {
+          "key": "tipo_tensor",
+          "section": "elementos",
+          "label": "Tensor de despliegue",
+          "type": "editable-options",
+          "required": false,
+          "options": [
+            "SIPA",
+            "Metálico"
+          ],
+          "showWhen": null
+        },
+        {
+          "key": "foto_tipo_tensor",
+          "section": "elementos",
+          "label": "Foto · tensor / herraje",
+          "type": "photo-single",
+          "required": false,
+          "options": [],
+          "showWhen": null
+        },
+        {
+          "key": "tensor_acometida",
+          "section": "elementos",
+          "label": "Tensor de acometida",
+          "type": "editable-options",
+          "required": false,
+          "options": [
+            "Cartuchera pequeña",
+            "Cartuchera grande",
+            "Figura 8",
+            "Clamp metálico",
+            "Clamp plástico",
+            "Portante drop"
+          ],
+          "showWhen": null
+        },
+        {
+          "key": "foto_tensor_acometida",
+          "section": "elementos",
+          "label": "Foto · tensor de acometida",
+          "type": "photo-single",
+          "required": false,
+          "options": [],
+          "showWhen": null
+        },
+        {
+          "key": "calidad_tendido",
+          "section": "calidad",
+          "label": "Calidad de tendido e instalación",
+          "type": "segmented",
+          "required": true,
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "showWhen": null
+        },
+        {
+          "key": "calidad_servicio_percibida",
+          "section": "calidad",
+          "label": "Calidad del servicio percibida por el cliente",
+          "type": "segmented",
+          "required": false,
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "showWhen": null
+        },
+        {
+          "key": "precio_solo_internet",
+          "section": "calidad",
+          "label": "Precio regular · solo Internet",
+          "type": "currency",
+          "required": false,
+          "options": [],
+          "showWhen": null
+        },
+        {
+          "key": "precio_internet_tv",
+          "section": "calidad",
+          "label": "Precio regular · Internet + TV",
+          "type": "currency",
+          "required": false,
+          "options": [],
+          "showWhen": null
+        },
+        {
+          "key": "incluye_tv",
+          "section": "calidad",
+          "label": "¿El operador ofrece / incluye TV?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Sí",
+            "No",
+            "No sabe"
+          ],
+          "showWhen": null
+        },
+        {
+          "key": "grilla_tv",
+          "section": "calidad",
+          "label": "¿Cómo es la grilla de TV?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Amplia",
+            "Reducida",
+            "No sabe"
+          ],
+          "showWhen": {
+            "field": "incluye_tv",
+            "equals": "Sí"
+          }
+        },
+        {
+          "key": "observaciones",
+          "section": "calidad",
+          "label": "Observaciones para identificarlo en campo",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "showWhen": null,
+          "full": true
+        },
+        {
+          "key": "municipio",
+          "section": "validacion",
+          "label": "Municipio / ciudad",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "showWhen": null,
+          "autoCity": true
+        },
+        {
+          "key": "sector_barrio",
+          "section": "validacion",
+          "label": "Barrio",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "showWhen": null,
+          "autoGeo": "barrio"
+        },
+        {
+          "key": "estrato",
+          "section": "validacion",
+          "label": "Estrato automático (Motor Territorial)",
+          "type": "select",
+          "required": false,
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "Sin información"
+          ],
+          "showWhen": null,
+          "autoGeo": "estrato"
+        },
+        {
+          "key": "estrato_observado",
+          "section": "validacion",
+          "label": "Estrato manual / observado en campo",
+          "type": "select",
+          "required": false,
+          "options": [
+            "",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+          ],
+          "showWhen": null
         }
       ]
     }
@@ -579,16 +1463,69 @@
     "publicDefault": false
   },
   "typography": {
-    "reference": "Dashboard Impacto Social",
-    "basePx": 14,
-    "sectionTitlePx": 17,
-    "labelPx": 12,
-    "helpPx": 11,
-    "microPx": 9
+    "deprecated": true,
+    "canonicalStandard": "https://docs.google.com/document/d/1prrIG6gikA7rfvadDz2xRF_PnnhtUtMZlJXOagflY_U/edit",
+    "note": "Valores previos históricos; no constituyen la norma visual vigente"
   },
   "ui": {
-    "stepperFutureTitles": "hidden",
-    "explorationPostes": "segmented 1-5",
-    "explorationOperatorPresence": "toggle No/Sí, default No"
+    "canonicalStandard": "https://docs.google.com/document/d/1prrIG6gikA7rfvadDz2xRF_PnnhtUtMZlJXOagflY_U/edit",
+    "note": "Se documenta funcionamiento; no se redefine el sistema de estilos"
+  },
+  "sourceOfTruth": {
+    "fields": "forms-config.js",
+    "navigation": "ux-v04.js",
+    "server": "api/submissions.js",
+    "diagram": "docs/FIBRAZO_Forms_Flujos.drawio",
+    "visualStandard": "https://docs.google.com/document/d/1prrIG6gikA7rfvadDz2xRF_PnnhtUtMZlJXOagflY_U/edit",
+    "sheetQuestions": "PREGUNTAS es referencia histórica, no editor productivo"
+  },
+  "syncAudit": {
+    "reference": "FO-CHG-017",
+    "date": "2026-10-11",
+    "baseCommit": "fc369fa8182408d3254e95394146fe61b8310d27",
+    "forms": 4,
+    "declaredFields": 94,
+    "fieldsWithReachableSection": 93,
+    "counts": {
+      "CHURN": {
+        "sections": 5,
+        "fields": 20,
+        "conditionalFields": 11
+      },
+      "EXPLORACION": {
+        "sections": 4,
+        "fields": 22,
+        "conditionalFields": 3
+      },
+      "EXPLORACION_PRESENCIAL": {
+        "sections": 5,
+        "fields": 27,
+        "conditionalFields": 9
+      },
+      "INTELIGENCIA_OPERADOR": {
+        "sections": 5,
+        "fields": 25,
+        "conditionalFields": 1
+      }
+    },
+    "issues": [
+      {
+        "formId": "EXPLORACION",
+        "fieldKey": "coordenadas",
+        "declaredSection": "coordenada",
+        "status": "Campo huérfano en configuración productiva; no corregido por esta sincronización."
+      }
+    ],
+    "note": "Documentación del código tal como está; inspección visual de diagrams.net y defecto de coordenadas requieren validación separada"
+  },
+  "behavior": {
+    "navigation": "activeSections() determina pasos visibles; next() valida sección y review() valida todas antes de enviar",
+    "location": "GPS/captura paralela en campo; espera de geodatos para revisión final; valor manual exige aplicarse",
+    "operatorRequirement": "En los formularios de Exploración/Inteligencia debe existir al menos un operador observado",
+    "ispQuality": "Calidad del ISP visible puede exigir respuesta incluso si required=false estático",
+    "photos": "photos y photo-single; Inteligencia usa seis pares técnicos/fotos",
+    "submit": "POST /api/submissions; éxito, cola offline y error son estados diferentes",
+    "offline": "Solo respuestas internas autenticadas no editadas admiten cola offline cuando está disponible",
+    "security": "Permisos y estado activo evaluados por administración y backend; diagrama no concede permisos"
   }
 }

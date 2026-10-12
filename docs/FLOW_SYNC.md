@@ -45,3 +45,23 @@ No modifica el formulario:
 ## Regla de seguridad
 
 Nunca se publica automáticamente un cambio hecho en draw.io. La modificación se aplica cuando el usuario pide sincronizarla, se valida contra las convenciones y luego se actualizan código, Sheet y diagrama de forma controlada.
+
+## Auditoría integral de sincronización FO-CHG-017 — 11/10/2026
+
+### Inventario y fuentes oficiales
+- Fuente ejecutable: `forms-config.js` (campos, secciones, tipos, valores permitidos, `required` y `showWhen`), junto con `ux-v04.js` para navegación/validación y `api/submissions.js` para envío/seguridad. `PREGUNTAS` en Sheets es documentación histórica, no editor de producción.
+- Diagrama editable único: `docs/FIBRAZO_Forms_Flujos.drawio`. Manifiesto auditable: `docs/flow-sync-manifest.json` (schemaVersion 2).
+- Conteos del código al corte: CHURN 5 secciones/20 campos; EXPLORACION 4/22; EXPLORACION_PRESENCIAL 5/27; INTELIGENCIA_OPERADOR 5/25; total: 94 campos declarados.
+- Páginas del Draw.io: Churn, Exploración virtual, Exploración presencial, Inteligencia de operadores, Seguridad y publicación, Convenciones y Modo offline. Las tres páginas generales originales se conservan.
+- La norma de estilos permanece únicamente en https://docs.google.com/document/d/1prrIG6gikA7rfvadDz2xRF_PnnhtUtMZlJXOagflY_U/edit (v1.4).
+
+### Lectura funcional y reglas
+Los nodos `[section:id]` marcan secciones, `[field:key]` campos, `[fields:key_1,key_2]` grupos condicionales y `[decision:key]` sus disparadores. Las bifurcaciones están etiquetadas; las líneas discontinuas son inventario/reglas, no una secuencia obligatoria de respuesta.
+El proceso general es: acceso autorizado → pasos activos → validaciones por paso → revisión integral (esperar GPS/enriquecimiento territorial cuando corresponda) → envío → confirmación servidor, cola offline interna autenticada o error/reintento. La captura GPS puede continuar en paralelo a otros pasos del relevamiento de campo; la validación final sigue siendo obligatoria.
+En Exploración e Inteligencia se exige al menos un operador observado. Las calidades ISP visibles se validan adicionalmente según `validateField()`. Las fotografías tipo `photos` y `photo-single` se respetan según límites configurados y servidor.
+
+### Incidencia registrada, no resuelta en producción
+`EXPLORACION.coordenadas` está declarado como `section:"coordenada"`, pero `EXPLORACION.sections` no contiene esa sección (sólo `ubicacion`, `infraestructura`, `operadores` y `cierre`). `activeSections()` / `renderSection()` trabajan por ID de sección: el campo queda fuera de los pasos y de `validateAll()`. Se preserva literalmente en manifiesto y se señala en Draw.io como **campo huérfano**; NO se alteró el código funcional. Solucionarlo necesita decisión separada sobre su ubicación y prueba de formulario real.
+
+### Procedimiento posterior y QA
+Cada cambio futuro debe comparar código, manifiesto y el mismo Draw.io, verificando IDs, campos, opciones, condiciones, requerido y rutas. En la dirección Draw.io → producción primero auditar diferencias y obtener validación de cualquier cambio de negocio. Comprobar que el XML abre en diagrams.net y que las 7 páginas son navegables antes de cerrar QA visual. Mantener las fuentes de permisos, `RESP_*` y `PREGUNTAS` sin modificar como efecto de una simple sincronización documental. Evitar despliegues por cambios sólo documentales.
