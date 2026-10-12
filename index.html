@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.css">
-  <link rel="stylesheet" href="/styles.css?v=2026.10.08.68">
+  <link rel="stylesheet" href="/styles.css?v=2026.10.12.02">
   <link rel="stylesheet" href="/brand-alignment.css?v=20261011-16">
 </head>
 <body class="auth-pending">
@@ -67,19 +67,6 @@
             </div>
           </div>
         </div>
-        <div class="pending-hub">
-          <button id="pendingToggle" class="pending-toggle" type="button" aria-expanded="false" title="Pendientes de desarrollo">
-            <span class="pending-emoji">⚠️</span>
-            <span id="pendingCount" class="pending-count">0</span>
-          </button>
-          <div id="pendingPopover" class="pending-popover" hidden>
-            <div class="pending-popover-head">
-              <div><span>SEGUIMIENTO</span><h3>Pendientes</h3></div>
-              <button id="pendingClose" type="button" aria-label="Cerrar">×</button>
-            </div>
-            <div id="pendingList" class="pending-list"></div>
-          </div>
-        </div>
         <button id="signOutButton" type="button">Cerrar sesión</button>
       </div>
     </header>
@@ -92,6 +79,20 @@
           <button data-view="results">Resultados</button>
           <button data-view="map">Mapa</button>
           <button id="adminNavButton" data-view="admin" hidden>Administrar</button>
+        </div>
+        <div class="pending-hub">
+          <button id="pendingToggle" class="pending-toggle" type="button" aria-expanded="false" aria-label="Ver pendientes de desarrollo" title="Pendientes de desarrollo">
+            <span class="pending-emoji" aria-hidden="true">⚠️</span>
+            <span class="pending-label">Pendientes</span>
+            <span id="pendingCount" class="pending-count" aria-label="3 pendientes">3</span>
+          </button>
+          <div id="pendingPopover" class="pending-popover" hidden>
+            <div class="pending-popover-head">
+              <div><span>SEGUIMIENTO</span><h3>Pendientes</h3></div>
+              <button id="pendingClose" type="button" aria-label="Cerrar">×</button>
+            </div>
+            <div id="pendingList" class="pending-list"></div>
+          </div>
         </div>
       </div>
     </section>
