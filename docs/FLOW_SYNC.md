@@ -65,3 +65,7 @@ En Exploración e Inteligencia se exige al menos un operador observado. Las cali
 
 ### Procedimiento posterior y QA
 Cada cambio futuro debe comparar código, manifiesto y el mismo Draw.io, verificando IDs, campos, opciones, condiciones, requerido y rutas. En la dirección Draw.io → producción primero auditar diferencias y obtener validación de cualquier cambio de negocio. Comprobar que el XML abre en diagrams.net y que las 7 páginas son navegables antes de cerrar QA visual. Mantener las fuentes de permisos, `RESP_*` y `PREGUNTAS` sin modificar como efecto de una simple sincronización documental. Evitar despliegues por cambios sólo documentales.
+
+
+### Control adicional del Draw.io — 12/10/2026
+Se revisaron por lectura estructural las siete páginas del XML actual: 226 vértices, 241 aristas y 94 referencias de campo en las cuatro páginas de formularios. No se detectaron IDs repetidos de campos, extremos de aristas ausentes, elementos fuera del tamaño declarado de sus lienzos ni intersecciones geométricas relevantes entre vértices. Las decisiones documentadas corresponden a motivo, servicio, TV, ISP y tipo de despliegue según el formulario. Esto amplía el QA técnico; NO constituye inspección interactiva real de apertura, zoom, legibilidad, colores, etiquetas y guardado en app.diagrams.net. FO-PEN-005 sigue pendiente de cierre visual.

@@ -208,6 +208,32 @@
   }
   window.FIBRAZO_SET_VIEW=setView;
 
+  // FO-CHG-018: resumen CURADO de pendientes operativos. La hoja PENDIENTES
+  // es la fuente oficial; esta vista estática no pretende sincronización en vivo.
+  const FORM_PENDING_SUMMARY=[
+    {id:"FO-PEN-003",title:"Capacidad Vercel",detail:"Verificar Function Storage y autorización de consulta antes de nuevas publicaciones.",priority:"ALTA"},
+    {id:"FO-PEN-004",title:"Exploración virtual · coordenadas",detail:"Revisión funcional postergada: campo obligatorio asociado a una sección inexistente. No corregir sin validar el formulario.",priority:"ALTA"},
+    {id:"FO-PEN-005",title:"Flujos Draw.io · apertura visual",detail:"Validación estructural y geométrica correcta. Falta abrir y revisar las siete páginas en diagrams.net.",priority:"MEDIA"}
+  ];
+  function initPendingCenter(){
+    const toggle=$("pendingToggle"),popover=$("pendingPopover"),list=$("pendingList"),badge=$("pendingCount"),close=$("pendingClose");
+    if(!toggle||!popover||!list||!badge||!close)return;
+    badge.textContent=String(FORM_PENDING_SUMMARY.length);
+    toggle.setAttribute("aria-label","⚠️ "+FORM_PENDING_SUMMARY.length+" pendientes de desarrollo");
+    list.innerHTML=FORM_PENDING_SUMMARY.map(item=>
+      '<article class="pending-item"><div><strong>'+escapeHtml(item.id+" · "+item.title)+'</strong><p>'+escapeHtml(item.detail)+'</p></div><span>'+escapeHtml(item.priority)+'</span></article>'
+    ).join("")+'<a href="https://docs.google.com/spreadsheets/d/1khSXy3s44k6wuRrIjP5-an9C5Kr1qPpAF6iWECKrI3c/edit" target="_blank" rel="noopener noreferrer">↗ Ver seguimiento actualizado en Sheets</a>'+
+      '<small style="color:var(--fz-muted)">Resumen del 12/10/2026; el estado oficial se mantiene en PENDIENTES.</small>';
+    if(toggle.dataset.pendingBound==="1")return;
+    toggle.dataset.pendingBound="1";
+    const setOpen=open=>{popover.hidden=!open;toggle.setAttribute("aria-expanded",String(open));};
+    toggle.addEventListener("click",()=>setOpen(popover.hidden));
+    close.addEventListener("click",()=>setOpen(false));
+    document.addEventListener("pointerdown",event=>{if(!popover.hidden&&!popover.contains(event.target)&&!toggle.contains(event.target))setOpen(false);});
+    document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!popover.hidden){setOpen(false);toggle.focus();}});
+  }
+
+
   function resetPrivateUi() {
     setView("forms",{persist:false});
     if ($("adminNavButton")) $("adminNavButton").hidden=true;
@@ -228,6 +254,7 @@
     document.body.classList.remove("auth-pending");
     $("authGate").hidden = true;
     $("authSession").hidden = false;
+    initPendingCenter();
     $("authError").textContent = "";
     renderCards();
     window.dispatchEvent(new CustomEvent("fibrazo:access-ready"));
