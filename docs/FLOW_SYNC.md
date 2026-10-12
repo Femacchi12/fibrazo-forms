@@ -69,3 +69,28 @@ Cada cambio futuro debe comparar código, manifiesto y el mismo Draw.io, verific
 
 ### Control adicional del Draw.io — 12/10/2026
 Se revisaron por lectura estructural las siete páginas del XML actual: 226 vértices, 241 aristas y 94 referencias de campo en las cuatro páginas de formularios. No se detectaron IDs repetidos de campos, extremos de aristas ausentes, elementos fuera del tamaño declarado de sus lienzos ni intersecciones geométricas relevantes entre vértices. Las decisiones documentadas corresponden a motivo, servicio, TV, ISP y tipo de despliegue según el formulario. Esto amplía el QA técnico; NO constituye inspección interactiva real de apertura, zoom, legibilidad, colores, etiquetas y guardado en app.diagrams.net. FO-PEN-005 sigue pendiente de cierre visual.
+
+
+## Política de actualización OBLIGATORIA de todos los formularios — FO-CHG-019, 12/10/2026
+
+**Invariante:** para cada formulario vigente, el formulario funcional, el manifiesto y la página correspondiente del único Draw.io deben representar la misma revisión funcional. NO se debe cerrar una modificación, aprobar un merge ni declarar un despliegue conforme sin actualizar/verificar las tres fuentes y registrar FO-CHG y evidencia.
+
+**Formulario → Draw.io (siempre dentro del mismo cambio funcional):**
+1. Registrar la propuesta y el impacto (preguntas, IDs, secciones, orden, opciones, requeridos, condiciones, navegación, fotos/GPS, validación, envío, permisos si corresponde).
+2. Implementar y probar los cambios en el código y las hojas autorizadas.
+3. Actualizar `docs/flow-sync-manifest.json` y `docs/FIBRAZO_Forms_Flujos.drawio`, sin crear otra copia canónica.
+4. Ejecutar `node docs/check-flow-sync.mjs` y comparar visualmente con diagrams.net. Verificar ramas Sí/No, rutas, etiquetas, destinos y manejo de error/offline.
+5. Registrar commit, pruebas, estado de publicación y pendientes en CAMBIOS/PENDIENTES; cerrar solo si todas las verificaciones pertinentes pasan.
+
+**Draw.io → formulario (aplicación bajo solicitud expresa):**
+1. Guardar el cambio sobre el mismo archivo de GitHub, manteniendo IDs `[field:...]`, `[section:...]` y `[decision:...]`.
+2. Revisar el diff contra la revisión previa y el manifiesto; separar cambios solo gráficos de cambios funcionales.
+3. Si el cambio es funcional, solicitar “aplica los cambios del diagrama”, revisar impacto y aprobar criterios del formulario.
+4. Aplicar el cambio al código, a los datos/configuración necesarios, a la página Draw.io y al manifiesto, ejecutar QA, registrar FO-CHG y publicar controladamente cuando Vercel lo permita.
+5. **Nunca editar el gráfico altera automáticamente el formulario publicado.** No convertir un movimiento de cajas en cambio de reglas.
+
+**Prueba estructural repetible:** `node docs/check-flow-sync.mjs` verifica inventario de formularios, campos, orden, secciones, opciones, requerido, condiciones showWhen, correspondencias con etiquetas del diagrama y extremos de aristas. Es una comprobación local bajo demanda, NO un job CI ya instalado ni un sincronizador automático. No certifica texto interno, lógica completa de bifurcaciones ni inspección visual interactiva. A esas verificaciones se llega por revisión humana/QA funcional antes de cerrar.
+
+**Excepción controlada abierta:** FO-PEN-004 (EXPLORACION.coordenadas huérfanas) queda registrada y NO se corrige sin nueva instrucción. FO-PEN-005 sigue pendiente de la apertura y legibilidad reales en diagrams.net. Estas excepciones deben acompañar el cambio hasta su cierre validado.
+
+**Control de despliegues:** ediciones meramente documentales no deberían consumir nuevas versiones de aplicación. Para cambios funcionales, comprobar el despliegue real en Vercel; código en GitHub no equivale a producción.
