@@ -94,3 +94,26 @@ Se revisaron por lectura estructural las siete páginas del XML actual: 226 vér
 **Excepción controlada abierta:** FO-PEN-004 (EXPLORACION.coordenadas huérfanas) queda registrada y NO se corrige sin nueva instrucción. FO-PEN-005 sigue pendiente de la apertura y legibilidad reales en diagrams.net. Estas excepciones deben acompañar el cambio hasta su cierre validado.
 
 **Control de despliegues:** ediciones meramente documentales no deberían consumir nuevas versiones de aplicación. Para cambios funcionales, comprobar el despliegue real en Vercel; código en GitHub no equivale a producción.
+
+
+## Control de pruebas y consistencia del mapa — FO-CHG-021 — 13/10/2026
+
+**Estado:** implementado en rama de desarrollo `feat/forms-map-qa-20261013`. Pendiente de revisión visual, QA real y publicación de producción. No declarar publicado solo por existir el código.
+
+### Formularios → Draw.io y datos
+- En la revisión final de **los cuatro formularios**, únicamente `eduardo@fibrazo.com` ve `¿Este registro es una prueba?` con **No preseleccionado**. No forma parte de las 94 preguntas propias: es una bandera de metadatos de envío.
+- El servidor valida el correo **a partir del token autenticado**, no del payload. `isTest:true` de cualquier otro usuario provoca 403. El modo público no permite el control.
+- El estado queda en la columna aditiva `Es_Prueba` de `RESP_CHURN!AC`, `RESP_EXPLORACION!CE` (se preservan columnas históricas BY:CC), o `RESP_INTELIGENCIA_OPERADOR!AF`; no desplazar el esquema anterior.
+- **Sí** se guarda en la hoja de respuestas con ID, usuario y estado para auditoría de QA; no se cuenta en resultados, reportes ni catálogo de ISPs. En Exploración no genera puntos u observaciones en la base maestra Bucaramanga ni consume el límite de una respuesta real. La cola offline conserva la marca, pero el servidor vuelve a verificar el acceso al recibirla. No significa borrar la prueba.
+- En el mapa, **las pruebas están ocultas por defecto**. Solo el mismo usuario autenticado puede habilitar `Mostrar pruebas (QA)` y obtener sus puntos con coordenadas. Los marcadores de prueba tienen distinción visual y están excluidos de los KPI aun cuando se muestran. No se habilita esta recuperación a otros administradores.
+- El diagrama Draw.io contiene un flujo auxiliar `[decision:es_prueba]` en **cada una de las cuatro páginas**. El manifiesto `qaTestFlow` registra la regla, las columnas y la excepción. `node docs/check-flow-sync.mjs` valida las cuatro decisiones. La incidencia preexistente `FO-PEN-004` sigue pendiente, **sin corrección funcional**.
+
+### Mapa y reglas de UI
+- `FO-PEN-007`: el usuario puede tipear para buscar/seleccionar en los filtros con listas de opciones; conserva la selección real en el elemento `select`, permisos, opción Todos, teclado, tildes, búsqueda de barrios y controles distintos (fechas/casillas). **Aplicar como convención a nuevos filtros de selección.**
+- `FO-PEN-008`: estratos `1=#22C55E (verde), 2=#FACC15 (amarillo), 3=#3B82F6 (azul), 4=#EF4444 (rojo), 5=#A855F7 (morado), 6=#EC4899 (rosa)` en polígonos, selector y referencia, sin alterar categorías cromáticas de operadores.
+- `FO-PEN-009`: controles únicos de filtros, capas y leyenda en panel flotante desplazable/contraíble en escritorio, compacto en móvil. No duplica lógica/estado; la referencia de estratos se mantiene visible mientras esté expandido.
+- `FO-PEN-010/012`: coordenadas de puntos existentes y clic derecho/pulsación prolongada copiables al tocarlas, con confirmación; botón `Ir a Google Maps` abre búsqueda del marcador exacto (`maps/search`), nunca instrucciones de ruta. Se conserva contexto territorial y acceso a formularios.
+
+### Pruebas y publicación
+Requeridas antes de cerrar los tickets: control de permisos (Eduardo/otro/anonimato), No predeterminado, colas offline y reintentos, prueba que no entra a base maestra ni indicadores, filtro del mapa, popup/copiar/enlace externo, selección escribible/foco/Enter/Escape, movimiento y minimizado del panel, y CSS/móvil (320/360/390/430 px) y escritorio; contrastar datos preexistentes sin modificación. Todo cambio funcional de formulario exige actualizar código/hojas/manifest/diagrama/manual/CAMBIOS según FO-CHG-019. La suite estructural no reemplaza QA visual/autenticada.
+
