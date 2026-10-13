@@ -297,7 +297,21 @@
           "showWhen": null,
           "full": true
         }
-      ]
+      ],
+      "submissionReview": {
+        "testFlag": {
+          "key": "Es_Prueba",
+          "type": "radio",
+          "options": [
+            "No",
+            "Sí"
+          ],
+          "default": "No",
+          "visibleOnlyTo": "eduardo@fibrazo.com",
+          "sheetColumn": "AC",
+          "yes": "Conservar QA; excluir análisis y Master; mostrar solo en filtro de mapa autorizado"
+        }
+      }
     },
     "EXPLORACION": {
       "page": "Exploración virtual",
@@ -615,7 +629,21 @@
           "showWhen": null,
           "full": true
         }
-      ]
+      ],
+      "submissionReview": {
+        "testFlag": {
+          "key": "Es_Prueba",
+          "type": "radio",
+          "options": [
+            "No",
+            "Sí"
+          ],
+          "default": "No",
+          "visibleOnlyTo": "eduardo@fibrazo.com",
+          "sheetColumn": "CE",
+          "yes": "Conservar QA; excluir análisis y Master; mostrar solo en filtro de mapa autorizado"
+        }
+      }
     },
     "EXPLORACION_PRESENCIAL": {
       "page": "Exploración presencial",
@@ -1046,7 +1074,21 @@
           "showWhen": null,
           "full": true
         }
-      ]
+      ],
+      "submissionReview": {
+        "testFlag": {
+          "key": "Es_Prueba",
+          "type": "radio",
+          "options": [
+            "No",
+            "Sí"
+          ],
+          "default": "No",
+          "visibleOnlyTo": "eduardo@fibrazo.com",
+          "sheetColumn": "CE",
+          "yes": "Conservar QA; excluir análisis y Master; mostrar solo en filtro de mapa autorizado"
+        }
+      }
     },
     "INTELIGENCIA_OPERADOR": {
       "page": "Inteligencia de operadores",
@@ -1376,7 +1418,21 @@
           ],
           "showWhen": null
         }
-      ]
+      ],
+      "submissionReview": {
+        "testFlag": {
+          "key": "Es_Prueba",
+          "type": "radio",
+          "options": [
+            "No",
+            "Sí"
+          ],
+          "default": "No",
+          "visibleOnlyTo": "eduardo@fibrazo.com",
+          "sheetColumn": "AF",
+          "yes": "Conservar QA; excluir análisis y Master; mostrar solo en filtro de mapa autorizado"
+        }
+      }
     }
   },
   "offline": {
@@ -1516,7 +1572,20 @@
         "status": "Campo huérfano en configuración productiva; no corregido por esta sincronización."
       }
     ],
-    "note": "Documentación del código tal como está; inspección visual de diagrams.net y defecto de coordenadas requieren validación separada"
+    "note": "Documentación del código tal como está; inspección visual de diagrams.net y defecto de coordenadas requieren validación separada",
+    "testModeChange": {
+      "reference": "FO-PEN-011",
+      "date": "2026-10-13",
+      "forms": 4,
+      "sheetColumns": {
+        "CHURN": "AC",
+        "EXPLORACION": "CE",
+        "EXPLORACION_PRESENCIAL": "CE",
+        "INTELIGENCIA_OPERADOR": "AF"
+      },
+      "diagramMarker": "[decision:es_prueba]",
+      "note": "Metadato del envío. FO-PEN-004 continúa pendiente."
+    }
   },
   "behavior": {
     "navigation": "activeSections() determina pasos visibles; next() valida sección y review() valida todas antes de enviar",
@@ -1527,5 +1596,29 @@
     "submit": "POST /api/submissions; éxito, cola offline y error son estados diferentes",
     "offline": "Solo respuestas internas autenticadas no editadas admiten cola offline cuando está disponible",
     "security": "Permisos y estado activo evaluados por administración y backend; diagrama no concede permisos"
+  },
+  "mapExperience": {
+    "reference": "FO-PEN-007/012",
+    "date": "2026-10-13",
+    "searchableFilters": [
+      "mapCityFilter",
+      "mapTypeFilter",
+      "mapOperatorFilter",
+      "mapUserFilter",
+      "mapEstratoSearch",
+      "mapBarrioSearch"
+    ],
+    "permanentRule": "Toda lista de filtros del mapa debe admitir búsqueda por escritura sin perder permisos ni selección.",
+    "strata": {
+      "1": "#22C55E",
+      "2": "#FACC15",
+      "3": "#3B82F6",
+      "4": "#EF4444",
+      "5": "#A855F7",
+      "6": "#EC4899"
+    },
+    "controlPanel": "Panel flotante con originales de filtros, capas y leyenda. Contraíble, arrastrable en escritorio; compacto móvil.",
+    "coordinateActions": "Copiar pulsando la coordenada y abrir el punto en Google Maps sin generar ruta.",
+    "testPolicy": "Registro Sí excluido de KPIs, listados normales, catálogos y base maestra. Solo Eduardo puede pedir verlo en mapa."
   }
 }

@@ -65,6 +65,8 @@ for(const id of formIds){
   const page=diagrams.find(m=>(m[1].match(/\bname="([^"]+)"/)?.[1])===copy.page);
   if(!page){errors.push("Falta diagrama asignado para "+id+": "+copy.page);continue;}
   const content=page[2];
+  check(content.includes("[decision:es_prueba]"),id+": falta decisión QA en Draw.io");
+  check(copy.submissionReview?.testFlag?.key==="Es_Prueba"&&copy.submissionReview.testFlag.default==="No",id+": metadata QA ausente");
   const fieldTags=[...content.matchAll(/\[field:([^\]]+)\]/g)].map(m=>m[1]);
   const sectionTags=[...content.matchAll(/\[section:([^\]]+)\]/g)].map(m=>m[1]);
   const fieldKeys=sourceFields.map(f=>f.key);

@@ -94,3 +94,18 @@ Se revisaron por lectura estructural las siete páginas del XML actual: 226 vér
 **Excepción controlada abierta:** FO-PEN-004 (EXPLORACION.coordenadas huérfanas) queda registrada y NO se corrige sin nueva instrucción. FO-PEN-005 sigue pendiente de la apertura y legibilidad reales en diagrams.net. Estas excepciones deben acompañar el cambio hasta su cierre validado.
 
 **Control de despliegues:** ediciones meramente documentales no deberían consumir nuevas versiones de aplicación. Para cambios funcionales, comprobar el despliegue real en Vercel; código en GitHub no equivale a producción.
+
+
+## FO-PEN-007 a FO-PEN-012 — implementación en rama pendiente de QA y despliegue (13/10/2026)
+
+Rama: feature/map-filters-and-test-records-20261013. Los seis requisitos se implementaron en código de desarrollo, sin publicación productiva. Los filtros de listas (ciudad, formulario, operador, usuario) y estratos admiten escribir para buscar; barrios conserva su buscador. Este patrón es obligatorio para filtros nuevos. No modifica permisos.
+
+Paleta de estratos: 1 verde #22C55E, 2 amarillo #FACC15, 3 azul #3B82F6, 4 rojo #EF4444, 5 morado #A855F7, 6 rosa #EC4899; independiente de los colores de operadores. El mapa dispone de un panel flotante con una sola instancia de filtros, capas y leyenda, movible en escritorio y contraíble; en móvil tiene modo compacto.
+
+En puntos existentes, mostrar coordenada pulsable para copiar y enlace «Ir a Google Maps» (buscar punto lat/lon, no ruta). En clic derecho / pulsación prolongada se elimina el botón separado Copiar, conservando contexto territorial y accesos a formularios.
+
+Identificación de pruebas: en la revisión final de los cuatro formularios, exclusivamente la cuenta verificada eduardo@fibrazo.com puede elegir «¿Este registro es una prueba?» Sí/No, con No predeterminado. El servidor rechaza Sí de otro usuario. Es metadata de envío, no pregunta general de forms-config.js: se guarda como Es_Prueba en RESP_CHURN!AC, RESP_EXPLORACION!CE y RESP_INTELIGENCIA_OPERADOR!AF (cabeceras ya existentes). No mueve columnas ni modifica respuestas anteriores. La cola offline transporta isTest y el servidor verifica token al sincronizar.
+
+Si es Sí, se conserva trazabilidad QA en respuestas, se excluye de resultados de análisis y catálogo ISP y no se sincroniza a Bucaramanga-Exploración. El mapa los oculta de forma predeterminada; solo Eduardo puede solicitar incluirlos mediante «Mostrar puntos de prueba». Aun visibles en ese modo, no se contabilizan en KPIs ni leyendas. Las herramientas que consulten directamente las hojas deben aplicar condición Es_Prueba distinto de Sí.
+
+El mismo Draw.io fue actualizado en las cuatro páginas con [decision:es_prueba], y el manifiesto documenta el metadato y mapa. Quedan pendientes las pruebas funcionales en navegador y móvil, con dos usuarios, envío Sí/No en cada formulario, online/offline, revisión/edición, resultados, Master, copia, filtros, capas, zoom, leyenda y Google Maps. FO-PEN-004 permanece sin corregir y FO-PEN-005 requiere QA visual diagrams.net. No declarar producción publicada hasta Vercel READY y comprobación autenticada.

@@ -2371,3 +2371,5 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
 .test-mode-choice input{accent-color:#43ffa5;width:18px;height:18px}
 .test-mode-panel small{display:block;margin-top:10px;color:#c1e2d2;font-size:11px;line-height:1.45}
 #testModePanel[hidden],#mapTestPointsWrap[hidden]{display:none!important}
+
+.map-searchable-select[hidden]{display:none!important}
