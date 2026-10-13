@@ -9,7 +9,7 @@ for(const path of scripts)new vm.Script(read(path),{filename:path});
 const html=read("index.html"),css=read("styles.css"),map=read("map-v01.js"),backend=read("api/submissions.js"),apiMap=read("api/map.js"),ui=read("ux-v04.js"),types=read("map-controls-ui.js");
 const expectedPalette={"1":"#22C55E","2":"#FACC15","3":"#3B82F6","4":"#EF4444","5":"#A855F7","6":"#EC4899"};
 for(const [k,v] of Object.entries(expectedPalette))assert.ok(map.includes('"'+k+'":"'+v+'"'),"Estrato "+k+" debe ser "+v);
-for(const id of ["reviewTestFlag","mapFloatingTools","mapFloatingHost","mapShowTests","mapTestControl","mapEstratoSearch","mapFiltersPanel","mapLayersPanel","mapPointLegendPanel"])
+for(const id of ["reviewTestFlag","formTestFlag","mapFloatingTools","mapFloatingHost","mapShowTests","mapTestControl","mapEstratoSearch","mapFiltersPanel","mapLayersPanel","mapPointLegendPanel"])
   assert.equal(html.split('id="'+id+'"').length,2,"Un solo control "+id);
 assert.ok(html.includes("/map-controls-ui.js?v=")&&read("service-worker.js").includes('"/map-controls-ui.js"'),"UI nueva cargada y cacheada");
 assert.ok(backend.includes('throw httpError("TEST_FLAG_FORBIDDEN",403)'),"Guardia de token");
@@ -32,3 +32,8 @@ const xml=read("docs/FIBRAZO_Forms_Flujos.drawio");
 assert.equal(xml.split("[decision:es_prueba]").length,5,"Cuatro diagramas QA");
 assert.equal((css.match(/{/g)||[]).length,(css.match(/}/g)||[]).length,"CSS balanceado");
 console.log("FO-CHG-021: sintaxis JS, fuentes, permisos QA, metadatos, colores, 4 flujos y CSS OK");
+
+assert.ok(ui.includes('updateTestReview();')&&ui.includes('$("formTestFlag")')===false?html.includes('id="formTestFlag"'):html.includes('id="formTestFlag"'),"Selector prueba visible desde el formulario");
+assert.ok(types.includes('panels.legend?.prepend(mini)')&&html.includes('data-floating-tab="legend"'),"Colores solo en Referencia");
+assert.ok(!html.includes('id="mapFiltersToggle"')&&!html.includes('id="mapLayersToggle"'),"Sin barra de botones duplicados");
+assert.ok(map.includes('map-copy-feedback'),"Aviso breve de coordenadas copiadas");

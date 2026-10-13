@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.css">
-  <link rel="stylesheet" href="/styles.css?v=2026.10.13.22">
+  <link rel="stylesheet" href="/styles.css?v=2026.10.13.23">
   <link rel="stylesheet" href="/brand-alignment.css?v=20261011-16">
 </head>
 <body class="auth-pending">
@@ -137,6 +137,14 @@
           <div id="formHistoryList" class="form-history-list"><div class="pending-empty">Cargando historial…</div></div>
         </details>
 
+        <fieldset id="formTestFlag" class="form-qa-flag" hidden>
+          <legend>¿Este registro es una prueba?</legend>
+          <div class="review-test-choices">
+            <label><input type="radio" name="qaTestEntry" value="No" checked> No · Registro real</label>
+            <label><input type="radio" name="qaTestEntry" value="Sí"> Sí · Prueba (QA)</label>
+          </div>
+          <small>Solo tu cuenta. Las pruebas quedan fuera de análisis y bases maestras; pueden verse con el filtro QA del mapa.</small>
+        </fieldset>
         <div id="sectionStepper" class="section-stepper"></div>
 
         <form id="dynamicForm" novalidate>
@@ -327,21 +335,6 @@
           </div>
         </div>
 
-        <div class="map-command-row">
-          <div class="map-command-left">
-            <button id="mapFiltersToggle" class="secondary-button compact map-filter-toggle" type="button" aria-expanded="false">
-              ☰ Filtros <span id="mapFilterCount" class="map-filter-count">0</span>
-            </button>
-            <button id="mapLayersToggle" class="secondary-button compact map-layer-toggle" type="button" aria-expanded="false">
-              ▱ Capas <span id="mapLayerCount" class="map-filter-count">0</span>
-            </button>
-          </div>
-          <div class="map-basemap-switch" role="group" aria-label="Tipo de mapa">
-            <button id="mapBaseStreet" class="active" type="button">Mapa</button>
-            <button id="mapBaseSatellite" type="button">Satélite</button>
-          </div>
-        </div>
-
         <div class="map-search-shell">
           <div class="map-search-box">
             <span>⌕</span>
@@ -379,6 +372,13 @@
         </div>
 
         <div id="mapLayersPanel" class="map-layers-panel" hidden>
+          <div class="map-basemap-control">
+            <span class="map-section-caption">TIPO DE MAPA</span>
+            <div class="map-basemap-switch" role="group" aria-label="Tipo de mapa">
+            <button id="mapBaseStreet" class="active" type="button">Mapa</button>
+            <button id="mapBaseSatellite" type="button">Satélite</button>
+          </div>
+          </div>
           <div class="map-layers-head">
             <div>
               <span>CAPAS TERRITORIALES</span>
@@ -450,7 +450,7 @@
             <div id="mapFloatingContent" class="map-floating-content">
               <div class="map-floating-tabs">
                 <button type="button" data-floating-tab="filters" class="active">Filtros</button>
-                <button type="button" data-floating-tab="layers">Estratos y barrios</button>
+                <button type="button" data-floating-tab="layers">Capas</button>
                 <button type="button" data-floating-tab="legend">Referencia</button>
               </div>
               <div id="mapFloatingHost" class="map-floating-host"></div>
@@ -507,11 +507,11 @@
   <script src="/app.js?v=2026.10.12.01"></script>
   <script src="/access-v03.js?v=2026.10.08.68"></script>
   <script src="/offline-v04.js?v=2026.10.08.68"></script>
-  <script src="/ux-v04.js?v=2026.10.13.21"></script>
+  <script src="/ux-v04.js?v=2026.10.13.23"></script>
   <script src="/admin-v03.js?v=2026.10.11.16"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.umd.min.js"></script>
-  <script src="/map-v01.js?v=2026.10.13.22"></script>
-  <script src="/map-controls-ui.js?v=2026.10.13.21"></script>
+  <script src="/map-v01.js?v=2026.10.13.23"></script>
+  <script src="/map-controls-ui.js?v=2026.10.13.23"></script>
 </body>
 </html>

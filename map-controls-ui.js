@@ -9,15 +9,21 @@
     select.dataset.typeaheadReady="1";
     const wrap=document.createElement("div");
     wrap.className="map-typeahead";
+    const heading=document.createElement("label");
+    heading.className="map-search-label";
+    heading.textContent=select.getAttribute("aria-label")||"Filtrar";
     const input=document.createElement("input");
+    const uniqueId="search-"+select.id;
+    input.id=uniqueId;
+    heading.htmlFor=uniqueId;
     input.type="search"; input.autocomplete="off";
-    input.placeholder="Escribí para buscar…";
+    input.placeholder="Escribe para buscar…";
     input.setAttribute("aria-label",select.getAttribute("aria-label")||"Buscar opción del filtro");
     input.setAttribute("aria-haspopup","listbox");
     input.setAttribute("aria-expanded","false");
     const menu=document.createElement("div");
     menu.className="map-typeahead-options"; menu.setAttribute("role","listbox");menu.hidden=true;
-    select.before(wrap);wrap.append(input,menu,select);
+    select.before(wrap);wrap.append(heading,input,menu,select);
     select.classList.add("map-native-select-hidden");
     select.tabIndex=-1;
     select._searchInput=input;
@@ -82,7 +88,40 @@
       legend:document.querySelector(".map-point-legend-card")
     };
     for(const child of Object.values(panels))if(child)host.appendChild(child);
-    // Referencia constante; comparte colores con los polígonos del mapa.
+    // Las opciones secundarias se pueden plegar sin duplicar controles.
+    const filters=panels.filters?.querySelector(".map-filters");
+    if(filters&&!filters.querySelector(".map-extra-filters")){
+      const section=document.createElement("details");
+      section.className="map-extra-filters";
+      const title=document.createElement("summary");title.textContent="Opciones adicionales · fotos, QA y fechas";
+      const body=document.createElement("div");body.className="map-extra-content";
+      for(const id of ["mapPhotosFilter","mapShowTests"]){
+        const input=$(id);
+        if(input?.parentElement)body.appendChild(input.parentElement);
+      }
+      for(const [id,label] of [["mapDateFrom","Desde"],["mapDateTo","Hasta"]]){
+        const input=$(id);if(!input)continue;
+        const wrap=document.createElement("label");wrap.className="map-extra-date";
+        wrap.append(document.createTextNode(label),input);body.appendChild(wrap);
+      }
+      section.append(title,body);filters.appendChild(section);
+    }
+    // Las capas se agrupan como listas desplegables; sus botones siguen siendo
+    // los mismos controles y mantienen aria-pressed / estado de mapa.
+    const switches=panels.layers?.querySelector(".map-layer-switches");
+    if(switches&&!switches.dataset.grouped){
+      switches.dataset.grouped="1";
+      for(const [key,title,controlId] of [["barrios","Barrios","mapBarrioControls"],["estratos","Estratos","mapEstratoControls"]]){
+        const toggle=$(key==="barrios"?"mapLayerBarrios":"mapLayerEstratos");
+        const content=$(controlId);if(!toggle||!content)continue;
+        const disclosure=document.createElement("details");disclosure.className="map-layer-disclosure";
+        const summary=document.createElement("summary");summary.textContent=title+" · ver opciones";
+        disclosure.append(summary,toggle,content);
+        switches.appendChild(disclosure);
+        toggle.addEventListener("click",()=>{disclosure.open=true;});
+      }
+    }
+    // Referencia solo en su pestaña: no ocupa espacio en filtros ni capas.
     const mini=document.createElement("div");
     mini.className="map-mini-legend";
     mini.setAttribute("aria-label","Referencias de estratos");
@@ -93,12 +132,20 @@
       item.append(swatch,document.createTextNode("Estrato "+key));
       mini.appendChild(item);
     }
-    panel.querySelector(".map-floating-tabs")?.after(mini);
+    const title=document.createElement("strong");
+    title.className="map-reference-title";title.textContent="Colores de estratos";
+    mini.prepend(title);
+    panels.legend?.prepend(mini);
 
     function show(which){
       Object.entries(panels).forEach(([name,element])=>{if(element)element.hidden=name!==which;});
       if(which==="legend"&&$("mapPointLegendPanel"))$("mapPointLegendPanel").hidden=false;
-      panel.querySelectorAll("[data-floating-tab]").forEach(button=>button.classList.toggle("active",button.dataset.floatingTab===which));
+      panel.querySelectorAll("[data-floating-tab]").forEach(button=>{
+        const selected=button.dataset.floatingTab===which;
+        button.classList.toggle("active",selected);
+        button.setAttribute("aria-selected",String(selected));
+      });
+      panel.dataset.activeTab=which;
     }
     panel.querySelectorAll("[data-floating-tab]").forEach(button=>button.addEventListener("click",()=>show(button.dataset.floatingTab)));
     $("mapFloatingMinimize")?.addEventListener("click",()=>{

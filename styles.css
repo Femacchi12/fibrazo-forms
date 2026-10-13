@@ -2381,3 +2381,43 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
 
 /* FO-PEN-007: búsqueda escrita de estratos, igual que otros filtros */
 .map-estrato-search{width:100%;min-height:37px;border:1px solid #52635c;border-radius:8px;background:#14201b;color:#f5fff9;padding:8px 10px;margin:8px 0;font:inherit}
+
+/* FO-CHG-022 · ajuste de legibilidad del mapa en Preview */
+.map-floating-host .map-filters,.map-floating-tools .map-filters{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:10px!important}
+.map-floating-host .map-filters>*{min-width:0;width:100%}
+.map-floating-host .map-typeahead{display:flex;flex-direction:column;gap:4px;min-width:0}
+.map-floating-host .map-typeahead>input{width:100%!important;min-width:0!important;min-height:38px;padding:9px 11px;box-sizing:border-box}
+.map-floating-host .map-typeahead-options{max-width:100%}
+.map-search-label,.map-section-caption{display:block;font-size:10px;font-weight:800;color:#a7ccb9;letter-spacing:.02em}
+.map-floating-host .map-filter-actions{margin:9px 0 0;display:flex;justify-content:flex-end}
+.map-extra-filters,.map-layer-disclosure{border:1px solid rgba(113,149,126,.36);border-radius:10px;padding:8px;margin-top:5px;background:rgba(20,39,29,.45);min-width:0}
+.map-extra-filters>summary,.map-layer-disclosure>summary{cursor:pointer;font-weight:700;font-size:11px;list-style:revert;padding:7px 3px;line-height:1.5}
+.map-extra-content{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-top:10px}
+.map-extra-content>.map-photos-filter{grid-column:span 1;min-width:0;display:flex;gap:7px;align-items:center}
+.map-extra-content>.map-extra-date{display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700}
+.map-extra-date input{width:100%;min-width:0;box-sizing:border-box}
+.map-floating-host .map-layer-switches{display:grid;grid-template-columns:1fr;gap:7px}
+.map-layer-disclosure .map-layer-chip{display:flex;width:100%;min-height:42px;margin:8px 0;text-align:left;align-items:center}
+.map-layer-disclosure .map-layer-chip::before{content:"";flex:0 0 15px;width:15px;height:15px;border:1.5px solid #a6c5b4;border-radius:4px;margin:0 7px 0 0;display:grid;place-items:center;font-size:12px}
+.map-layer-disclosure .map-layer-chip[aria-pressed="true"]::before{content:"✓";background:#43ffa5;color:#073b24;border-color:#43ffa5}
+.map-layer-disclosure .map-selective-layer{padding:6px 0;margin:0}
+.map-layer-disclosure .map-estrato-options{display:grid;grid-template-columns:1fr 1fr}
+.map-basemap-control{margin:0 0 12px;padding:9px;border:1px solid rgba(113,149,126,.35);border-radius:9px}
+.map-basemap-control .map-basemap-switch{display:flex;margin-top:6px;gap:8px;justify-content:flex-start}
+.map-mini-legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:8px;margin:0 0 10px!important}
+.map-reference-title{grid-column:1/-1;font-size:12px;display:block;color:#d6ffe6}
+.map-mini-legend>span{display:flex;gap:5px;align-items:center;font-size:11px;min-width:0}
+.map-floating-tools .map-point-legend-card{max-width:100%}
+.map-popup .map-coordinate-tap,.map-coordinate-sheet .map-coordinate-tap{display:inline;min-height:0;max-width:100%;padding:1px 0;border:0!important;background:transparent!important;color:#43ffa5;font-size:10px;font-weight:700;text-align:left;line-height:1.5;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;box-shadow:none!important}
+.map-copy-feedback{display:inline-block;margin:3px 0 0 6px;padding:3px 7px;background:#1d4931;border:1px solid #43ffa5;border-radius:6px;color:#d7ffea;font-size:10px;font-weight:700;white-space:nowrap}
+.form-qa-flag{border:1px solid rgba(67,255,165,.48);background:rgba(67,255,165,.07);border-radius:10px;padding:11px 13px;margin:12px 0;color:#eafff4}
+.form-qa-flag[hidden]{display:none!important}
+.form-qa-flag legend{font-size:12px;font-weight:800;padding:0 5px}
+.form-qa-flag small{display:block;margin-top:6px;font-size:10px;color:#c9e0d3}
+.form-qa-flag .review-test-choices{display:flex;gap:10px;flex-wrap:wrap}
+@media(max-width:700px){
+ .map-floating-host .map-filters{grid-template-columns:1fr!important}
+ .map-floating-host .map-layer-switches{grid-template-columns:1fr!important}
+ .map-extra-content{grid-template-columns:minmax(0,1fr)}
+ .map-extra-content>.map-photos-filter{grid-column:1}
+}

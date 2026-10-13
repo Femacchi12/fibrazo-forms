@@ -1542,7 +1542,17 @@
       const button=event.target.closest("[data-map-copy-point]");
       if(!button)return;
       event.preventDefault();
-      copyCoordinates(Number(button.dataset.lat),Number(button.dataset.lng));
+      copyCoordinates(Number(button.dataset.lat),Number(button.dataset.lng)).then(()=>{
+        const owner=button.parentElement;
+        if(!owner)return;
+        owner.querySelector(".map-copy-feedback")?.remove();
+        const notice=document.createElement("span");
+        notice.className="map-copy-feedback";
+        notice.setAttribute("role","status");
+        notice.textContent="✓ Copiado";
+        owner.appendChild(notice);
+        setTimeout(()=>notice.remove(),1800);
+      });
     });
     ["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter","mapDateFrom","mapDateTo","mapPhotosFilter"].forEach(id=>$(id)?.addEventListener("change",()=>{updateFilterCount();renderMarkers();}));
     $("mapShowTests")?.addEventListener("change",()=>{renderMarkers();updateFilterCount();loadPoints({silent:true});});

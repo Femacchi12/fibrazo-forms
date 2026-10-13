@@ -14,17 +14,24 @@
     return !publicMode&&String(currentUser()?.email||"").trim().toLowerCase()==="eduardo@fibrazo.com";
   }
   function updateTestReview(){
-    const box=$("reviewTestFlag");
-    if(!box)return;
     const permitted=mayIdentifyTest();
-    box.hidden=!permitted;
     if(!permitted)state.isTest=false;
-    box.querySelectorAll('input[name="qaTestFlag"]').forEach(input=>input.checked=input.value===(state.isTest?"Sí":"No"));
+    for(const id of ["formTestFlag","reviewTestFlag"]){
+      const box=$(id);
+      if(!box)continue;
+      box.hidden=!permitted;
+      box.querySelectorAll('input[type="radio"]').forEach(input=>{
+        input.checked=input.value===(state.isTest?"Sí":"No");
+      });
+    }
   }
-  $("reviewTestFlag")?.addEventListener("change",event=>{
-    if(!mayIdentifyTest())return;
-    if(event.target?.name==="qaTestFlag")state.isTest=event.target.value==="Sí";
-  });
+  for(const id of ["formTestFlag","reviewTestFlag"]){
+    $(id)?.addEventListener("change",event=>{
+      if(!mayIdentifyTest()||!event.target.matches('input[type="radio"]'))return;
+      state.isTest=event.target.value==="Sí";
+      updateTestReview();
+    });
+  }
 
   function renderPending(){
     const count=$("pendingCount"),list=$("pendingList"),hub=document.querySelector(".pending-hub"); if(!count||!list)return;
@@ -132,6 +139,7 @@
       }
     }
     $("formWorkspace").hidden=false;$("reviewWorkspace").hidden=true;$("successWorkspace").hidden=true;
+    updateTestReview();
     const stepper=$("sectionStepper"),counter=$("formStepCounter");
     if(stepper)stepper.hidden=policy.showProgress===false;
     if(counter)counter.hidden=policy.showProgress===false;
