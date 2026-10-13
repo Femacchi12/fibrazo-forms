@@ -21,7 +21,7 @@ assert.ok(backend.includes("submissionRow[31]=payload.isTest"),"Metadatos en Int
 assert.ok(apiMap.includes('canViewTests=email==="eduardo@fibrazo.com"'),"Solo propietario puede recuperar QA");
 assert.equal(apiMap.split("if(isTest&&(!includeTests||rowEmail!==email))continue").length,3,"Filtrar QA en ambos orígenes");
 assert.ok(ui.includes("state.isTest=false")&&ui.includes("isTest:mayIdentifyTest()&&state.isTest"),"No por defecto");
-assert.ok(types.includes("SEARCH")===false,"Typeahead opera con la lista nativa sin duplicar selección");
+assert.ok(types.includes('input.type="search"')&&types.includes("select.dispatchEvent"),"Filtros tecleables enlazados al select original");
 assert.ok(map.includes("googlePointUrl(lat,lng)"),"Google Maps como marcador, no ruta");
 const manifest=JSON.parse(read("docs/flow-sync-manifest.json"));
 for(const form of Object.values(manifest.forms)){
