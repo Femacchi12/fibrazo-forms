@@ -569,7 +569,7 @@
       counts.set(id,(counts.get(id)||0)+1);
     }
     const formCounts={virtual:0,presential:0,intelligence:0};
-    for(const point of (Array.isArray(filtered)?filtered:[])){
+    for(const point of (Array.isArray(filtered)?filtered:[]).filter(point=>!point.isTest)){
       const typ=formType(point.type);
       if(typ==="Presencial")formCounts.presential++;
       else if(typ==="Inteligencia de operadores")formCounts.intelligence++;
