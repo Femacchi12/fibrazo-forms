@@ -80,6 +80,19 @@
       legend:document.querySelector(".map-point-legend-card")
     };
     for(const child of Object.values(panels))if(child)host.appendChild(child);
+    // Referencia constante; comparte colores con los polígonos del mapa.
+    const mini=document.createElement("div");
+    mini.className="map-mini-legend";
+    mini.setAttribute("aria-label","Referencias de estratos");
+    const colors=window.FIBRAZO_MAP_ESTRATO_COLORS||{};
+    for(const key of ["1","2","3","4","5","6"]){
+      const item=document.createElement("span"),swatch=document.createElement("i");
+      swatch.style.background=colors[key]||"#888";
+      item.append(swatch,document.createTextNode("Estrato "+key));
+      mini.appendChild(item);
+    }
+    panel.querySelector(".map-floating-tabs")?.after(mini);
+
     function show(which){
       Object.entries(panels).forEach(([name,element])=>{if(element)element.hidden=name!==which;});
       if(which==="legend"&&$("mapPointLegendPanel"))$("mapPointLegendPanel").hidden=false;
