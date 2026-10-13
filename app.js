@@ -215,9 +215,12 @@
     {id:"FO-PEN-004",title:"Exploración virtual · coordenadas",detail:"Revisión funcional postergada: campo obligatorio asociado a una sección inexistente. No corregir sin validar el formulario.",priority:"ALTA"},
     {id:"FO-PEN-005",title:"Flujos Draw.io · apertura visual",detail:"Validación estructural y geométrica correcta. Falta abrir y revisar las siete páginas en diagrams.net.",priority:"MEDIA"}
   ];
+  const appPendingHub=document.querySelector(".pending-hub");
+  if(appPendingHub)appPendingHub.dataset.pendingOwner="app";
   function initPendingCenter(){
-    const toggle=$("pendingToggle"),popover=$("pendingPopover"),list=$("pendingList"),badge=$("pendingCount"),close=$("pendingClose");
+    const toggle=$("pendingToggle"),popover=$("pendingPopover"),list=$("pendingList"),badge=$("pendingCount"),close=$("pendingClose"),hub=document.querySelector(".pending-hub");
     if(!toggle||!popover||!list||!badge||!close)return;
+    if(hub)hub.hidden=false;
     badge.textContent=String(FORM_PENDING_SUMMARY.length);
     toggle.setAttribute("aria-label","⚠️ "+FORM_PENDING_SUMMARY.length+" pendientes de desarrollo");
     list.innerHTML=FORM_PENDING_SUMMARY.map(item=>

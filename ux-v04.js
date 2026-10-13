@@ -4,6 +4,7 @@
   const publicMode=document.body.classList.contains("public-mode");
   const state={form:null,policy:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:"",ispOptions:[],geoController:null,geoLookupId:0,geoLookupCancelled:false,locationBusy:false,maxSectionReached:0,locationValidated:false,geoPromise:null,editId:"",existingPhotoFields:{},serverHistory:[]};
   const pending=window.FIBRAZO_PENDING||[];
+  const pendingOwnedByApp=document.querySelector(".pending-hub")?.dataset.pendingOwner==="app";
 
   function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
   function css(v){return window.CSS&&CSS.escape?CSS.escape(v):String(v).replace(/["\\]/g,"\\$&");}
@@ -20,10 +21,12 @@
     const show=typeof force==="boolean"?force:pop.hidden;
     pop.hidden=!show;btn.setAttribute("aria-expanded",String(show));
   }
-  $("pendingToggle")?.addEventListener("click",e=>{e.stopPropagation();togglePending();});
-  $("pendingClose")?.addEventListener("click",()=>togglePending(false));
-  document.addEventListener("click",e=>{if(!e.target.closest(".pending-hub"))togglePending(false);});
-  renderPending();
+  if(!pendingOwnedByApp){
+    $("pendingToggle")?.addEventListener("click",e=>{e.stopPropagation();togglePending();});
+    $("pendingClose")?.addEventListener("click",()=>togglePending(false));
+    document.addEventListener("click",e=>{if(!e.target.closest(".pending-hub"))togglePending(false);});
+    renderPending();
+  }
 
   document.addEventListener("click",e=>{
     const btn=e.target.closest(".form-card .form-open-button");if(!btn)return;
