@@ -2360,3 +2360,14 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
   .map-floating-drag{display:none}
   .map-floating-panel.collapsed{width:auto}
 }
+
+/* FO-PEN-008/011 · referencia de estratos y pruebas */
+.map-estrato-search{display:block;width:100%;min-height:36px;padding:7px 10px;margin:6px 0;border:1px solid #526860;border-radius:8px;background:#111c17;color:#fff;font:inherit}
+.map-test-point-marker .map-point-shape{outline:2px dashed #f8bdff;outline-offset:3px;box-shadow:0 0 0 2px #14141c}
+.test-mode-panel{margin:14px 0;padding:15px;border:1px solid #43ffa5;border-radius:11px;background:#14251d;color:#f5fff9}
+.test-mode-panel legend{font-size:13px;font-weight:800;padding:0 7px}
+.test-mode-choice{display:flex;flex-wrap:wrap;gap:12px}
+.test-mode-choice label{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:8px 12px;border:1px solid #456859;border-radius:9px;cursor:pointer}
+.test-mode-choice input{accent-color:#43ffa5;width:18px;height:18px}
+.test-mode-panel small{display:block;margin-top:10px;color:#c1e2d2;font-size:11px;line-height:1.45}
+#testModePanel[hidden],#mapTestPointsWrap[hidden]{display:none!important}
