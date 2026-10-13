@@ -298,6 +298,13 @@
     });
   }
 
+  function googlePointUrl(lat,lng){
+    return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(Number(lat).toFixed(6)+","+Number(lng).toFixed(6));
+  }
+  function coordinateCopyButton(lat,lng){
+    const value=Number(lat).toFixed(6)+", "+Number(lng).toFixed(6);
+    return '<button type="button" class="map-coordinate-tap" data-map-copy-point data-lat="'+Number(lat)+'" data-lng="'+Number(lng)+'" title="Copiar coordenadas">'+esc(value)+'</button>';
+  }
   function closeCoordinateSheet(){
     document.querySelector(".map-coordinate-backdrop")?.remove();
     document.querySelector(".map-coordinate-sheet")?.remove();
@@ -358,19 +365,18 @@
     sheet.setAttribute("aria-modal","true");
     sheet.innerHTML='<div class="map-coordinate-handle"></div>'+
       '<div class="map-coordinate-head"><div><span>PUNTO SELECCIONADO</span><h3>Acciones con la coordenada</h3></div><button type="button" data-map-close aria-label="Cerrar">×</button></div>'+
-      '<div class="map-coordinate-value">'+lat.toFixed(6)+', '+lng.toFixed(6)+'</div>'+
+      '<div class="map-coordinate-value">'+coordinateCopyButton(lat,lng)+'</div>'+
       '<div class="map-coordinate-actions">'+
-        '<button type="button" data-map-copy>⧉ Copiar coordenada</button>'+
-        '<button type="button" data-map-route>↗ Ruta en Google Maps</button>'+
+        
+        '<button type="button" data-map-route>↗ Ir a Google Maps</button>'+
       '</div>'+
       '<div class="map-coordinate-territorial"><span>CONTEXTO TERRITORIAL</span><div data-map-territorial><div class="map-coordinate-territorial-loading">Consultando nuestra base…</div></div></div>'+
       '<div class="map-coordinate-forms"><span>COMPLETAR FORMULARIO</span><div data-map-form-list></div></div>';
     document.body.append(backdrop,sheet);
     sheet.addEventListener("click",event=>event.stopPropagation());
     sheet.querySelector("[data-map-close]")?.addEventListener("click",closeCoordinateSheet);
-    sheet.querySelector("[data-map-copy]")?.addEventListener("click",()=>copyCoordinates(lat,lng));
     sheet.querySelector("[data-map-route]")?.addEventListener("click",()=>{
-      window.open("https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(lat+","+lng),"_blank","noopener");
+      window.open(googlePointUrl(lat,lng),"_blank","noopener");
     });
     loadCoordinateTerritorial(sheet,lat,lng);
     const list=sheet.querySelector("[data-map-form-list]");
@@ -487,7 +493,7 @@
 
   function popupHtml(point){
     const links=[];
-    if(point.maps)links.push('<a href="'+esc(point.maps)+'" target="_blank" rel="noopener">↗ Google Maps</a>');
+    links.push('<a href="'+esc(googlePointUrl(point.lat,point.lng))+'" target="_blank" rel="noopener">↗ Ir a Google Maps</a>');
     if(point.evidence)links.push('<a href="'+esc(point.evidence)+'" target="_blank" rel="noopener">↗ Evidencia</a>');
     (point.photos||[]).forEach((url,index)=>links.push('<a href="'+esc(url)+'" target="_blank" rel="noopener">↗ Foto '+(index+1)+'</a>'));
     const operators=(point.operators||[]).length?'<div class="map-popup-row"><b>Operadores</b><span>'+esc(point.operators.join(", "))+'</span></div>':"";
@@ -499,6 +505,8 @@
       '<div class="map-popup-row"><b>Ciudad</b><span>'+esc(statusLine("",point.city).replace(/^:\s*/,""))+'</span></div>'+
       '<div class="map-popup-row"><b>Barrio</b><span>'+esc(statusLine("",point.barrio).replace(/^:\s*/,""))+'</span></div>'+
       '<div class="map-popup-row"><b>Estrato</b><span>'+esc(statusLine("",point.estrato).replace(/^:\s*/,""))+'</span></div>'+
+      '<div class="map-popup-row"><b>Coordenadas</b><span>'+coordinateCopyButton(point.lat,point.lng)+'</span></div>'+
+      (point.isTest?'<div class="map-popup-test">⚠ Registro de prueba · excluido de análisis</div>':"")+
       operators+note+
       (links.length?'<div class="map-popup-links">'+links.join("")+'</div>':"")+
     '</div>';
@@ -1520,6 +1528,12 @@
   }
 
   function bind(){
+    document.addEventListener("click",event=>{
+      const button=event.target.closest("[data-map-copy-point]");
+      if(!button)return;
+      event.preventDefault();
+      copyCoordinates(Number(button.dataset.lat),Number(button.dataset.lng));
+    });
     ["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter","mapDateFrom","mapDateTo","mapPhotosFilter"].forEach(id=>$(id)?.addEventListener("change",()=>{updateFilterCount();renderMarkers();}));
     $("mapRefresh")?.addEventListener("click",refreshMapNow);
     $("mapQuickRefresh")?.addEventListener("click",refreshMapNow);
