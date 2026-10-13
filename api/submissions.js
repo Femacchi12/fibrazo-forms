@@ -517,7 +517,7 @@ module.exports=async(req,res)=>{
       // Preservar el indicador histórico en una edición autorizada.
       row[31]=old[31]|| (payload.isTest?"Sí":"No");
       row[0]=old[0]||row[0];
-      await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!A${idx+2}:AE${idx+2}`,valueInputOption:"RAW",requestBody:{values:[row]}});
+      await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!A${idx+2}:AF${idx+2}`,valueInputOption:"RAW",requestBody:{values:[row]}});
       return res.status(200).json({ok:true,id:editId,updated:true,photos:links});
     }
 
@@ -563,7 +563,7 @@ module.exports=async(req,res)=>{
     }
     const appended=await sheets.spreadsheets.values.append({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!${isExploration(form.id)?"A:AB":form.id==="INTELIGENCIA_OPERADOR"?"A:AE":"A:AB"}`,
+      range:`${form.sheet}!${isExploration(form.id)?"A:CE":form.id==="INTELIGENCIA_OPERADOR"?"A:AF":"A:AC"}`,
       valueInputOption:"RAW",
       insertDataOption:"INSERT_ROWS",
       requestBody:{values:[submissionRow]}
