@@ -183,6 +183,11 @@
           </div>
         </div>
 
+        <fieldset id="testModePanel" class="test-mode-panel" hidden aria-labelledby="testModeTitle">
+          <legend id="testModeTitle">¿Este registro es una prueba? · Solo usuario autorizado</legend>
+          <div class="test-mode-choice"><label><input id="testModeNo" type="radio" name="is_test" value="No" checked> No · registro real</label><label><input id="testModeYes" type="radio" name="is_test" value="Sí"> Sí · prueba</label></div>
+          <small id="testModeNotice">Registro real: se incluirá en los análisis y sincronizaciones correspondientes.</small>
+        </fieldset>
         <div id="reviewContent" class="review-content"></div>
 
         <div id="saveStatus" class="save-status"></div>
@@ -496,7 +501,7 @@
   <script src="/app.js?v=2026.10.12.01"></script>
   <script src="/access-v03.js?v=2026.10.08.68"></script>
   <script src="/offline-v04.js?v=2026.10.08.68"></script>
-  <script src="/ux-v04.js?v=2026.10.13.14"></script>
+  <script src="/ux-v04.js?v=2026.10.13.05"></script>
   <script src="/admin-v03.js?v=2026.10.11.16"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.umd.min.js"></script>

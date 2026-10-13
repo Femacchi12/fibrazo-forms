@@ -5,6 +5,8 @@ const {
 }=require("./_core");
 
 const MAX_POINTS=2000;
+const TEST_EMAIL="eduardo@fibrazo.com";
+const isTestValue=v=>String(v||"").trim().toLowerCase()==="sí";
 
 function norm(v){
   return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
@@ -73,13 +75,14 @@ module.exports=async(req,res)=>{
     const sheets=google.sheets({version:"v4",auth});
     const [response,intelResponse]=await Promise.all([
       (access.virtual||access.presential)
-        ?sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"RESP_EXPLORACION!A2:BK"})
+        ?sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"RESP_EXPLORACION!A2:CE"})
         :Promise.resolve({data:{values:[]}}),
       access.intelligence
-        ?sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"RESP_INTELIGENCIA_OPERADOR!A2:AE"})
+        ?sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"RESP_INTELIGENCIA_OPERADOR!A2:AF"})
         :Promise.resolve({data:{values:[]}})
     ]);
     const email=String(user.email||"").trim().toLowerCase();
+    const canShowTests=email===TEST_EMAIL&&String(req.query?.includeTests||"")==="1";
     const admin=!!(caps.base||String(caps.user?.role||"").toUpperCase()==="ADMIN");
     const all=response.data.values||[];
     const points=[];
@@ -91,6 +94,8 @@ module.exports=async(req,res)=>{
       if(!isVirtual(row)&&!isPresential(row))continue;
       const rowEmail=String(row[24]||"").trim().toLowerCase();
       if(!admin&&rowEmail!==email)continue;
+      const isTest=isTestValue(row[82]);
+      if(isTest&&(!canShowTests||rowEmail!==email))continue;
 
       const lat=num(row[17]),lng=num(row[18]);
       if(lat===null||lng===null||lat<-90||lat>90||lng<-180||lng>180)continue;
@@ -112,7 +117,7 @@ module.exports=async(req,res)=>{
       points.push({
         id:String(row[1]||""),
         timestamp:String(row[0]||""),
-        type,
+        type,isTest,
         user:String(row[24]||""),
         lat,lng,
         accuracy:num(row[19]),
@@ -156,6 +161,8 @@ module.exports=async(req,res)=>{
     for(const row of (intelResponse.data.values||[]).slice(-MAX_POINTS)){
       const rowEmail=String(row[19]||"").trim().toLowerCase();
       if(!admin&&rowEmail!==email)continue;
+      const isTest=isTestValue(row[31]);
+      if(isTest&&(!canShowTests||rowEmail!==email))continue;
       const lat=num(row[9]),lng=num(row[10]);
       if(lat===null||lng===null||lat<-90||lat>90||lng<-180||lng>180)continue;
       const operator=String(row[2]||"").trim();
@@ -165,7 +172,7 @@ module.exports=async(req,res)=>{
       points.push({
         id:String(row[1]||""),
         timestamp:String(row[0]||""),
-        type:"INTELIGENCIA_OPERADOR",
+        type:"INTELIGENCIA_OPERADOR",isTest,
         user:String(row[19]||""),
         lat,lng,accuracy:num(row[11]),
         observedCity,sector:barrio,note:String(row[8]||""),

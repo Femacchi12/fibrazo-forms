@@ -10,12 +10,12 @@ module.exports=async(req,res)=>{
     const [forms,caps]=await Promise.all([loadForms(auth),userCapabilities(auth,user.email)]);
     if(!canUseDashboard(user,caps.adminActive,forms))return res.status(403).json({error:"Access denied"});
     const sheets=google.sheets({version:"v4",auth});
-    const ranges=["RESP_EXPLORACION!M2:P","RESP_INTELIGENCIA_OPERADOR!C2:C","LISTAS!A2:B"];
+    const ranges=["RESP_EXPLORACION!M2:CE","RESP_INTELIGENCIA_OPERADOR!C2:AF","LISTAS!A2:B"];
     const response=await sheets.spreadsheets.values.batchGet({spreadsheetId:SHEET_ID,ranges});
     const [exploration=[],intelligence=[],lists=[]]=(response.data.valueRanges||[]).map(x=>x.values||[]);
     const names=[];
-    for(const row of exploration)for(const v of row)names.push(v);
-    for(const row of intelligence)names.push(row[0]);
+    for(const row of exploration)if(String(row[70]||"").trim().toLowerCase()!=="sí")for(const v of row.slice(0,4))names.push(v);
+    for(const row of intelligence)if(String(row[29]||"").trim().toLowerCase()!=="sí")names.push(row[0]);
     for(const row of lists)if(["isp","operador","isp_global"].includes(clean(row[0]).toLowerCase()))names.push(row[1]);
     const byKey=new Map();
     for(const raw of names){

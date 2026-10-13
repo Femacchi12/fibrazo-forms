@@ -2,7 +2,7 @@
   const forms=window.FIBRAZO_FORMS||{};
   const $=id=>document.getElementById(id);
   const publicMode=document.body.classList.contains("public-mode");
-  const state={form:null,policy:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:"",ispOptions:[],geoController:null,geoLookupId:0,geoLookupCancelled:false,locationBusy:false,maxSectionReached:0,locationValidated:false,geoPromise:null,editId:"",existingPhotoFields:{},serverHistory:[]};
+  const state={form:null,policy:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:"",ispOptions:[],geoController:null,geoLookupId:0,geoLookupCancelled:false,locationBusy:false,maxSectionReached:0,locationValidated:false,geoPromise:null,editId:"",existingPhotoFields:{},serverHistory:[],isTest:false};
   const pending=window.FIBRAZO_PENDING||[];
   const pendingOwnedByApp=document.querySelector(".pending-hub")?.dataset.pendingOwner==="app";
 
@@ -44,6 +44,12 @@
   $("editForm")?.addEventListener("click",edit);
   $("editFormBottom")?.addEventListener("click",edit);
   $("confirmSubmit")?.addEventListener("click",submit);
+  $("testModePanel")?.addEventListener("change",event=>{
+    if(event.target.name!=="is_test")return;
+    state.isTest=event.target.value==="Sí";
+    const note=$("testModeNotice");
+    if(note)note.textContent=state.isTest?"Prueba: se guarda con identificación QA; no se incluye en análisis ni en la base maestra. Puedes mostrarla temporalmente en el mapa.":"Registro real: se incluirá en los análisis y sincronizaciones correspondientes.";
+  });
   $("newResponse")?.addEventListener("click",()=>{if(state.form)openForm(state.form.id);});
 
   function policyFor(id){
@@ -78,7 +84,7 @@
     const form=forms[id];if(!form)return;
     if(!publicMode&&window.FIBRAZO_ACCESS&&window.FIBRAZO_ACCESS[id]===false)return;
     const policy=policyFor(id);
-    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.gpsCapturePending=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
+    state.form=form;state.isTest=false;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.gpsCapturePending=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
     document.body.classList.add("form-mode");
     $("formTitle").textContent=form.name;
     $("formDescription").textContent=form.description||"";
@@ -1041,6 +1047,15 @@
   function edit(){$("reviewWorkspace").hidden=true;$("formWorkspace").hidden=false;renderSection();}
   function buildReview(){
     const host=$("reviewContent");host.innerHTML="";
+    const testPanel=$("testModePanel");
+    if(testPanel){
+      const enabled=!publicMode&&String(currentUser()?.email||"").trim().toLowerCase()==="eduardo@fibrazo.com";
+      testPanel.hidden=!enabled;
+      const yes=$("testModeYes"),no=$("testModeNo"),note=$("testModeNotice");
+      if(yes)yes.checked=state.isTest===true;
+      if(no)no.checked=state.isTest!==true;
+      if(note)note.textContent=state.isTest?"Prueba: se guarda con identificación QA; no se incluye en análisis ni en la base maestra. Puedes mostrarla temporalmente en el mapa.":"Registro real: se incluirá en los análisis y sincronizaciones correspondientes.";
+    }
     activeSections().forEach(section=>{const visible=state.form.fields.filter(f=>f.section===section.id&&conditionMet(f));if(!visible.length)return;const card=document.createElement("section");card.className="review-section";const rows=visible.map(f=>'<div class="review-row"><span>'+esc(f.label)+'</span><strong>'+esc(reviewValue(f))+'</strong></div>').join("");card.innerHTML='<div class="review-section-head"><span>SECCIÓN</span><h2>'+esc(section.title)+"</h2></div>"+rows;host.appendChild(card);});
   }
   function reviewValue(field){
@@ -1084,6 +1099,7 @@
         ?["foto_modelo_caja","foto_nomenclatura_caja","foto_marquilla","foto_tipo_tensor","foto_marquilla_drop","foto_tensor_acometida"].map(key=>state.photos.find(p=>p.fieldKey===key)||null).filter(Boolean)
         :state.photos,
       user:{email:u?.email||""},
+      isTest:state.isTest===true,
       clientTimestamp:new Date().toISOString(),
       startedAt:state.startedAt,
       website:$("publicWebsite")?.value||"",

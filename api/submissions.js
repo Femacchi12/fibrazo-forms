@@ -23,6 +23,9 @@ let masterBarrioCache=null;
 const PHOTO_ROOT_FOLDER_ID=process.env.DRIVE_FORMS_ROOT_FOLDER_ID||"0AF3Q3h3jUqsoUk9PVA";
 const photoFolderCache=new Map();
 
+const TEST_EMAIL="eduardo@fibrazo.com";
+const TEST_FLAG_COLUMN={CHURN:28,EXPLORACION:82,EXPLORACION_PRESENCIAL:82,INTELIGENCIA_OPERADOR:31};
+const isTestValue=value=>String(value||"").trim().toLowerCase()==="sí";
 const idFor=form=>`${form}-${Date.now()}-${Math.random().toString(36).slice(2,7).toUpperCase()}`;
 
 function driveQueryValue(value){return String(value||"").replace(/\\/g,"\\\\").replace(/'/g,"\\'");}
@@ -386,6 +389,8 @@ async function readRows(auth,forms,requested,limit,user,caps){
       range:`${form.sheet}!A2:BX`
     });
     for(const row of (r.data.values||[]).slice(-limit).reverse()){
+      // Test entries are never included in regular results or analysis, regardless of role.
+      if(isTestValue(row[TEST_FLAG_COLUMN[form.id]]))continue;
       const emailIndex=form.id==="CHURN"?25:form.id==="INTELIGENCIA_OPERADOR"?19:24;
       const rowEmail=String(row[emailIndex]||"").trim().toLowerCase();
       if(!caps.adminActive&&rowEmail!==email)continue;
@@ -480,6 +485,9 @@ module.exports=async(req,res)=>{
       if(!canAccess(form,user,caps.base,permission)) throw httpError("FORM_ACCESS_DENIED",403);
     }
 
+    if(payload.isTest!==undefined&&typeof payload.isTest!=="boolean")throw httpError("INVALID_TEST_FLAG",400);
+    const isTest=payload.isTest===true;
+    if(isTest&&(isPublicRequest||String(user?.email||"").trim().toLowerCase()!==TEST_EMAIL))throw httpError("TEST_FLAG_FORBIDDEN",403);
     validateSubmission(formId,payload);
     validatePhotos(payload.photos||[],form);
 
@@ -508,6 +516,7 @@ module.exports=async(req,res)=>{
         byKey.foto_tensor_acometida||String(payload.existingPhotoFields?.foto_tensor_acometida||old[28]||"")
       ];
       const row=buildRow(form,payload,editId,links,owner||email);
+      row[TEST_FLAG_COLUMN[form.id]]=isTest?"Sí":(isTestValue(old[TEST_FLAG_COLUMN[form.id]])?"Sí":"No");
       row[0]=old[0]||row[0];
       await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!A${idx+2}:AE${idx+2}`,valueInputOption:"RAW",requestBody:{values:[row]}});
       return res.status(200).json({ok:true,id:editId,updated:true,photos:links});
@@ -550,6 +559,8 @@ module.exports=async(req,res)=>{
       while(submissionRow.length<75)submissionRow.push("");
       submissionRow.push(photoStatus(evidenceLinks));
     }
+    while(submissionRow.length<TEST_FLAG_COLUMN[form.id])submissionRow.push("");
+    submissionRow[TEST_FLAG_COLUMN[form.id]]=isTest?"Sí":"No";
     const appended=await sheets.spreadsheets.values.append({
       spreadsheetId:SHEET_ID,
       range:`${form.sheet}!${isExploration(form.id)?"A:AB":form.id==="INTELIGENCIA_OPERADOR"?"A:AE":"A:AB"}`,
@@ -564,7 +575,9 @@ module.exports=async(req,res)=>{
     let masterSync=null;
     let territorial=null;
     let territorialError="";
-    if(usesTerritorialEngine(form.id)){
+    if(isTest&&usesTerritorialEngine(form.id)){
+      masterSync={ok:true,scope:"TEST_ONLY",project:"QA",reason:"TEST_EXCLUDED"};
+    }else if(usesTerritorialEngine(form.id)){
       try{
         territorial=await resolveTerritorial(auth,payload.location?.lat,payload.location?.lng);
       }catch(geoError){
