@@ -390,7 +390,7 @@ async function readRows(auth,forms,requested,limit,user,caps){
   for(const form of allowed){
     const r=await sheets.spreadsheets.values.get({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!A2:CE`
+      range:`${form.sheet}!A2:${isExploration(form.id)?"CE":form.id==="INTELIGENCIA_OPERADOR"?"AF":"AC"}`
     });
     for(const row of (r.data.values||[]).slice(-limit).reverse()){
       // Toda respuesta de prueba queda excluida de resultados y análisis.
