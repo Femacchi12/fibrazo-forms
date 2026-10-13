@@ -213,7 +213,13 @@
   const FORM_PENDING_SUMMARY=[
     {id:"FO-PEN-003",title:"Capacidad Vercel",detail:"Verificar Function Storage y autorización de consulta antes de nuevas publicaciones.",priority:"ALTA"},
     {id:"FO-PEN-004",title:"Exploración virtual · coordenadas",detail:"Revisión funcional postergada: campo obligatorio asociado a una sección inexistente. No corregir sin validar el formulario.",priority:"ALTA"},
-    {id:"FO-PEN-005",title:"Flujos Draw.io · apertura visual",detail:"Validación estructural y geométrica correcta. Falta abrir y revisar las siete páginas en diagrams.net.",priority:"MEDIA"}
+    {id:"FO-PEN-005",title:"Flujos Draw.io · apertura visual",detail:"Validación estructural aprobada; falta abrir las siete páginas de diagrams.net.",priority:"MEDIA"},
+    {id:"FO-PEN-007",title:"Filtros del mapa con búsqueda",detail:"Implementado en rama; pendiente QA de teclado, selección y móvil.",priority:"MEDIA"},
+    {id:"FO-PEN-008",title:"Colores de estratos 1–6",detail:"Paleta implementada en rama; falta comprobar visualmente capas y leyenda.",priority:"MEDIA"},
+    {id:"FO-PEN-009",title:"Panel flotante del mapa",detail:"Panel reutilizable en rama; pendiente prueba de arrastre, zoom y móvil.",priority:"MEDIA"},
+    {id:"FO-PEN-010",title:"Coordenadas de puntos",detail:"Copiar pulsando y enlace al lugar en Google Maps; pendiente QA.",priority:"MEDIA"},
+    {id:"FO-PEN-011",title:"Registros de prueba separados",detail:"Metadato protegido en rama; pendiente QA de permisos, Sheets, offline y análisis.",priority:"ALTA"},
+    {id:"FO-PEN-012",title:"Clic derecho simplificado",detail:"Acciones compactas en rama; pendiente QA en escritorio y móvil.",priority:"MEDIA"}
   ];
   const appPendingHub=document.querySelector(".pending-hub");
   if(appPendingHub)appPendingHub.dataset.pendingOwner="app";
@@ -226,7 +232,7 @@
     list.innerHTML=FORM_PENDING_SUMMARY.map(item=>
       '<article class="pending-item"><div><strong>'+escapeHtml(item.id+" · "+item.title)+'</strong><p>'+escapeHtml(item.detail)+'</p></div><span>'+escapeHtml(item.priority)+'</span></article>'
     ).join("")+'<a href="https://docs.google.com/spreadsheets/d/1khSXy3s44k6wuRrIjP5-an9C5Kr1qPpAF6iWECKrI3c/edit" target="_blank" rel="noopener noreferrer">↗ Ver seguimiento actualizado en Sheets</a>'+
-      '<small style="color:var(--fz-muted)">Resumen del 12/10/2026; el estado oficial se mantiene en PENDIENTES.</small>';
+      '<small style="color:var(--fz-muted)">Resumen de trabajo 13/10/2026; el estado oficial se mantiene en PENDIENTES.</small>';
     if(toggle.dataset.pendingBound==="1")return;
     toggle.dataset.pendingBound="1";
     const setOpen=open=>{popover.hidden=!open;toggle.setAttribute("aria-expanded",String(open));};
