@@ -2378,3 +2378,6 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
 }
 
 #mapTestControl[hidden],.map-typeahead[hidden]{display:none!important}
+
+/* FO-PEN-007: búsqueda escrita de estratos, igual que otros filtros */
+.map-estrato-search{width:100%;min-height:37px;border:1px solid #52635c;border-radius:8px;background:#14201b;color:#f5fff9;padding:8px 10px;margin:8px 0;font:inherit}

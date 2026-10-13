@@ -938,7 +938,8 @@
     host.hidden=!state.polygonActive.estratos;
     if(host.hidden)return;
     const counts=new Map((state.polygonIndexData.estratos||[]).map(item=>[String(item.value),Number(item.count)||0]));
-    options.innerHTML=["1","2","3","4","5","6"].map(value=>{
+    const query=norm($("mapEstratoSearch")?.value||"");
+    options.innerHTML=["1","2","3","4","5","6"].filter(value=>!query||norm("Estrato "+value).includes(query)).map(value=>{
       const checked=state.polygonSelections.estratos.has(value);
       const count=counts.get(value)||0;
       return '<label class="map-selective-option estrato-option'+(checked?' active':'')+'">'+
@@ -1563,6 +1564,7 @@
     $("mapBarrioModeVisible")?.addEventListener("click",()=>setBarrioListMode("visible"));
     $("mapBarrioModeAll")?.addEventListener("click",()=>setBarrioListMode("all"));
     $("mapBarrioSearch")?.addEventListener("input",renderBarrioControls);
+    $("mapEstratoSearch")?.addEventListener("input",renderEstratoControls);
     $("mapEstratoOptions")?.addEventListener("change",event=>{
       const input=event.target.closest('input[data-layer-option="estratos"]');
       if(input)setLayerSelection("estratos",input.value,input.checked);

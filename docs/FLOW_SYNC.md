@@ -117,3 +117,6 @@ Se revisaron por lectura estructural las siete páginas del XML actual: 226 vér
 ### Pruebas y publicación
 Requeridas antes de cerrar los tickets: control de permisos (Eduardo/otro/anonimato), No predeterminado, colas offline y reintentos, prueba que no entra a base maestra ni indicadores, filtro del mapa, popup/copiar/enlace externo, selección escribible/foco/Enter/Escape, movimiento y minimizado del panel, y CSS/móvil (320/360/390/430 px) y escritorio; contrastar datos preexistentes sin modificación. Todo cambio funcional de formulario exige actualizar código/hojas/manifest/diagrama/manual/CAMBIOS según FO-CHG-019. La suite estructural no reemplaza QA visual/autenticada.
 
+
+### Cierre de cobertura de búsqueda de filtros — 13/10/2026
+Además de ciudad, formulario, operador y usuario, el selector de estratos permite teclear y filtrar sus seis casillas; el selector de barrios mantiene su búsqueda previa. Ningún filtro de lista nuevo se considerará completo sin búsqueda por escritura y prueba de teclado y móvil. Búsqueda cambia solo opciones mostradas, no desmarca selecciones ocultas. Integrado en el PR #24, pendiente QA visual y producción.
