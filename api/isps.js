@@ -10,12 +10,19 @@ module.exports=async(req,res)=>{
     const [forms,caps]=await Promise.all([loadForms(auth),userCapabilities(auth,user.email)]);
     if(!canUseDashboard(user,caps.adminActive,forms))return res.status(403).json({error:"Access denied"});
     const sheets=google.sheets({version:"v4",auth});
-    const ranges=["RESP_EXPLORACION!M2:P","RESP_INTELIGENCIA_OPERADOR!C2:C","LISTAS!A2:B"];
+    const ranges=["RESP_EXPLORACION!M2:P","RESP_INTELIGENCIA_OPERADOR!C2:C","LISTAS!A2:B","RESP_EXPLORACION!CE2:CE","RESP_INTELIGENCIA_OPERADOR!AF2:AF"];
     const response=await sheets.spreadsheets.values.batchGet({spreadsheetId:SHEET_ID,ranges});
-    const [exploration=[],intelligence=[],lists=[]]=(response.data.valueRanges||[]).map(x=>x.values||[]);
+    const [exploration=[],intelligence=[],lists=[],explorationQa=[],intelligenceQa[]]=(response.data.valueRanges||[]).map(x=>x.values||[]);
     const names=[];
-    for(const row of exploration)for(const v of row)names.push(v);
-    for(const row of intelligence)names.push(row[0]);
+    // Las pruebas jamás incorporan nombres ficticios al catálogo operativo.
+    for(const [index,row] of exploration.entries()){
+      if(String(explorationQa[index]?.[0]||"").trim().toLowerCase()==="sí")continue;
+      for(const value of row)names.push(value);
+    }
+    for(const [index,row] of intelligence.entries()){
+      if(String(intelligenceQa[index]?.[0]||"").trim().toLowerCase()==="sí")continue;
+      names.push(row[0]);
+    }
     for(const row of lists)if(["isp","operador","isp_global"].includes(clean(row[0]).toLowerCase()))names.push(row[1]);
     const byKey=new Map();
     for(const raw of names){
