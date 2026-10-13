@@ -2335,3 +2335,28 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
 .map-coordinate-copy{display:block;width:100%;border:1px solid #37885f;border-radius:8px;background:#173425;color:#c7ffe5;padding:9px;cursor:pointer;font:700 13px Montserrat,sans-serif;text-align:center}
 .map-coordinate-copy small{display:block;font-size:9px;margin-top:3px}
 .map-popup-test{border:1px solid #a855f7;background:rgba(168,85,247,.15);color:#e9cdff;padding:7px;border-radius:7px;font-size:10px;font-weight:700}
+
+/* FO-PEN-007/009 · panel de mapa, reutiliza elementos únicos */
+.map-canvas-wrap{position:relative}
+.map-searchable-select{display:flex;flex-direction:column;gap:4px;min-width:0}
+.map-filters .map-filter-typeahead{min-height:32px;padding:6px 9px;border:1px solid #526860;border-radius:8px;background:#111c17;color:#fff;font-size:12px}
+.map-floating-panel{position:absolute;z-index:850;top:12px;right:12px;width:345px;max-width:calc(100% - 24px);max-height:calc(100% - 24px);overflow:hidden;border:1px solid #526c5d;border-radius:12px;background:rgba(12,19,16,.97);box-shadow:0 14px 40px rgba(0,0,0,.5);color:#fff}
+.map-floating-head{display:flex;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid #38483d;font:700 12px Montserrat,sans-serif}
+.map-floating-head strong{flex:1;min-width:0}
+.map-floating-head button{min-width:34px;min-height:30px;border:1px solid #48735d;border-radius:7px;color:#fff;background:#192a21;cursor:pointer}
+.map-floating-drag{touch-action:none;user-select:none;color:#43ffa5;font-size:21px;cursor:grab}
+.map-floating-drag:active{cursor:grabbing}
+.map-floating-content{padding:9px;max-height:min(64vh,560px);overflow:auto;overscroll-behavior:contain}
+.map-floating-content[hidden]{display:none!important}
+.map-floating-panel.collapsed{width:290px}
+.map-floating-content .map-filters{grid-template-columns:1fr!important;margin:0;gap:7px}
+.map-floating-content .map-filters-panel,.map-floating-content .map-layers-panel{position:static!important;max-width:none!important;max-height:none!important;margin:0 0 8px!important}
+.map-floating-content .map-point-legend-card{margin:0!important}
+.map-floating-content .map-point-legend-panel{max-height:185px;overflow:auto}
+.map-floating-content .map-filters select{width:100%}
+@media(max-width:700px){
+  .map-floating-panel{left:8px!important;right:8px!important;top:auto!important;bottom:8px;width:auto;max-width:none;max-height:55%}
+  .map-floating-content{max-height:38vh}
+  .map-floating-drag{display:none}
+  .map-floating-panel.collapsed{width:auto}
+}

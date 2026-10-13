@@ -554,6 +554,7 @@
   }
 
   function renderPointLegend(filtered=state.filtered){
+    filtered=Array.isArray(filtered)?filtered.filter(point=>!point.isTest):[];
     const panel=$("mapPointLegendPanel"),summary=$("mapPointLegendSummary");
     if(!panel)return;
     const counts=new Map(POINT_CATEGORIES.map(item=>[item.id,0]));
@@ -673,6 +674,7 @@
       if(users.includes(current))user.value=current;
       else user.value="all";
     }
+    refreshSearchableMapFilters();
     updateFilterCount();
     updateVisibilityBadge();
   }
@@ -714,6 +716,7 @@
   }
 
   function toggleFilters(force){
+    if($("mapFloatingContent")?.hidden)$("mapFloatingToggle")?.click();
     const panel=$("mapFiltersPanel"),button=$("mapFiltersToggle");
     if(!panel||!button)return;
     const open=typeof force==="boolean"?force:panel.hidden;
@@ -754,6 +757,7 @@
   const BARRIO_COLORS=["#00C389","#2D9CDB","#F2C94C","#9B51E0","#F2994A","#56CCF2","#EB5757","#6FCF97","#BB6BD9","#27AE60"];
 
   function toggleLayersPanel(force){
+    if($("mapFloatingContent")?.hidden)$("mapFloatingToggle")?.click();
     const panel=$("mapLayersPanel"),button=$("mapLayersToggle");
     if(!panel||!button)return;
     const open=typeof force==="boolean"?force:panel.hidden;
@@ -1529,7 +1533,80 @@
     setTimeout(()=>state.map?.invalidateSize(),80);
   }
 
+
+  // FO-PEN-007: editable-search companion for map selects. The original select remains
+  // the single source of state, so permissions, filters and keyboard selection are preserved.
+  const SEARCHABLE_MAP_FILTERS=["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter"];
+  function normalizeMapSearch(value){return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();}
+  function refreshSearchableMapFilters(){
+    for(const id of SEARCHABLE_MAP_FILTERS){
+      const select=$(id);if(!select)continue;
+      let shell=select.closest(".map-searchable-select");
+      if(!shell){
+        shell=document.createElement("div");shell.className="map-searchable-select";
+        select.before(shell);shell.append(select);
+        const search=document.createElement("input");
+        search.type="search";search.className="map-filter-typeahead";
+        search.autocomplete="off";search.placeholder="Escribe para buscar…";
+        search.setAttribute("aria-label","Buscar opciones: "+(select.getAttribute("aria-label")||id));
+        shell.prepend(search);
+        search.addEventListener("input",()=>filterMapSelect(select));
+        select.addEventListener("change",()=>{search.value="";filterMapSelect(select);});
+      }
+      if(id!=="mapTypeFilter"||!select._mapFullOptions){
+        select._mapFullOptions=Array.from(select.options).map(opt=>({value:opt.value,label:opt.textContent}));
+      }
+      filterMapSelect(select);
+      shell.hidden=select.hidden;
+    }
+  }
+  function filterMapSelect(select){
+    const search=select.closest(".map-searchable-select")?.querySelector("input");
+    const q=normalizeMapSearch(search?.value||"");
+    const selected=select.value;
+    const full=select._mapFullOptions||[];
+    const filtered=full.filter((opt,i)=>!i||!q||normalizeMapSearch(opt.label).includes(q)||opt.value===selected);
+    select.replaceChildren(...filtered.map(opt=>{
+      const el=document.createElement("option");el.value=opt.value;el.textContent=opt.label;return el;
+    }));
+    if(filtered.some(opt=>opt.value===selected))select.value=selected;
+  }
+  // FO-PEN-009: original filters, layers and legend are moved, not cloned.
+  function initFloatingMapPanel(){
+    const floating=$("mapFloatingPanel"),body=$("mapFloatingContent"),wrap=$("mapCanvasWrap");
+    if(!floating||!body||!wrap||floating.dataset.ready==="1")return;
+    floating.dataset.ready="1";
+    for(const id of ["mapFiltersPanel","mapLayersPanel"]){const panel=$(id);if(panel)body.appendChild(panel);}
+    const legend=document.querySelector(".map-point-legend-card");
+    if(legend)body.appendChild(legend);
+    const panel=$("mapPointLegendPanel"),trigger=$("mapPointLegendToggle");
+    if(panel&&trigger){panel.hidden=false;trigger.setAttribute("aria-expanded","true");}
+    const toggle=$("mapFloatingToggle");
+    const expand=open=>{body.hidden=!open;floating.classList.toggle("collapsed",!open);toggle?.setAttribute("aria-expanded",String(open));};
+    toggle?.addEventListener("click",()=>expand(body.hidden));
+    expand(!window.matchMedia("(max-width: 700px)").matches);
+    const handle=$("mapFloatingDrag");let drag=null;
+    handle?.addEventListener("pointerdown",e=>{
+      if(e.button!==0||window.matchMedia("(max-width: 700px)").matches)return;
+      e.stopPropagation();e.preventDefault();
+      const box=floating.getBoundingClientRect(),parent=wrap.getBoundingClientRect();
+      drag={pointer:e.pointerId,x:e.clientX-box.left,y:e.clientY-box.top,parent};
+      handle.setPointerCapture(e.pointerId);
+    });
+    handle?.addEventListener("pointermove",e=>{
+      if(!drag||drag.pointer!==e.pointerId)return;
+      const x=Math.max(4,Math.min(e.clientX-drag.parent.left-drag.x,wrap.clientWidth-floating.offsetWidth-4));
+      const y=Math.max(4,Math.min(e.clientY-drag.parent.top-drag.y,wrap.clientHeight-floating.offsetHeight-4));
+      floating.style.left=x+"px";floating.style.top=y+"px";floating.style.right="auto";e.stopPropagation();
+    });
+    for(const t of ["pointerup","pointercancel"])handle?.addEventListener(t,()=>{drag=null;});
+    floating.addEventListener("pointerdown",e=>e.stopPropagation());
+    floating.addEventListener("wheel",e=>e.stopPropagation(),{passive:true});
+  }
+
   function bind(){
+    initFloatingMapPanel();
+    refreshSearchableMapFilters();
     ["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter","mapDateFrom","mapDateTo","mapPhotosFilter"].forEach(id=>$(id)?.addEventListener("change",()=>{updateFilterCount();renderMarkers();}));
     $("mapTestPointsFilter")?.addEventListener("change",event=>{state.includeTests=!!event.target.checked;updateFilterCount();loadPoints({fit:false,silent:false});});
     $("explorationMap")?.addEventListener("click",event=>{
