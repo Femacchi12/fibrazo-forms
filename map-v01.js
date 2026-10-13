@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_KEY="fibrazoExplorationMapPointsV1";
+  const CACHE_KEY="fibrazoExplorationMapPointsV2";
   const ROUTE_KEY="fibrazoExplorationRouteV1";
 
   function userScopedKey(base){
@@ -56,7 +56,8 @@
     viewActive:false,
     pointsLoading:false,
     lastPointsAttempt:0,
-    fullscreen:false
+    fullscreen:false,
+    mapQaAuthorized:false
   };
 
   const $=id=>document.getElementById(id);
@@ -552,7 +553,7 @@
     const profile=operatorProfile(point);
     return L.divIcon({
       className:"exploration-point-marker",
-      html:'<span class="map-point-shape '+(formType(point.type)==="Virtual"?"shape-square":formType(point.type)==="Presencial"?"shape-circle":"shape-triangle")+'" style="--point-color:'+esc(profile.category.color)+'"></span>',
+      html:'<span class="map-point-shape '+(point.isTest?"shape-test":formType(point.type)==="Virtual"?"shape-square":formType(point.type)==="Presencial"?"shape-circle":"shape-triangle")+'" style="--point-color:'+esc(point.isTest?"#EF4444":profile.category.color)+'">'+(point.isTest?"T":"")+'</span>',
       iconSize:[20,20],
       iconAnchor:[10,10],
       popupAnchor:[0,-11]
@@ -563,7 +564,7 @@
     const panel=$("mapPointLegendPanel"),summary=$("mapPointLegendSummary");
     if(!panel)return;
     const counts=new Map(POINT_CATEGORIES.map(item=>[item.id,0]));
-    for(const point of (Array.isArray(filtered)?filtered:[])){
+    for(const point of (Array.isArray(filtered)?filtered:[]).filter(point=>!point.isTest)){
       const id=operatorProfile(point).id;
       counts.set(id,(counts.get(id)||0)+1);
     }
@@ -586,7 +587,7 @@
         '<strong>'+String(counts.get(item.id)||0)+'</strong>'+
       '</div>'
     ).join("");
-    const visible=(Array.isArray(filtered)?filtered:[]).length;
+    const visible=(Array.isArray(filtered)?filtered:[]).filter(point=>!point.isTest).length;
     if(summary)summary.textContent=visible+" puntos visibles · ■ Virtual · ● Presencial"+(formCounts.intelligence?" · ▲ Operadores":"")+" · color según operadores";
   }
 
@@ -632,10 +633,12 @@
     const type=$("mapTypeFilter")?.value||"all";
     const user=$("mapUserFilter")?.value||"all";
     const onlyPhotos=$("mapPhotosFilter")?.checked===true;
+    const showTests=state.mapQaAuthorized&&$("mapShowTests")?.checked===true;
     const operator=$("mapOperatorFilter")?.value||"all";
     const from=$("mapDateFrom")?.value?new Date($("mapDateFrom").value+"T00:00:00"):null;
     const to=$("mapDateTo")?.value?new Date($("mapDateTo").value+"T23:59:59.999"):null;
     return state.points.filter(point=>{
+      if(point.isTest&&!showTests)return false;
       const pointCity=String(point.city?.assigned||point.observedCity||"").trim();
       const when=new Date(point.timestamp);
       if(city!=="all"&&pointCity!==city)return false;
@@ -683,7 +686,7 @@
   }
 
   function updateKpis(filtered=state.filtered){
-    const list=Array.isArray(filtered)?filtered:[];
+    const list=(Array.isArray(filtered)?filtered:[]).filter(point=>!point.isTest);
     if($("mapPointCount"))$("mapPointCount").textContent=list.length;
     if($("mapVirtualCount"))$("mapVirtualCount").textContent=list.filter(p=>formType(p.type)==="Virtual").length;
     if($("mapPresentialCount"))$("mapPresentialCount").textContent=list.filter(p=>formType(p.type)==="Presencial").length;
@@ -704,6 +707,7 @@
     if(($("mapCityFilter")?.value||"all")!=="all")count++;
     if(($("mapTypeFilter")?.value||"all")!=="all")count++;
     if($("mapPhotosFilter")?.checked)count++;
+    if(state.mapQaAuthorized&&$("mapShowTests")?.checked)count++;
     if(($("mapOperatorFilter")?.value||"all")!=="all")count++;
     if(state.visibility==="team"&&($("mapUserFilter")?.value||"all")!=="all")count++;
     if($("mapDateFrom")?.value)count++;
@@ -742,6 +746,7 @@
     if($("mapCityFilter"))$("mapCityFilter").value="all";
     if($("mapTypeFilter"))$("mapTypeFilter").value="all";
     if($("mapPhotosFilter"))$("mapPhotosFilter").checked=false;
+    if($("mapShowTests"))$("mapShowTests").checked=false;
     if($("mapUserFilter"))$("mapUserFilter").value="all";
     if($("mapOperatorFilter"))$("mapOperatorFilter").value="all";
     if($("mapDateFrom"))$("mapDateFrom").value="";
@@ -1288,11 +1293,14 @@
     if(!silent)mapStatus("Actualizando puntos…","loading");
     try{
       const token=await firebase.auth().currentUser.getIdToken();
-      const response=await fetch("/api/map?limit=2000",{headers:{Authorization:"Bearer "+token},cache:"no-store"});
+      const includeTests=state.mapQaAuthorized&&$("mapShowTests")?.checked===true;
+      const response=await fetch("/api/map?limit=2000"+(includeTests?"&includeTests=1":""),{headers:{Authorization:"Bearer "+token},cache:"no-store"});
       const data=await response.json();
       if(!response.ok)throw new Error(data.error||"No se pudo cargar el mapa.");
       state.points=Array.isArray(data.points)?data.points:[];
       state.visibility=data.visibility==="team"?"team":"own";
+      state.mapQaAuthorized=data.canViewTests===true;
+      if($("mapTestControl"))$("mapTestControl").hidden=!state.mapQaAuthorized;
       state.lastRefresh=new Date();
       cachePoints(state.points);
       updateFilters();
@@ -1535,6 +1543,7 @@
       copyCoordinates(Number(button.dataset.lat),Number(button.dataset.lng));
     });
     ["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter","mapDateFrom","mapDateTo","mapPhotosFilter"].forEach(id=>$(id)?.addEventListener("change",()=>{updateFilterCount();renderMarkers();}));
+    $("mapShowTests")?.addEventListener("change",()=>{renderMarkers();updateFilterCount();loadPoints({silent:true});});
     $("mapRefresh")?.addEventListener("click",refreshMapNow);
     $("mapQuickRefresh")?.addEventListener("click",refreshMapNow);
     $("mapQuickReset")?.addEventListener("click",clearAllMapFilters);
@@ -1590,6 +1599,9 @@
         state.filtered=[];
         state.loadedOnce=false;
         state.autoLocated=false;
+        state.mapQaAuthorized=false;
+        if($("mapTestControl"))$("mapTestControl").hidden=true;
+        if($("mapShowTests"))$("mapShowTests").checked=false;
         state.route=user?routeStorage():[];
         state.barrioListMode="visible";
         state.barrioAllSelected=false;
