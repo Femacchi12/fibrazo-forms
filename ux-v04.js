@@ -2,13 +2,29 @@
   const forms=window.FIBRAZO_FORMS||{};
   const $=id=>document.getElementById(id);
   const publicMode=document.body.classList.contains("public-mode");
-  const state={form:null,policy:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:"",ispOptions:[],geoController:null,geoLookupId:0,geoLookupCancelled:false,locationBusy:false,maxSectionReached:0,locationValidated:false,geoPromise:null,editId:"",existingPhotoFields:{},serverHistory:[]};
+  const state={form:null,policy:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:"",ispOptions:[],geoController:null,geoLookupId:0,geoLookupCancelled:false,locationBusy:false,maxSectionReached:0,locationValidated:false,geoPromise:null,editId:"",existingPhotoFields:{},serverHistory:[],isTest:false};
   const pending=window.FIBRAZO_PENDING||[];
   const pendingOwnedByApp=document.querySelector(".pending-hub")?.dataset.pendingOwner==="app";
 
   function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
   function css(v){return window.CSS&&CSS.escape?CSS.escape(v):String(v).replace(/["\\]/g,"\\$&");}
   function currentUser(){return window.FIBRAZO_PUBLIC_USER||window.firebase?.auth?.().currentUser||null;}
+
+  function mayIdentifyTest(){
+    return !publicMode&&String(currentUser()?.email||"").trim().toLowerCase()==="eduardo@fibrazo.com";
+  }
+  function updateTestReview(){
+    const box=$("reviewTestFlag");
+    if(!box)return;
+    const permitted=mayIdentifyTest();
+    box.hidden=!permitted;
+    if(!permitted)state.isTest=false;
+    box.querySelectorAll('input[name="qaTestFlag"]').forEach(input=>input.checked=input.value===(state.isTest?"Sí":"No"));
+  }
+  $("reviewTestFlag")?.addEventListener("change",event=>{
+    if(!mayIdentifyTest())return;
+    if(event.target?.name==="qaTestFlag")state.isTest=event.target.value==="Sí";
+  });
 
   function renderPending(){
     const count=$("pendingCount"),list=$("pendingList"),hub=document.querySelector(".pending-hub"); if(!count||!list)return;
@@ -78,7 +94,7 @@
     const form=forms[id];if(!form)return;
     if(!publicMode&&window.FIBRAZO_ACCESS&&window.FIBRAZO_ACCESS[id]===false)return;
     const policy=policyFor(id);
-    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.gpsCapturePending=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
+    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.isTest=false;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.gpsCapturePending=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
     document.body.classList.add("form-mode");
     $("formTitle").textContent=form.name;
     $("formDescription").textContent=form.description||"";
@@ -1042,6 +1058,7 @@
   function buildReview(){
     const host=$("reviewContent");host.innerHTML="";
     activeSections().forEach(section=>{const visible=state.form.fields.filter(f=>f.section===section.id&&conditionMet(f));if(!visible.length)return;const card=document.createElement("section");card.className="review-section";const rows=visible.map(f=>'<div class="review-row"><span>'+esc(f.label)+'</span><strong>'+esc(reviewValue(f))+'</strong></div>').join("");card.innerHTML='<div class="review-section-head"><span>SECCIÓN</span><h2>'+esc(section.title)+"</h2></div>"+rows;host.appendChild(card);});
+    updateTestReview();
   }
   function reviewValue(field){
     if(field.type==="gps"||field.type==="coordinates"){
@@ -1084,6 +1101,7 @@
         ?["foto_modelo_caja","foto_nomenclatura_caja","foto_marquilla","foto_tipo_tensor","foto_marquilla_drop","foto_tensor_acometida"].map(key=>state.photos.find(p=>p.fieldKey===key)||null).filter(Boolean)
         :state.photos,
       user:{email:u?.email||""},
+      isTest:mayIdentifyTest()&&state.isTest,
       clientTimestamp:new Date().toISOString(),
       startedAt:state.startedAt,
       website:$("publicWebsite")?.value||"",
@@ -1119,6 +1137,7 @@
       const recordedWho=state.policy?.collectEmail===false?"Respuesta anónima":(u?.email||"—");
       $("successEmail").textContent=recordedWho;
       paintCompletionStatus(result);
+      if(payload.isTest&&$("successMessage"))$("successMessage").textContent=result?.queued?"Prueba guardada en cola. No se analizará al sincronizarse.":"Prueba registrada para QA. Excluida de estadísticas y de la base maestra.";
       window.FIBRAZO_OFFLINE?.refreshUi?.();
       if(isExplorationForm()&&!result?.queued){
         window.dispatchEvent(new CustomEvent("fibrazo:submission-saved",{detail:{formId:state.form.id,id:result?.id||""}}));
