@@ -640,7 +640,7 @@ module.exports=async(req,res)=>{
           valueInputOption:"RAW",
           requestBody:{values:[[
             masterSync?.pointId||"",
-            masterSync?.ok?(masterSync?.scope==="GLOBAL_ONLY"?"GLOBAL_ONLY":"OK"):String(masterSync?.reason||"PENDIENTE"),
+            payload.isTest?"QA_ONLY":masterSync?.ok?(masterSync?.scope==="GLOBAL_ONLY"?"GLOBAL_ONLY":"OK"):String(masterSync?.reason||"PENDIENTE"),
             project,
             processState
           ]]}
