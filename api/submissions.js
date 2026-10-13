@@ -386,7 +386,7 @@ async function readRows(auth,forms,requested,limit,user,caps){
   for(const form of allowed){
     const r=await sheets.spreadsheets.values.get({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!A2:BX`
+      range:`${form.sheet}!A2:${isExploration(form.id)?"CE":"BX"}`
     });
     for(const row of (r.data.values||[]).slice(-limit).reverse()){
       // Test entries are never included in regular results or analysis, regardless of role.
@@ -497,7 +497,7 @@ module.exports=async(req,res)=>{
       const permission=permissionFor(caps.permissions,String(user.email||"").toLowerCase(),form.id,caps.base);
       if(!canAccess(form,user,caps.base,permission)) throw httpError("FORM_ACCESS_DENIED",403);
       const sheets=google.sheets({version:"v4",auth});
-      const existing=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!A2:AD`});
+      const existing=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!A2:AF`});
       const rows=existing.data.values||[];
       const idx=rows.findIndex(row=>String(row[1]||"")===editId);
       if(idx<0) throw httpError("SUBMISSION_NOT_FOUND",404);
@@ -518,7 +518,7 @@ module.exports=async(req,res)=>{
       const row=buildRow(form,payload,editId,links,owner||email);
       row[TEST_FLAG_COLUMN[form.id]]=isTest?"Sí":(isTestValue(old[TEST_FLAG_COLUMN[form.id]])?"Sí":"No");
       row[0]=old[0]||row[0];
-      await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!A${idx+2}:AE${idx+2}`,valueInputOption:"RAW",requestBody:{values:[row]}});
+      await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!A${idx+2}:AF${idx+2}`,valueInputOption:"RAW",requestBody:{values:[row]}});
       return res.status(200).json({ok:true,id:editId,updated:true,photos:links});
     }
 
