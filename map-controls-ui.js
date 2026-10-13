@@ -19,6 +19,8 @@
     menu.className="map-typeahead-options"; menu.setAttribute("role","listbox");menu.hidden=true;
     select.before(wrap);wrap.append(input,menu,select);
     select.classList.add("map-native-select-hidden");
+    select.tabIndex=-1;
+    select._searchInput=input;
     let active=0;
     const close=()=>{menu.hidden=true;input.setAttribute("aria-expanded","false");};
     const sync=()=>{
@@ -123,7 +125,16 @@
     for(const type of ["pointerup","pointercancel"])handle.addEventListener(type,()=>start=null);
     show("filters");
   }
-  function init(){ids.forEach(id=>searchable($(id)));floatingPanel();}
+  function init(){
+    ids.forEach(id=>searchable($(id)));
+    floatingPanel();
+    for(const id of ["mapClearFilters","mapQuickReset"]){
+      $(id)?.addEventListener("click",()=>ids.forEach(key=>{
+        const select=$(key);
+        if(select?._searchInput)select._searchInput.value=select.selectedOptions?.[0]?.textContent||"";
+      }));
+    }
+  }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);
   else init();
 })();
