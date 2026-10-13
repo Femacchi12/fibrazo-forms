@@ -2329,3 +2329,9 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
   .app-nav .pending-toggle{min-height:38px}
   .app-nav .pending-popover{position:fixed;top:24vh;left:12px;right:12px;width:auto;max-height:65vh;overflow:auto}
 }
+
+/* FO-PEN-010/012 · coordenadas directamente copiables */
+.map-popup-coordinate{max-width:100%;text-align:left;cursor:pointer;word-break:break-all;border:1px solid #37885f;border-radius:7px;background:#173425;color:#c7ffe5;padding:7px;font:700 10px Montserrat,sans-serif}
+.map-coordinate-copy{display:block;width:100%;border:1px solid #37885f;border-radius:8px;background:#173425;color:#c7ffe5;padding:9px;cursor:pointer;font:700 13px Montserrat,sans-serif;text-align:center}
+.map-coordinate-copy small{display:block;font-size:9px;margin-top:3px}
+.map-popup-test{border:1px solid #a855f7;background:rgba(168,85,247,.15);color:#e9cdff;padding:7px;border-radius:7px;font-size:10px;font-weight:700}

@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_KEY="fibrazoExplorationMapPointsV1";
+  const CACHE_KEY="fibrazoExplorationMapPointsV2TestAware";
   const ROUTE_KEY="fibrazoExplorationRouteV1";
 
   function userScopedKey(base){
@@ -17,6 +17,7 @@
     baseLayers:null,
     baseMode:"street",
     visibility:"own",
+    includeTests:false,
     polygonActive:{barrios:false,estratos:false},
     polygonGroups:null,
     polygonRenderers:{barrios:null,estratos:null},
@@ -358,10 +359,9 @@
     sheet.setAttribute("aria-modal","true");
     sheet.innerHTML='<div class="map-coordinate-handle"></div>'+
       '<div class="map-coordinate-head"><div><span>PUNTO SELECCIONADO</span><h3>Acciones con la coordenada</h3></div><button type="button" data-map-close aria-label="Cerrar">×</button></div>'+
-      '<div class="map-coordinate-value">'+lat.toFixed(6)+', '+lng.toFixed(6)+'</div>'+
+      '<button type="button" class="map-coordinate-value map-coordinate-copy" data-map-copy title="Copiar coordenada" aria-label="Copiar coordenada">'+lat.toFixed(6)+', '+lng.toFixed(6)+' <small>⧉ Toca para copiar</small></button>'+
       '<div class="map-coordinate-actions">'+
-        '<button type="button" data-map-copy>⧉ Copiar coordenada</button>'+
-        '<button type="button" data-map-route>↗ Ruta en Google Maps</button>'+
+        '<button type="button" data-map-route>↗ Ir a Google Maps</button>'+
       '</div>'+
       '<div class="map-coordinate-territorial"><span>CONTEXTO TERRITORIAL</span><div data-map-territorial><div class="map-coordinate-territorial-loading">Consultando nuestra base…</div></div></div>'+
       '<div class="map-coordinate-forms"><span>COMPLETAR FORMULARIO</span><div data-map-form-list></div></div>';
@@ -487,9 +487,11 @@
 
   function popupHtml(point){
     const links=[];
-    if(point.maps)links.push('<a href="'+esc(point.maps)+'" target="_blank" rel="noopener">↗ Google Maps</a>');
+    if(Number.isFinite(Number(point.lat))&&Number.isFinite(Number(point.lng)))links.push('<a href="https://www.google.com/maps/search/?api=1&amp;query='+encodeURIComponent(point.lat+","+point.lng)+'" target="_blank" rel="noopener">↗ Ir a Google Maps</a>');
     if(point.evidence)links.push('<a href="'+esc(point.evidence)+'" target="_blank" rel="noopener">↗ Evidencia</a>');
     (point.photos||[]).forEach((url,index)=>links.push('<a href="'+esc(url)+'" target="_blank" rel="noopener">↗ Foto '+(index+1)+'</a>'));
+    const coord=Number.isFinite(Number(point.lat))&&Number.isFinite(Number(point.lng))?Number(point.lat).toFixed(6)+", "+Number(point.lng).toFixed(6):"";
+    const coordHtml=coord?'<div class="map-popup-row"><b>Coordenada</b><button class="map-popup-coordinate" type="button" data-map-copy-coord="'+esc(coord)+'" aria-label="Copiar coordenadas '+esc(coord)+'" title="Copiar coordenadas">'+esc(coord)+' ⧉</button></div>':"";
     const operators=(point.operators||[]).length?'<div class="map-popup-row"><b>Operadores</b><span>'+esc(point.operators.join(", "))+'</span></div>':"";
     const note=point.note?'<div class="map-popup-note">'+esc(point.note)+'</div>':"";
     return '<div class="map-popup">'+
@@ -499,7 +501,7 @@
       '<div class="map-popup-row"><b>Ciudad</b><span>'+esc(statusLine("",point.city).replace(/^:\s*/,""))+'</span></div>'+
       '<div class="map-popup-row"><b>Barrio</b><span>'+esc(statusLine("",point.barrio).replace(/^:\s*/,""))+'</span></div>'+
       '<div class="map-popup-row"><b>Estrato</b><span>'+esc(statusLine("",point.estrato).replace(/^:\s*/,""))+'</span></div>'+
-      operators+note+
+      (point.isTest?'<div class="map-popup-test">⚠️ PRUEBA · excluido de análisis</div>':"")+coordHtml+operators+note+
       (links.length?'<div class="map-popup-links">'+links.join("")+'</div>':"")+
     '</div>';
   }
@@ -628,6 +630,7 @@
     const from=$("mapDateFrom")?.value?new Date($("mapDateFrom").value+"T00:00:00"):null;
     const to=$("mapDateTo")?.value?new Date($("mapDateTo").value+"T23:59:59.999"):null;
     return state.points.filter(point=>{
+      if(point.isTest&&!state.includeTests)return false;
       const pointCity=String(point.city?.assigned||point.observedCity||"").trim();
       const when=new Date(point.timestamp);
       if(city!=="all"&&pointCity!==city)return false;
@@ -675,7 +678,7 @@
   }
 
   function updateKpis(filtered=state.filtered){
-    const list=Array.isArray(filtered)?filtered:[];
+    const list=(Array.isArray(filtered)?filtered:[]).filter(point=>!point.isTest);
     if($("mapPointCount"))$("mapPointCount").textContent=list.length;
     if($("mapVirtualCount"))$("mapVirtualCount").textContent=list.filter(p=>formType(p.type)==="Virtual").length;
     if($("mapPresentialCount"))$("mapPresentialCount").textContent=list.filter(p=>formType(p.type)==="Presencial").length;
@@ -698,6 +701,7 @@
     if($("mapPhotosFilter")?.checked)count++;
     if(($("mapOperatorFilter")?.value||"all")!=="all")count++;
     if(state.visibility==="team"&&($("mapUserFilter")?.value||"all")!=="all")count++;
+    if(state.includeTests)count++;
     if($("mapDateFrom")?.value)count++;
     if($("mapDateTo")?.value)count++;
     return count;
@@ -736,6 +740,8 @@
     if($("mapPhotosFilter"))$("mapPhotosFilter").checked=false;
     if($("mapUserFilter"))$("mapUserFilter").value="all";
     if($("mapOperatorFilter"))$("mapOperatorFilter").value="all";
+    state.includeTests=false;
+    if($("mapTestPointsFilter"))$("mapTestPointsFilter").checked=false;
     if($("mapDateFrom"))$("mapDateFrom").value="";
     if($("mapDateTo"))$("mapDateTo").value="";
     updateFilterCount();
@@ -743,7 +749,7 @@
   }
 
   const ESTRATO_COLORS={
-    "1":"#F2C94C","2":"#6FCF97","3":"#56CCF2","4":"#4C78FF","5":"#9B51E0","6":"#EB5757"
+    "1":"#22C55E","2":"#FACC15","3":"#3B82F6","4":"#EF4444","5":"#A855F7","6":"#EC4899"
   };
   const BARRIO_COLORS=["#00C389","#2D9CDB","#F2C94C","#9B51E0","#F2994A","#56CCF2","#EB5757","#6FCF97","#BB6BD9","#27AE60"];
 
@@ -1280,7 +1286,11 @@
     if(!silent)mapStatus("Actualizando puntos…","loading");
     try{
       const token=await firebase.auth().currentUser.getIdToken();
-      const response=await fetch("/api/map?limit=2000",{headers:{Authorization:"Bearer "+token},cache:"no-store"});
+      const allowedTestView=String(firebase.auth().currentUser.email||"").trim().toLowerCase()==="eduardo@fibrazo.com";
+      if($("mapTestPointsWrap"))$("mapTestPointsWrap").hidden=!allowedTestView;
+      if(!allowedTestView)state.includeTests=false;
+      const url="/api/map?limit=2000"+(state.includeTests&&allowedTestView?"&includeTests=1":"");
+      const response=await fetch(url,{headers:{Authorization:"Bearer "+token},cache:"no-store"});
       const data=await response.json();
       if(!response.ok)throw new Error(data.error||"No se pudo cargar el mapa.");
       state.points=Array.isArray(data.points)?data.points:[];
@@ -1521,6 +1531,11 @@
 
   function bind(){
     ["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter","mapDateFrom","mapDateTo","mapPhotosFilter"].forEach(id=>$(id)?.addEventListener("change",()=>{updateFilterCount();renderMarkers();}));
+    $("mapTestPointsFilter")?.addEventListener("change",event=>{state.includeTests=!!event.target.checked;updateFilterCount();loadPoints({fit:false,silent:false});});
+    $("explorationMap")?.addEventListener("click",event=>{
+      const button=event.target.closest("[data-map-copy-coord]");
+      if(button){event.preventDefault();event.stopPropagation();const latlng=button.dataset.mapCopyCoord.split(",").map(Number);if(latlng.length===2&&latlng.every(Number.isFinite))copyCoordinates(latlng[0],latlng[1]);}
+    });
     $("mapRefresh")?.addEventListener("click",refreshMapNow);
     $("mapQuickRefresh")?.addEventListener("click",refreshMapNow);
     $("mapQuickReset")?.addEventListener("click",clearAllMapFilters);

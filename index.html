@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.css">
-  <link rel="stylesheet" href="/styles.css?v=2026.10.12.02">
+  <link rel="stylesheet" href="/styles.css?v=2026.10.13.04">
   <link rel="stylesheet" href="/brand-alignment.css?v=20261011-16">
 </head>
 <body class="auth-pending">
@@ -361,6 +361,7 @@
             </select>
             <select id="mapUserFilter" aria-label="Filtrar usuario"><option value="all">Todos los usuarios</option></select>
             <label class="map-photos-filter"><input id="mapPhotosFilter" type="checkbox"> Solo puntos con fotos</label>
+            <label id="mapTestPointsWrap" class="map-photos-filter" hidden><input id="mapTestPointsFilter" type="checkbox"> Mostrar puntos de prueba (no se contabilizan)</label>
             <input id="mapDateFrom" type="date" aria-label="Fecha desde" title="Fecha desde">
             <input id="mapDateTo" type="date" aria-label="Fecha hasta" title="Fecha hasta">
           </div>
@@ -490,6 +491,6 @@
   <script src="/admin-v03.js?v=2026.10.11.16"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.umd.min.js"></script>
-  <script src="/map-v01.js?v=2026.10.11.14"></script>
+  <script src="/map-v01.js?v=2026.10.13.04"></script>
 </body>
 </html>
