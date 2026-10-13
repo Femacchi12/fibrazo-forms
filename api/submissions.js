@@ -363,10 +363,17 @@ async function submissionExists(auth,form,id){
 async function hasExistingResponseForEmail(auth,form,email){
   if(!form.collectEmail||form.allowMultipleResponses||!email)return false;
   const sheets=google.sheets({version:"v4",auth});
-  const column=form.id==="CHURN"?"Z":"Y";
-  const r=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!${column}2:${column}`});
+  const column=form.id==="CHURN"?"Z":form.id==="INTELIGENCIA_OPERADOR"?"T":"Y";
+  const qaColumn=form.id==="CHURN"?"AC":form.id==="INTELIGENCIA_OPERADOR"?"AF":"CE";
+  const [r,tests]=await Promise.all([
+    sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!${column}2:${column}`}),
+    sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!${qaColumn}2:${qaColumn}`})
+  ]);
   const target=String(email).trim().toLowerCase();
-  return (r.data.values||[]).some(row=>String(row[0]||"").trim().toLowerCase()===target);
+  return (r.data.values||[]).some((row,index)=>
+    String(row[0]||"").trim().toLowerCase()===target&&
+    String(tests.data.values?.[index]?.[0]||"").trim().toLowerCase()!=="sí"
+  );
 }
 
 async function readRows(auth,forms,requested,limit,user,caps){
@@ -544,7 +551,7 @@ module.exports=async(req,res)=>{
 
     const recordedEmail=form.collectEmail?String(user?.email||"").trim().toLowerCase():"ANONIMO";
     if(form.collectEmail&&!recordedEmail) throw httpError("EMAIL_REQUIRED",401);
-    if(await hasExistingResponseForEmail(auth,form,recordedEmail)) throw httpError("ALREADY_RESPONDED",409);
+    if(!payload.isTest&&await hasExistingResponseForEmail(auth,form,recordedEmail)) throw httpError("ALREADY_RESPONDED",409);
 
     const links=await uploadPhotos(auth,form,id,payload.photos||[]);
     if(formId==="INTELIGENCIA_OPERADOR"){
