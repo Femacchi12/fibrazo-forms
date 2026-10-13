@@ -2376,3 +2376,5 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
   .map-floating-handle{touch-action:auto;cursor:default}
   .map-floating-tabs button{font-size:10px}
 }
+
+#mapTestControl[hidden],.map-typeahead[hidden]{display:none!important}
