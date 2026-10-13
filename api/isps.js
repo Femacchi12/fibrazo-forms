@@ -12,7 +12,7 @@ module.exports=async(req,res)=>{
     const sheets=google.sheets({version:"v4",auth});
     const ranges=["RESP_EXPLORACION!M2:P","RESP_INTELIGENCIA_OPERADOR!C2:C","LISTAS!A2:B","RESP_EXPLORACION!CE2:CE","RESP_INTELIGENCIA_OPERADOR!AF2:AF"];
     const response=await sheets.spreadsheets.values.batchGet({spreadsheetId:SHEET_ID,ranges});
-    const [exploration=[],intelligence=[],lists=[],explorationQa=[],intelligenceQa[]]=(response.data.valueRanges||[]).map(x=>x.values||[]);
+    const [exploration=[],intelligence=[],lists=[],explorationQa=[],intelligenceQa=[]]=(response.data.valueRanges||[]).map(x=>x.values||[]);
     const names=[];
     // Las pruebas jamás incorporan nombres ficticios al catálogo operativo.
     for(const [index,row] of exploration.entries()){
