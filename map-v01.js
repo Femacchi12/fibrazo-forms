@@ -758,6 +758,7 @@
   const ESTRATO_COLORS={
     "1":"#22C55E","2":"#FACC15","3":"#3B82F6","4":"#EF4444","5":"#A855F7","6":"#EC4899"
   };
+  window.FIBRAZO_MAP_ESTRATO_COLORS=Object.freeze({...ESTRATO_COLORS});
   const BARRIO_COLORS=["#00C389","#2D9CDB","#F2C94C","#9B51E0","#F2994A","#56CCF2","#EB5757","#6FCF97","#BB6BD9","#27AE60"];
 
   function toggleLayersPanel(force){
