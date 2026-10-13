@@ -2329,3 +2329,50 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
   .app-nav .pending-toggle{min-height:38px}
   .app-nav .pending-popover{position:fixed;top:24vh;left:12px;right:12px;width:auto;max-height:65vh;overflow:auto}
 }
+
+/* FO-PEN-007–012 · filtro escribible, panel sobre mapa y control privado de QA */
+.review-test-flag{border:1px solid rgba(67,255,165,.42);border-radius:12px;padding:13px;margin:12px 0;background:rgba(67,255,165,.04)}
+.review-test-flag[hidden]{display:none!important}
+.review-test-flag legend{font-size:13px;font-weight:800;color:#f4fff8;padding:0 6px}
+.review-test-choices{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0}
+.review-test-choices label{display:flex;gap:7px;align-items:center;cursor:pointer;font-size:12px}
+.review-test-choices input{accent-color:#43FFA5;min-width:18px;min-height:18px}
+.review-test-flag p{color:var(--fz-muted);font-size:11px;line-height:1.5;margin:8px 0 0}
+.map-floating-tools{position:absolute;top:56px;right:12px;z-index:950;width:min(360px,calc(100% - 24px));border:1px solid rgba(67,255,165,.48);border-radius:12px;background:rgba(12,19,16,.96);box-shadow:0 12px 35px rgba(0,0,0,.55);color:#ecfff6;overflow:visible;max-height:calc(100% - 65px);font-family:Montserrat,Inter,system-ui,sans-serif}
+.map-floating-handle{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:8px 10px;border-radius:12px;cursor:move;touch-action:none;font-size:11px;font-weight:800;color:#43FFA5;user-select:none}
+.map-floating-handle button{background:rgba(67,255,165,.08);border:1px solid rgba(67,255,165,.3);border-radius:7px;color:#e3ffe9;min-width:30px;min-height:30px;cursor:pointer}
+.map-floating-content{padding:0 9px 9px;overflow-y:auto;overflow-x:visible;max-height:min(57vh,390px);overscroll-behavior:contain}
+.map-floating-content[hidden]{display:none!important}
+.map-floating-tabs{display:flex;gap:4px;flex-wrap:wrap;margin:0 0 7px}
+.map-floating-tabs button{font-size:10px;font-weight:700;border:1px solid #4b5e55;border-radius:6px;background:transparent;color:#d1ded8;padding:7px 6px;flex:1;min-height:36px;cursor:pointer}
+.map-floating-tabs button.active{background:rgba(67,255,165,.15);color:#43FFA5;border-color:#43FFA5}
+.map-floating-host [hidden]{display:none!important}
+.map-floating-host .map-filters-panel,.map-floating-host .map-layers-panel{padding:7px 4px;margin:0;background:transparent;border:0;min-width:0}
+.map-floating-host .map-filters{grid-template-columns:1fr!important;gap:6px}
+.map-floating-host .map-point-legend-card{margin:0;max-width:100%}
+.map-floating-host .map-layers-head{flex-wrap:wrap}
+.map-floating-host .map-selective-option{min-width:0}
+.map-floating-host .map-estrato-options{grid-template-columns:repeat(2,minmax(0,1fr))}
+.map-typeahead{position:relative;min-width:0}
+.map-typeahead input[type=search]{box-sizing:border-box;display:block;width:100%;min-height:38px;padding:8px 9px;background:var(--fz-control);color:#f3fff7;border:1px solid var(--fz-border-strong);border-radius:7px;font-size:12px}
+.map-typeahead input:focus{outline:2px solid rgba(67,255,165,.6)}
+.map-native-select-hidden{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;overflow:hidden!important;padding:0!important;clip-path:inset(50%)!important}
+.map-typeahead-options{position:absolute;top:100%;left:0;right:0;max-height:195px;overflow:auto;z-index:1200;background:#131e19;border:1px solid #43FFA5;border-radius:7px;box-shadow:0 7px 20px #000a}
+.map-typeahead-options[hidden]{display:none!important}
+.map-typeahead-options button{display:block;width:100%;text-align:left;padding:10px 9px;color:#ecfff4;border:0;background:transparent;cursor:pointer;font-size:11px}
+.map-typeahead-options button:hover,.map-typeahead-options button[aria-selected=true],.map-typeahead-options button:focus-visible{background:rgba(67,255,165,.16)}
+.map-typeahead-options p{font-size:11px;color:#cbd8d0;padding:7px}
+.map-coordinate-tap{display:inline-block;max-width:100%;overflow-wrap:anywhere;border:1px solid rgba(67,255,165,.5);border-radius:7px;padding:6px 8px;background:rgba(67,255,165,.07);color:#8effc7;font:inherit;cursor:pointer}
+.map-coordinate-tap:hover,.map-coordinate-tap:focus-visible{outline:2px solid #43FFA5}
+.map-coordinate-actions{grid-template-columns:1fr}
+.map-popup-test{border:1px solid rgba(239,68,68,.5);border-radius:7px;background:rgba(239,68,68,.13);padding:7px;font-weight:700;font-size:10px;color:#ffc4c4}
+.map-point-shape.shape-test{display:flex!important;justify-content:center;align-items:center;border:2px solid #fff;border-radius:6px;background:#ef4444!important;color:#fff;font-size:10px;font-weight:900}
+.map-mini-legend{display:flex;flex-wrap:wrap;gap:6px 8px;padding:4px 0 9px;font-size:10px}
+.map-mini-legend span{display:inline-flex;align-items:center;gap:4px}
+.map-mini-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;border:1px solid #fff6}
+@media(max-width:700px){
+  .map-floating-tools{top:auto!important;bottom:10px!important;left:10px!important;right:auto!important;width:min(310px,calc(100% - 20px));max-height:55%}
+  .map-floating-content{max-height:34vh}
+  .map-floating-handle{touch-action:auto;cursor:default}
+  .map-floating-tabs button{font-size:10px}
+}
