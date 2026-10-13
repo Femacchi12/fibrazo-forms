@@ -45,7 +45,7 @@
       if(!opts.length){const msg=document.createElement("p");msg.textContent="No hay coincidencias";menu.appendChild(msg);}
       active=0;menu.hidden=false;input.setAttribute("aria-expanded","true");
     };
-    input.addEventListener("focus",draw);
+    input.addEventListener("focus",()=>{input.select();draw();});
     input.addEventListener("input",draw);
     input.addEventListener("keydown",event=>{
       const buttons=[...menu.querySelectorAll("button")];
