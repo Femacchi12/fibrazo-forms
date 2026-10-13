@@ -383,9 +383,12 @@ async function readRows(auth,forms,requested,limit,user,caps){
   for(const form of allowed){
     const r=await sheets.spreadsheets.values.get({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!A2:BX`
+      range:`${form.sheet}!A2:CE`
     });
     for(const row of (r.data.values||[]).slice(-limit).reverse()){
+      // Toda respuesta de prueba queda excluida de resultados y análisis.
+      const testIndex=form.id==="CHURN"?28:form.id==="INTELIGENCIA_OPERADOR"?31:82;
+      if(String(row[testIndex]||"").trim().toLowerCase()==="sí")continue;
       const emailIndex=form.id==="CHURN"?25:form.id==="INTELIGENCIA_OPERADOR"?19:24;
       const rowEmail=String(row[emailIndex]||"").trim().toLowerCase();
       if(!caps.adminActive&&rowEmail!==email)continue;
@@ -480,6 +483,9 @@ module.exports=async(req,res)=>{
       if(!canAccess(form,user,caps.base,permission)) throw httpError("FORM_ACCESS_DENIED",403);
     }
 
+    // El cliente no puede auto-otorgarse permisos de pruebas.
+    if(payload.isTest===true&&String(user?.email||"").trim().toLowerCase()!=="eduardo@fibrazo.com")throw httpError("TEST_FLAG_FORBIDDEN",403);
+    payload.isTest=payload.isTest===true&&String(user?.email||"").trim().toLowerCase()==="eduardo@fibrazo.com";
     validateSubmission(formId,payload);
     validatePhotos(payload.photos||[],form);
 
@@ -508,6 +514,8 @@ module.exports=async(req,res)=>{
         byKey.foto_tensor_acometida||String(payload.existingPhotoFields?.foto_tensor_acometida||old[28]||"")
       ];
       const row=buildRow(form,payload,editId,links,owner||email);
+      // Preservar el indicador histórico en una edición autorizada.
+      row[31]=old[31]|| (payload.isTest?"Sí":"No");
       row[0]=old[0]||row[0];
       await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!A${idx+2}:AE${idx+2}`,valueInputOption:"RAW",requestBody:{values:[row]}});
       return res.status(200).json({ok:true,id:editId,updated:true,photos:links});
@@ -545,10 +553,13 @@ module.exports=async(req,res)=>{
     }
     const sheets=google.sheets({version:"v4",auth});
     const submissionRow=buildRow(form,payload,id,links,recordedEmail);
+    if(form.id==="CHURN")submissionRow[28]=payload.isTest?"Sí":"No";         // AC
+    if(form.id==="INTELIGENCIA_OPERADOR")submissionRow[31]=payload.isTest?"Sí":"No"; // AF
     if(isExploration(form.id)){
       const evidenceLinks=form.id==="EXPLORACION"?[payload.data?.link_evidencia,...links]:links;
       while(submissionRow.length<75)submissionRow.push("");
       submissionRow.push(photoStatus(evidenceLinks));
+      submissionRow[82]=payload.isTest?"Sí":"No"; // CE, evita columnas legacy BY:CC
     }
     const appended=await sheets.spreadsheets.values.append({
       spreadsheetId:SHEET_ID,
@@ -573,7 +584,9 @@ module.exports=async(req,res)=>{
       }
 
       try{
-        masterSync=isExploration(form.id)
+        masterSync=payload.isTest&&isExploration(form.id)
+          ?{ok:true,scope:"QA_ONLY",project:"NONE",reason:"TEST_NO_MASTER_SYNC"}
+          :isExploration(form.id)
           ?await syncExplorationMaster(auth,form,payload,links,territorial)
           :{ok:true,scope:"INTELLIGENCE_ONLY",project:territorial?.catalogId||"GENERAL"};
       }catch(syncError){
@@ -611,7 +624,7 @@ module.exports=async(req,res)=>{
         }
 
         const project=masterSync?.project||territorial?.catalogId||"GENERAL";
-        const processState=masterSync?.ok
+        const processState=payload.isTest?"PRUEBA_SIN_SINCRONIZACION":masterSync?.ok
           ?(masterSync?.scope==="GLOBAL_ONLY"?"REGISTRADO_GLOBAL":"PROCESADO_PROYECTO")
           :"PENDIENTE";
         await sheets.spreadsheets.values.update({
