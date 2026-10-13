@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.css">
-  <link rel="stylesheet" href="/styles.css?v=2026.10.12.02">
+  <link rel="stylesheet" href="/styles.css?v=2026.10.13.21">
   <link rel="stylesheet" href="/brand-alignment.css?v=20261011-16">
 </head>
 <body class="auth-pending">
@@ -184,6 +184,14 @@
         </div>
 
         <div id="reviewContent" class="review-content"></div>
+        <fieldset id="reviewTestFlag" class="review-test-flag" hidden>
+          <legend>¿Este registro es una prueba?</legend>
+          <div class="review-test-choices">
+            <label><input type="radio" name="qaTestFlag" value="No" checked> No · Registro real</label>
+            <label><input type="radio" name="qaTestFlag" value="Sí"> Sí · Solo para pruebas</label>
+          </div>
+          <p>Solo disponible para tu cuenta. Los registros de prueba no alimentan los indicadores ni la base territorial; se pueden consultar desde el filtro de QA del mapa.</p>
+        </fieldset>
 
         <div id="saveStatus" class="save-status"></div>
 
@@ -361,6 +369,7 @@
             </select>
             <select id="mapUserFilter" aria-label="Filtrar usuario"><option value="all">Todos los usuarios</option></select>
             <label class="map-photos-filter"><input id="mapPhotosFilter" type="checkbox"> Solo puntos con fotos</label>
+            <label class="map-photos-filter" id="mapTestControl" hidden><input id="mapShowTests" type="checkbox"> Mostrar pruebas (QA)</label>
             <input id="mapDateFrom" type="date" aria-label="Fecha desde" title="Fecha desde">
             <input id="mapDateTo" type="date" aria-label="Fecha hasta" title="Fecha hasta">
           </div>
@@ -434,7 +443,18 @@
             <div class="map-loading-track"><span></span></div>
             <div class="map-loading-label"><i></i><span id="mapLoadingText">Cargando mapa…</span></div>
           </div>
-          <div id="explorationMap" class="exploration-map" aria-label="Mapa de exploración FIBRAZO"></div><div class="map-quick-actions"><button id="mapFullscreen" type="button" title="Ver mapa en pantalla completa" aria-pressed="false">⛶ <span>Pantalla completa</span></button><button id="mapQuickRefresh" type="button" title="Actualizar puntos y capas">↻ <span>Actualizar</span></button><button id="mapQuickReset" type="button" title="Borrar todos los filtros">× <span>Filtros</span></button></div>
+          <div id="explorationMap" class="exploration-map" aria-label="Mapa de exploración FIBRAZO"></div>
+          <section id="mapFloatingTools" class="map-floating-tools" aria-label="Panel flotante de controles">
+            <div id="mapFloatingHandle" class="map-floating-handle"><span>☰ Controles del mapa</span><button id="mapFloatingMinimize" type="button" aria-expanded="true" aria-label="Contraer panel">−</button></div>
+            <div id="mapFloatingContent" class="map-floating-content">
+              <div class="map-floating-tabs">
+                <button type="button" data-floating-tab="filters" class="active">Filtros</button>
+                <button type="button" data-floating-tab="layers">Estratos y barrios</button>
+                <button type="button" data-floating-tab="legend">Referencia</button>
+              </div>
+              <div id="mapFloatingHost" class="map-floating-host"></div>
+            </div>
+          </section><div class="map-quick-actions"><button id="mapFullscreen" type="button" title="Ver mapa en pantalla completa" aria-pressed="false">⛶ <span>Pantalla completa</span></button><button id="mapQuickRefresh" type="button" title="Actualizar puntos y capas">↻ <span>Actualizar</span></button><button id="mapQuickReset" type="button" title="Borrar todos los filtros">× <span>Filtros</span></button></div>
         </div>
         <div id="mapStatus" class="map-status">Abre el mapa para cargar los puntos.</div>
 
@@ -486,10 +506,10 @@
   <script src="/app.js?v=2026.10.12.01"></script>
   <script src="/access-v03.js?v=2026.10.08.68"></script>
   <script src="/offline-v04.js?v=2026.10.08.68"></script>
-  <script src="/ux-v04.js?v=2026.10.13.14"></script>
+  <script src="/ux-v04.js?v=2026.10.13.21"></script>
   <script src="/admin-v03.js?v=2026.10.11.16"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.umd.min.js"></script>
-  <script src="/map-v01.js?v=2026.10.11.14"></script>
+  <script src="/map-v01.js?v=2026.10.13.21"></script>
 </body>
 </html>
