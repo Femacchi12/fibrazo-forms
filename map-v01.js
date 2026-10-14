@@ -31,6 +31,8 @@
     barrioAllSelected:false,
     barrioExcluded:new Set(),
     polygonReloadTimer:null,
+    polygonSelectionTimers:{barrios:null,estratos:null},
+    polygonFilterTimer:null,
     polygonFocusUntil:0,
     polygonIndexGroups:new Map(),
     busy:new Map(),
@@ -63,6 +65,23 @@
   const $=id=>document.getElementById(id);
   const esc=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[ch]));
   const norm=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
+  const cityLabel=value=>String(value||"").trim().toLocaleLowerCase("es-CO").replace(/(^|[\s-])([a-záéíóúüñ])/g,(_,space,letter)=>space+letter.toLocaleUpperCase("es-CO"));
+  const filterValues=id=>{
+    const select=$(id);
+    return select?[...select.selectedOptions].map(option=>option.value).filter(value=>value&&value!=="all"):[];
+  };
+  const selectFilterValues=(select,values)=>{
+    if(!select)return;
+    const wanted=new Set(values||[]);
+    let matched=0;
+    for(const option of select.options){
+      option.selected=option.value!=="all"&&wanted.has(option.value);
+      if(option.selected)matched++;
+    }
+    const all=[...select.options].find(option=>option.value==="all");
+    if(all)all.selected=matched===0;
+  };
+  const polygonResponseCache=new Map();
   const validNum=value=>{
     if(value===null||value===undefined||value==="")return null;
     const n=Number(value);
@@ -239,15 +258,20 @@
     state.map.on("rotate rotateend",()=>requestAnimationFrame(syncBearingLayers));
     state.route=routeStorage();
     redrawRoute();
-    updateBaseMapButtons();
+    updateBaseMapToggle();
     installLongPressSelection();
     setTimeout(()=>state.map.invalidateSize(),80);
     return true;
   }
 
-  function updateBaseMapButtons(){
-    $("mapBaseStreet")?.classList.toggle("active",state.baseMode==="street");
-    $("mapBaseSatellite")?.classList.toggle("active",state.baseMode==="satellite");
+  function updateBaseMapToggle(){
+    const button=$("mapBaseToggle");
+    if(!button)return;
+    const satellite=state.baseMode==="satellite";
+    button.innerHTML=satellite?'▤ <span>Mapa</span>':'▧ <span>Satélite</span>';
+    button.title=satellite?"Cambiar a mapa":"Cambiar a vista satelital";
+    button.setAttribute("aria-label",button.title);
+    button.setAttribute("aria-pressed",String(satellite));
   }
 
   function setBaseMap(mode){
@@ -262,7 +286,7 @@
     if(state.routeLine)state.routeLine.bringToFront?.();
     if(state.accuracyCircle)state.accuracyCircle.bringToFront?.();
     if(state.currentMarker)state.currentMarker.bringToFront?.();
-    updateBaseMapButtons();
+    updateBaseMapToggle();
   }
 
   function mapStatus(message,type=""){
@@ -331,6 +355,32 @@
     setTimeout(()=>window.FIBRAZO_UX_OPEN_FORM?.(formId),60);
   }
 
+  function installCoordinateSheetDrag(sheet){
+    const handle=sheet?.querySelector(".map-coordinate-head");
+    if(!handle)return;
+    let start=null;
+    handle.addEventListener("pointerdown",event=>{
+      if(window.innerWidth<=700||event.target.closest("button"))return;
+      const rect=sheet.getBoundingClientRect();
+      start={x:event.clientX,y:event.clientY,left:rect.left,top:rect.top};
+      sheet.classList.add("dragging");
+      sheet.style.left=rect.left+"px";sheet.style.top=rect.top+"px";
+      sheet.style.right="auto";sheet.style.bottom="auto";sheet.style.transform="none";
+      handle.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    });
+    handle.addEventListener("pointermove",event=>{
+      if(!start)return;
+      const maxLeft=Math.max(8,window.innerWidth-sheet.offsetWidth-8);
+      const maxTop=Math.max(8,window.innerHeight-sheet.offsetHeight-8);
+      sheet.style.left=Math.min(Math.max(8,start.left+event.clientX-start.x),maxLeft)+"px";
+      sheet.style.top=Math.min(Math.max(8,start.top+event.clientY-start.y),maxTop)+"px";
+    });
+    for(const type of ["pointerup","pointercancel"]){
+      handle.addEventListener(type,()=>{start=null;sheet.classList.remove("dragging");});
+    }
+  }
+
   function openCoordinateSheet(latlng){
     if(!latlng)return;
     const lat=Number(latlng.lat),lng=Number(latlng.lng);
@@ -366,14 +416,13 @@
     sheet.setAttribute("aria-modal","true");
     sheet.innerHTML='<div class="map-coordinate-handle"></div>'+
       '<div class="map-coordinate-head"><div><span>PUNTO SELECCIONADO</span><h3>Acciones con la coordenada</h3></div><button type="button" data-map-close aria-label="Cerrar">×</button></div>'+
-      '<div class="map-coordinate-value">'+coordinateCopyButton(lat,lng)+'</div>'+
-      '<div class="map-coordinate-actions">'+
-        
-        '<button type="button" data-map-route>↗ Ir a Google Maps</button>'+
+      '<div class="map-coordinate-primary"><div class="map-coordinate-value">'+coordinateCopyButton(lat,lng)+'</div>'+
+        '<button type="button" data-map-route title="Abrir en Google Maps">↗ Ir</button>'+
       '</div>'+
       '<div class="map-coordinate-territorial"><span>CONTEXTO TERRITORIAL</span><div data-map-territorial><div class="map-coordinate-territorial-loading">Consultando nuestra base…</div></div></div>'+
       '<div class="map-coordinate-forms"><span>COMPLETAR FORMULARIO</span><div data-map-form-list></div></div>';
     document.body.append(backdrop,sheet);
+    installCoordinateSheetDrag(sheet);
     sheet.addEventListener("click",event=>event.stopPropagation());
     sheet.querySelector("[data-map-close]")?.addEventListener("click",closeCoordinateSheet);
     sheet.querySelector("[data-map-route]")?.addEventListener("click",()=>{
@@ -634,29 +683,33 @@
   }
 
   function filteredPoints(){
-    const city=$("mapCityFilter")?.value||"all";
-    const type=$("mapTypeFilter")?.value||"all";
-    const user=$("mapUserFilter")?.value||"all";
+    const cities=filterValues("mapCityFilter");
+    const types=filterValues("mapTypeFilter");
+    const users=filterValues("mapUserFilter");
     const onlyPhotos=$("mapPhotosFilter")?.checked===true;
     const showTests=state.mapQaAuthorized&&$("mapShowTests")?.checked===true;
-    const operator=$("mapOperatorFilter")?.value||"all";
+    const operators=filterValues("mapOperatorFilter");
     const from=$("mapDateFrom")?.value?new Date($("mapDateFrom").value+"T00:00:00"):null;
     const to=$("mapDateTo")?.value?new Date($("mapDateTo").value+"T23:59:59.999"):null;
     return state.points.filter(point=>{
       if(point.isTest&&!showTests)return false;
       const pointCity=String(point.city?.assigned||point.observedCity||"").trim();
       const when=new Date(point.timestamp);
-      if(city!=="all"&&pointCity!==city)return false;
+      if(cities.length&&!cities.includes(norm(pointCity)))return false;
       if(onlyPhotos&&!(Array.isArray(point.photos)&&point.photos.some(Boolean)))return false;
-      if(type!=="all"&&formType(point.type)!==type)return false;
-      if(user!=="all"&&String(point.user||"")!==user)return false;
-      if(operator!=="all"){
+      if(types.length&&!types.includes(formType(point.type)))return false;
+      if(users.length&&!users.includes(String(point.user||"")))return false;
+      if(operators.length){
         const profile=operatorProfile(point);
-        if(operator==="tigo"&&!profile.incumbents.includes("tigo"))return false;
-        if(operator==="claro"&&!profile.incumbents.includes("claro"))return false;
-        if(operator==="movistar"&&!profile.incumbents.includes("movistar"))return false;
-        if(operator==="isps"&&!(profile.others.length>0&&profile.incumbents.length===0))return false;
-        if(operator.startsWith("isp:")&&!profile.others.some(x=>norm(x)===operator.slice(4)))return false;
+        const matches=operators.some(operator=>{
+          if(operator==="tigo")return profile.incumbents.includes("tigo");
+          if(operator==="claro")return profile.incumbents.includes("claro");
+          if(operator==="movistar")return profile.incumbents.includes("movistar");
+          if(operator==="isps")return profile.others.length>0&&profile.incumbents.length===0;
+          if(operator.startsWith("isp:"))return profile.others.some(x=>norm(x)===operator.slice(4));
+          return false;
+        });
+        if(!matches)return false;
       }
       if(from&&!Number.isNaN(when.getTime())&&when<from)return false;
       if(to&&!Number.isNaN(when.getTime())&&when>to)return false;
@@ -667,24 +720,30 @@
   function updateFilters(){
     const city=$("mapCityFilter"),user=$("mapUserFilter"),operator=$("mapOperatorFilter");
     if(city){
-      const current=city.value||"all";
-      const cities=[...new Set(state.points.map(p=>String(p.city?.assigned||p.observedCity||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
-      city.innerHTML='<option value="all">Todas las ciudades</option>'+cities.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join("");
-      if(cities.includes(current))city.value=current;
+      const current=filterValues("mapCityFilter");
+      const cityMap=new Map();
+      for(const point of state.points){
+        const raw=String(point.city?.assigned||point.observedCity||"").trim();
+        if(raw&&!cityMap.has(norm(raw)))cityMap.set(norm(raw),cityLabel(raw));
+      }
+      const cities=[...cityMap.entries()].sort((a,b)=>a[1].localeCompare(b[1],"es",{sensitivity:"base"}));
+      city.innerHTML='<option value="all">Todas las ciudades</option>'+cities.map(([key,label])=>'<option value="'+esc(key)+'">'+esc(label)+'</option>').join("");
+      selectFilterValues(city,current);
     }
     if(operator){
-      const current=operator.value||"all";
-      const isps=[...new Set(state.points.flatMap(p=>operatorProfile(p).others).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
-      operator.innerHTML='<option value="all">Todos los operadores</option><option value="tigo">Tigo · esté solo o acompañado</option><option value="claro">Claro · esté solo o acompañado</option><option value="movistar">Movistar · esté solo o acompañado</option><option value="isps">Solo ISPs · sin incumbentes</option>'+isps.map(v=>'<option value="isp:'+esc(norm(v))+'">ISP · '+esc(v)+'</option>').join("");
-      if([...operator.options].some(o=>o.value===current))operator.value=current;
+      const current=filterValues("mapOperatorFilter");
+      const ispMap=new Map();
+      for(const value of state.points.flatMap(p=>operatorProfile(p).others).filter(Boolean))if(!ispMap.has(norm(value)))ispMap.set(norm(value),value);
+      const isps=[...ispMap.entries()].sort((a,b)=>a[1].localeCompare(b[1],"es",{sensitivity:"base"}));
+      operator.innerHTML='<option value="all">Todos los operadores</option><option value="tigo">Tigo · esté solo o acompañado</option><option value="claro">Claro · esté solo o acompañado</option><option value="movistar">Movistar · esté solo o acompañado</option><option value="isps">Solo ISPs · sin incumbentes</option>'+isps.map(([key,label])=>'<option value="isp:'+esc(key)+'">ISP · '+esc(label)+'</option>').join("");
+      selectFilterValues(operator,current);
     }
     if(user){
-      const current=user.value||"all";
+      const current=filterValues("mapUserFilter");
       const users=[...new Set(state.points.map(p=>String(p.user||"").trim()).filter(Boolean))].sort();
       user.innerHTML='<option value="all">Todos los usuarios</option>'+users.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join("");
       user.hidden=state.visibility!=="team";
-      if(users.includes(current))user.value=current;
-      else user.value="all";
+      selectFilterValues(user,current);
     }
     updateFilterCount();
     updateVisibilityBadge();
@@ -695,7 +754,7 @@
     if($("mapPointCount"))$("mapPointCount").textContent=list.length;
     if($("mapVirtualCount"))$("mapVirtualCount").textContent=list.filter(p=>formType(p.type)==="Virtual").length;
     if($("mapPresentialCount"))$("mapPresentialCount").textContent=list.filter(p=>formType(p.type)==="Presencial").length;
-    if($("mapCityCount"))$("mapCityCount").textContent=new Set(list.map(p=>p.city?.assigned||p.observedCity).filter(Boolean)).size;
+    if($("mapCityCount"))$("mapCityCount").textContent=new Set(list.map(p=>norm(p.city?.assigned||p.observedCity)).filter(Boolean)).size;
     updateRouteMetrics();
   }
 
@@ -709,12 +768,12 @@
 
   function activeFilterCount(){
     let count=0;
-    if(($("mapCityFilter")?.value||"all")!=="all")count++;
-    if(($("mapTypeFilter")?.value||"all")!=="all")count++;
+    if(filterValues("mapCityFilter").length)count++;
+    if(filterValues("mapTypeFilter").length)count++;
     if($("mapPhotosFilter")?.checked)count++;
     if(state.mapQaAuthorized&&$("mapShowTests")?.checked)count++;
-    if(($("mapOperatorFilter")?.value||"all")!=="all")count++;
-    if(state.visibility==="team"&&($("mapUserFilter")?.value||"all")!=="all")count++;
+    if(filterValues("mapOperatorFilter").length)count++;
+    if(state.visibility==="team"&&filterValues("mapUserFilter").length)count++;
     if($("mapDateFrom")?.value)count++;
     if($("mapDateTo")?.value)count++;
     return count;
@@ -743,19 +802,21 @@
   }
 
   function refreshMapNow(){
+    polygonResponseCache.clear();
     loadPoints({fit:false});
     for(const layer of ["barrios","estratos"])if(state.polygonActive[layer])refreshPolygonLayer(layer,{silent:false});
   }
 
   function clearFilters(){
-    if($("mapCityFilter"))$("mapCityFilter").value="all";
-    if($("mapTypeFilter"))$("mapTypeFilter").value="all";
+    selectFilterValues($("mapCityFilter"),[]);
+    selectFilterValues($("mapTypeFilter"),[]);
     if($("mapPhotosFilter"))$("mapPhotosFilter").checked=false;
     if($("mapShowTests"))$("mapShowTests").checked=false;
-    if($("mapUserFilter"))$("mapUserFilter").value="all";
-    if($("mapOperatorFilter"))$("mapOperatorFilter").value="all";
+    selectFilterValues($("mapUserFilter"),[]);
+    selectFilterValues($("mapOperatorFilter"),[]);
     if($("mapDateFrom"))$("mapDateFrom").value="";
     if($("mapDateTo"))$("mapDateTo").value="";
+    for(const id of ["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter"])$(id)?.dispatchEvent(new Event("change",{bubbles:true}));
     updateFilterCount();
     renderMarkers({fit:true});
   }
@@ -1030,18 +1091,28 @@
   function mapViewportQuery(){
     const bounds=state.map.getBounds();
     return {
-      bbox:[bounds.getWest(),bounds.getSouth(),bounds.getEast(),bounds.getNorth()].map(v=>Number(v).toFixed(6)).join(","),
-      zoom:state.map.getZoom()
+      bbox:[bounds.getWest(),bounds.getSouth(),bounds.getEast(),bounds.getNorth()].map(v=>Number(v).toFixed(5)).join(","),
+      zoom:state.map.getZoom(),
+      cities:filterValues("mapCityFilter").join(",")
     };
   }
 
-  async function authorizedFetch(url,controller){
+  async function authorizedFetch(url,controller,{ttl=0}={}){
+    const cached=polygonResponseCache.get(url);
+    if(ttl>0&&cached&&cached.expires>Date.now())return cached.data;
     const user=firebase?.auth?.().currentUser;
     if(!user)throw new Error("Sesión no disponible.");
     const token=await user.getIdToken();
-    const response=await fetch(url,{headers:{Authorization:"Bearer "+token},cache:"no-store",signal:controller?.signal});
+    const response=await fetch(url,{headers:{Authorization:"Bearer "+token},cache:"default",signal:controller?.signal});
     const data=await response.json();
     if(!response.ok)throw new Error(data.error||"No se pudo cargar la capa.");
+    if(ttl>0){
+      polygonResponseCache.set(url,{expires:Date.now()+ttl,data});
+      if(polygonResponseCache.size>80){
+        const oldest=polygonResponseCache.keys().next().value;
+        polygonResponseCache.delete(oldest);
+      }
+    }
     return data;
   }
 
@@ -1052,11 +1123,12 @@
     state.polygonIndexControllers[layer]=controller;
     const busyToken=silent?null:beginMapBusy("Actualizando "+(layer==="barrios"?"barrios visibles":"estratos visibles")+"…");
     if(!silent){state.polygonStatus[layer]="actualizando índice…";updatePolygonStatus();}
-    const {bbox,zoom}=mapViewportQuery();
+    const {bbox,zoom,cities}=mapViewportQuery();
     try{
       const scope=layer==="barrios"?state.barrioListMode:"visible";
-      const url="/api/map-polygons?mode=index&layer="+encodeURIComponent(layer)+"&scope="+encodeURIComponent(scope)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom);
-      const data=await authorizedFetch(url,controller);
+      const cityFilter=cities?"&cities="+encodeURIComponent(cities):"";
+      const url="/api/map-polygons?mode=index&layer="+encodeURIComponent(layer)+"&scope="+encodeURIComponent(scope)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom)+cityFilter;
+      const data=await authorizedFetch(url,controller,{ttl:45000});
       if(data.requiresZoom){
         state.polygonIndexData[layer]=[];
         clearPolygonLayer(layer,{keepStatus:true});
@@ -1104,7 +1176,7 @@
     state.polygonControllers[layer]=controller;
     const busyToken=beginMapBusy("Dibujando "+(layer==="barrios"?"barrios seleccionados":"estratos seleccionados")+"…");
     if(!silent){state.polygonStatus[layer]="cargando selección…";updatePolygonStatus();}
-    const {bbox,zoom}=mapViewportQuery();
+    const {bbox,zoom,cities}=mapViewportQuery();
     const selected=[...selection];
     const filter=layer==="barrios"
       ?(state.barrioAllSelected
@@ -1112,8 +1184,9 @@
         :("&ids="+encodeURIComponent(selected.join(","))))
       :("&estratos="+encodeURIComponent(selected.join(",")));
     try{
-      const url="/api/map-polygons?mode=geometry&layer="+encodeURIComponent(layer)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom)+filter;
-      const data=await authorizedFetch(url,controller);
+      const cityFilter=cities?"&cities="+encodeURIComponent(cities):"";
+      const url="/api/map-polygons?mode=geometry&layer="+encodeURIComponent(layer)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom)+filter+cityFilter;
+      const data=await authorizedFetch(url,controller,{ttl:90000});
       if(data.requiresZoom){
         clearPolygonLayer(layer,{keepStatus:true});
         state.polygonStatus[layer]="acércate al mapa (zoom "+data.minZoom+"+)";
@@ -1155,7 +1228,15 @@
         if(layer==="barrios"&&state.barrioListMode==="all")loadPolygonLayer(layer,{silent:true});
         else refreshPolygonLayer(layer,{silent:true});
       }
-    },380);
+    },650);
+  }
+
+  function schedulePolygonFilterRefresh(){
+    if(state.polygonFilterTimer)clearTimeout(state.polygonFilterTimer);
+    state.polygonFilterTimer=setTimeout(()=>{
+      state.polygonFilterTimer=null;
+      for(const layer of ["barrios","estratos"])if(state.polygonActive[layer])refreshPolygonLayer(layer,{silent:true});
+    },260);
   }
 
   function clearLayerSelection(layer){
@@ -1180,7 +1261,11 @@
       else set.delete(key);
     }
     renderLayerControls();
-    loadPolygonLayer(layer,{silent:true});
+    if(state.polygonSelectionTimers[layer])clearTimeout(state.polygonSelectionTimers[layer]);
+    state.polygonSelectionTimers[layer]=setTimeout(()=>{
+      state.polygonSelectionTimers[layer]=null;
+      loadPolygonLayer(layer,{silent:true});
+    },220);
   }
 
   function togglePolygonLayer(layer){
@@ -1559,7 +1644,10 @@
         setTimeout(()=>notice.remove(),1800);
       });
     });
-    ["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter","mapDateFrom","mapDateTo","mapPhotosFilter"].forEach(id=>$(id)?.addEventListener("change",()=>{updateFilterCount();renderMarkers();}));
+    ["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter","mapDateFrom","mapDateTo","mapPhotosFilter"].forEach(id=>$(id)?.addEventListener("change",()=>{
+      updateFilterCount();renderMarkers();
+      if(id==="mapCityFilter")schedulePolygonFilterRefresh();
+    }));
     $("mapShowTests")?.addEventListener("change",()=>{renderMarkers();updateFilterCount();loadPoints({silent:true});});
     $("mapRefresh")?.addEventListener("click",refreshMapNow);
     $("mapQuickRefresh")?.addEventListener("click",refreshMapNow);
@@ -1596,8 +1684,7 @@
       const results=$("mapSearchResults")?._results||[];
       selectMapSearchResult(results[Number(button.dataset.searchIndex)]);
     });
-    $("mapBaseStreet")?.addEventListener("click",()=>setBaseMap("street"));
-    $("mapBaseSatellite")?.addEventListener("click",()=>setBaseMap("satellite"));
+    $("mapBaseToggle")?.addEventListener("click",()=>setBaseMap(state.baseMode==="satellite"?"street":"satellite"));
     $("mapLocateMe")?.addEventListener("click",locateMe);
     $("mapStartTracking")?.addEventListener("click",()=>{
       if(state.watchId!==null)stopTracking(true);

@@ -334,21 +334,21 @@
 
         <div id="mapFiltersPanel" class="map-filters-panel" hidden>
           <div class="map-filters">
-            <select id="mapCityFilter" aria-label="Filtrar ciudad"><option value="all">Todas las ciudades</option></select>
-            <select id="mapTypeFilter" aria-label="Filtrar tipo de formulario">
+            <select id="mapCityFilter" aria-label="Filtrar ciudad" multiple><option value="all">Todas las ciudades</option></select>
+            <select id="mapTypeFilter" aria-label="Filtrar tipo de formulario" multiple>
               <option value="all">Todos los formularios con puntos</option>
               <option value="Virtual">Exploración virtual · ■</option>
               <option value="Presencial">Exploración presencial · ●</option>
               <option value="Inteligencia de operadores">Inteligencia de operadores · ▲</option>
             </select>
-            <select id="mapOperatorFilter" aria-label="Filtrar operador">
+            <select id="mapOperatorFilter" aria-label="Filtrar operador" multiple>
               <option value="all">Todos los operadores</option>
               <option value="tigo">Tigo · esté solo o acompañado</option>
               <option value="claro">Claro · esté solo o acompañado</option>
               <option value="movistar">Movistar · esté solo o acompañado</option>
               <option value="isps">Solo ISPs · sin incumbentes</option>
             </select>
-            <select id="mapUserFilter" aria-label="Filtrar usuario"><option value="all">Todos los usuarios</option></select>
+            <select id="mapUserFilter" aria-label="Filtrar usuario" multiple><option value="all">Todos los usuarios</option></select>
             <label class="map-photos-filter"><input id="mapPhotosFilter" type="checkbox"> Solo puntos con fotos</label>
             <label class="map-photos-filter" id="mapTestControl" hidden><input id="mapShowTests" type="checkbox"> Mostrar pruebas (QA)</label>
             <input id="mapDateFrom" type="date" aria-label="Fecha desde" title="Fecha desde">
@@ -360,13 +360,6 @@
         </div>
 
         <div id="mapLayersPanel" class="map-layers-panel" hidden>
-          <div class="map-basemap-control">
-            <span class="map-section-caption">TIPO DE MAPA</span>
-            <div class="map-basemap-switch" role="group" aria-label="Tipo de mapa">
-            <button id="mapBaseStreet" class="active" type="button">Mapa</button>
-            <button id="mapBaseSatellite" type="button">Satélite</button>
-          </div>
-          </div>
           <div class="map-layers-head">
             <div>
               <span>CAPAS TERRITORIALES</span>
@@ -443,7 +436,7 @@
               </div>
               <div id="mapFloatingHost" class="map-floating-host"></div>
             </div>
-          </section><div class="map-quick-actions"><button id="mapFullscreen" type="button" title="Ver mapa en pantalla completa" aria-pressed="false">⛶ <span>Pantalla completa</span></button><button id="mapQuickRefresh" type="button" title="Actualizar puntos y capas">↻ <span>Actualizar</span></button><button id="mapQuickReset" type="button" title="Borrar todos los filtros">× <span>Filtros</span></button></div>
+          </section><div class="map-quick-actions"><button id="mapFullscreen" type="button" title="Ver mapa en pantalla completa" aria-pressed="false">⛶ <span>Pantalla completa</span></button><button id="mapBaseToggle" type="button" title="Cambiar a vista satelital" aria-label="Cambiar a vista satelital">▧ <span>Satélite</span></button><button id="mapQuickRefresh" type="button" title="Actualizar puntos y capas">↻ <span>Actualizar</span></button><button id="mapQuickReset" type="button" title="Borrar todos los filtros">× <span>Filtros</span></button></div>
         </div>
         <div id="mapStatus" class="map-status">Abre el mapa para cargar los puntos.</div>
 
@@ -487,7 +480,7 @@
     </section>
   </main>
 
-  <footer>FIBRAZO · Growth <span>Forms v0.8.90 · Coordenada en paralelo · Validación al final · Motor territorial v3.2 · 2026</span></footer>
+  <footer>FIBRAZO · Growth <span>Forms v0.8.91 · Filtros múltiples · Capas optimizadas · Motor territorial v3.3 · 2026</span></footer>
 
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
@@ -499,7 +492,7 @@
   <script src="/admin-v03.js?v=2026.10.11.16"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.umd.min.js"></script>
-  <script src="/map-v01.js?v=2026.10.14.25"></script>
-  <script src="/map-controls-ui.js?v=2026.10.14.25"></script>
+  <script src="/map-v01.js?v=2026.10.14.26"></script>
+  <script src="/map-controls-ui.js?v=2026.10.14.26"></script>
 </body>
 </html>

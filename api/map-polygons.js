@@ -5,6 +5,7 @@ const {_internals}=require("./_territorial");
 const BGA_SHEET_ID="1w0uI4dTF46ZBWALGTqmDj-BF1XPkv61qJlBD3XbGDqs";
 const CACHE_MS=10*60*1000;
 const cache=new Map();
+const geometryCache=new Map();
 
 const CONFIG={
   barrios:{
@@ -157,6 +158,27 @@ async function getWkts(auth,cfg,rows){
   }
   return out;
 }
+async function getGeometries(auth,cfg,rows){
+  const now=Date.now(),out=new Map(),missing=[];
+  for(const row of rows){
+    const key=cfg.sheet+":"+row.__row;
+    const hit=geometryCache.get(key);
+    if(hit&&hit.expires>now)out.set(row.__row,hit.geometry);
+    else missing.push(row);
+  }
+  if(missing.length){
+    const wkts=await getWkts(auth,cfg,missing);
+    for(const row of missing){
+      const geometry=geometryFromWkt(wkts.get(row.__row));
+      geometryCache.set(cfg.sheet+":"+row.__row,{expires:now+CACHE_MS,geometry});
+      out.set(row.__row,geometry);
+    }
+  }
+  if(geometryCache.size>1800){
+    for(const [key,value] of geometryCache)if(value.expires<=now)geometryCache.delete(key);
+  }
+  return out;
+}
 function bboxArea(row){
   return Math.max(0,row.maxLon-row.minLon)*Math.max(0,row.maxLat-row.minLat);
 }
@@ -200,6 +222,11 @@ function spatialSample(rows,limit,bbox){
 }
 function parseList(value){
   return String(value||"").split(",").map(v=>v.trim()).filter(Boolean);
+}
+function applyCityFilter(rows,query){
+  const cities=new Set(parseList(query.cities).map(norm));
+  if(!cities.size)return rows;
+  return rows.filter(row=>cities.has(norm(safeValue(row,"Municipio")||safeValue(row,"Ciudad"))));
 }
 function indexItems(layer,rows){
   if(layer==="estratos"){
@@ -247,7 +274,7 @@ function applySelection(layer,rows,query){
 }
 
 module.exports=async(req,res)=>{
-  res.setHeader("Cache-Control","private, max-age=20");
+  res.setHeader("Cache-Control","private, max-age=20, stale-while-revalidate=60");
   try{
     if(req.method!=="GET")return res.status(405).json({error:"Method not allowed"});
     const user=await verifyUser(req);
@@ -268,6 +295,8 @@ module.exports=async(req,res)=>{
     const mode=String(req.query.mode||"geometry").toLowerCase();
     const indexScope=String(req.query.scope||"visible").toLowerCase();
 
+    const cityRows=applyCityFilter(meta.rows,req.query);
+
     if(mode==="index"&&layer==="barrios"&&indexScope==="all"){
       return res.status(200).json({
         ok:true,
@@ -276,8 +305,8 @@ module.exports=async(req,res)=>{
         scope:"BUC_AMB_ALL",
         minZoom:cfg.minZoom,
         requiresZoom:false,
-        totalVisible:meta.rows.length,
-        items:indexItems(layer,meta.rows)
+        totalVisible:cityRows.length,
+        items:indexItems(layer,cityRows)
       });
     }
 
@@ -287,7 +316,7 @@ module.exports=async(req,res)=>{
       });
     }
 
-    let visible=meta.rows.filter(row=>intersects(row,bbox));
+    let visible=cityRows.filter(row=>intersects(row,bbox));
 
     if(mode==="index"){
       return res.status(200).json({
@@ -323,10 +352,10 @@ module.exports=async(req,res)=>{
     const truncated=candidates.length>limit;
     candidates=spatialSample(candidates,limit,bbox);
 
-    const wkts=await getWkts(auth,cfg,candidates);
+    const geometries=await getGeometries(auth,cfg,candidates);
     const features=[];
     for(const row of candidates){
-      const geometry=geometryFromWkt(wkts.get(row.__row));
+      const geometry=geometries.get(row.__row);
       if(!geometry)continue;
       features.push({
         type:"Feature",

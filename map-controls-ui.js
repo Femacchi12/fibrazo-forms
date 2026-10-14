@@ -22,20 +22,43 @@
     input.setAttribute("aria-haspopup","listbox");
     input.setAttribute("aria-expanded","false");
     const menu=document.createElement("div");
-    menu.className="map-typeahead-options"; menu.setAttribute("role","listbox");menu.hidden=true;
-    select.before(wrap);wrap.append(heading,input,menu,select);
+    menu.className="map-typeahead-options";menu.setAttribute("role","listbox");menu.setAttribute("aria-multiselectable","true");menu.hidden=true;
+    const selections=document.createElement("div");
+    selections.className="map-typeahead-selections";selections.setAttribute("aria-live","polite");
+    select.before(wrap);wrap.append(heading,selections,input,menu,select);
     select.classList.add("map-native-select-hidden");
     select.tabIndex=-1;
     select._searchInput=input;
     let active=0;
-    const close=()=>{menu.hidden=true;input.setAttribute("aria-expanded","false");};
+    const values=()=>[...select.selectedOptions].map(option=>option.value).filter(value=>value&&value!=="all");
+    const close=()=>{menu.hidden=true;input.setAttribute("aria-expanded","false");input.value="";};
     const sync=()=>{
       wrap.hidden=select.hidden;
-      if(menu.hidden)input.value=select.selectedOptions?.[0]?.textContent||"";
+      const chosen=values();
+      selections.replaceChildren(...chosen.map(value=>{
+        const option=[...select.options].find(item=>item.value===value);
+        const chip=document.createElement("button");
+        chip.type="button";chip.dataset.removeValue=value;
+        chip.setAttribute("aria-label","Quitar "+(option?.textContent||value));
+        chip.textContent=(option?.textContent||value)+" ×";
+        return chip;
+      }));
+      selections.hidden=chosen.length===0;
+      input.placeholder=chosen.length?"Agregar otra opción…":"Escribe para buscar…";
+      if(menu.hidden)input.value="";
     };
     const choose=value=>{
-      if(![...select.options].some(option=>option.value===value))return;
-      select.value=value;close();sync();
+      const option=[...select.options].find(item=>item.value===value);
+      if(!option)return;
+      if(value==="all"){
+        for(const item of select.options)item.selected=item.value==="all";
+      }else{
+        option.selected=!option.selected;
+        const all=[...select.options].find(item=>item.value==="all");
+        if(all)all.selected=false;
+        if(!values().length&&all)all.selected=true;
+      }
+      input.value="";sync();draw();
       select.dispatchEvent(new Event("change",{bubbles:true}));
     };
     const draw=()=>{
@@ -47,13 +70,13 @@
         button.type="button";button.dataset.value=opt.value;
         button.textContent=opt.textContent;
         button.setAttribute("role","option");
-        button.setAttribute("aria-selected",String(opt.value===select.value));
+        button.setAttribute("aria-selected",String(opt.selected));
         menu.appendChild(button);
       });
       if(!opts.length){const msg=document.createElement("p");msg.textContent="No hay coincidencias";menu.appendChild(msg);}
       active=0;menu.hidden=false;input.setAttribute("aria-expanded","true");
     };
-    input.addEventListener("focus",()=>{input.select();draw();});
+    input.addEventListener("focus",()=>{input.value="";draw();});
     input.addEventListener("input",draw);
     input.addEventListener("keydown",event=>{
       const buttons=[...menu.querySelectorAll("button")];
@@ -73,6 +96,10 @@
     menu.addEventListener("click",event=>{
       const button=event.target.closest("button[data-value]");
       if(button)choose(button.dataset.value);
+    });
+    selections.addEventListener("click",event=>{
+      const button=event.target.closest("button[data-remove-value]");
+      if(button)choose(button.dataset.removeValue);
     });
     input.addEventListener("blur",()=>setTimeout(()=>{close();sync();},130));
     select.addEventListener("change",sync);
@@ -106,8 +133,8 @@
       }
       section.append(title,body);filters.appendChild(section);
     }
-    // Las capas se agrupan como listas desplegables; sus botones siguen siendo
-    // los mismos controles y mantienen aria-pressed / estado de mapa.
+    // Las capas se agrupan como desplegables multiselección. Los botones
+    // originales siguen siendo la fuente única del estado, pero no se duplican.
     const switches=panels.layers?.querySelector(".map-layer-switches");
     if(switches&&!switches.dataset.grouped){
       switches.dataset.grouped="1";
@@ -115,10 +142,24 @@
         const toggle=$(key==="barrios"?"mapLayerBarrios":"mapLayerEstratos");
         const content=$(controlId);if(!toggle||!content)continue;
         const disclosure=document.createElement("details");disclosure.className="map-layer-disclosure";
-        const summary=document.createElement("summary");summary.textContent=title+" · ver opciones";
+        const summary=document.createElement("summary");
+        const label=document.createElement("span");label.textContent=title;
+        const count=document.createElement("small");count.textContent="0 seleccionados";
+        summary.append(label,count);
+        toggle.hidden=true;toggle.setAttribute("aria-hidden","true");toggle.tabIndex=-1;
         disclosure.append(summary,toggle,content);
         switches.appendChild(disclosure);
-        toggle.addEventListener("click",()=>{disclosure.open=true;});
+        const updateCount=()=>{
+          const selected=content.querySelectorAll('input[data-layer-option]:checked').length;
+          count.textContent=selected+" seleccionado"+(selected===1?"":"s");
+        };
+        disclosure.addEventListener("toggle",()=>{
+          if(disclosure.open&&toggle.getAttribute("aria-pressed")!=="true")toggle.click();
+          updateCount();
+        });
+        content.addEventListener("change",updateCount);
+        new MutationObserver(updateCount).observe(content,{childList:true,subtree:true});
+        updateCount();
       }
     }
     // Referencia solo en su pestaña: no ocupa espacio en filtros ni capas.
@@ -182,7 +223,7 @@
     for(const id of ["mapClearFilters","mapQuickReset"]){
       $(id)?.addEventListener("click",()=>ids.forEach(key=>{
         const select=$(key);
-        if(select?._searchInput)select._searchInput.value=select.selectedOptions?.[0]?.textContent||"";
+        if(select?._searchInput)select._searchInput.value="";
       }));
     }
   }

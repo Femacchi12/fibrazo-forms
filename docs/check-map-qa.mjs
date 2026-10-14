@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
 const read=p=>fs.readFileSync(new URL("../"+p,import.meta.url),"utf8");
-const scripts=["map-v01.js","map-controls-ui.js","ux-v04.js","api/submissions.js","api/map.js","api/isps.js","app.js","service-worker.js"];
+const scripts=["map-v01.js","map-controls-ui.js","ux-v04.js","api/submissions.js","api/map.js","api/map-polygons.js","api/isps.js","app.js","service-worker.js"];
 for(const path of scripts)new vm.Script(read(path),{filename:path});
 const html=read("index.html"),css=read("styles.css"),map=read("map-v01.js"),backend=read("api/submissions.js"),apiMap=read("api/map.js"),ui=read("ux-v04.js"),types=read("map-controls-ui.js");
 const expectedPalette={"1":"#22C55E","2":"#FACC15","3":"#3B82F6","4":"#EF4444","5":"#A855F7","6":"#EC4899"};
@@ -43,3 +43,11 @@ assert.ok(!html.includes('id="mapFiltersToggle"')&&!html.includes('id="mapLayers
 assert.ok(!html.includes('id="mapVisibilityBadge"')&&!html.includes("Actualización automática"),"Sin badges redundantes sobre la búsqueda");
 assert.ok(css.includes("bounds.clientHeight-panel.offsetHeight")||types.includes("bounds.clientHeight-panel.offsetHeight"),"Arrastre limitado al mapa");
 assert.ok(map.includes('map-copy-feedback'),"Aviso breve de coordenadas copiadas");
+for(const id of ["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter"]){
+  assert.match(html,new RegExp('id="'+id+'"[^>]*multiple'),id+" permite selección múltiple");
+}
+assert.ok(types.includes("map-typeahead-selections")&&types.includes('input.value="";sync();draw()'),"La búsqueda se limpia y conserva selecciones visibles");
+assert.ok(!html.includes('id="mapBaseStreet"')&&!html.includes('id="mapBaseSatellite"')&&html.includes('id="mapBaseToggle"'),"Un solo botón alterna el tipo de mapa");
+assert.ok(map.includes("installCoordinateSheetDrag")&&map.includes("map-coordinate-primary")&&map.includes('>↗ Ir</button>'),"Punto seleccionado movible y compacto");
+assert.ok(map.includes("polygonResponseCache")&&map.includes("ttl:90000")&&read("api/map-polygons.js").includes("geometryCache"),"Caché cliente/servidor para polígonos");
+assert.ok(read("api/map-polygons.js").includes("applyCityFilter")&&map.includes('cities:filterValues("mapCityFilter")'),"Capas territoriales respetan ciudades filtradas");
