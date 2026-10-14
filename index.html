@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.css">
-  <link rel="stylesheet" href="/styles.css?v=2026.10.13.23">
+  <link rel="stylesheet" href="/styles.css?v=2026.10.14.24">
   <link rel="stylesheet" href="/brand-alignment.css?v=20261011-16">
 </head>
 <body class="auth-pending">
@@ -137,14 +137,6 @@
           <div id="formHistoryList" class="form-history-list"><div class="pending-empty">Cargando historial…</div></div>
         </details>
 
-        <fieldset id="formTestFlag" class="form-qa-flag" hidden>
-          <legend>¿Este registro es una prueba?</legend>
-          <div class="review-test-choices">
-            <label><input type="radio" name="qaTestEntry" value="No" checked> No · Registro real</label>
-            <label><input type="radio" name="qaTestEntry" value="Sí"> Sí · Prueba (QA)</label>
-          </div>
-          <small>Solo tu cuenta. Las pruebas quedan fuera de análisis y bases maestras; pueden verse con el filtro QA del mapa.</small>
-        </fieldset>
         <div id="sectionStepper" class="section-stepper"></div>
 
         <form id="dynamicForm" novalidate>
@@ -158,6 +150,15 @@
           </div>
 
           <div id="dynamicFields" class="form-grid"></div>
+
+          <fieldset id="formTestFlag" class="form-qa-flag field full" hidden>
+            <legend>¿Este registro es una prueba?</legend>
+            <div class="review-test-choices">
+              <label><input type="radio" name="qaTestEntry" value="No" checked> No · Registro real</label>
+              <label><input type="radio" name="qaTestEntry" value="Sí"> Sí · Prueba (QA)</label>
+            </div>
+            <small>Solo tu cuenta. Las pruebas quedan fuera de análisis y bases maestras; pueden verse con el filtro QA del mapa.</small>
+          </fieldset>
 
           <div id="validationSummary" class="validation-summary" hidden>
             <strong>Revisa los siguientes campos:</strong>
@@ -192,15 +193,6 @@
         </div>
 
         <div id="reviewContent" class="review-content"></div>
-        <fieldset id="reviewTestFlag" class="review-test-flag" hidden>
-          <legend>¿Este registro es una prueba?</legend>
-          <div class="review-test-choices">
-            <label><input type="radio" name="qaTestFlag" value="No" checked> No · Registro real</label>
-            <label><input type="radio" name="qaTestFlag" value="Sí"> Sí · Solo para pruebas</label>
-          </div>
-          <p>Solo disponible para tu cuenta. Los registros de prueba no alimentan los indicadores ni la base territorial; se pueden consultar desde el filtro de QA del mapa.</p>
-        </fieldset>
-
         <div id="saveStatus" class="save-status"></div>
 
         <div class="form-actions review-actions">
@@ -324,10 +316,6 @@
             <span>EXPLORACIÓN TERRITORIAL</span>
             <h2>Mapa de puntos y recorrido</h2>
             <p>Visualiza los relevamientos, tu ubicación actual y el recorrido de campo en una sola vista.</p>
-            <div class="map-scope-row">
-              <span id="mapVisibilityBadge" class="map-visibility-badge">Cargando alcance…</span>
-              <span class="map-live-badge"><i></i> Actualización automática</span>
-            </div>
           </div>
           <div class="map-head-actions">
             <button id="mapRefresh" class="secondary-button compact" type="button">↻ Actualizar</button>
@@ -507,11 +495,11 @@
   <script src="/app.js?v=2026.10.12.01"></script>
   <script src="/access-v03.js?v=2026.10.08.68"></script>
   <script src="/offline-v04.js?v=2026.10.08.68"></script>
-  <script src="/ux-v04.js?v=2026.10.13.23"></script>
+  <script src="/ux-v04.js?v=2026.10.14.24"></script>
   <script src="/admin-v03.js?v=2026.10.11.16"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.umd.min.js"></script>
-  <script src="/map-v01.js?v=2026.10.13.23"></script>
-  <script src="/map-controls-ui.js?v=2026.10.13.23"></script>
+  <script src="/map-v01.js?v=2026.10.14.24"></script>
+  <script src="/map-controls-ui.js?v=2026.10.14.24"></script>
 </body>
 </html>

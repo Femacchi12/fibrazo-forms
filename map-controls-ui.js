@@ -122,20 +122,23 @@
       }
     }
     // Referencia solo en su pestaña: no ocupa espacio en filtros ni capas.
-    const mini=document.createElement("div");
-    mini.className="map-mini-legend";
-    mini.setAttribute("aria-label","Referencias de estratos");
+    const strata=document.createElement("details");
+    strata.className="map-reference-group map-strata-index";
+    strata.setAttribute("aria-label","Índice de estratos");
+    const strataSummary=document.createElement("summary");
+    strataSummary.innerHTML="<span>Índice de estratos</span><small>6 colores</small>";
+    const strataList=document.createElement("div");
+    strataList.className="map-reference-list";
     const colors=window.FIBRAZO_MAP_ESTRATO_COLORS||{};
     for(const key of ["1","2","3","4","5","6"]){
-      const item=document.createElement("span"),swatch=document.createElement("i");
+      const item=document.createElement("div"),swatch=document.createElement("i");
+      item.className="map-reference-row";
       swatch.style.background=colors[key]||"#888";
       item.append(swatch,document.createTextNode("Estrato "+key));
-      mini.appendChild(item);
+      strataList.appendChild(item);
     }
-    const title=document.createElement("strong");
-    title.className="map-reference-title";title.textContent="Colores de estratos";
-    mini.prepend(title);
-    panels.legend?.prepend(mini);
+    strata.append(strataSummary,strataList);
+    panels.legend?.prepend(strata);
 
     function show(which){
       Object.entries(panels).forEach(([name,element])=>{if(element)element.hidden=name!==which;});
@@ -166,8 +169,9 @@
       if(!start)return;
       const bounds=panel.parentElement;
       const left=Math.min(Math.max(4,start.left+event.clientX-start.x),Math.max(4,bounds.clientWidth-panel.offsetWidth-4));
-      const top=Math.min(Math.max(4,start.top+event.clientY-start.y),Math.max(4,bounds.clientHeight-80));
-      panel.style.left=left+"px";panel.style.top=top+"px";panel.style.right="auto";
+      const top=Math.min(Math.max(4,start.top+event.clientY-start.y),Math.max(4,bounds.clientHeight-panel.offsetHeight-4));
+      panel.style.left=left+"px";panel.style.top=top+"px";panel.style.right="auto";panel.style.bottom="auto";
+      panel.style.maxHeight=Math.max(120,bounds.clientHeight-top-4)+"px";
     });
     for(const type of ["pointerup","pointercancel"])handle.addEventListener(type,()=>start=null);
     show("filters");

@@ -307,7 +307,7 @@
           "No",
           "Sí"
         ],
-        "reviewStep": "Antes de Confirmar y guardar",
+        "reviewStep": "Última pregunta del último paso, antes de Revisar respuestas",
         "backendPolicy": "Validar email autenticado; rechazar flag de usuarios no autorizados",
         "storageColumn": "RESP_CHURN!AC",
         "no": "Guardar y procesar normalmente",
@@ -650,7 +650,7 @@
           "No",
           "Sí"
         ],
-        "reviewStep": "Antes de Confirmar y guardar",
+        "reviewStep": "Última pregunta del último paso, antes de Revisar respuestas",
         "backendPolicy": "Validar email autenticado; rechazar flag de usuarios no autorizados",
         "storageColumn": "RESP_EXPLORACION!CE",
         "no": "Guardar y procesar normalmente",
@@ -1106,7 +1106,7 @@
           "No",
           "Sí"
         ],
-        "reviewStep": "Antes de Confirmar y guardar",
+        "reviewStep": "Última pregunta del último paso, antes de Revisar respuestas",
         "backendPolicy": "Validar email autenticado; rechazar flag de usuarios no autorizados",
         "storageColumn": "RESP_EXPLORACION!CE",
         "no": "Guardar y procesar normalmente",
@@ -1461,7 +1461,7 @@
           "No",
           "Sí"
         ],
-        "reviewStep": "Antes de Confirmar y guardar",
+        "reviewStep": "Última pregunta del último paso, antes de Revisar respuestas",
         "backendPolicy": "Validar email autenticado; rechazar flag de usuarios no autorizados",
         "storageColumn": "RESP_INTELIGENCIA_OPERADOR!AF",
         "no": "Guardar y procesar normalmente",

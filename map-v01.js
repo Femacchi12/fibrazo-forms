@@ -575,18 +575,23 @@
       else if(typ==="Inteligencia de operadores")formCounts.intelligence++;
       else formCounts.virtual++;
     }
-    const shapeLegend='<div class="map-form-type-legend">'+
-      '<span><i class="shape-square" aria-hidden="true"></i> Exploración virtual ('+formCounts.virtual+')</span>'+
-      '<span><i class="shape-circle" aria-hidden="true"></i> Exploración presencial ('+formCounts.presential+')</span>'+
-      (formCounts.intelligence?'<span><i class="shape-triangle" aria-hidden="true"></i> Inteligencia de operadores ('+formCounts.intelligence+')</span>':'')+
-    '</div>';
-    panel.innerHTML=shapeLegend+POINT_CATEGORIES.map(item=>
-      '<div class="map-point-legend-item">'+
-        '<i style="background:'+esc(item.color)+'"></i>'+
-        '<span><b>'+esc(item.label)+'</b><small>'+esc(item.description)+'</small></span>'+
-        '<strong>'+String(counts.get(item.id)||0)+'</strong>'+
-      '</div>'
-    ).join("");
+    const shapeLegend='<details class="map-reference-group">'+
+      '<summary><span>Índice de formas de los elementos</span><small>Tipo de formulario</small></summary>'+
+      '<div class="map-reference-list map-form-type-legend">'+
+        '<div class="map-reference-row"><i class="shape-square" aria-hidden="true"></i><span>Exploración virtual</span><strong>'+formCounts.virtual+'</strong></div>'+
+        '<div class="map-reference-row"><i class="shape-circle" aria-hidden="true"></i><span>Exploración presencial</span><strong>'+formCounts.presential+'</strong></div>'+
+        '<div class="map-reference-row"><i class="shape-triangle" aria-hidden="true"></i><span>Inteligencia de operadores</span><strong>'+formCounts.intelligence+'</strong></div>'+
+      '</div></details>';
+    const operatorLegend='<details class="map-reference-group">'+
+      '<summary><span>Índice de operadores</span><small>Color de los puntos</small></summary>'+
+      '<div class="map-reference-list">'+POINT_CATEGORIES.map(item=>
+        '<div class="map-point-legend-item">'+
+          '<i style="background:'+esc(item.color)+'"></i>'+
+          '<span><b>'+esc(item.label)+'</b><small>'+esc(item.description)+'</small></span>'+
+          '<strong>'+String(counts.get(item.id)||0)+'</strong>'+
+        '</div>'
+      ).join("")+'</div></details>';
+    panel.innerHTML=shapeLegend+operatorLegend;
     const visible=(Array.isArray(filtered)?filtered:[]).filter(point=>!point.isTest).length;
     if(summary)summary.textContent=visible+" puntos visibles · ■ Virtual · ● Presencial"+(formCounts.intelligence?" · ▲ Operadores":"")+" · color según operadores";
   }

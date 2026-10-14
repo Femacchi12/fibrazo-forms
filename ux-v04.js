@@ -16,22 +16,20 @@
   function updateTestReview(){
     const permitted=mayIdentifyTest();
     if(!permitted)state.isTest=false;
-    for(const id of ["formTestFlag","reviewTestFlag"]){
-      const box=$(id);
-      if(!box)continue;
-      box.hidden=!permitted;
-      box.querySelectorAll('input[type="radio"]').forEach(input=>{
-        input.checked=input.value===(state.isTest?"Sí":"No");
-      });
-    }
-  }
-  for(const id of ["formTestFlag","reviewTestFlag"]){
-    $(id)?.addEventListener("change",event=>{
-      if(!mayIdentifyTest()||!event.target.matches('input[type="radio"]'))return;
-      state.isTest=event.target.value==="Sí";
-      updateTestReview();
+    const box=$("formTestFlag");
+    if(!box)return;
+    const sections=activeSections();
+    const isLastSection=!!state.form&&sections.length>0&&state.sectionIndex===sections.length-1;
+    box.hidden=!(permitted&&isLastSection);
+    box.querySelectorAll('input[type="radio"]').forEach(input=>{
+      input.checked=input.value===(state.isTest?"Sí":"No");
     });
   }
+  $("formTestFlag")?.addEventListener("change",event=>{
+    if(!mayIdentifyTest()||!event.target.matches('input[type="radio"]'))return;
+    state.isTest=event.target.value==="Sí";
+    updateTestReview();
+  });
 
   function renderPending(){
     const count=$("pendingCount"),list=$("pendingList"),hub=document.querySelector(".pending-hub"); if(!count||!list)return;
@@ -942,7 +940,7 @@
     stepper.hidden=state.policy?.showProgress===false;
     if(activeStep)requestAnimationFrame(()=>{if(activeStep.parentElement!==stepper||!window.matchMedia("(max-width:680px)").matches)return;stepper.scrollLeft=Math.max(0,activeStep.offsetLeft-(stepper.clientWidth-activeStep.offsetWidth)/2);});
     $("formStepCounter").hidden=state.policy?.showProgress===false;
-    $("prevSection").hidden=state.sectionIndex===0;const last=state.sectionIndex===sections.length-1;$("nextSection").hidden=last;$("reviewForm").hidden=!last;
+    $("prevSection").hidden=state.sectionIndex===0;const last=state.sectionIndex===sections.length-1;$("nextSection").hidden=last;$("reviewForm").hidden=!last;updateTestReview();
     document.querySelectorAll(".operator-memory-inline").forEach(el=>el.remove());
     document.querySelectorAll(".territorial-coordinate-summary").forEach(el=>el.remove());
     clearValidation();updateVisibility();
@@ -1066,7 +1064,6 @@
   function buildReview(){
     const host=$("reviewContent");host.innerHTML="";
     activeSections().forEach(section=>{const visible=state.form.fields.filter(f=>f.section===section.id&&conditionMet(f));if(!visible.length)return;const card=document.createElement("section");card.className="review-section";const rows=visible.map(f=>'<div class="review-row"><span>'+esc(f.label)+'</span><strong>'+esc(reviewValue(f))+'</strong></div>').join("");card.innerHTML='<div class="review-section-head"><span>SECCIÓN</span><h2>'+esc(section.title)+"</h2></div>"+rows;host.appendChild(card);});
-    updateTestReview();
   }
   function reviewValue(field){
     if(field.type==="gps"||field.type==="coordinates"){
