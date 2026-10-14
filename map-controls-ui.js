@@ -150,7 +150,8 @@
         disclosure.append(summary,toggle,content);
         switches.appendChild(disclosure);
         const updateCount=()=>{
-          const selected=content.querySelectorAll('input[data-layer-option]:checked').length;
+          const fromState=Number(content.dataset.selectedCount);
+          const selected=Number.isFinite(fromState)?fromState:content.querySelectorAll('input[data-layer-option]:checked').length;
           count.textContent=selected+" seleccionado"+(selected===1?"":"s");
         };
         disclosure.addEventListener("toggle",()=>{

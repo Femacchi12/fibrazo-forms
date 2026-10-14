@@ -1001,6 +1001,7 @@
   function renderEstratoControls(){
     const host=$("mapEstratoControls"),options=$("mapEstratoOptions"),hint=$("mapEstratoHint");
     if(!host||!options)return;
+    host.dataset.selectedCount=String(state.polygonSelections.estratos.size);
     host.hidden=!state.polygonActive.estratos;
     if(host.hidden)return;
     const counts=new Map((state.polygonIndexData.estratos||[]).map(item=>[String(item.value),Number(item.count)||0]));
@@ -1030,6 +1031,10 @@
   function renderBarrioControls(){
     const host=$("mapBarrioControls"),options=$("mapBarrioOptions"),countEl=$("mapBarrioVisibleCount"),hint=$("mapBarrioHint"),title=$("mapBarrioListTitle");
     if(!host||!options)return;
+    const selectedTotal=state.barrioAllSelected
+      ?Math.max(0,(state.polygonIndexData.barrios||[]).length-state.barrioExcluded.size)
+      :state.polygonSelections.barrios.size;
+    host.dataset.selectedCount=String(selectedTotal);
     host.hidden=!state.polygonActive.barrios;
     if(host.hidden)return;
     const search=norm($("mapBarrioSearch")?.value||"");
@@ -1049,9 +1054,7 @@
     }).join(""):'<div class="map-selective-empty">'+(search?'No hay barrios que coincidan con la búsqueda.':'No hay barrios disponibles en esta vista.')+'</div>';
 
     if(hint){
-      const selected=state.barrioAllSelected
-        ?Math.max(0,all.length-state.barrioExcluded.size)
-        :state.polygonSelections.barrios.size;
+      const selected=selectedTotal;
       const scope=state.barrioListMode==="all"?"la base completa":"la vista actual";
       hint.textContent=selected
         ?selected+" barrio"+(selected===1?"":"s")+" seleccionado"+(selected===1?"":"s")+" · el mapa solo dibuja los seleccionados que estén dentro del zoom actual."
