@@ -156,3 +156,11 @@ Aplicación Forms específica:
 - Documentación: manual Forms y registro local FO-CHG-016, matriz VIS-019 de preferencias (es referencia local al estándar, no norma separada). Otros dashboards siguen pendientes de implementar/validar, aunque la norma es aplicable a todos.
 - Verificaciones previas: 17 comprobaciones estáticas de JS parse, CSS equilibrado, markup de permisos, readonly admin base, help accesible y cache bust; pendiente prueba Android real de apertura/cierre/foco/contraste y publicación Vercel READY.
 No se cambian valores en Sheets de usuarios/permisos ni su contrato de API.
+
+## FO-CHG-025 — Última pregunta QA y panel del mapa contenido (2026-10-14)
+La bandera privada «¿Este registro es una prueba?» se integra como única última pregunta del último paso, antes de «Revisar respuestas». No se muestra en secciones anteriores ni se repite en revisión; conserva `No` predeterminado, autorización exclusiva de `eduardo@fibrazo.com` y validación existente del servidor.
+
+El mapa mantiene sus tres pestañas, pero cada contenido se ordena verticalmente. Referencia agrupa en desplegables independientes los índices de estratos, formas de los elementos y operadores. El panel se limita a la altura/ancho del mapa, usa scroll interior y conserva radio uniforme en sus cuatro esquinas. Se retiran los badges redundantes sobre la búsqueda; buscador, título, textos y botones se alinean con márgenes compactos. No se modifican formularios funcionales, permisos, datos ni endpoints.
+
+## FO-CHG-026 — Corrección de precedencia CSS observada en Preview (2026-10-14)
+La prueba autenticada del despliegue `f6f9b245` mostró que la hoja transversal `brand-alignment.css`, cargada después de `styles.css`, todavía imponía cuatro columnas a `#mapFiltersPanel .map-filters` con mayor especificidad y `!important`. La regla canónica se cambia a una sola columna para todos los anchos, conservando el listado vertical solicitado. También se elimina el borde interior cuadrado del buscador y se reduce su alto efectivo, manteniendo el contenedor exterior redondeado. El cambio es exclusivamente visual y no modifica valores, eventos, filtros, permisos, formularios ni persistencia.

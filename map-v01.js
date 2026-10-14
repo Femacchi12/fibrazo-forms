@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_KEY="fibrazoExplorationMapPointsV1";
+  const CACHE_KEY="fibrazoExplorationMapPointsV2";
   const ROUTE_KEY="fibrazoExplorationRouteV1";
 
   function userScopedKey(base){
@@ -56,7 +56,8 @@
     viewActive:false,
     pointsLoading:false,
     lastPointsAttempt:0,
-    fullscreen:false
+    fullscreen:false,
+    mapQaAuthorized:false
   };
 
   const $=id=>document.getElementById(id);
@@ -298,6 +299,13 @@
     });
   }
 
+  function googlePointUrl(lat,lng){
+    return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(Number(lat).toFixed(6)+","+Number(lng).toFixed(6));
+  }
+  function coordinateCopyButton(lat,lng){
+    const value=Number(lat).toFixed(6)+", "+Number(lng).toFixed(6);
+    return '<button type="button" class="map-coordinate-tap" data-map-copy-point data-lat="'+Number(lat)+'" data-lng="'+Number(lng)+'" title="Copiar coordenadas">'+esc(value)+'</button>';
+  }
   function closeCoordinateSheet(){
     document.querySelector(".map-coordinate-backdrop")?.remove();
     document.querySelector(".map-coordinate-sheet")?.remove();
@@ -358,19 +366,18 @@
     sheet.setAttribute("aria-modal","true");
     sheet.innerHTML='<div class="map-coordinate-handle"></div>'+
       '<div class="map-coordinate-head"><div><span>PUNTO SELECCIONADO</span><h3>Acciones con la coordenada</h3></div><button type="button" data-map-close aria-label="Cerrar">×</button></div>'+
-      '<div class="map-coordinate-value">'+lat.toFixed(6)+', '+lng.toFixed(6)+'</div>'+
+      '<div class="map-coordinate-value">'+coordinateCopyButton(lat,lng)+'</div>'+
       '<div class="map-coordinate-actions">'+
-        '<button type="button" data-map-copy>⧉ Copiar coordenada</button>'+
-        '<button type="button" data-map-route>↗ Ruta en Google Maps</button>'+
+        
+        '<button type="button" data-map-route>↗ Ir a Google Maps</button>'+
       '</div>'+
       '<div class="map-coordinate-territorial"><span>CONTEXTO TERRITORIAL</span><div data-map-territorial><div class="map-coordinate-territorial-loading">Consultando nuestra base…</div></div></div>'+
       '<div class="map-coordinate-forms"><span>COMPLETAR FORMULARIO</span><div data-map-form-list></div></div>';
     document.body.append(backdrop,sheet);
     sheet.addEventListener("click",event=>event.stopPropagation());
     sheet.querySelector("[data-map-close]")?.addEventListener("click",closeCoordinateSheet);
-    sheet.querySelector("[data-map-copy]")?.addEventListener("click",()=>copyCoordinates(lat,lng));
     sheet.querySelector("[data-map-route]")?.addEventListener("click",()=>{
-      window.open("https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(lat+","+lng),"_blank","noopener");
+      window.open(googlePointUrl(lat,lng),"_blank","noopener");
     });
     loadCoordinateTerritorial(sheet,lat,lng);
     const list=sheet.querySelector("[data-map-form-list]");
@@ -487,7 +494,7 @@
 
   function popupHtml(point){
     const links=[];
-    if(point.maps)links.push('<a href="'+esc(point.maps)+'" target="_blank" rel="noopener">↗ Google Maps</a>');
+    links.push('<a href="'+esc(googlePointUrl(point.lat,point.lng))+'" target="_blank" rel="noopener">↗ Ir a Google Maps</a>');
     if(point.evidence)links.push('<a href="'+esc(point.evidence)+'" target="_blank" rel="noopener">↗ Evidencia</a>');
     (point.photos||[]).forEach((url,index)=>links.push('<a href="'+esc(url)+'" target="_blank" rel="noopener">↗ Foto '+(index+1)+'</a>'));
     const operators=(point.operators||[]).length?'<div class="map-popup-row"><b>Operadores</b><span>'+esc(point.operators.join(", "))+'</span></div>':"";
@@ -499,6 +506,8 @@
       '<div class="map-popup-row"><b>Ciudad</b><span>'+esc(statusLine("",point.city).replace(/^:\s*/,""))+'</span></div>'+
       '<div class="map-popup-row"><b>Barrio</b><span>'+esc(statusLine("",point.barrio).replace(/^:\s*/,""))+'</span></div>'+
       '<div class="map-popup-row"><b>Estrato</b><span>'+esc(statusLine("",point.estrato).replace(/^:\s*/,""))+'</span></div>'+
+      '<div class="map-popup-row"><b>Coordenadas</b><span>'+coordinateCopyButton(point.lat,point.lng)+'</span></div>'+
+      (point.isTest?'<div class="map-popup-test">⚠ Registro de prueba · excluido de análisis</div>':"")+
       operators+note+
       (links.length?'<div class="map-popup-links">'+links.join("")+'</div>':"")+
     '</div>';
@@ -544,7 +553,7 @@
     const profile=operatorProfile(point);
     return L.divIcon({
       className:"exploration-point-marker",
-      html:'<span class="map-point-shape '+(formType(point.type)==="Virtual"?"shape-square":formType(point.type)==="Presencial"?"shape-circle":"shape-triangle")+'" style="--point-color:'+esc(profile.category.color)+'"></span>',
+      html:'<span class="map-point-shape '+(point.isTest?"shape-test":formType(point.type)==="Virtual"?"shape-square":formType(point.type)==="Presencial"?"shape-circle":"shape-triangle")+'" style="--point-color:'+esc(point.isTest?"#EF4444":profile.category.color)+'">'+(point.isTest?"T":"")+'</span>',
       iconSize:[20,20],
       iconAnchor:[10,10],
       popupAnchor:[0,-11]
@@ -555,30 +564,35 @@
     const panel=$("mapPointLegendPanel"),summary=$("mapPointLegendSummary");
     if(!panel)return;
     const counts=new Map(POINT_CATEGORIES.map(item=>[item.id,0]));
-    for(const point of (Array.isArray(filtered)?filtered:[])){
+    for(const point of (Array.isArray(filtered)?filtered:[]).filter(point=>!point.isTest)){
       const id=operatorProfile(point).id;
       counts.set(id,(counts.get(id)||0)+1);
     }
     const formCounts={virtual:0,presential:0,intelligence:0};
-    for(const point of (Array.isArray(filtered)?filtered:[])){
+    for(const point of (Array.isArray(filtered)?filtered:[]).filter(point=>!point.isTest)){
       const typ=formType(point.type);
       if(typ==="Presencial")formCounts.presential++;
       else if(typ==="Inteligencia de operadores")formCounts.intelligence++;
       else formCounts.virtual++;
     }
-    const shapeLegend='<div class="map-form-type-legend">'+
-      '<span><i class="shape-square" aria-hidden="true"></i> Exploración virtual ('+formCounts.virtual+')</span>'+
-      '<span><i class="shape-circle" aria-hidden="true"></i> Exploración presencial ('+formCounts.presential+')</span>'+
-      (formCounts.intelligence?'<span><i class="shape-triangle" aria-hidden="true"></i> Inteligencia de operadores ('+formCounts.intelligence+')</span>':'')+
-    '</div>';
-    panel.innerHTML=shapeLegend+POINT_CATEGORIES.map(item=>
-      '<div class="map-point-legend-item">'+
-        '<i style="background:'+esc(item.color)+'"></i>'+
-        '<span><b>'+esc(item.label)+'</b><small>'+esc(item.description)+'</small></span>'+
-        '<strong>'+String(counts.get(item.id)||0)+'</strong>'+
-      '</div>'
-    ).join("");
-    const visible=(Array.isArray(filtered)?filtered:[]).length;
+    const shapeLegend='<details class="map-reference-group">'+
+      '<summary><span>Índice de formas de los elementos</span><small>Tipo de formulario</small></summary>'+
+      '<div class="map-reference-list map-form-type-legend">'+
+        '<div class="map-reference-row"><i class="shape-square" aria-hidden="true"></i><span>Exploración virtual</span><strong>'+formCounts.virtual+'</strong></div>'+
+        '<div class="map-reference-row"><i class="shape-circle" aria-hidden="true"></i><span>Exploración presencial</span><strong>'+formCounts.presential+'</strong></div>'+
+        '<div class="map-reference-row"><i class="shape-triangle" aria-hidden="true"></i><span>Inteligencia de operadores</span><strong>'+formCounts.intelligence+'</strong></div>'+
+      '</div></details>';
+    const operatorLegend='<details class="map-reference-group">'+
+      '<summary><span>Índice de operadores</span><small>Color de los puntos</small></summary>'+
+      '<div class="map-reference-list">'+POINT_CATEGORIES.map(item=>
+        '<div class="map-point-legend-item">'+
+          '<i style="background:'+esc(item.color)+'"></i>'+
+          '<span><b>'+esc(item.label)+'</b><small>'+esc(item.description)+'</small></span>'+
+          '<strong>'+String(counts.get(item.id)||0)+'</strong>'+
+        '</div>'
+      ).join("")+'</div></details>';
+    panel.innerHTML=shapeLegend+operatorLegend;
+    const visible=(Array.isArray(filtered)?filtered:[]).filter(point=>!point.isTest).length;
     if(summary)summary.textContent=visible+" puntos visibles · ■ Virtual · ● Presencial"+(formCounts.intelligence?" · ▲ Operadores":"")+" · color según operadores";
   }
 
@@ -624,10 +638,12 @@
     const type=$("mapTypeFilter")?.value||"all";
     const user=$("mapUserFilter")?.value||"all";
     const onlyPhotos=$("mapPhotosFilter")?.checked===true;
+    const showTests=state.mapQaAuthorized&&$("mapShowTests")?.checked===true;
     const operator=$("mapOperatorFilter")?.value||"all";
     const from=$("mapDateFrom")?.value?new Date($("mapDateFrom").value+"T00:00:00"):null;
     const to=$("mapDateTo")?.value?new Date($("mapDateTo").value+"T23:59:59.999"):null;
     return state.points.filter(point=>{
+      if(point.isTest&&!showTests)return false;
       const pointCity=String(point.city?.assigned||point.observedCity||"").trim();
       const when=new Date(point.timestamp);
       if(city!=="all"&&pointCity!==city)return false;
@@ -675,7 +691,7 @@
   }
 
   function updateKpis(filtered=state.filtered){
-    const list=Array.isArray(filtered)?filtered:[];
+    const list=(Array.isArray(filtered)?filtered:[]).filter(point=>!point.isTest);
     if($("mapPointCount"))$("mapPointCount").textContent=list.length;
     if($("mapVirtualCount"))$("mapVirtualCount").textContent=list.filter(p=>formType(p.type)==="Virtual").length;
     if($("mapPresentialCount"))$("mapPresentialCount").textContent=list.filter(p=>formType(p.type)==="Presencial").length;
@@ -696,6 +712,7 @@
     if(($("mapCityFilter")?.value||"all")!=="all")count++;
     if(($("mapTypeFilter")?.value||"all")!=="all")count++;
     if($("mapPhotosFilter")?.checked)count++;
+    if(state.mapQaAuthorized&&$("mapShowTests")?.checked)count++;
     if(($("mapOperatorFilter")?.value||"all")!=="all")count++;
     if(state.visibility==="team"&&($("mapUserFilter")?.value||"all")!=="all")count++;
     if($("mapDateFrom")?.value)count++;
@@ -734,6 +751,7 @@
     if($("mapCityFilter"))$("mapCityFilter").value="all";
     if($("mapTypeFilter"))$("mapTypeFilter").value="all";
     if($("mapPhotosFilter"))$("mapPhotosFilter").checked=false;
+    if($("mapShowTests"))$("mapShowTests").checked=false;
     if($("mapUserFilter"))$("mapUserFilter").value="all";
     if($("mapOperatorFilter"))$("mapOperatorFilter").value="all";
     if($("mapDateFrom"))$("mapDateFrom").value="";
@@ -743,8 +761,9 @@
   }
 
   const ESTRATO_COLORS={
-    "1":"#F2C94C","2":"#6FCF97","3":"#56CCF2","4":"#4C78FF","5":"#9B51E0","6":"#EB5757"
+    "1":"#22C55E","2":"#FACC15","3":"#3B82F6","4":"#EF4444","5":"#A855F7","6":"#EC4899"
   };
+  window.FIBRAZO_MAP_ESTRATO_COLORS=Object.freeze({...ESTRATO_COLORS});
   const BARRIO_COLORS=["#00C389","#2D9CDB","#F2C94C","#9B51E0","#F2994A","#56CCF2","#EB5757","#6FCF97","#BB6BD9","#27AE60"];
 
   function toggleLayersPanel(force){
@@ -924,7 +943,8 @@
     host.hidden=!state.polygonActive.estratos;
     if(host.hidden)return;
     const counts=new Map((state.polygonIndexData.estratos||[]).map(item=>[String(item.value),Number(item.count)||0]));
-    options.innerHTML=["1","2","3","4","5","6"].map(value=>{
+    const query=norm($("mapEstratoSearch")?.value||"");
+    options.innerHTML=["1","2","3","4","5","6"].filter(value=>!query||norm("Estrato "+value).includes(query)).map(value=>{
       const checked=state.polygonSelections.estratos.has(value);
       const count=counts.get(value)||0;
       return '<label class="map-selective-option estrato-option'+(checked?' active':'')+'">'+
@@ -1280,11 +1300,14 @@
     if(!silent)mapStatus("Actualizando puntos…","loading");
     try{
       const token=await firebase.auth().currentUser.getIdToken();
-      const response=await fetch("/api/map?limit=2000",{headers:{Authorization:"Bearer "+token},cache:"no-store"});
+      const includeTests=state.mapQaAuthorized&&$("mapShowTests")?.checked===true;
+      const response=await fetch("/api/map?limit=2000"+(includeTests?"&includeTests=1":""),{headers:{Authorization:"Bearer "+token},cache:"no-store"});
       const data=await response.json();
       if(!response.ok)throw new Error(data.error||"No se pudo cargar el mapa.");
       state.points=Array.isArray(data.points)?data.points:[];
       state.visibility=data.visibility==="team"?"team":"own";
+      state.mapQaAuthorized=data.canViewTests===true;
+      if($("mapTestControl"))$("mapTestControl").hidden=!state.mapQaAuthorized;
       state.lastRefresh=new Date();
       cachePoints(state.points);
       updateFilters();
@@ -1520,7 +1543,24 @@
   }
 
   function bind(){
+    document.addEventListener("click",event=>{
+      const button=event.target.closest("[data-map-copy-point]");
+      if(!button)return;
+      event.preventDefault();
+      copyCoordinates(Number(button.dataset.lat),Number(button.dataset.lng)).then(()=>{
+        const owner=button.parentElement;
+        if(!owner)return;
+        owner.querySelector(".map-copy-feedback")?.remove();
+        const notice=document.createElement("span");
+        notice.className="map-copy-feedback";
+        notice.setAttribute("role","status");
+        notice.textContent="✓ Copiado";
+        owner.appendChild(notice);
+        setTimeout(()=>notice.remove(),1800);
+      });
+    });
     ["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter","mapDateFrom","mapDateTo","mapPhotosFilter"].forEach(id=>$(id)?.addEventListener("change",()=>{updateFilterCount();renderMarkers();}));
+    $("mapShowTests")?.addEventListener("change",()=>{renderMarkers();updateFilterCount();loadPoints({silent:true});});
     $("mapRefresh")?.addEventListener("click",refreshMapNow);
     $("mapQuickRefresh")?.addEventListener("click",refreshMapNow);
     $("mapQuickReset")?.addEventListener("click",clearAllMapFilters);
@@ -1539,6 +1579,7 @@
     $("mapBarrioModeVisible")?.addEventListener("click",()=>setBarrioListMode("visible"));
     $("mapBarrioModeAll")?.addEventListener("click",()=>setBarrioListMode("all"));
     $("mapBarrioSearch")?.addEventListener("input",renderBarrioControls);
+    $("mapEstratoSearch")?.addEventListener("input",renderEstratoControls);
     $("mapEstratoOptions")?.addEventListener("change",event=>{
       const input=event.target.closest('input[data-layer-option="estratos"]');
       if(input)setLayerSelection("estratos",input.value,input.checked);
@@ -1576,6 +1617,9 @@
         state.filtered=[];
         state.loadedOnce=false;
         state.autoLocated=false;
+        state.mapQaAuthorized=false;
+        if($("mapTestControl"))$("mapTestControl").hidden=true;
+        if($("mapShowTests"))$("mapShowTests").checked=false;
         state.route=user?routeStorage():[];
         state.barrioListMode="visible";
         state.barrioAllSelected=false;

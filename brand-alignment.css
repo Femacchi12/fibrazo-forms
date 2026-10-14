@@ -1262,7 +1262,7 @@ body.form-mode #formWorkspace .operator-memory-inline button{
 }
 #mapFiltersPanel .map-filters{
   display:grid!important;
-  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  grid-template-columns:minmax(0,1fr)!important;
   align-items:stretch!important;gap:8px!important;
   margin:0!important;padding:0!important;
   min-width:0!important;max-width:100%!important;
@@ -1327,7 +1327,7 @@ body.form-mode #formWorkspace .operator-memory-inline button{
 }
 @media(max-width:900px){
   #mapFiltersPanel .map-filters{
-    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    grid-template-columns:minmax(0,1fr)!important;
   }
 }
 @media(max-width:680px){
@@ -1384,6 +1384,19 @@ body.form-mode #formWorkspace .operator-memory-inline button{
   #mapFiltersPanel .map-filters{
     grid-template-columns:minmax(0,1fr)!important;
   }
+}
+
+/* FO-CHG-026 · la alineación transversal no debe revertir el panel vertical. */
+#mapView .map-search-box input{
+  min-height:32px!important;
+  height:32px!important;
+  padding:5px 2px!important;
+  border:0!important;
+  border-radius:10px!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  outline:0!important;
+  font-size:12px!important;
 }
 
 

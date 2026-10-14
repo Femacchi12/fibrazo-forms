@@ -705,7 +705,7 @@
   async function localHistoryRows() {
     if(!window.FIBRAZO_OFFLINE?.list)return[];
     const email=String(state.user?.email||"").trim().toLowerCase();
-    const records=(await window.FIBRAZO_OFFLINE.list()).filter(r=>!email||r.userEmail===email);
+    const records=(await window.FIBRAZO_OFFLINE.list()).filter(r=>(!email||r.userEmail===email)&&r.payload?.isTest!==true);
     return records.map(r=>({
       formId:r.formId,id:r.clientSubmissionId,clientTimestamp:r.createdAt,
       data:r.payload?.data||{},user:r.userEmail||"",localStatus:r.status||"pending",local:true

@@ -1,7 +1,7 @@
-const CACHE="fibrazo-forms-v0.8.90-20261013-03";
+const CACHE="fibrazo-forms-v0.8.90-20261014-25";
 const APP_SHELL=[
   "/","/index.html","/public","/styles.css","/brand-alignment.css","/forms-config.js","/app.js","/access-v03.js",
-  "/ux-v04.js","/offline-v04.js","/admin-v03.js","/public-v05.js","/map-v01.js","/manifest.webmanifest","/icon-fzo-growth-form-v6.svg"
+  "/ux-v04.js","/offline-v04.js","/admin-v03.js","/public-v05.js","/map-v01.js","/map-controls-ui.js","/manifest.webmanifest","/icon-fzo-growth-form-v6.svg"
 ];
 const REMOTE_SHELL=[
   "https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js",

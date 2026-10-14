@@ -1,1 +1,15 @@
-{"name":"fibrazo-forms","version":"0.1.0","private":true,"engines":{"node":"24.x"},"dependencies":{"firebase-admin":"^12.5.0","googleapis":"^144.0.0"}}
+{
+  "name": "fibrazo-forms",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": "24.x"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.5.0",
+    "googleapis": "^144.0.0"
+  },
+  "scripts": {
+    "test:forms": "node docs/check-flow-sync.mjs && node docs/check-map-qa.mjs"
+  }
+}

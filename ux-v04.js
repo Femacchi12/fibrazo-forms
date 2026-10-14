@@ -2,13 +2,34 @@
   const forms=window.FIBRAZO_FORMS||{};
   const $=id=>document.getElementById(id);
   const publicMode=document.body.classList.contains("public-mode");
-  const state={form:null,policy:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:"",ispOptions:[],geoController:null,geoLookupId:0,geoLookupCancelled:false,locationBusy:false,maxSectionReached:0,locationValidated:false,geoPromise:null,editId:"",existingPhotoFields:{},serverHistory:[]};
+  const state={form:null,policy:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:"",ispOptions:[],geoController:null,geoLookupId:0,geoLookupCancelled:false,locationBusy:false,maxSectionReached:0,locationValidated:false,geoPromise:null,editId:"",existingPhotoFields:{},serverHistory:[],isTest:false};
   const pending=window.FIBRAZO_PENDING||[];
   const pendingOwnedByApp=document.querySelector(".pending-hub")?.dataset.pendingOwner==="app";
 
   function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
   function css(v){return window.CSS&&CSS.escape?CSS.escape(v):String(v).replace(/["\\]/g,"\\$&");}
   function currentUser(){return window.FIBRAZO_PUBLIC_USER||window.firebase?.auth?.().currentUser||null;}
+
+  function mayIdentifyTest(){
+    return !publicMode&&String(currentUser()?.email||"").trim().toLowerCase()==="eduardo@fibrazo.com";
+  }
+  function updateTestReview(){
+    const permitted=mayIdentifyTest();
+    if(!permitted)state.isTest=false;
+    const box=$("formTestFlag");
+    if(!box)return;
+    const sections=activeSections();
+    const isLastSection=!!state.form&&sections.length>0&&state.sectionIndex===sections.length-1;
+    box.hidden=!(permitted&&isLastSection);
+    box.querySelectorAll('input[type="radio"]').forEach(input=>{
+      input.checked=input.value===(state.isTest?"Sí":"No");
+    });
+  }
+  $("formTestFlag")?.addEventListener("change",event=>{
+    if(!mayIdentifyTest()||!event.target.matches('input[type="radio"]'))return;
+    state.isTest=event.target.value==="Sí";
+    updateTestReview();
+  });
 
   function renderPending(){
     const count=$("pendingCount"),list=$("pendingList"),hub=document.querySelector(".pending-hub"); if(!count||!list)return;
@@ -78,7 +99,7 @@
     const form=forms[id];if(!form)return;
     if(!publicMode&&window.FIBRAZO_ACCESS&&window.FIBRAZO_ACCESS[id]===false)return;
     const policy=policyFor(id);
-    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.gpsCapturePending=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
+    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.isTest=false;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.gpsCapturePending=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
     document.body.classList.add("form-mode");
     $("formTitle").textContent=form.name;
     $("formDescription").textContent=form.description||"";
@@ -116,6 +137,7 @@
       }
     }
     $("formWorkspace").hidden=false;$("reviewWorkspace").hidden=true;$("successWorkspace").hidden=true;
+    updateTestReview();
     const stepper=$("sectionStepper"),counter=$("formStepCounter");
     if(stepper)stepper.hidden=policy.showProgress===false;
     if(counter)counter.hidden=policy.showProgress===false;
@@ -918,7 +940,7 @@
     stepper.hidden=state.policy?.showProgress===false;
     if(activeStep)requestAnimationFrame(()=>{if(activeStep.parentElement!==stepper||!window.matchMedia("(max-width:680px)").matches)return;stepper.scrollLeft=Math.max(0,activeStep.offsetLeft-(stepper.clientWidth-activeStep.offsetWidth)/2);});
     $("formStepCounter").hidden=state.policy?.showProgress===false;
-    $("prevSection").hidden=state.sectionIndex===0;const last=state.sectionIndex===sections.length-1;$("nextSection").hidden=last;$("reviewForm").hidden=!last;
+    $("prevSection").hidden=state.sectionIndex===0;const last=state.sectionIndex===sections.length-1;$("nextSection").hidden=last;$("reviewForm").hidden=!last;updateTestReview();
     document.querySelectorAll(".operator-memory-inline").forEach(el=>el.remove());
     document.querySelectorAll(".territorial-coordinate-summary").forEach(el=>el.remove());
     clearValidation();updateVisibility();
@@ -1084,6 +1106,7 @@
         ?["foto_modelo_caja","foto_nomenclatura_caja","foto_marquilla","foto_tipo_tensor","foto_marquilla_drop","foto_tensor_acometida"].map(key=>state.photos.find(p=>p.fieldKey===key)||null).filter(Boolean)
         :state.photos,
       user:{email:u?.email||""},
+      isTest:mayIdentifyTest()&&state.isTest,
       clientTimestamp:new Date().toISOString(),
       startedAt:state.startedAt,
       website:$("publicWebsite")?.value||"",
@@ -1119,6 +1142,7 @@
       const recordedWho=state.policy?.collectEmail===false?"Respuesta anónima":(u?.email||"—");
       $("successEmail").textContent=recordedWho;
       paintCompletionStatus(result);
+      if(payload.isTest&&$("successMessage"))$("successMessage").textContent=result?.queued?"Prueba guardada en cola. No se analizará al sincronizarse.":"Prueba registrada para QA. Excluida de estadísticas y de la base maestra.";
       window.FIBRAZO_OFFLINE?.refreshUi?.();
       if(isExplorationForm()&&!result?.queued){
         window.dispatchEvent(new CustomEvent("fibrazo:submission-saved",{detail:{formId:state.form.id,id:result?.id||""}}));

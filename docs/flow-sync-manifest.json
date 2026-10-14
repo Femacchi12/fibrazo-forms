@@ -297,7 +297,32 @@
           "showWhen": null,
           "full": true
         }
-      ]
+      ],
+      "qaTestFlow": {
+        "type": "submissionMetadata",
+        "key": "Es_Prueba",
+        "visibleOnlyFor": "eduardo@fibrazo.com",
+        "default": "No",
+        "options": [
+          "No",
+          "Sí"
+        ],
+        "reviewStep": "Última pregunta del último paso, antes de Revisar respuestas",
+        "backendPolicy": "Validar email autenticado; rechazar flag de usuarios no autorizados",
+        "storageColumn": "RESP_CHURN!AC",
+        "no": "Guardar y procesar normalmente",
+        "yes": "Guardar para QA sin sincronización maestra; excluir de resultados y estadísticas. Solo puntos con coordenadas visibles mediante Mostrar pruebas en mapa, para cuenta autorizada.",
+        "drawioMarker": "[decision:es_prueba]",
+        "regression": [
+          "default No",
+          "servidor rechaza no autorizado",
+          "offline conserva flag",
+          "solo QA no sincroniza master",
+          "resultados no muestran QA",
+          "mapa no muestra QA por defecto",
+          "Mostrar pruebas autorizado"
+        ]
+      }
     },
     "EXPLORACION": {
       "page": "Exploración virtual",
@@ -615,7 +640,32 @@
           "showWhen": null,
           "full": true
         }
-      ]
+      ],
+      "qaTestFlow": {
+        "type": "submissionMetadata",
+        "key": "Es_Prueba",
+        "visibleOnlyFor": "eduardo@fibrazo.com",
+        "default": "No",
+        "options": [
+          "No",
+          "Sí"
+        ],
+        "reviewStep": "Última pregunta del último paso, antes de Revisar respuestas",
+        "backendPolicy": "Validar email autenticado; rechazar flag de usuarios no autorizados",
+        "storageColumn": "RESP_EXPLORACION!CE",
+        "no": "Guardar y procesar normalmente",
+        "yes": "Guardar para QA sin sincronización maestra; excluir de resultados y estadísticas. Solo puntos con coordenadas visibles mediante Mostrar pruebas en mapa, para cuenta autorizada.",
+        "drawioMarker": "[decision:es_prueba]",
+        "regression": [
+          "default No",
+          "servidor rechaza no autorizado",
+          "offline conserva flag",
+          "solo QA no sincroniza master",
+          "resultados no muestran QA",
+          "mapa no muestra QA por defecto",
+          "Mostrar pruebas autorizado"
+        ]
+      }
     },
     "EXPLORACION_PRESENCIAL": {
       "page": "Exploración presencial",
@@ -1046,7 +1096,32 @@
           "showWhen": null,
           "full": true
         }
-      ]
+      ],
+      "qaTestFlow": {
+        "type": "submissionMetadata",
+        "key": "Es_Prueba",
+        "visibleOnlyFor": "eduardo@fibrazo.com",
+        "default": "No",
+        "options": [
+          "No",
+          "Sí"
+        ],
+        "reviewStep": "Última pregunta del último paso, antes de Revisar respuestas",
+        "backendPolicy": "Validar email autenticado; rechazar flag de usuarios no autorizados",
+        "storageColumn": "RESP_EXPLORACION!CE",
+        "no": "Guardar y procesar normalmente",
+        "yes": "Guardar para QA sin sincronización maestra; excluir de resultados y estadísticas. Solo puntos con coordenadas visibles mediante Mostrar pruebas en mapa, para cuenta autorizada.",
+        "drawioMarker": "[decision:es_prueba]",
+        "regression": [
+          "default No",
+          "servidor rechaza no autorizado",
+          "offline conserva flag",
+          "solo QA no sincroniza master",
+          "resultados no muestran QA",
+          "mapa no muestra QA por defecto",
+          "Mostrar pruebas autorizado"
+        ]
+      }
     },
     "INTELIGENCIA_OPERADOR": {
       "page": "Inteligencia de operadores",
@@ -1376,7 +1451,32 @@
           ],
           "showWhen": null
         }
-      ]
+      ],
+      "qaTestFlow": {
+        "type": "submissionMetadata",
+        "key": "Es_Prueba",
+        "visibleOnlyFor": "eduardo@fibrazo.com",
+        "default": "No",
+        "options": [
+          "No",
+          "Sí"
+        ],
+        "reviewStep": "Última pregunta del último paso, antes de Revisar respuestas",
+        "backendPolicy": "Validar email autenticado; rechazar flag de usuarios no autorizados",
+        "storageColumn": "RESP_INTELIGENCIA_OPERADOR!AF",
+        "no": "Guardar y procesar normalmente",
+        "yes": "Guardar para QA sin sincronización maestra; excluir de resultados y estadísticas. Solo puntos con coordenadas visibles mediante Mostrar pruebas en mapa, para cuenta autorizada.",
+        "drawioMarker": "[decision:es_prueba]",
+        "regression": [
+          "default No",
+          "servidor rechaza no autorizado",
+          "offline conserva flag",
+          "solo QA no sincroniza master",
+          "resultados no muestran QA",
+          "mapa no muestra QA por defecto",
+          "Mostrar pruebas autorizado"
+        ]
+      }
     }
   },
   "offline": {
@@ -1516,7 +1616,19 @@
         "status": "Campo huérfano en configuración productiva; no corregido por esta sincronización."
       }
     ],
-    "note": "Documentación del código tal como está; inspección visual de diagrams.net y defecto de coordenadas requieren validación separada"
+    "note": "Documentación del código tal como está; inspección visual de diagrams.net y defecto de coordenadas requieren validación separada",
+    "qaTestControl": {
+      "ticket": "FO-PEN-011",
+      "status": "IMPLEMENTED_IN_FEATURE_BRANCH_NOT_DEPLOYED",
+      "roles": "Owner eduardo@fibrazo.com",
+      "forms": [
+        "CHURN",
+        "EXPLORACION",
+        "EXPLORACION_PRESENCIAL",
+        "INTELIGENCIA_OPERADOR"
+      ],
+      "noChangeToFieldInventory": true
+    }
   },
   "behavior": {
     "navigation": "activeSections() determina pasos visibles; next() valida sección y review() valida todas antes de enviar",

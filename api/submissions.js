@@ -363,10 +363,17 @@ async function submissionExists(auth,form,id){
 async function hasExistingResponseForEmail(auth,form,email){
   if(!form.collectEmail||form.allowMultipleResponses||!email)return false;
   const sheets=google.sheets({version:"v4",auth});
-  const column=form.id==="CHURN"?"Z":"Y";
-  const r=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!${column}2:${column}`});
+  const column=form.id==="CHURN"?"Z":form.id==="INTELIGENCIA_OPERADOR"?"T":"Y";
+  const qaColumn=form.id==="CHURN"?"AC":form.id==="INTELIGENCIA_OPERADOR"?"AF":"CE";
+  const [r,tests]=await Promise.all([
+    sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!${column}2:${column}`}),
+    sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!${qaColumn}2:${qaColumn}`})
+  ]);
   const target=String(email).trim().toLowerCase();
-  return (r.data.values||[]).some(row=>String(row[0]||"").trim().toLowerCase()===target);
+  return (r.data.values||[]).some((row,index)=>
+    String(row[0]||"").trim().toLowerCase()===target&&
+    String(tests.data.values?.[index]?.[0]||"").trim().toLowerCase()!=="sí"
+  );
 }
 
 async function readRows(auth,forms,requested,limit,user,caps){
@@ -383,9 +390,12 @@ async function readRows(auth,forms,requested,limit,user,caps){
   for(const form of allowed){
     const r=await sheets.spreadsheets.values.get({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!A2:BX`
+      range:`${form.sheet}!A2:${isExploration(form.id)?"CE":form.id==="INTELIGENCIA_OPERADOR"?"AF":"AC"}`
     });
     for(const row of (r.data.values||[]).slice(-limit).reverse()){
+      // Toda respuesta de prueba queda excluida de resultados y análisis.
+      const testIndex=form.id==="CHURN"?28:form.id==="INTELIGENCIA_OPERADOR"?31:82;
+      if(String(row[testIndex]||"").trim().toLowerCase()==="sí")continue;
       const emailIndex=form.id==="CHURN"?25:form.id==="INTELIGENCIA_OPERADOR"?19:24;
       const rowEmail=String(row[emailIndex]||"").trim().toLowerCase();
       if(!caps.adminActive&&rowEmail!==email)continue;
@@ -480,6 +490,9 @@ module.exports=async(req,res)=>{
       if(!canAccess(form,user,caps.base,permission)) throw httpError("FORM_ACCESS_DENIED",403);
     }
 
+    // El cliente no puede auto-otorgarse permisos de pruebas.
+    if(payload.isTest===true&&String(user?.email||"").trim().toLowerCase()!=="eduardo@fibrazo.com")throw httpError("TEST_FLAG_FORBIDDEN",403);
+    payload.isTest=payload.isTest===true&&String(user?.email||"").trim().toLowerCase()==="eduardo@fibrazo.com";
     validateSubmission(formId,payload);
     validatePhotos(payload.photos||[],form);
 
@@ -489,7 +502,7 @@ module.exports=async(req,res)=>{
       const permission=permissionFor(caps.permissions,String(user.email||"").toLowerCase(),form.id,caps.base);
       if(!canAccess(form,user,caps.base,permission)) throw httpError("FORM_ACCESS_DENIED",403);
       const sheets=google.sheets({version:"v4",auth});
-      const existing=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!A2:AD`});
+      const existing=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!A2:AF`});
       const rows=existing.data.values||[];
       const idx=rows.findIndex(row=>String(row[1]||"")===editId);
       if(idx<0) throw httpError("SUBMISSION_NOT_FOUND",404);
@@ -508,8 +521,10 @@ module.exports=async(req,res)=>{
         byKey.foto_tensor_acometida||String(payload.existingPhotoFields?.foto_tensor_acometida||old[28]||"")
       ];
       const row=buildRow(form,payload,editId,links,owner||email);
+      // Preservar el indicador histórico en una edición autorizada.
+      row[31]=old[31]|| (payload.isTest?"Sí":"No");
       row[0]=old[0]||row[0];
-      await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!A${idx+2}:AE${idx+2}`,valueInputOption:"RAW",requestBody:{values:[row]}});
+      await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!A${idx+2}:AF${idx+2}`,valueInputOption:"RAW",requestBody:{values:[row]}});
       return res.status(200).json({ok:true,id:editId,updated:true,photos:links});
     }
 
@@ -536,7 +551,7 @@ module.exports=async(req,res)=>{
 
     const recordedEmail=form.collectEmail?String(user?.email||"").trim().toLowerCase():"ANONIMO";
     if(form.collectEmail&&!recordedEmail) throw httpError("EMAIL_REQUIRED",401);
-    if(await hasExistingResponseForEmail(auth,form,recordedEmail)) throw httpError("ALREADY_RESPONDED",409);
+    if(!payload.isTest&&await hasExistingResponseForEmail(auth,form,recordedEmail)) throw httpError("ALREADY_RESPONDED",409);
 
     const links=await uploadPhotos(auth,form,id,payload.photos||[]);
     if(formId==="INTELIGENCIA_OPERADOR"){
@@ -545,14 +560,17 @@ module.exports=async(req,res)=>{
     }
     const sheets=google.sheets({version:"v4",auth});
     const submissionRow=buildRow(form,payload,id,links,recordedEmail);
+    if(form.id==="CHURN")submissionRow[28]=payload.isTest?"Sí":"No";         // AC
+    if(form.id==="INTELIGENCIA_OPERADOR")submissionRow[31]=payload.isTest?"Sí":"No"; // AF
     if(isExploration(form.id)){
       const evidenceLinks=form.id==="EXPLORACION"?[payload.data?.link_evidencia,...links]:links;
       while(submissionRow.length<75)submissionRow.push("");
       submissionRow.push(photoStatus(evidenceLinks));
+      submissionRow[82]=payload.isTest?"Sí":"No"; // CE, evita columnas legacy BY:CC
     }
     const appended=await sheets.spreadsheets.values.append({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!${isExploration(form.id)?"A:AB":form.id==="INTELIGENCIA_OPERADOR"?"A:AE":"A:AB"}`,
+      range:`${form.sheet}!${isExploration(form.id)?"A:CE":form.id==="INTELIGENCIA_OPERADOR"?"A:AF":"A:AC"}`,
       valueInputOption:"RAW",
       insertDataOption:"INSERT_ROWS",
       requestBody:{values:[submissionRow]}
@@ -573,7 +591,9 @@ module.exports=async(req,res)=>{
       }
 
       try{
-        masterSync=isExploration(form.id)
+        masterSync=payload.isTest&&isExploration(form.id)
+          ?{ok:true,scope:"QA_ONLY",project:"NONE",reason:"TEST_NO_MASTER_SYNC"}
+          :isExploration(form.id)
           ?await syncExplorationMaster(auth,form,payload,links,territorial)
           :{ok:true,scope:"INTELLIGENCE_ONLY",project:territorial?.catalogId||"GENERAL"};
       }catch(syncError){
@@ -611,7 +631,7 @@ module.exports=async(req,res)=>{
         }
 
         const project=masterSync?.project||territorial?.catalogId||"GENERAL";
-        const processState=masterSync?.ok
+        const processState=payload.isTest?"PRUEBA_SIN_SINCRONIZACION":masterSync?.ok
           ?(masterSync?.scope==="GLOBAL_ONLY"?"REGISTRADO_GLOBAL":"PROCESADO_PROYECTO")
           :"PENDIENTE";
         await sheets.spreadsheets.values.update({
@@ -620,7 +640,7 @@ module.exports=async(req,res)=>{
           valueInputOption:"RAW",
           requestBody:{values:[[
             masterSync?.pointId||"",
-            masterSync?.ok?(masterSync?.scope==="GLOBAL_ONLY"?"GLOBAL_ONLY":"OK"):String(masterSync?.reason||"PENDIENTE"),
+            payload.isTest?"QA_ONLY":masterSync?.ok?(masterSync?.scope==="GLOBAL_ONLY"?"GLOBAL_ONLY":"OK"):String(masterSync?.reason||"PENDIENTE"),
             project,
             processState
           ]]}

@@ -65,6 +65,10 @@ for(const id of formIds){
   const page=diagrams.find(m=>(m[1].match(/\bname="([^"]+)"/)?.[1])===copy.page);
   if(!page){errors.push("Falta diagrama asignado para "+id+": "+copy.page);continue;}
   const content=page[2];
+  // Control QA privado y documentado en ambos sentidos.
+  check(copy.qaTestFlow?.default==="No",id+": valor inicial QA incorrecto");
+  check(copy.qaTestFlow?.visibleOnlyFor==="eduardo@fibrazo.com",id+": permiso QA incorrecto");
+  check(content.split("[decision:es_prueba]").length===2,id+": marcador QA debe aparecer exactamente una vez");
   const fieldTags=[...content.matchAll(/\[field:([^\]]+)\]/g)].map(m=>m[1]);
   const sectionTags=[...content.matchAll(/\[section:([^\]]+)\]/g)].map(m=>m[1]);
   const fieldKeys=sourceFields.map(f=>f.key);
