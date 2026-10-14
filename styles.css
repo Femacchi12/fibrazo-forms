@@ -2422,7 +2422,7 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
  .map-extra-content>.map-photos-filter{grid-column:1}
 }
 
-/* FO-CHG-023 · panel del mapa contenido, referencias desplegables y encabezado compacto */
+/* FO-CHG-025 · panel del mapa contenido, referencias desplegables y encabezado compacto */
 .exploration-map-panel{overflow:visible}
 .map-head{
   padding:2px 2px 13px;

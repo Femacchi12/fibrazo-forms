@@ -1386,7 +1386,7 @@ body.form-mode #formWorkspace .operator-memory-inline button{
   }
 }
 
-/* FO-CHG-024 · la alineación transversal no debe revertir el panel vertical. */
+/* FO-CHG-026 · la alineación transversal no debe revertir el panel vertical. */
 #mapView .map-search-box input{
   min-height:32px!important;
   height:32px!important;
