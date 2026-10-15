@@ -23,7 +23,7 @@ async function readPending(auth){
     id:clean(r[0],30),
     title:clean(r[1],130),
     status:clean(r[3],150),
-    priority:clean(r[4],130),
+    priority:/ALTA/.test(String(r[4]||"").toUpperCase())?"ALTA":/MEDIA/.test(String(r[4]||"").toUpperCase())?"MEDIA":/BAJA/.test(String(r[4]||"").toUpperCase())?"BAJA":"PENDIENTE",
     requirement:clean(r[5],260),
     type:kind(r[3])
   }));
