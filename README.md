@@ -115,3 +115,18 @@ En QA, Estratos se inicia con 1, 2 y 3 seleccionados (estrato 0 no figura en las
 - La capa Troncales cuenta con soporte de API para 04_TRONCALES y líneas WKT; su selector informa «Sin troncales registradas» porque en la fecha de revisión 04_TRONCALES tenía encabezados pero cero filas. No se simulan trazados.
 - Las geometrías actualmente servidas por /api/map-polygons son del maestro territorial de Bucaramanga; al seleccionar otras ciudades aparece una advertencia de cobertura, sin asumir disponibilidad nacional de barrios/estratos/troncales. No modificar la fuente geográfica ni reportar capa vacía como error de puntos.
 - QA pendiente: validar desplazamiento en móvil/escritorio, controles GPS/recorrido, lectura API con usuario autorizado, casillas y los estados de ojo, todas las ciudades de catálogo, condiciones por ciudad, ausencia de troncales, y visualizar geodatos reales cuando Ingeniería cargue troncales. Rama feat/forms-map-qa-20261013, sin producción.
+
+
+## PROTOCOLO DE CONTINUIDAD ENTRE CHATS — FIBRAZO Forms (15/10/2026)
+
+Objetivo: prevenir pérdida de contexto, lentitud y reconstrucción innecesaria del trabajo de FIBRAZO Forms al utilizar conversaciones extensas.
+
+Al comenzar un chat nuevo del proyecto: (1) revisar documentación general, README, CHANGELOG/registro de cambios y hoja PENDIENTES, así como la última rama y entorno QA; (2) recuperar el último resumen de continuidad o decisiones pertinentes disponibles; (3) hacer una evaluación cualitativa del volumen y complejidad del chat actual y comunicar si conviene continuar o migrar.
+
+Clasificación orientativa: BAJA, MEDIA, ALTA o MUY ALTA. No implica acceso a un medidor real, porcentaje de tokens/contexto restante, consumo de memoria o rendimiento de la plataforma. No inventar porcentajes ni afirmar que se controla automáticamente en segundo plano. Evaluar por extensión acumulada, número de tareas y cambios, archivos, capturas, consultas a herramientas, riesgo de perder decisiones y señales de latencia observadas; sin medición directa, reconocer incertidumbre.
+
+En carga BAJA/MEDIA, continuar. En ALTA, recomendar preparar traspaso al cerrar la tarea actual. En MUY ALTA, recomendar un nuevo chat y preparar inmediatamente un resumen verificable. Avisar proactivamente cuando el volumen sea significativo durante el trabajo, sin interrumpir innecesariamente tareas críticas.
+
+Resumen mínimo de traspaso: nombre y objetivo del proyecto, estado exacto y fecha de revisión, decisiones aprobadas, cambios efectivamente aplicados versus propuestas o pruebas pendientes, enlaces oficiales QA y producción, rama/commits relevantes, documentación maestra, Changelog y tickets/pendientes con IDs, dependencias, próximos pasos y precauciones. No confundir READY con QA funcional validado ni decir que producción cambió si solo se actualizó la rama de prueba. Priorizar referencias corporativas y verificar su estado actual.
+
+Esta es una instrucción operativa documentada para futuras conversaciones del proyecto, no una función automática de medición de contexto o notificación autónoma. En el nuevo chat corresponde consultar este protocolo y aplicarlo.
