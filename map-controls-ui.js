@@ -145,7 +145,12 @@
         const summary=document.createElement("summary");
         const label=document.createElement("span");label.textContent=title;
         const count=document.createElement("small");count.textContent="0 seleccionados";
-        summary.append(label,count);
+        const action=$(key==="barrios"?"mapSelectAllBarrios":"mapClearEstratos");
+        if(action){
+          action.classList.add("map-layer-eye-action");
+          action.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();});
+          summary.append(label,action,count);
+        }else summary.append(label,count);
         toggle.hidden=true;toggle.setAttribute("aria-hidden","true");toggle.tabIndex=-1;
         disclosure.append(summary,toggle,content);
         switches.appendChild(disclosure);
@@ -164,6 +169,23 @@
       }
     }
     // Referencia solo en su pestaña: no ocupa espacio en filtros ni capas.
+    // FO-CHG-036: filtros con el mismo patrón de acordeón que Capas.
+    const filterHost=panels.filters?.querySelector(".map-filters");
+    if(filterHost&&!filterHost.dataset.grouped){
+      filterHost.dataset.grouped="1";
+      const names={mapCityFilter:"Ciudades",mapTypeFilter:"Tipo de formulario",mapOperatorFilter:"Operadores",mapUserFilter:"Usuarios"};
+      for(const [id,title] of Object.entries(names)){
+        const control=$(id);
+        const box=control?.closest(".map-searchable")||control?._searchInput?.parentElement||control?.parentElement;
+        if(!control||!box||box===filterHost)continue;
+        const group=document.createElement("details");group.className="map-filter-disclosure";
+        const summary=document.createElement("summary");summary.textContent=title;
+        group.append(summary);
+        filterHost.insertBefore(group,box);
+        group.appendChild(box);
+        if(id==="mapCityFilter")group.open=true;
+      }
+    }
     const strata=document.createElement("details");
     strata.className="map-reference-group map-strata-index";
     strata.setAttribute("aria-label","Índice de estratos");
