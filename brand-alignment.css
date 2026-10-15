@@ -2229,3 +2229,57 @@ input:not([type=checkbox]):not([type=radio]),select,textarea,
  #mapFloatingTools .map-layer-disclosure>summary{grid-template-columns:28px minmax(0,1fr) auto 16px!important;padding-inline:8px!important}
  #mapFloatingTools .map-control-count{font-size:9px!important}
 }
+
+/* FO-CHG-044: una sola fila compacta y alineada para filtros y capas. */
+#mapFloatingTools .map-filter-disclosure>summary,
+#mapFloatingTools .map-layer-disclosure>summary{
+ grid-template-columns:24px minmax(0,1fr) auto 14px!important;
+ column-gap:7px!important;min-height:40px!important;padding:5px 8px!important;
+}
+#mapFloatingTools .map-filter-disclosure>summary::after,
+#mapFloatingTools .map-layer-disclosure>summary::after{
+ grid-column:4!important;grid-row:1!important;align-self:center!important;justify-self:center!important;
+ width:14px!important;font-size:20px!important;text-align:center!important;
+}
+#mapFloatingTools .map-control-leading,
+#mapFloatingTools .map-layer-eye-action{
+ order:0!important;grid-column:1!important;grid-row:1!important;align-self:center!important;
+ width:24px!important;height:24px!important;min-width:24px!important;min-height:24px!important;
+ border-radius:6px!important;font-size:16px!important;
+}
+#mapFloatingTools .map-control-filter-leading{font-size:17px!important}
+#mapFloatingTools .map-control-label,
+#mapFloatingTools .map-filter-disclosure>summary>.map-control-label,
+#mapFloatingTools .map-layer-disclosure>summary>.map-control-label{
+ order:0!important;grid-column:2!important;grid-row:1!important;align-self:center!important;
+ margin:0!important;min-width:0!important;font-size:13px!important;line-height:1.15!important;
+}
+#mapFloatingTools .map-control-count,
+#mapFloatingTools .map-filter-disclosure>summary>.map-control-count,
+#mapFloatingTools .map-layer-disclosure>summary>.map-control-count{
+ order:0!important;grid-column:3!important;grid-row:1!important;align-self:center!important;
+ margin:0!important;font-size:9px!important;line-height:1!important;
+}
+#mapFloatingTools .map-filter-disclosure>.map-typeahead,
+#mapFloatingTools .map-layer-disclosure>.map-selective-layer{
+ padding:7px 8px 9px!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead>input,
+#mapFloatingTools .map-layer-disclosure :is(.map-estrato-search,.map-barrio-search input){
+ min-height:33px!important;margin-bottom:5px!important;font-size:12px!important;
+}
+#mapFloatingTools .map-layer-disclosure .map-selective-option,
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options button{
+ min-height:34px!important;padding:6px 4px!important;font-size:12px!important;
+}
+#mapFloatingTools .map-unified-extra>summary{
+ min-height:40px!important;padding:6px 8px 6px 39px!important;font-size:12px!important;
+}
+@media(max-width:650px){
+ #mapFloatingTools .map-filter-disclosure>summary,
+ #mapFloatingTools .map-layer-disclosure>summary{
+  grid-template-columns:23px minmax(0,1fr) auto 13px!important;column-gap:6px!important;padding-inline:7px!important;
+ }
+ #mapFloatingTools .map-control-leading,
+ #mapFloatingTools .map-layer-eye-action{width:23px!important;height:23px!important;min-width:23px!important;min-height:23px!important}
+}

@@ -54,3 +54,6 @@ assert.ok(read("api/map-polygons.js").includes("applyCityFilter")&&map.includes(
 assert.ok(types.includes("content.dataset.selectedCount")&&map.includes("host.dataset.selectedCount"),"El resumen de capas conserva el conteo real aunque el filtro o viewport oculten opciones");
 assert.ok(types.includes('byLayer("Barrios"),byLayer("Troncales")')&&!types.includes("Capas adicionales · Troncales"),"Troncales aparece inmediatamente debajo de Barrios, sin bloque separado");
 assert.ok(types.includes('map-control-label')&&types.includes('map-control-count')&&read("brand-alignment.css").includes("FO-CHG-043"),"Filtros y capas comparten fila, contador y jerarquía visual");
+const alignmentCss=read("brand-alignment.css");
+assert.ok(alignmentCss.includes("FO-CHG-044")&&alignmentCss.includes("grid-row:1!important"),"Ojo, nombre, contador y flecha permanecen alineados en una sola fila");
+assert.ok(alignmentCss.includes("min-height:40px!important")&&alignmentCss.includes("grid-template-columns:24px minmax(0,1fr) auto 14px"),"Controladores compactos en escritorio y móvil");

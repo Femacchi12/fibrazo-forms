@@ -173,3 +173,6 @@ En QA se retiran de la cabecera los botones Actualizar y Ver todos los puntos; s
 
 ### FO-CHG-043 — Controladores unificados del mapa (15/10/2026)
 En QA, Ciudades, Operadores, Estratos, Barrios y Troncales comparten una misma fila compacta, tipografía, fondo, contador y despliegue. Troncales deja de estar dentro de «Capas adicionales» y se ubica inmediatamente debajo de Barrios. Los filtros mantienen búsqueda y multiselección; las capas conservan su acción ocular, búsquedas, casillas y carga de geometrías existente. Se actualiza la caché PWA. Producción no modificada; requiere validación visual y funcional en Preview antes de promover.
+
+### FO-CHG-044 — Alineación y compactación final de capas (15/10/2026)
+En QA, la fila de cada filtro y capa fija explícitamente el ojo o icono, nombre, contador y flecha en una única línea. Se neutraliza el salto provocado por el orden heredado de los elementos del resumen y se reducen alturas, separaciones, tipografía, buscadores y opciones para aproximar el panel a la referencia compacta, tanto en escritorio como en móvil. Estratos, Barrios y Troncales conservan la misma acción ocular independiente, despliegue, búsqueda/multiselección y lógica de carga existente. Se renueva la caché PWA; producción no modificada.
