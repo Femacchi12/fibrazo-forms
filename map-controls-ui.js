@@ -68,7 +68,10 @@
       opts.forEach(opt=>{
         const button=document.createElement("button");
         button.type="button";button.dataset.value=opt.value;
-        button.textContent=opt.textContent;
+        button.innerHTML="";
+        const tick=document.createElement("input");tick.type="checkbox";tick.tabIndex=-1;tick.checked=opt.selected;tick.setAttribute("aria-hidden","true");
+        const name=document.createElement("span");name.textContent=opt.textContent;
+        button.append(tick,name);
         button.setAttribute("role","option");
         button.setAttribute("aria-selected",String(opt.selected));
         menu.appendChild(button);
@@ -190,6 +193,14 @@
       refresh();
     }
 
+    // FO-CHG-039: menú de recorrido desplegado hacia el interior del mapa.
+    const routeDock=document.querySelector(".map-tools-dock");
+    const routeDisclosure=routeDock?.querySelector(".map-route-disclosure");
+    if(routeDisclosure){
+      routeDisclosure.addEventListener("toggle",()=>{
+        routeDock.classList.toggle("route-open",routeDisclosure.open);
+      });
+    }
     // Referencia solo en su pestaña: no ocupa espacio en filtros ni capas.
     // FO-CHG-036: filtros con el mismo patrón de acordeón que Capas.
     const filterHost=panels.filters?.querySelector(".map-filters");
