@@ -1665,6 +1665,8 @@
     $("mapLayersToggle")?.addEventListener("click",()=>toggleLayersPanel());
     $("mapLayerBarrios")?.addEventListener("click",()=>togglePolygonLayer("barrios"));
     $("mapLayerEstratos")?.addEventListener("click",()=>togglePolygonLayer("estratos"));
+    // FO-CHG-033: activar automáticamente la capa y los estratos 1, 2 y 3 al iniciar mapa.
+    if(!state.polygonActive.estratos)togglePolygonLayer("estratos");
     $("mapViewBucaramanga")?.addEventListener("click",viewBucaramanga);
     $("mapClearEstratos")?.addEventListener("click",()=>clearLayerSelection("estratos"));
     $("mapClearBarrios")?.addEventListener("click",()=>clearLayerSelection("barrios"));
