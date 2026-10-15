@@ -1,18 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="116" fill="#00FE9C"/>
-  <text x="256" y="140" text-anchor="middle" fill="#FFFFFF"
-        font-family="Inter,Arial,Helvetica,sans-serif"
-        font-size="82" font-weight="700" letter-spacing="2">GROWTH</text>
-  <text x="158" y="318" text-anchor="middle" fill="#FFFFFF"
-        font-family="Inter,Arial,Helvetica,sans-serif"
-        font-size="166" font-weight="800">f</text>
-  <text x="260" y="318" text-anchor="middle" fill="#FFFFFF"
-        font-family="Inter,Arial,Helvetica,sans-serif"
-        font-size="166" font-weight="800">z</text>
-  <text x="370" y="318" text-anchor="middle" fill="#FFFFFF"
-        font-family="Inter,Arial,Helvetica,sans-serif"
-        font-size="166" font-weight="800">o</text>
-  <text x="256" y="448" text-anchor="middle" fill="#FFFFFF"
-        font-family="Inter,Arial,Helvetica,sans-serif"
-        font-size="82" font-weight="700" letter-spacing="3">FORM</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="fbz growth forms">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#04d99a"/><stop offset=".55" stop-color="#00ba86"/><stop offset="1" stop-color="#008f6e"/></linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".16"/><stop offset=".55" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect x="4" y="4" width="504" height="504" rx="108" fill="url(#shine)"/>
+  <g fill="#fff" font-family="Montserrat,Inter,Arial,Helvetica,sans-serif" font-weight="800">
+    <text x="256" y="322" text-anchor="middle" font-size="222" letter-spacing="-13">fbz</text>
+    <circle cx="236" cy="142" r="17"/>
+    <text x="256" y="412" text-anchor="middle" font-size="47" letter-spacing="-1.9" font-weight="750">growth forms</text>
+  </g>
 </svg>
