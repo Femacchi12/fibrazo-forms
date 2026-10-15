@@ -27,7 +27,7 @@
     polygonIndexControllers:{barrios:null,estratos:null},
     polygonIndexData:{barrios:[],estratos:[]},
     polygonSelections:{barrios:new Set(),estratos:new Set()},
-    barrioListMode:"visible",
+    barrioListMode:"all",
     barrioAllSelected:false,
     barrioExcluded:new Set(),
     polygonReloadTimer:null,
@@ -1004,15 +1004,13 @@
     host.dataset.selectedCount=String(state.polygonSelections.estratos.size);
     host.hidden=!state.polygonActive.estratos;
     if(host.hidden)return;
-    const counts=new Map((state.polygonIndexData.estratos||[]).map(item=>[String(item.value),Number(item.count)||0]));
     const query=norm($("mapEstratoSearch")?.value||"");
     options.innerHTML=["1","2","3","4","5","6"].filter(value=>!query||norm("Estrato "+value).includes(query)).map(value=>{
       const checked=state.polygonSelections.estratos.has(value);
-      const count=counts.get(value)||0;
       return '<label class="map-selective-option estrato-option'+(checked?' active':'')+'">'+
         '<input type="checkbox" data-layer-option="estratos" value="'+value+'" '+(checked?'checked':'')+'>'+
         '<i style="background:'+ESTRATO_COLORS[value]+'"></i>'+
-        '<span><b>Estrato '+value+'</b><small>'+count+' polígonos en la vista</small></span>'+
+        '<span><b>Estrato '+value+'</b></span>'+
       '</label>';
     }).join("");
     if(hint){
@@ -1040,10 +1038,7 @@
     const search=norm($("mapBarrioSearch")?.value||"");
     const all=state.polygonIndexData.barrios||[];
     const filtered=all.filter(item=>!search||norm(item.name).includes(search)||norm(item.municipio).includes(search)||norm(item.comuna).includes(search));
-    if(countEl)countEl.textContent=String(all.length);
     if(title)title.textContent=state.barrioListMode==="all"?"Todos los barrios de la base AMB":"Barrios visibles en esta vista";
-    $("mapBarrioModeVisible")?.classList.toggle("active",state.barrioListMode==="visible");
-    $("mapBarrioModeAll")?.classList.toggle("active",state.barrioListMode==="all");
     options.innerHTML=filtered.length?filtered.map(item=>{
       const checked=barrioIsChecked(item.id);
       return '<label class="map-selective-option barrio-option'+(checked?' active':'')+'">'+
