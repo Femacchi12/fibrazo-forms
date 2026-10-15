@@ -614,5 +614,5 @@ module.exports={
   resolveTerritorial,
   searchTerritorial,
   flattenTerritorial,
-  _internals:{parseWkt,inGeometry,geometryDistance,bboxDistance}
+  _internals:{parseWkt,inGeometry,geometryDistance,bboxDistance,resolveCityItems}
 };
