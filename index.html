@@ -18,6 +18,19 @@
   <link rel="stylesheet" href="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.css">
   <link rel="stylesheet" href="/styles.css?v=2026.10.14.25">
   <link rel="stylesheet" href="/brand-alignment.css?v=20261014-17">
+
+<style id="map-layer-qa-compact">
+#mapLayerBarrios .map-layer-chevron,#mapLayerEstratos .map-layer-chevron{margin-left:auto;font-size:21px;font-weight:800;line-height:1;transition:transform .18s ease;color:#43ffa5}
+#mapLayerBarrios[aria-pressed="true"] .map-layer-chevron,#mapLayerEstratos[aria-pressed="true"] .map-layer-chevron{transform:rotate(180deg)}
+#mapEstratoOptions .map-selective-option{min-height:45px;padding:8px 11px;gap:10px}
+#mapEstratoOptions .map-selective-option b{font-size:14px;line-height:1.2}
+#mapEstratoOptions .map-selective-option small{display:none}
+#mapBarrioControls .map-selective-layer-head{padding-bottom:5px}
+#mapBarrioControls .map-barrio-search{margin-top:5px}
+#mapBarrioControls .map-barrio-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#mapBarrioControls .map-barrio-actions button{min-width:0;padding:8px 5px;min-height:38px;font-size:12px}
+#mapBarrioOptions .map-selective-option{min-height:47px;padding:7px 10px}
+</style>
 </head>
 <body class="auth-pending">
   <section id="authGate" class="auth-gate" aria-live="polite">
@@ -373,11 +386,11 @@
           <div class="map-layer-switches">
             <button id="mapLayerBarrios" class="map-layer-chip" type="button" aria-pressed="false">
               <i class="map-layer-solid-icon barrios">B</i>
-              <span><b>Barrios</b><small>Selecciona los barrios que quieres mostrar</small></span>
+              <span><b>Barrios</b><small>Selecciona los barrios que quieres mostrar</small></span><span class="map-layer-chevron" aria-hidden="true">⌄</span>
             </button>
             <button id="mapLayerEstratos" class="map-layer-chip" type="button" aria-pressed="false">
               <i class="map-layer-solid-icon estratos">E</i>
-              <span><b>Estratos</b><small>Activa únicamente los estratos que quieras ver</small></span>
+              <span><b>Estratos</b><small>Activa únicamente los estratos que quieras ver</small></span><span class="map-layer-chevron" aria-hidden="true">⌄</span>
             </button>
           </div>
           <div id="mapLayerStatus" class="map-layer-status">Capas apagadas.</div>
@@ -395,17 +408,14 @@
           <section id="mapBarrioControls" class="map-selective-layer" hidden>
             <div class="map-selective-layer-head">
               <div><span>BARRIOS</span><strong id="mapBarrioListTitle">Barrios visibles en esta vista</strong></div>
-              <span id="mapBarrioVisibleCount" class="map-layer-count">0</span>
+              
             </div>
-            <div class="map-barrio-mode" role="group" aria-label="Alcance del listado de barrios">
-              <button id="mapBarrioModeVisible" class="active" type="button">Vista actual</button>
-              <button id="mapBarrioModeAll" type="button">Todos</button>
-            </div>
+            
             <div class="map-barrio-search">
               <input id="mapBarrioSearch" type="search" placeholder="Buscar barrio…" autocomplete="off">
               <div class="map-barrio-actions">
                 <button id="mapSelectAllBarrios" class="secondary-button compact" type="button">Seleccionar todos</button>
-                <button id="mapClearBarrios" class="secondary-button compact" type="button">Apagar todos</button>
+                <button id="mapClearBarrios" class="secondary-button compact" type="button">Limpiar</button>
               </div>
             </div>
             <div id="mapBarrioOptions" class="map-barrio-options"></div>
