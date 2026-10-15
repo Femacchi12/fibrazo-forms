@@ -208,7 +208,7 @@
   }
   window.FIBRAZO_SET_VIEW=setView;
 
-  // FO-CHG-030: seguimiento dinámico. La hoja PENDIENTES continúa como única fuente de verdad.
+  // FO-CHG-032: seguimiento dinámico. La hoja PENDIENTES continúa como única fuente de verdad.
   const PENDING_SHEET_URL="https://docs.google.com/spreadsheets/d/1khSXy3s44k6wuRrIjP5-an9C5Kr1qPpAF6iWECKrI3c/edit";
   const PENDING_REFRESH_MS=120000;
   let pendingLastLoad=0,pendingRequest=null;
