@@ -843,7 +843,15 @@
   function refreshMapNow(){
     polygonResponseCache.clear();
     loadPoints({fit:false});
-    for(const layer of ["barrios","estratos","troncales"])if(state.polygonActive[layer])refreshPolygonLayer(layer,{silent:false});
+    // Explicit refresh must re-fetch each visible polygon and re-render active selections.
+    for(const layer of ["estratos","troncales","barrios"]){
+      if(!state.polygonActive[layer])continue;
+      state.polygonIndexData[layer]=[];
+      state.polygonIndexControllers[layer]?.abort();
+      state.polygonIndexControllers[layer]=null;
+      clearPolygonLayer(layer,{keepStatus:true});
+      refreshPolygonLayer(layer,{silent:false});
+    }
   }
 
   function clearFilters(){
@@ -1120,7 +1128,7 @@
       const checked=barrioIsChecked(item.id);
       return '<label class="map-selective-option barrio-option'+(checked?' active':'')+'">'+
         '<input type="checkbox" data-layer-option="barrios" value="'+esc(item.id)+'" '+(checked?'checked':'')+'>'+
-        '<i class="barrio-selector-dot"></i>'+
+        ''+
         '<span><b>'+esc(item.name||item.id)+'</b><small>'+esc(item.municipio||"")+(item.comuna?' · '+esc(item.comuna):'')+'</small></span>'+
       '</label>';
     }).join(""):'<div class="map-selective-empty">'+(search?'No hay barrios que coincidan con la búsqueda.':'No hay barrios disponibles en esta vista.')+'</div>';
