@@ -214,6 +214,24 @@
     $("mapFiltersToggle")?.addEventListener("click",()=>show("filters"));
     $("mapLayersToggle")?.addEventListener("click",()=>show("layers"));
     // Panel de mapa anclado a la esquina superior izquierda: no se arrastra.
+    // FO-CHG-034: navegación compacta superpuesta al mapa.
+    const canvas=$("mapCanvasWrap"),search=document.querySelector(".map-search-shell");
+    const locate=$("mapLocateMe"),route=document.querySelector(".map-location-toolbar");
+    if(canvas&&search){
+      const dock=document.createElement("div");dock.className="map-search-dock";
+      const toggle=document.createElement("button");toggle.type="button";toggle.className="map-dock-icon";toggle.textContent="⌕";toggle.setAttribute("aria-label","Buscar ubicación");
+      search.hidden=true;dock.append(toggle,search);canvas.appendChild(dock);
+      toggle.addEventListener("click",()=>{search.hidden=!search.hidden;toggle.setAttribute("aria-expanded",String(!search.hidden));if(!search.hidden)$("mapSearchInput")?.focus();});
+    }
+    if(canvas&&locate&&route){
+      const dock=document.createElement("div");dock.className="map-tools-dock";
+      locate.textContent="⊙";locate.className="map-dock-icon";locate.setAttribute("aria-label","Mi ubicación");locate.title="Mi ubicación";
+      const more=document.createElement("details");more.className="map-route-disclosure";
+      const summary=document.createElement("summary");summary.textContent="⋮";summary.setAttribute("aria-label","Controles de recorrido");summary.title="Controles de recorrido";
+      more.append(summary,route);
+      dock.append(locate,more);canvas.appendChild(dock);
+    }
+    document.querySelectorAll("#mapRefresh,#mapFitPoints").forEach(button=>button.hidden=true);
     show("filters");
   }
   function init(){
