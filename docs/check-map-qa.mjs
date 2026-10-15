@@ -62,3 +62,7 @@ assert.ok(alignmentCss.includes("FO-CHG-045")&&alignmentCss.includes("min-height
 assert.ok(map.includes("resetTerritorialScopeForCity")&&map.includes('cities!==filterValues("mapCityFilter").join(",")'),"El cambio de ciudad cancela y descarta respuestas territoriales anteriores");
 assert.ok(map.includes("const incumbents=new Set")&&map.includes("hasOnlyIsps"),"Operadores disponibles dependen de los puntos de la ciudad seleccionada");
 assert.ok(read("api/map-polygons.js").includes("requestedCityCount===1?cfg.maxFeatures"),"Una sola ciudad usa el límite completo de geometrías de la capa");
+assert.ok(map.includes('territorialCityReady=()=>filterValues("mapCityFilter").length===1')&&map.includes('state.polygonSelections.estratos=new Set(["1","2","3"])'),"Capas territoriales requieren una ciudad y preseleccionan estratos 1, 2 y 3");
+assert.ok(map.includes('state.polygonActive[layer]=ready&&layer==="estratos"')&&types.includes("territorial-locked"),"Cero o varias ciudades apagan capas y bloquean sus desplegables");
+assert.ok(types.includes('compactCity=select.id==="mapCityFilter"')&&alignmentCss.includes('data-control="mapCityFilter"'),"Ciudad oculta el chip redundante y conserva el selector");
+assert.ok(alignmentCss.includes("FO-CHG-046")&&alignmentCss.includes("position:relative!important")&&alignmentCss.includes("territorial-ready"),"El tachado del ojo queda contenido y los estados rojo/verde son visibles");

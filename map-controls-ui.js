@@ -43,8 +43,9 @@
         chip.textContent=(option?.textContent||value)+" ×";
         return chip;
       }));
-      selections.hidden=chosen.length===0;
-      input.placeholder=chosen.length?"Agregar otra opción…":"Escribe para buscar…";
+      const compactCity=select.id==="mapCityFilter";
+      selections.hidden=chosen.length===0||compactCity;
+      input.placeholder=compactCity?"Escribe para buscar…":chosen.length?"Agregar otra opción…":"Escribe para buscar…";
       if(menu.hidden)input.value="";
     };
     const choose=value=>{
@@ -160,16 +161,30 @@
         disclosure.append(summary,toggle,content);
         switches.appendChild(disclosure);
         const updateCount=()=>{
+          const ready=content.dataset.cityScope==="ready";
           const fromState=Number(content.dataset.selectedCount);
-          const selected=Number.isFinite(fromState)?fromState:content.querySelectorAll('input[data-layer-option]:checked').length;
+          const selected=ready?(Number.isFinite(fromState)?fromState:content.querySelectorAll('input[data-layer-option]:checked').length):0;
           count.textContent=selected+" seleccionado"+(selected===1?"":"s");
+          disclosure.classList.toggle("territorial-ready",ready);
+          disclosure.classList.toggle("territorial-locked",!ready);
+          if(action){
+            action.disabled=!ready;
+            action.title=ready?action.title:"Selecciona una sola ciudad para habilitar esta capa";
+          }
         };
+        summary.addEventListener("click",event=>{
+          if(content.dataset.cityScope!=="ready"){
+            event.preventDefault();
+            disclosure.open=false;
+          }
+        });
         disclosure.addEventListener("toggle",()=>{
+          if(disclosure.open&&content.dataset.cityScope!=="ready"){disclosure.open=false;updateCount();return;}
           if(disclosure.open&&toggle.getAttribute("aria-pressed")!=="true")toggle.click();
           updateCount();
         });
         content.addEventListener("change",updateCount);
-        new MutationObserver(updateCount).observe(content,{childList:true,subtree:true});
+        new MutationObserver(updateCount).observe(content,{childList:true,subtree:true,attributes:true,attributeFilter:["data-selected-count","data-city-scope"]});
         updateCount();
       }
     }

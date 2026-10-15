@@ -2280,6 +2280,19 @@ input:not([type=checkbox]):not([type=radio]),select,textarea,
 #mapFloatingTools .map-filter-disclosure .map-typeahead-options button{
  min-height:31px!important;padding:4px 5px!important;gap:7px!important;font-size:11px!important;
 }
+
+/* FO-CHG-046 · alcance territorial explícito y ojo contenido. */
+#mapFloatingTools .map-filter-eye-action{position:relative!important;overflow:hidden!important}
+#mapFloatingTools .map-filter-eye-action.eye-hidden::after{
+ left:4px!important;right:4px!important;top:11px!important;height:2px!important;
+}
+#mapFloatingTools .map-filter-disclosure[data-control="mapCityFilter"] .map-typeahead-selections{display:none!important}
+#mapFloatingTools .map-layer-disclosure.territorial-locked .map-control-count{color:#ff6767!important}
+#mapFloatingTools .map-layer-disclosure.territorial-ready .map-control-count{color:#43ffa5!important}
+#mapFloatingTools .map-layer-disclosure.territorial-locked>summary{cursor:not-allowed!important}
+#mapFloatingTools .map-layer-disclosure.territorial-locked .map-layer-eye-action{
+ opacity:.38!important;cursor:not-allowed!important;color:#aeb9b3!important;
+}
 #mapFloatingTools .map-filter-disclosure .map-typeahead-options input[type=checkbox]{
  width:14px!important;height:14px!important;flex-basis:14px!important;
 }
