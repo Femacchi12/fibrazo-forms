@@ -30,6 +30,15 @@
 #mapBarrioControls .map-barrio-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 #mapBarrioControls .map-barrio-actions button{min-width:0;padding:8px 5px;min-height:38px;font-size:12px}
 #mapBarrioOptions .map-selective-option{min-height:47px;padding:7px 10px}
+
+/* FO-CHG-029 · Panel Capas QA: indicadores y buscador siempre visibles */
+#mapLayerBarrios,#mapLayerEstratos{position:relative;padding-right:34px!important}
+#mapLayerBarrios .map-layer-chevron,#mapLayerEstratos .map-layer-chevron{position:absolute;right:13px;top:50%;transform:translateY(-50%);display:block!important;visibility:visible!important;font-size:0!important;width:12px;height:12px;border-right:2px solid #43ffa5;border-bottom:2px solid #43ffa5;rotate:45deg;margin-top:-3px}
+#mapLayerBarrios[aria-pressed="true"] .map-layer-chevron,#mapLayerEstratos[aria-pressed="true"] .map-layer-chevron{rotate:225deg;margin-top:3px}
+#mapBarrioControls .map-barrio-search{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:8px!important;padding:8px 10px!important;align-items:stretch!important}
+#mapBarrioControls #mapBarrioSearch{display:block!important;visibility:visible!important;position:static!important;grid-column:1/-1!important;width:100%!important;min-width:0!important;box-sizing:border-box!important;height:39px!important;font-size:13px!important;margin:0!important}
+#mapBarrioControls .map-barrio-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important;width:100%!important;justify-content:stretch!important;align-items:stretch!important;margin:0!important}
+#mapBarrioControls .map-barrio-actions button{display:flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important;width:100%!important;height:40px!important;min-height:40px!important;margin:0!important;padding:6px 4px!important;font-size:12px!important;white-space:nowrap!important}
 </style>
 </head>
 <body class="auth-pending">
