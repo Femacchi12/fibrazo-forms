@@ -231,6 +231,24 @@
       more.append(summary,route);
       dock.append(locate,more);canvas.appendChild(dock);
     }
+    // FO-CHG-036: acompasar la lupa a la apertura del panel y exponer recorrido.
+    if(canvas){
+      const floating=$("mapFloatingTools"),searchDock=canvas.querySelector(".map-search-dock");
+      const locationDock=canvas.querySelector(".map-tools-dock");
+      const syncMapDocks=()=>{
+        const collapsed=floating?.classList.contains("is-collapsed");
+        if(searchDock)searchDock.classList.toggle("beside-panel",!collapsed);
+        if(locationDock)locationDock.classList.toggle("below-search",!collapsed);
+      };
+      const observer=new MutationObserver(syncMapDocks);
+      if(floating)observer.observe(floating,{attributes:true,attributeFilter:["class"]});
+      syncMapDocks();
+      const routeDetails=locationDock?.querySelector(".map-route-disclosure");
+      if(routeDetails){
+        const button=routeDetails.querySelector("summary");
+        if(button){button.textContent="☷";button.title="Iniciar, limpiar o seguir recorrido";button.setAttribute("aria-label","Abrir controles de recorrido");}
+      }
+    }
     document.querySelectorAll("#mapRefresh,#mapFitPoints").forEach(button=>button.hidden=true);
     show("filters");
   }
