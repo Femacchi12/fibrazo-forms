@@ -2680,3 +2680,24 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
 .map-layer-disclosure>summary .map-layer-eye-action{font-family:Arial,sans-serif!important;font-size:18px!important}
 .map-layer-disclosure>summary .map-layer-eye-action.eye-hidden{color:#e4b2b2!important}
 .map-layer-disclosure>summary .map-layer-eye-action:focus-visible,.map-dock-icon:focus-visible,.map-filter-disclosure>summary:focus-visible{outline:2px solid #43ffa5;outline-offset:2px}
+
+/* FO-CHG-037 · FIBRAZO visual system, guided by Impacto Social surfaces; QA only. */
+:root{--fz-page:#050807;--fz-surface:#0b110f;--fz-surface-raised:#101b15;--fz-surface-inner:#14231b;--fz-surface-hover:#1d3025;--fz-control:#172820;--fz-control-hover:#244133;--fz-control-active:#24513b;--fz-border:#294137;--fz-border-strong:#426454;--fz-text:#fff;--fz-muted:#d0ddd5;--fz-green:#43ffa5;--fz-green-border:rgba(67,255,165,.65);--fz-green-soft:rgba(67,255,165,.12)}
+body,button,input,select,textarea{font-family:Montserrat,Inter,system-ui,sans-serif!important}
+body{color:#fff!important}
+button,select,textarea,input{color:#fff}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #43ffa5;outline-offset:2px}
+input::placeholder,textarea::placeholder{color:#bfcfc6!important;opacity:1}
+.panel,.card,.auth-card,.modal-content,.dialog-content,.map-floating-tools,.map-floating-content,.map-route-disclosure .map-location-toolbar,.map-search-dock .map-search-shell,.map-typeahead-options,.map-selective-layer,.map-filter-disclosure,.map-layer-disclosure{background-color:#101b15!important;color:#fff!important}
+.map-floating-handle,.map-floating-tabs,.map-filters,.map-layers-panel,.map-filters-panel{background-color:#0b110f!important;color:#fff!important}
+.map-typeahead,.map-search-box,.map-typeahead>input,.map-estrato-search,.map-barrio-search input,.map-selective-option,.map-filter-disclosure input,.map-location-toolbar button{background-color:#172820!important;color:#fff!important}
+.map-typeahead-options button,.map-reference-row,.map-popup-row,.map-selective-empty{color:#fff!important}
+.map-popup,.polygon-popup,.leaflet-popup-content-wrapper,.leaflet-popup-content,.leaflet-popup-tip,.map-coordinate-sheet,.map-coordinate-modal{background:#101b15!important;color:#fff!important}
+.map-popup b,.map-popup span,.polygon-popup b,.polygon-popup span,.leaflet-popup-content{color:#fff!important}
+.map-popup a,.polygon-popup a{color:#43ffa5!important}
+.map-layer-disclosure,.map-filter-disclosure,.map-selective-option{border-color:#294137!important}
+.map-layer-disclosure .map-selective-option,.map-filter-disclosure .map-typeahead{background-color:#14231b!important}
+.map-layer-disclosure>summary,.map-filter-disclosure>summary{color:#fff!important}
+.map-layer-eye-action,.map-dock-icon,.map-route-disclosure>summary{background-color:#172820!important;color:#43ffa5!important}
+.map-selective-option.active{background-color:#1d3929!important}
+.map-point-details table,table{font-family:Poppins,Montserrat,sans-serif}
