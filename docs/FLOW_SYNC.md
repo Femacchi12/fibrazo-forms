@@ -148,3 +148,5 @@ Fuente única Google Sheets FIBRAZO Forms - Automatizaciones y control, pestaña
 
 ### FO-CHG-033 — Panel Capas compactado, estratos predeterminados y controles fijos (15/10/2026)
 En QA, Estratos se inicia con 1, 2 y 3 seleccionados (estrato 0 no figura en las opciones). Se oculta el control Leaflet +/− preservando zoom por gestos. El panel se ancla arriba a la izquierda; abierto se cierra con «−» y contraído solo muestra «☰» para abrir. Se elimina arrastre del panel; Barrios/Estratos se representan como listas desplegables compactas con indicador, sin divisores repetidos, manteniendo búsqueda y selección múltiple. Cambios: map-v01.js, map-controls-ui.js, styles.css, index.html y service-worker.js. Solo rama feat/forms-map-qa-20261013; quedan pruebas visuales desktop/móvil y confirmación de publicación Preview READY; producción no tocada.
+
+FO-CHG-033 (identidad PWA): se sustituye icon-fzo-growth-form-v6.svg por marca fbz verde con punto y leyenda growth forms grande, como aproximación vectorial de la imagen aprobada; requiere revisión visual en dispositivo y reinstalación/actualización de acceso directo para actualizar iconografía.
