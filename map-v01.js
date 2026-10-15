@@ -749,7 +749,7 @@
       const availableTypes=new Set(eligiblePoints.map(p=>norm(formType(p.type))).filter(Boolean));
       for(const option of typeSelect.options){
         if(option.value==="all")continue;
-        option.disabled=!availableTypes.has(norm(option.value));
+        option.disabled=eligiblePoints.length>0&&!availableTypes.has(norm(option.value));
         option.hidden=option.disabled;
         if(option.disabled)option.selected=false;
       }
