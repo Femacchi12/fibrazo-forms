@@ -1897,3 +1897,39 @@ body.form-mode #formWorkspace .operator-memory-inline button{
 #adminView .admin-box-title strong{min-width:0!important;overflow-wrap:anywhere;}
 #adminView .admin-box-title .fz-help-button{flex:0 0 25px;width:25px;height:25px;min-width:25px;min-height:25px;}
 #adminView .compact-box-head>div.admin-box-title{display:flex!important;}
+
+/* FO-CHG-037 · Official color + Impacto Social-inspired opaque contrast. QA. */
+:root{
+ --brand-primary:#43ffa5;--brand-black:#000;--brand-gray:#58595b;
+ --brand-surface:#0b110f;--brand-surface-raised:#101b15;--brand-control:#172820;
+ --brand-text:#fff;--brand-muted:#d0ddd5;--brand-border:#294137;
+ --fz-page:#050807;--fz-surface:#0b110f;--fz-surface-raised:#101b15;
+ --fz-surface-inner:#14231b;--fz-surface-hover:#1d3025;
+ --fz-control:#172820;--fz-control-hover:#244133;--fz-control-active:#24513b;
+ --fz-border:#294137;--fz-border-strong:#426454;--fz-text:#fff;--fz-muted:#d0ddd5;
+ --fz-green:#43ffa5;--fz-green-border:rgba(67,255,165,.65);--fz-green-soft:rgba(67,255,165,.12)
+}
+#mapCanvasWrap .map-floating-tools,
+#mapCanvasWrap .map-floating-content,
+#mapCanvasWrap .map-filters-panel,
+#mapCanvasWrap .map-layers-panel,
+#mapCanvasWrap .map-search-shell,
+#mapCanvasWrap .map-route-disclosure .map-location-toolbar,
+#mapCanvasWrap .map-selective-layer{
+ background-color:#101b15!important;color:#fff!important;
+}
+#mapCanvasWrap .map-typeahead,
+#mapCanvasWrap .map-typeahead input,
+#mapCanvasWrap .map-barrio-search input,
+#mapCanvasWrap .map-estrato-search,
+#mapCanvasWrap .map-layer-disclosure .map-selective-option{
+ background-color:#172820!important;color:#fff!important;
+}
+#mapCanvasWrap .map-filter-disclosure>summary,
+#mapCanvasWrap .map-layer-disclosure>summary,
+#mapCanvasWrap .map-selective-option b,
+#mapCanvasWrap .map-selective-option small{color:#fff!important}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip,.map-popup,.polygon-popup{
+ background-color:#101b15!important;color:#fff!important
+}
+.leaflet-popup-content-wrapper :is(span,strong,b,p,small){color:#fff!important}
