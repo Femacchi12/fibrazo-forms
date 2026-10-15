@@ -96,3 +96,10 @@ Versión: **0.8.14**
 El mapa maestro se mantiene en:
 
 `docs/FIBRAZO_Forms_Flujos.drawio`
+
+Las cuatro páginas de formularios usan una composición amplia por pasos, con el recorrido principal separado de las reglas condicionales. Para regenerar únicamente esa distribución visual y ejecutar sus controles:
+
+```bash
+node docs/reflow-drawio-layout.mjs
+npm run test:forms
+```

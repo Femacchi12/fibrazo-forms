@@ -10,6 +10,6 @@
     "googleapis": "^144.0.0"
   },
   "scripts": {
-    "test:forms": "node docs/check-flow-sync.mjs && node docs/check-map-qa.mjs"
+    "test:forms": "node docs/check-flow-sync.mjs && node docs/check-flow-layout.mjs && node docs/check-map-qa.mjs"
   }
 }
