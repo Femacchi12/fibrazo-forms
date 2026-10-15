@@ -8,6 +8,7 @@
   }
   const REFRESH_MS=60000;
   const REFRESH_SLOW_MS=150000;
+  // FO-CHG-031 · Caché de coordenadas con expiración y clave renovada.
   const TERRITORIAL_CACHE_KEY="fibrazoTerritorialPointCacheV2";
   const TERRITORIAL_CACHE_TTL_MS=5*60*1000;
   const CITY_NEARBY_LIMIT_M=20000;
