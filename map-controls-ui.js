@@ -138,14 +138,14 @@
     const switches=panels.layers?.querySelector(".map-layer-switches");
     if(switches&&!switches.dataset.grouped){
       switches.dataset.grouped="1";
-      for(const [key,title,controlId] of [["barrios","Barrios","mapBarrioControls"],["estratos","Estratos","mapEstratoControls"]]){
-        const toggle=$(key==="barrios"?"mapLayerBarrios":"mapLayerEstratos");
+      for(const [key,title,controlId] of [["barrios","Barrios","mapBarrioControls"],["estratos","Estratos","mapEstratoControls"],["troncales","Troncales","mapTroncalControls"]]){
+        const toggle=$(key==="barrios"?"mapLayerBarrios":key==="estratos"?"mapLayerEstratos":"mapLayerTroncales");
         const content=$(controlId);if(!toggle||!content)continue;
         const disclosure=document.createElement("details");disclosure.className="map-layer-disclosure";
         const summary=document.createElement("summary");
         const label=document.createElement("span");label.textContent=title;
         const count=document.createElement("small");count.textContent="0 seleccionados";
-        const action=$(key==="barrios"?"mapSelectAllBarrios":"mapClearEstratos");
+        const action=$(key==="barrios"?"mapSelectAllBarrios":key==="estratos"?"mapClearEstratos":"mapToggleAllTroncales");
         if(action){
           action.classList.add("map-layer-eye-action");
           action.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();});
