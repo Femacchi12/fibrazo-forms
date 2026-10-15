@@ -242,7 +242,7 @@
         const user=firebase.auth().currentUser;
         if(!user)throw new Error("AUTH_REQUIRED");
         const token=await user.getIdToken();
-        const response=await fetch((apiBase||"").replace(/\\/$/,"")+"/api/pending",{
+        const response=await fetch(((apiBase||"").endsWith("/")?(apiBase||"").slice(0,-1):(apiBase||""))+"/api/pending",{
           headers:{Authorization:"Bearer "+token},cache:"no-store"
         });
         if(!response.ok)throw new Error("PENDING_HTTP_"+response.status);
