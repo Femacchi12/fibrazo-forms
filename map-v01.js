@@ -737,15 +737,18 @@
     }
     if(operator){
       const current=filterValues("mapOperatorFilter");
+      const activeCities=new Set(filterValues("mapCityFilter"));
+      const eligiblePoints=state.points.filter(p=>!activeCities.size||activeCities.has(norm(p.city?.assigned||p.observedCity||"")));
       const ispMap=new Map();
-      for(const value of state.points.flatMap(p=>operatorProfile(p).others).filter(Boolean))if(!ispMap.has(norm(value)))ispMap.set(norm(value),value);
+      for(const value of eligiblePoints.flatMap(p=>operatorProfile(p).others).filter(Boolean))if(!ispMap.has(norm(value)))ispMap.set(norm(value),value);
       const isps=[...ispMap.entries()].sort((a,b)=>a[1].localeCompare(b[1],"es",{sensitivity:"base"}));
       operator.innerHTML='<option value="all">Todos los operadores</option><option value="tigo">Tigo · esté solo o acompañado</option><option value="claro">Claro · esté solo o acompañado</option><option value="movistar">Movistar · esté solo o acompañado</option><option value="isps">Solo ISPs · sin incumbentes</option>'+isps.map(([key,label])=>'<option value="isp:'+esc(key)+'">ISP · '+esc(label)+'</option>').join("");
       selectFilterValues(operator,current);
     }
     if(user){
       const current=filterValues("mapUserFilter");
-      const users=[...new Set(state.points.map(p=>String(p.user||"").trim()).filter(Boolean))].sort();
+      const activeCities=new Set(filterValues("mapCityFilter"));
+      const users=[...new Set(state.points.filter(p=>!activeCities.size||activeCities.has(norm(p.city?.assigned||p.observedCity||""))).map(p=>String(p.user||"").trim()).filter(Boolean))].sort();
       user.innerHTML='<option value="all">Todos los usuarios</option>'+users.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join("");
       user.hidden=state.visibility!=="team";
       selectFilterValues(user,current);
