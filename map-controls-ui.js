@@ -193,29 +193,27 @@
       panel.dataset.activeTab=which;
     }
     panel.querySelectorAll("[data-floating-tab]").forEach(button=>button.addEventListener("click",()=>show(button.dataset.floatingTab)));
-    $("mapFloatingMinimize")?.addEventListener("click",()=>{
-      const content=$("mapFloatingContent");
-      content.hidden=!content.hidden;
-      $("mapFloatingMinimize").textContent=content.hidden?"+":"−";
-      $("mapFloatingMinimize").setAttribute("aria-expanded",String(!content.hidden));
-    });
+    const content=$("mapFloatingContent"),minimize=$("mapFloatingMinimize");
+    const openButton=document.createElement("button");
+    openButton.id="mapFloatingOpen";openButton.type="button";openButton.textContent="☰";
+    openButton.setAttribute("aria-label","Abrir controles del mapa");
+    openButton.hidden=true;
+    handle.prepend(openButton);
+    function setCollapsed(collapsed){
+      content.hidden=collapsed;
+      panel.classList.toggle("is-collapsed",collapsed);
+      openButton.hidden=!collapsed;
+      minimize.hidden=collapsed;
+      minimize.setAttribute("aria-expanded",String(!collapsed));
+      if(collapsed){handle.querySelector("span").hidden=true;}
+      else {handle.querySelector("span").hidden=false;minimize.textContent="−";}
+    }
+    minimize?.addEventListener("click",()=>setCollapsed(true));
+    openButton.addEventListener("click",()=>setCollapsed(false));
+    setCollapsed(false);
     $("mapFiltersToggle")?.addEventListener("click",()=>show("filters"));
     $("mapLayersToggle")?.addEventListener("click",()=>show("layers"));
-    let start=null;
-    handle.addEventListener("pointerdown",event=>{
-      if(event.target.closest("button")||(event.pointerType==="touch"&&window.innerWidth<700))return;
-      start={x:event.clientX,y:event.clientY,left:panel.offsetLeft,top:panel.offsetTop};
-      handle.setPointerCapture(event.pointerId);
-    });
-    handle.addEventListener("pointermove",event=>{
-      if(!start)return;
-      const bounds=panel.parentElement;
-      const left=Math.min(Math.max(4,start.left+event.clientX-start.x),Math.max(4,bounds.clientWidth-panel.offsetWidth-4));
-      const top=Math.min(Math.max(4,start.top+event.clientY-start.y),Math.max(4,bounds.clientHeight-panel.offsetHeight-4));
-      panel.style.left=left+"px";panel.style.top=top+"px";panel.style.right="auto";panel.style.bottom="auto";
-      panel.style.maxHeight=Math.max(120,bounds.clientHeight-top-4)+"px";
-    });
-    for(const type of ["pointerup","pointercancel"])handle.addEventListener(type,()=>start=null);
+    // Panel de mapa anclado a la esquina superior izquierda: no se arrastra.
     show("filters");
   }
   function init(){
