@@ -1,7 +1,7 @@
 const {google}=require("googleapis");
 const {gauth,verifyUser,loadForms,loadUsers,isBaseAdmin,canUseDashboard}=require("./_core");
 
-// Fuente de verdad: FIBRAZO Forms - Automatizaciones y control / PENDIENTES.
+// FO-CHG-032 · Fuente de verdad: FIBRAZO Forms - Automatizaciones y control / PENDIENTES.
 // Solo lectura; la aplicación nunca escribe estados en esta hoja.
 const CONTROL_SHEET_ID=process.env.FORMS_CONTROL_SHEET_ID||"1khSXy3s44k6wuRrIjP5-an9C5Kr1qPpAF6iWECKrI3c";
 const CACHE_MS=90*1000;
