@@ -41,7 +41,7 @@ assert.ok(types.includes('strata.className="map-reference-group map-strata-index
 assert.ok(map.includes("Índice de formas de los elementos")&&map.includes("Índice de operadores"),"Índices de formas y operadores desplegables");
 assert.ok(!html.includes('id="mapFiltersToggle"')&&!html.includes('id="mapLayersToggle"'),"Sin barra de botones duplicados");
 assert.ok(!html.includes('id="mapVisibilityBadge"')&&!html.includes("Actualización automática"),"Sin badges redundantes sobre la búsqueda");
-assert.ok(css.includes("bounds.clientHeight-panel.offsetHeight")||types.includes("bounds.clientHeight-panel.offsetHeight"),"Arrastre limitado al mapa");
+assert.ok(types.includes("Panel de mapa anclado a la esquina superior izquierda: no se arrastra."),"Panel anclado al mapa según la decisión UX vigente");
 assert.ok(map.includes('map-copy-feedback'),"Aviso breve de coordenadas copiadas");
 for(const id of ["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter"]){
   assert.match(html,new RegExp('id="'+id+'"[^>]*multiple'),id+" permite selección múltiple");
@@ -52,3 +52,5 @@ assert.ok(map.includes("installCoordinateSheetDrag")&&map.includes("map-coordina
 assert.ok(map.includes("polygonResponseCache")&&map.includes("ttl:90000")&&read("api/map-polygons.js").includes("geometryCache"),"Caché cliente/servidor para polígonos");
 assert.ok(read("api/map-polygons.js").includes("applyCityFilter")&&map.includes('cities:filterValues("mapCityFilter")'),"Capas territoriales respetan ciudades filtradas");
 assert.ok(types.includes("content.dataset.selectedCount")&&map.includes("host.dataset.selectedCount"),"El resumen de capas conserva el conteo real aunque el filtro o viewport oculten opciones");
+assert.ok(types.includes('byLayer("Barrios"),byLayer("Troncales")')&&!types.includes("Capas adicionales · Troncales"),"Troncales aparece inmediatamente debajo de Barrios, sin bloque separado");
+assert.ok(types.includes('map-control-label')&&types.includes('map-control-count')&&read("brand-alignment.css").includes("FO-CHG-043"),"Filtros y capas comparten fila, contador y jerarquía visual");

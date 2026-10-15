@@ -141,13 +141,13 @@
     const switches=panels.layers?.querySelector(".map-layer-switches");
     if(switches&&!switches.dataset.grouped){
       switches.dataset.grouped="1";
-      for(const [key,title,controlId] of [["estratos","Estratos","mapEstratoControls"],["troncales","Troncales","mapTroncalControls"],["barrios","Barrios","mapBarrioControls"]]){
+      for(const [key,title,controlId] of [["estratos","Estratos","mapEstratoControls"],["barrios","Barrios","mapBarrioControls"],["troncales","Troncales","mapTroncalControls"]]){
         const toggle=$(key==="barrios"?"mapLayerBarrios":key==="estratos"?"mapLayerEstratos":"mapLayerTroncales");
         const content=$(controlId);if(!toggle||!content)continue;
         const disclosure=document.createElement("details");disclosure.className="map-layer-disclosure";
         const summary=document.createElement("summary");
-        const label=document.createElement("span");label.textContent=title;
-        const count=document.createElement("small");count.textContent="0 seleccionados";
+        const label=document.createElement("span");label.className="map-control-label";label.textContent=title;
+        const count=document.createElement("small");count.className="map-control-count";count.textContent="0 seleccionados";
         const action=$(key==="barrios"?"mapSelectAllBarrios":key==="estratos"?"mapClearEstratos":"mapToggleAllTroncales");
         if(action){
           action.classList.add("map-layer-eye-action");
@@ -206,16 +206,34 @@
     const filterHost=panels.filters?.querySelector(".map-filters");
     if(filterHost&&!filterHost.dataset.grouped){
       filterHost.dataset.grouped="1";
-      const names={mapCityFilter:"Ciudades",mapTypeFilter:"Tipo de formulario",mapOperatorFilter:"Operadores",mapUserFilter:"Usuarios"};
-      for(const [id,title] of Object.entries(names)){
+      const names={
+        mapCityFilter:{title:"Ciudades",all:"Todas",one:"seleccionada",many:"seleccionadas"},
+        mapTypeFilter:{title:"Tipo de formulario",all:"Todos",one:"seleccionado",many:"seleccionados"},
+        mapOperatorFilter:{title:"Operadores",all:"Todos",one:"seleccionado",many:"seleccionados"},
+        mapUserFilter:{title:"Usuarios",all:"Todos",one:"seleccionado",many:"seleccionados"}
+      };
+      for(const [id,meta] of Object.entries(names)){
         const control=$(id);
         const box=control?.closest(".map-searchable")||control?._searchInput?.parentElement||control?.parentElement;
         if(!control||!box||box===filterHost)continue;
         const group=document.createElement("details");group.className="map-filter-disclosure";
-        const summary=document.createElement("summary");summary.textContent=title;
+        group.dataset.control=id;
+        const summary=document.createElement("summary");
+        const leading=document.createElement("span");leading.className="map-control-leading map-control-filter-leading";leading.setAttribute("aria-hidden","true");leading.textContent="⌕";
+        const label=document.createElement("span");label.className="map-control-label";label.textContent=meta.title;
+        const count=document.createElement("small");count.className="map-control-count";
+        summary.append(leading,label,count);
         group.append(summary);
         filterHost.insertBefore(group,box);
         group.appendChild(box);
+        const updateCount=()=>{
+          const selected=[...control.selectedOptions].filter(option=>option.value&&option.value!=="all").length;
+          count.textContent=selected?selected+" "+(selected===1?meta.one:meta.many):meta.all;
+          group.classList.toggle("has-selection",selected>0);
+        };
+        control.addEventListener("change",updateCount);
+        new MutationObserver(updateCount).observe(control,{childList:true,subtree:true,attributes:true,attributeFilter:["selected"]});
+        updateCount();
         if(id==="mapCityFilter")group.open=true;
       }
     }
@@ -225,7 +243,7 @@
       const filterHost=unified.querySelector(".map-filters");
       const layerSwitches=panels.layers.querySelector(".map-layer-switches");
       const extra=filterHost?.querySelector(".map-extra-filters");
-      const bySummary=label=>[...(filterHost?.querySelectorAll(".map-filter-disclosure")||[])].find(e=>e.querySelector("summary")?.textContent?.trim()===label);
+      const bySummary=label=>[...(filterHost?.querySelectorAll(".map-filter-disclosure")||[])].find(e=>e.querySelector(".map-control-label")?.textContent?.trim()===label);
       const byLayer=label=>[...(layerSwitches?.querySelectorAll(".map-layer-disclosure")||[])].find(e=>e.querySelector("summary>span")?.textContent?.trim()===label);
       if(filterHost&&layerSwitches){
         const secondary=document.createElement("details");
@@ -235,18 +253,12 @@
         const extraBody=document.createElement("div");
         extraBody.className="map-extra-content";
         secondary.append(extraTitle,extraBody);
-        for(const item of [bySummary("Ciudades"),bySummary("Operadores"),byLayer("Estratos"),byLayer("Barrios")]){
+        for(const item of [bySummary("Ciudades"),bySummary("Operadores"),byLayer("Estratos"),byLayer("Barrios"),byLayer("Troncales")]){
           if(item){filterHost.appendChild(item);item.open=false;}
         }
         for(const item of [bySummary("Tipo de formulario"),bySummary("Usuarios")])if(item)extraBody.appendChild(item);
         if(extra)extraBody.appendChild(extra);
         filterHost.appendChild(secondary);
-        const troncales=byLayer("Troncales");
-        if(troncales){
-          const technical=document.createElement("details");technical.className="map-extra-filters";
-          technical.innerHTML="<summary>Capas adicionales · Troncales</summary>";
-          technical.appendChild(troncales);filterHost.appendChild(technical);
-        }
         panels.layers.hidden=true;
         panels.layers.dataset.unified="true";
       }
