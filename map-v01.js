@@ -758,10 +758,19 @@
       const current=filterValues("mapOperatorFilter");
       const activeCities=new Set(filterValues("mapCityFilter"));
       const eligiblePoints=state.points.filter(p=>!activeCities.size||activeCities.has(norm(p.city?.assigned||p.observedCity||"")));
+      const profiles=eligiblePoints.map(operatorProfile);
+      const incumbents=new Set(profiles.flatMap(profile=>profile.incumbents));
+      const hasOnlyIsps=profiles.some(profile=>profile.others.length>0&&profile.incumbents.length===0);
       const ispMap=new Map();
-      for(const value of eligiblePoints.flatMap(p=>operatorProfile(p).others).filter(Boolean))if(!ispMap.has(norm(value)))ispMap.set(norm(value),value);
+      for(const value of profiles.flatMap(profile=>profile.others).filter(Boolean))if(!ispMap.has(norm(value)))ispMap.set(norm(value),value);
       const isps=[...ispMap.entries()].sort((a,b)=>a[1].localeCompare(b[1],"es",{sensitivity:"base"}));
-      operator.innerHTML='<option value="all">Todos los operadores</option><option value="tigo">Tigo · esté solo o acompañado</option><option value="claro">Claro · esté solo o acompañado</option><option value="movistar">Movistar · esté solo o acompañado</option><option value="isps">Solo ISPs · sin incumbentes</option>'+isps.map(([key,label])=>'<option value="isp:'+esc(key)+'">ISP · '+esc(label)+'</option>').join("");
+      const bases=[
+        ["tigo","Tigo · esté solo o acompañado"],
+        ["claro","Claro · esté solo o acompañado"],
+        ["movistar","Movistar · esté solo o acompañado"]
+      ].filter(([value])=>incumbents.has(value));
+      if(hasOnlyIsps)bases.push(["isps","Solo ISPs · sin incumbentes"]);
+      operator.innerHTML='<option value="all">Todos los operadores</option>'+bases.map(([value,label])=>'<option value="'+value+'">'+label+'</option>').join("")+isps.map(([key,label])=>'<option value="isp:'+esc(key)+'">ISP · '+esc(label)+'</option>').join("");
       selectFilterValues(operator,current);
     }
     if(user){
@@ -1181,6 +1190,27 @@
     };
   }
 
+  function resetTerritorialScopeForCity(){
+    polygonResponseCache.clear();
+    for(const layer of ["barrios","estratos","troncales"]){
+      state.polygonControllers[layer]?.abort();
+      state.polygonIndexControllers[layer]?.abort();
+      state.polygonControllers[layer]=null;
+      state.polygonIndexControllers[layer]=null;
+      if(state.polygonSelectionTimers[layer])clearTimeout(state.polygonSelectionTimers[layer]);
+      state.polygonSelectionTimers[layer]=null;
+      state.polygonIndexData[layer]=[];
+      if(layer!=="estratos")state.polygonSelections[layer].clear();
+      if(layer==="barrios"){
+        state.barrioAllSelected=false;
+        state.barrioExcluded.clear();
+      }
+      clearPolygonLayer(layer,{keepStatus:true});
+      if(state.polygonActive[layer])state.polygonStatus[layer]="filtrando ciudad…";
+    }
+    renderLayerControls();
+  }
+
   async function authorizedFetch(url,controller,{ttl=0}={}){
     const cached=polygonResponseCache.get(url);
     if(ttl>0&&cached&&cached.expires>Date.now())return cached.data;
@@ -1213,6 +1243,7 @@
       const cityFilter=cities?"&cities="+encodeURIComponent(cities):"";
       const url="/api/map-polygons?mode=index&layer="+encodeURIComponent(layer)+"&scope="+encodeURIComponent(scope)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom)+cityFilter;
       const data=await authorizedFetch(url,controller,{ttl:45000});
+      if(cities!==filterValues("mapCityFilter").join(","))return;
       if(data.requiresZoom){
         state.polygonIndexData[layer]=[];
         clearPolygonLayer(layer,{keepStatus:true});
@@ -1272,6 +1303,7 @@
       const cityFilter=cities?"&cities="+encodeURIComponent(cities):"";
       const url="/api/map-polygons?mode=geometry&layer="+encodeURIComponent(layer)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom)+filter+cityFilter;
       const data=await authorizedFetch(url,controller,{ttl:90000});
+      if(cities!==filterValues("mapCityFilter").join(","))return;
       if(data.requiresZoom){
         clearPolygonLayer(layer,{keepStatus:true});
         state.polygonStatus[layer]="acércate al mapa (zoom "+data.minZoom+"+)";
@@ -1735,11 +1767,13 @@
       });
     });
     ["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter","mapDateFrom","mapDateTo","mapPhotosFilter"].forEach(id=>$(id)?.addEventListener("change",()=>{
-      updateFilterCount();renderMarkers();
+      updateFilterCount();
       if(id==="mapCityFilter"){
         updateFilters();
+        resetTerritorialScopeForCity();
+        renderMarkers({fit:filterValues("mapCityFilter").length>0});
         schedulePolygonFilterRefresh();
-      }
+      }else renderMarkers();
     }));
     $("mapShowTests")?.addEventListener("change",()=>{renderMarkers();updateFilterCount();loadPoints({silent:true});});
     $("mapRefresh")?.addEventListener("click",refreshMapNow);

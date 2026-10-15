@@ -363,7 +363,8 @@ module.exports=async(req,res)=>{
       });
     }
 
-    const limit=featureLimit(layer,zoom);
+    const requestedCityCount=parseList(req.query.cities).length;
+    const limit=requestedCityCount===1?cfg.maxFeatures:featureLimit(layer,zoom);
     const truncated=candidates.length>limit;
     candidates=spatialSample(candidates,limit,bbox);
 

@@ -105,8 +105,10 @@
       if(button)choose(button.dataset.removeValue);
     });
     input.addEventListener("blur",()=>setTimeout(()=>{close();sync();},130));
-    select.addEventListener("change",sync);
-    new MutationObserver(sync).observe(select,{childList:true,subtree:true,attributes:true,attributeFilter:["hidden"]});
+    select._typeaheadOpen=()=>{input.value="";draw();};
+    select._typeaheadClose=()=>{close();sync();};
+    select.addEventListener("change",()=>{sync();if(!menu.hidden)draw();});
+    new MutationObserver(()=>{sync();if(!menu.hidden)draw();}).observe(select,{childList:true,subtree:true,attributes:true,attributeFilter:["hidden"]});
     sync();
   }
   function floatingPanel(){
@@ -219,7 +221,14 @@
         const group=document.createElement("details");group.className="map-filter-disclosure";
         group.dataset.control=id;
         const summary=document.createElement("summary");
-        const leading=document.createElement("span");leading.className="map-control-leading map-control-filter-leading";leading.setAttribute("aria-hidden","true");leading.textContent="⌕";
+        const eyeEnabled=id==="mapCityFilter"||id==="mapOperatorFilter";
+        const leading=document.createElement(eyeEnabled?"button":"span");
+        leading.className=eyeEnabled?"map-layer-eye-action map-filter-eye-action":"map-control-leading map-control-filter-leading";
+        if(eyeEnabled){
+          leading.type="button";leading.textContent="👁";
+        }else{
+          leading.setAttribute("aria-hidden","true");leading.textContent="⌕";
+        }
         const label=document.createElement("span");label.className="map-control-label";label.textContent=meta.title;
         const count=document.createElement("small");count.className="map-control-count";
         summary.append(leading,label,count);
@@ -230,10 +239,36 @@
           const selected=[...control.selectedOptions].filter(option=>option.value&&option.value!=="all").length;
           count.textContent=selected?selected+" "+(selected===1?meta.one:meta.many):meta.all;
           group.classList.toggle("has-selection",selected>0);
+          if(eyeEnabled){
+            if(selected)group.dataset.savedValues=[...control.selectedOptions].filter(option=>option.value&&option.value!=="all").map(option=>option.value).join("|");
+            leading.classList.toggle("eye-hidden",selected>0);
+            leading.title=selected?"Apagar este filtro":group.dataset.savedValues?"Restaurar este filtro":"Selecciona opciones para activar el filtro";
+            leading.setAttribute("aria-label",leading.title);
+          }
         };
+        if(eyeEnabled)leading.addEventListener("click",event=>{
+          event.preventDefault();event.stopPropagation();
+          const selected=[...control.selectedOptions].filter(option=>option.value&&option.value!=="all");
+          const saved=(group.dataset.savedValues||"").split("|").filter(Boolean);
+          if(selected.length){
+            for(const option of control.options)option.selected=option.value==="all";
+          }else if(saved.length){
+            const wanted=new Set(saved);
+            let restored=0;
+            for(const option of control.options){option.selected=option.value!=="all"&&wanted.has(option.value);if(option.selected)restored++;}
+            const all=[...control.options].find(option=>option.value==="all");if(all)all.selected=restored===0;
+          }else{
+            group.open=true;control._typeaheadOpen?.();return;
+          }
+          control.dispatchEvent(new Event("change",{bubbles:true}));
+        });
         control.addEventListener("change",updateCount);
         new MutationObserver(updateCount).observe(control,{childList:true,subtree:true,attributes:true,attributeFilter:["selected"]});
         updateCount();
+        group.addEventListener("toggle",()=>{
+          if(group.open)control._typeaheadOpen?.();
+          else control._typeaheadClose?.();
+        });
         if(id==="mapCityFilter")group.open=true;
       }
     }

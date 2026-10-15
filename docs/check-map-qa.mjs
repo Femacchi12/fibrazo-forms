@@ -57,3 +57,8 @@ assert.ok(types.includes('map-control-label')&&types.includes('map-control-count
 const alignmentCss=read("brand-alignment.css");
 assert.ok(alignmentCss.includes("FO-CHG-044")&&alignmentCss.includes("grid-row:1!important"),"Ojo, nombre, contador y flecha permanecen alineados en una sola fila");
 assert.ok(alignmentCss.includes("min-height:40px!important")&&alignmentCss.includes("grid-template-columns:24px minmax(0,1fr) auto 14px"),"Controladores compactos en escritorio y móvil");
+assert.ok(types.includes("map-filter-eye-action")&&types.includes("_typeaheadOpen")&&types.includes('if(group.open)control._typeaheadOpen'),"Ciudades y Operadores comparten ojo, búsqueda y apertura completa");
+assert.ok(alignmentCss.includes("FO-CHG-045")&&alignmentCss.includes("min-height:31px!important")&&alignmentCss.includes("gap:0!important"),"Opciones internas compactas, sin separación excesiva");
+assert.ok(map.includes("resetTerritorialScopeForCity")&&map.includes('cities!==filterValues("mapCityFilter").join(",")'),"El cambio de ciudad cancela y descarta respuestas territoriales anteriores");
+assert.ok(map.includes("const incumbents=new Set")&&map.includes("hasOnlyIsps"),"Operadores disponibles dependen de los puntos de la ciudad seleccionada");
+assert.ok(read("api/map-polygons.js").includes("requestedCityCount===1?cfg.maxFeatures"),"Una sola ciudad usa el límite completo de geometrías de la capa");

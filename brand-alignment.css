@@ -2230,6 +2230,67 @@ input:not([type=checkbox]):not([type=radio]),select,textarea,
  #mapFloatingTools .map-control-count{font-size:9px!important}
 }
 
+/* FO-CHG-045: listas ejecutivas compactas y filtros con el patrón de capas. */
+#mapFloatingTools :is(#mapEstratoOptions,#mapBarrioOptions,#mapTroncalOptions){
+ display:grid!important;grid-template-columns:1fr!important;gap:0!important;
+ max-height:220px!important;margin:0!important;padding:0!important;overflow:auto!important;
+}
+#mapFloatingTools :is(#mapEstratoOptions,#mapBarrioOptions,#mapTroncalOptions) .map-selective-option{
+ display:grid!important;grid-template-columns:15px 9px minmax(0,1fr)!important;
+ align-items:center!important;column-gap:7px!important;min-height:31px!important;
+ padding:4px 5px!important;margin:0!important;border:0!important;
+ border-bottom:1px solid #292929!important;border-radius:0!important;
+ background:transparent!important;
+}
+#mapFloatingTools #mapBarrioOptions .map-selective-option{
+ grid-template-columns:15px minmax(0,1fr)!important;
+}
+#mapFloatingTools :is(#mapEstratoOptions,#mapBarrioOptions,#mapTroncalOptions) .map-selective-option:last-child{border-bottom:0!important}
+#mapFloatingTools :is(#mapEstratoOptions,#mapBarrioOptions,#mapTroncalOptions) .map-selective-option input[type=checkbox]{
+ width:14px!important;height:14px!important;min-width:14px!important;margin:0!important;
+}
+#mapFloatingTools :is(#mapEstratoOptions,#mapTroncalOptions) .map-selective-option>i{
+ width:8px!important;height:20px!important;border-radius:3px!important;margin:0!important;
+}
+#mapFloatingTools :is(#mapEstratoOptions,#mapBarrioOptions,#mapTroncalOptions) .map-selective-option :is(b,small){
+ font-size:11px!important;line-height:1.15!important;font-weight:650!important;
+}
+#mapFloatingTools #mapBarrioOptions .map-selective-option small,
+#mapFloatingTools #mapTroncalOptions .map-selective-option small{
+ margin-top:1px!important;color:#aeb9b3!important;font-size:9px!important;font-weight:500!important;
+}
+#mapFloatingTools .map-layer-disclosure>.map-selective-layer,
+#mapFloatingTools .map-filter-disclosure>.map-typeahead{
+ padding:6px!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead{position:relative!important}
+#mapFloatingTools .map-filter-disclosure .map-typeahead::before{
+ content:"⌕";position:absolute;left:14px;top:12px;z-index:1;
+ color:#9ca9a2;font-size:15px;line-height:1;pointer-events:none;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead>input,
+#mapFloatingTools .map-layer-disclosure :is(.map-estrato-search,.map-barrio-search input){
+ min-height:31px!important;height:31px!important;margin:0 0 4px!important;
+ padding-block:5px!important;font-size:11px!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead>input{padding-left:28px!important}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options{
+ max-height:220px!important;margin:0!important;padding:0!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options button{
+ min-height:31px!important;padding:4px 5px!important;gap:7px!important;font-size:11px!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options input[type=checkbox]{
+ width:14px!important;height:14px!important;flex-basis:14px!important;
+}
+#mapFloatingTools .map-typeahead-selections{gap:3px!important;margin:0 0 4px!important}
+#mapFloatingTools .map-typeahead-selections button{padding:3px 6px!important;font-size:8px!important}
+#mapFloatingTools .map-filter-eye-action{font-family:Arial,sans-serif!important;color:#43ffa5!important}
+@media(max-width:650px){
+ #mapFloatingTools :is(#mapEstratoOptions,#mapBarrioOptions,#mapTroncalOptions),
+ #mapFloatingTools .map-filter-disclosure .map-typeahead-options{max-height:190px!important}
+}
+
 /* FO-CHG-044: una sola fila compacta y alineada para filtros y capas. */
 #mapFloatingTools .map-filter-disclosure>summary,
 #mapFloatingTools .map-layer-disclosure>summary{
@@ -2282,4 +2343,15 @@ input:not([type=checkbox]):not([type=radio]),select,textarea,
  }
  #mapFloatingTools .map-control-leading,
  #mapFloatingTools .map-layer-eye-action{width:23px!important;height:23px!important;min-width:23px!important;min-height:23px!important}
+}
+
+/* FO-CHG-045 · bloqueo final de densidad sobre reglas históricas. */
+#mapFloatingTools .map-layer-disclosure>.map-selective-layer,
+#mapFloatingTools .map-filter-disclosure>.map-typeahead{padding:6px!important}
+#mapFloatingTools .map-filter-disclosure .map-typeahead>input,
+#mapFloatingTools .map-layer-disclosure :is(.map-estrato-search,.map-barrio-search input){
+ min-height:31px!important;height:31px!important;margin-bottom:4px!important;font-size:11px!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options button{
+ min-height:31px!important;padding:4px 5px!important;gap:7px!important;font-size:11px!important;
 }
