@@ -2105,3 +2105,35 @@ html,body{background-color:#000!important;color:#fff}
 }
 input:not([type=checkbox]):not([type=radio]),select,textarea,
 .secondary-button,.map-dock-icon{background-color:#242424!important;color:#fff!important}
+
+/* FO-CHG-041 · Clean layer hierarchy, accessible flat checklist */
+#mapFloatingTools .map-layer-disclosure>summary{display:flex!important;align-items:center!important;gap:12px!important;}
+#mapFloatingTools .map-layer-disclosure>summary>.map-layer-eye-action{
+ order:0!important;background:transparent!important;border:0!important;box-shadow:none!important;
+ border-radius:0!important;padding:3px!important;margin:0!important;min-width:28px!important;
+ width:28px!important;min-height:32px!important;color:#43FFA5!important;
+}
+#mapFloatingTools .map-layer-disclosure>summary>span{order:1!important;flex:1;}
+#mapFloatingTools .map-layer-disclosure>summary>small{order:2!important;}
+#mapFloatingTools #mapBarrioOptions .map-selective-option,
+#mapFloatingTools #mapEstratoOptions .map-selective-option{
+ background:transparent!important;border:0!important;border-radius:0!important;
+ box-shadow:none!important;padding:9px 4px!important;margin:0!important;min-height:42px!important;
+ gap:12px!important;
+}
+#mapFloatingTools #mapBarrioOptions .map-selective-option:hover,
+#mapFloatingTools #mapEstratoOptions .map-selective-option:hover,
+#mapFloatingTools #mapBarrioOptions .map-selective-option.active,
+#mapFloatingTools #mapEstratoOptions .map-selective-option.active{background:transparent!important;}
+#mapFloatingTools #mapBarrioOptions .map-selective-option b,
+#mapFloatingTools #mapEstratoOptions .map-selective-option b{
+ font-size:14px!important;line-height:1.4!important;font-weight:650!important;
+}
+#mapFloatingTools #mapBarrioOptions .map-selective-option small{
+ font-size:12px!important;line-height:1.4!important;color:#D0D0D0!important;
+ display:block!important;
+}
+#mapFloatingTools #mapBarrioOptions .map-selective-option input[type=checkbox],
+#mapFloatingTools #mapEstratoOptions .map-selective-option input[type=checkbox]{
+ flex:0 0 17px!important;width:17px!important;height:17px!important;min-width:17px!important;
+}
