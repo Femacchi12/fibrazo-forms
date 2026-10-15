@@ -401,6 +401,9 @@
               <i class="map-layer-solid-icon estratos">E</i>
               <span><b>Estratos</b><small>Activa únicamente los estratos que quieras ver</small></span><span class="map-layer-chevron" aria-hidden="true">⌄</span>
             </button>
+            <button id="mapLayerTroncales" class="map-layer-chip" type="button" aria-pressed="false">
+              <span><b>Troncales</b></span>
+            </button>
           </div>
           <div id="mapLayerStatus" class="map-layer-status">Capas apagadas.</div>
 
@@ -429,6 +432,11 @@
             </div>
             <div id="mapBarrioOptions" class="map-barrio-options"></div>
             <small id="mapBarrioHint" class="map-selective-hint">Mueve o acerca el mapa para actualizar este listado.</small>
+          </section>
+          <section id="mapTroncalControls" class="map-selective-layer" hidden>
+            <div class="map-selective-layer-head"><button id="mapToggleAllTroncales" class="secondary-button compact" type="button" aria-label="Mostrar todo">👁</button></div>
+            <input id="mapTroncalSearch" type="search" class="map-estrato-search" autocomplete="off" placeholder="Buscar troncal…" aria-label="Buscar troncales">
+            <div id="mapTroncalOptions" class="map-estrato-options"></div>
           </section>
         </div>
 
