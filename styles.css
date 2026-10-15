@@ -2580,7 +2580,7 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
   .map-floating-content{max-height:none}
 }
 
-/* FO-CHG-030 · Pendientes desde hoja corporativa: listado accesible y desplazable */
+/* FO-CHG-032 · Pendientes desde hoja corporativa: listado accesible y desplazable */
 .pending-popover{max-height:min(78vh,680px);overflow:hidden;display:flex;flex-direction:column}
 .pending-popover[hidden]{display:none}
 .pending-list{overflow-y:auto;overscroll-behavior:contain;min-height:0;padding-right:3px}
