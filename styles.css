@@ -2610,3 +2610,33 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
 #mapEstratoOptions .map-selective-option b{font-size:13px!important}
 #mapEstratoControls .map-selective-layer-head{display:none!important}
 #mapBarrioControls .map-selective-layer-head{display:none!important}
+
+/* FO-CHG-034: herramientas dentro del mapa y capas sobrias */
+.map-canvas-wrap{position:relative;overflow:visible!important;min-height:490px}
+.map-floating-tools{max-height:calc(100% - 20px)!important;display:flex;flex-direction:column;min-height:0}
+.map-floating-content{max-height:none!important;min-height:0;flex:1;overflow-y:auto!important;overscroll-behavior:contain}
+.map-floating-host{min-height:0}
+.map-search-dock,.map-tools-dock{position:absolute;z-index:985;top:10px;display:flex;align-items:flex-start;gap:6px}
+.map-search-dock{left:64px}
+.map-tools-dock{right:12px}
+.map-dock-icon,.map-route-disclosure>summary{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;background:#121c18;border:1px solid #466757;color:#ecfff6;font-size:25px;cursor:pointer;box-shadow:0 3px 12px #0006}
+.map-search-dock .map-search-shell{position:absolute;top:47px;left:0;width:min(370px,calc(100vw - 105px));margin:0!important;padding:7px!important;background:#0f1915;border:1px solid #466757;border-radius:12px;box-shadow:0 10px 24px #0007}
+.map-search-dock .map-search-shell[hidden]{display:none!important}
+.map-search-dock .map-search-box{width:100%;max-width:100%;margin:0}
+.map-tools-dock #mapLocateMe{padding:0!important;min-width:40px!important;width:40px!important;height:40px!important}
+.map-route-disclosure{position:relative}
+.map-route-disclosure>summary{list-style:none;font-size:24px}
+.map-route-disclosure>summary::-webkit-details-marker{display:none}
+.map-route-disclosure .map-location-toolbar{position:absolute;top:46px;right:0;width:210px;display:flex!important;flex-direction:column;gap:5px;padding:8px!important;margin:0!important;background:#111b17;border:1px solid #4a6054;border-radius:12px;box-shadow:0 8px 20px #0008}
+.map-route-disclosure .map-location-toolbar>*{width:100%;min-height:35px;padding:6px 8px!important;font-size:11px!important}
+#mapRefresh[hidden],#mapFitPoints[hidden]{display:none!important}
+.map-layer-disclosure{border:0!important;border-bottom:1px solid #ffffff15!important;background:transparent!important}
+.map-layer-disclosure>summary{border:0!important}
+.map-layer-disclosure .map-selective-option{border:0!important;border-bottom:1px solid #ffffff11!important;border-radius:0!important;background:transparent!important;margin:0!important;min-height:36px!important;padding:5px 8px!important}
+.map-layer-disclosure .map-selective-option.active{background:#00d48b12!important}
+#mapEstratoOptions,#mapBarrioOptions{border:0!important}
+#mapBarrioControls .map-barrio-actions{display:block!important;padding:3px 0}
+#mapBarrioControls .map-barrio-actions button{width:100%!important}
+#mapEstratoControls #mapClearEstratos{display:block!important;width:100%;margin:5px 0}
+#mapEstratoHint,#mapBarrioHint{display:none!important}
+@media(max-width:680px){.map-search-dock{left:55px}.map-floating-tools{width:min(350px,calc(100% - 20px))!important}.map-floating-tools.is-collapsed{width:46px!important}.map-tools-dock{right:6px}}
