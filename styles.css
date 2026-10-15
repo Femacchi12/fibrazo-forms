@@ -2579,3 +2579,13 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
   }
   .map-floating-content{max-height:none}
 }
+
+/* FO-CHG-030 · Pendientes desde hoja corporativa: listado accesible y desplazable */
+.pending-popover{max-height:min(78vh,680px);overflow:hidden;display:flex;flex-direction:column}
+.pending-popover[hidden]{display:none}
+.pending-list{overflow-y:auto;overscroll-behavior:contain;min-height:0;padding-right:3px}
+.pending-item{grid-template-columns:minmax(0,1fr) auto;align-items:start}
+.pending-item strong,.pending-item p,.pending-item small{overflow-wrap:anywhere}
+.pending-item small{display:block;color:var(--fz-muted);font-size:10px;line-height:1.45;margin-top:5px}
+.pending-item>span{max-width:82px;text-align:center;white-space:normal;overflow-wrap:anywhere}
+.pending-live-summary{font-size:11px;font-weight:700;color:var(--fz-green)}
