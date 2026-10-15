@@ -27,8 +27,8 @@ table, table button, th, td, .table-scroll, .table-wrap {font-family:Poppins,Mon
 :root{
  --brand-font-ui:"Montserrat",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
  --brand-font-table:"Poppins","Montserrat",system-ui,sans-serif;
- --brand-surface:#101211;--brand-surface-raised:#171918;
- --brand-control:#202222;--brand-text:#F7FAF8;--brand-muted:#BBC1BE;
+ --brand-surface:#151515;--brand-surface-raised:#202020;
+ --brand-control:#242424;--brand-text:#F7FAF8;--brand-muted:#BBC1BE;
  --brand-border:rgba(88,89,91,.72);
  --fz-page:var(--brand-black);
  --fz-surface:var(--brand-surface);
@@ -1782,14 +1782,14 @@ body.form-mode #formWorkspace .operator-memory-inline button{
 #adminView .admin-permission-row[open] .admin-permission-arrow{transform:rotate(180deg);}
 #adminView .admin-permission-options{
   display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
-  gap:6px;padding:8px 9px 10px;border-top:1px solid #64796E;
+  gap:6px;padding:8px 9px 10px;border-top:1px solid #58595b;
 }
 #adminView .admin-permission-options label{
   display:flex!important;align-items:center!important;justify-content:flex-start!important;
   min-height:36px!important;min-width:0!important;
   gap:6px!important;padding:7px 8px!important;
-  background:#1E2923!important;color:#F7FAF8!important;
-  border:1px solid #63776A!important;border-radius:8px!important;
+  background:#202020!important;color:#F7FAF8!important;
+  border:1px solid #58595b!important;border-radius:8px!important;
   font-size:11px!important;font-weight:650!important;
   line-height:1.25!important;white-space:normal!important;overflow-wrap:anywhere;
 }
@@ -1820,7 +1820,7 @@ body.form-mode #formWorkspace .operator-memory-inline button{
   display:flex!important;align-items:center!important;gap:8px!important;
   padding:8px 10px!important;margin:10px 0!important;
   background:rgba(67,255,165,.045)!important;
-  border:1px solid #617C6B!important;
+  border:1px solid #58595b!important;
   border-radius:9px!important;
 }
 #adminView .admin-access-note strong{font-size:11px!important;color:#F4FFF8;}
@@ -1834,7 +1834,7 @@ body.form-mode #formWorkspace .operator-memory-inline button{
   display:grid;place-items:center;flex:0 0 27px;
   width:27px;height:27px;min-width:27px;min-height:27px;
   padding:0!important;margin:0;
-  background:#20382C!important;color:var(--fz-green)!important;
+  background:#252525!important;color:var(--fz-green)!important;
   border:1.5px solid var(--fz-green-border)!important;
   border-radius:50%!important;
   font-family:var(--brand-font-ui)!important;
@@ -1842,7 +1842,7 @@ body.form-mode #formWorkspace .operator-memory-inline button{
   cursor:pointer;
 }
 #adminView .fz-help-button:hover,#adminView .fz-help-button:focus-visible{
-  background:#284B36!important;outline:2px solid var(--fz-green);
+  background:#303030!important;outline:2px solid var(--fz-green);
   outline-offset:2px;
 }
 #adminView .admin-person-permissions>summary:focus-visible,
@@ -1858,15 +1858,15 @@ body.form-mode #formWorkspace .operator-memory-inline button{
   left:12px;right:12px;margin:0 auto;
   max-width:375px;max-height:min(330px,70vh);
   padding:12px 13px;z-index:99999;overflow:auto;
-  background:#19241F!important;color:#F4FFF8!important;
-  border:1.5px solid #93BBA1;border-radius:12px;
+  background:#202020!important;color:#F4FFF8!important;
+  border:1.5px solid #777777;border-radius:12px;
   box-shadow:0 10px 35px rgba(0,0,0,.6);
 }
 .fz-help-popover[hidden]{display:none!important;}
 .fz-help-popover-top{display:flex;justify-content:space-between;align-items:center;gap:10px;}
 .fz-help-popover-top strong{font-size:12px;color:var(--fz-green);}
 .fz-help-popover .fz-help-close{
-  border:1px solid #708A78;background:#25372B;color:#fff;
+  border:1px solid #58595b;background:#262626;color:#fff;
   width:30px;height:30px;min-width:30px;border-radius:8px;
   font-size:19px;line-height:1;cursor:pointer;
 }
@@ -1901,12 +1901,12 @@ body.form-mode #formWorkspace .operator-memory-inline button{
 /* FO-CHG-037 · Official color + Impacto Social-inspired opaque contrast. QA. */
 :root{
  --brand-primary:#43ffa5;--brand-black:#000;--brand-gray:#58595b;
- --brand-surface:#0b110f;--brand-surface-raised:#101b15;--brand-control:#172820;
- --brand-text:#fff;--brand-muted:#d0ddd5;--brand-border:#294137;
- --fz-page:#050807;--fz-surface:#0b110f;--fz-surface-raised:#101b15;
- --fz-surface-inner:#14231b;--fz-surface-hover:#1d3025;
- --fz-control:#172820;--fz-control-hover:#244133;--fz-control-active:#24513b;
- --fz-border:#294137;--fz-border-strong:#426454;--fz-text:#fff;--fz-muted:#d0ddd5;
+ --brand-surface:#111111;--brand-surface-raised:#151515;--brand-control:#212121;
+ --brand-text:#fff;--brand-muted:#d0ddd5;--brand-border:#414141;
+ --fz-page:#000000;--fz-surface:#111111;--fz-surface-raised:#151515;
+ --fz-surface-inner:#202020;--fz-surface-hover:#272727;
+ --fz-control:#212121;--fz-control-hover:#303030;--fz-control-active:#303030;
+ --fz-border:#414141;--fz-border-strong:#58595b;--fz-text:#fff;--fz-muted:#d0ddd5;
  --fz-green:#43ffa5;--fz-green-border:rgba(67,255,165,.65);--fz-green-soft:rgba(67,255,165,.12)
 }
 #mapCanvasWrap .map-floating-tools,
@@ -1916,21 +1916,21 @@ body.form-mode #formWorkspace .operator-memory-inline button{
 #mapCanvasWrap .map-search-shell,
 #mapCanvasWrap .map-route-disclosure .map-location-toolbar,
 #mapCanvasWrap .map-selective-layer{
- background-color:#101b15!important;color:#fff!important;
+ background-color:#151515!important;color:#fff!important;
 }
 #mapCanvasWrap .map-typeahead,
 #mapCanvasWrap .map-typeahead input,
 #mapCanvasWrap .map-barrio-search input,
 #mapCanvasWrap .map-estrato-search,
 #mapCanvasWrap .map-layer-disclosure .map-selective-option{
- background-color:#172820!important;color:#fff!important;
+ background-color:#212121!important;color:#fff!important;
 }
 #mapCanvasWrap .map-filter-disclosure>summary,
 #mapCanvasWrap .map-layer-disclosure>summary,
 #mapCanvasWrap .map-selective-option b,
 #mapCanvasWrap .map-selective-option small{color:#fff!important}
 .leaflet-popup-content-wrapper,.leaflet-popup-tip,.map-popup,.polygon-popup{
- background-color:#101b15!important;color:#fff!important
+ background-color:#151515!important;color:#fff!important
 }
 .leaflet-popup-content-wrapper :is(span,strong,b,p,small){color:#fff!important}
 
@@ -1938,11 +1938,11 @@ body.form-mode #formWorkspace .operator-memory-inline button{
 /* FO-CHG-038: sombreado jerárquico (QA). Oscuro en componentes internos;
    verde oscuro reservado para los contenedores grandes. */
 :root{
- --fz-surface:#101b15;--fz-surface-raised:#101b15;
- --fz-surface-inner:#090f0c;--fz-control:#090f0c;
- --fz-control-hover:#15211a;--fz-control-active:#19281f;
- --fz-border:#35483e;--fz-text:#fff;
- --fz-small-surface:#090f0c;--fz-large-surface:#101b15;
+ --fz-surface:#151515;--fz-surface-raised:#151515;
+ --fz-surface-inner:#101010;--fz-control:#101010;
+ --fz-control-hover:#252525;--fz-control-active:#282828;
+ --fz-border:#404040;--fz-text:#fff;
+ --fz-small-surface:#101010;--fz-large-surface:#151515;
 }
 .hero-header,.panel,.admin-panel,.public-panel,.result-panel,.map-panel,
 .auth-card,.map-floating-tools,.map-floating-content,
@@ -1971,7 +1971,7 @@ input:not([type="checkbox"]):not([type="radio"]),select,textarea,
 }
 .map-selective-option.active,.admin-permission-row:hover,
 .map-typeahead-options button:hover,.secondary-button:hover{
- background-color:#15211a!important;
+ background-color:#252525!important;
 }
 .map-floating-tabs,.map-floating-handle,.map-layer-switches{
  background-color:var(--fz-large-surface)!important;
@@ -1991,12 +1991,12 @@ input:not([type="checkbox"]):not([type="radio"]),select,textarea,
 #mapFloatingTools .map-reference-group,
 #mapFloatingTools .map-reference-list,
 #mapFloatingTools .map-reference-row{
- background:#090f0c!important;color:#fff!important;
+ background:#101010!important;color:#fff!important;
 }
 #mapFloatingTools .map-point-legend-card :is(span,small,b,strong,p,summary),
 #mapFloatingTools .map-reference-row,
 #mapFloatingTools .map-reference-row *{color:#fff!important}
-#mapFloatingTools .map-reference-group{border-color:#26362e!important}
+#mapFloatingTools .map-reference-group{border-color:#393939!important}
 #mapFloatingTools .map-layer-disclosure,
 #mapFloatingTools .map-layer-disclosure>.map-selective-layer,
 #mapFloatingTools .map-layer-disclosure .map-selective-layer-head,
@@ -2010,27 +2010,27 @@ input:not([type="checkbox"]):not([type="radio"]),select,textarea,
 }
 #mapFloatingTools .map-layer-disclosure .map-selective-layer{padding:4px 0!important;margin:0!important}
 #mapFloatingTools .map-layer-disclosure .map-selective-option{
- background:#090f0c!important;display:flex!important;align-items:center!important;
+ background:#101010!important;display:flex!important;align-items:center!important;
  padding:8px 5px!important;margin:0!important;min-height:35px!important;
- border-bottom:1px solid #1f2d26!important;gap:9px!important;
+ border-bottom:1px solid #333333!important;gap:9px!important;
 }
 #mapFloatingTools .map-layer-disclosure .map-selective-option:hover,
-#mapFloatingTools .map-layer-disclosure .map-selective-option.active{background:#14231b!important}
+#mapFloatingTools .map-layer-disclosure .map-selective-option.active{background:#202020!important}
 #mapFloatingTools #mapBarrioOptions .map-selective-option i{display:none!important}
 #mapFloatingTools #mapBarrioOptions .map-selective-option span,
 #mapFloatingTools #mapEstratoOptions .map-selective-option span{padding:0!important;margin:0!important;flex:1}
 #mapFloatingTools #mapBarrioOptions .map-selective-option :is(b,small),
 #mapFloatingTools #mapEstratoOptions .map-selective-option b{color:#fff!important}
 #mapFloatingTools .map-layer-disclosure .map-selective-layer-head{display:none!important}
-#mapFloatingTools .map-filter-disclosure .map-typeahead-options{position:static!important;max-height:230px;overflow:auto;background:#090f0c!important;padding:0!important}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options{position:static!important;max-height:230px;overflow:auto;background:#101010!important;padding:0!important}
 #mapFloatingTools .map-filter-disclosure .map-typeahead-options button{
- width:100%;min-height:36px;padding:7px 5px!important;background:#090f0c!important;
+ width:100%;min-height:36px;padding:7px 5px!important;background:#101010!important;
  display:flex!important;align-items:center!important;gap:10px!important;
- border:0!important;border-bottom:1px solid #1f2d26!important;border-radius:0!important;
+ border:0!important;border-bottom:1px solid #333333!important;border-radius:0!important;
  text-align:left!important;color:#fff!important;
 }
 #mapFloatingTools .map-filter-disclosure .map-typeahead-options button:hover,
-#mapFloatingTools .map-filter-disclosure .map-typeahead-options button[aria-selected="true"]{background:#14231b!important}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options button[aria-selected="true"]{background:#202020!important}
 #mapFloatingTools .map-filter-disclosure .map-typeahead-options input[type=checkbox]{appearance:auto!important;pointer-events:none;accent-color:#43ffa5;width:15px;height:15px;flex:0 0 15px}
 #mapFloatingTools .map-filter-disclosure .map-typeahead-options button span{color:#fff!important}
 #mapCanvasWrap .map-tools-dock{
@@ -2045,13 +2045,63 @@ input:not([type="checkbox"]):not([type="radio"]),select,textarea,
  width:220px!important;max-width:min(220px,calc(100vw - 24px))!important;
  max-height:min(260px,50vh)!important;overflow-y:auto!important;
  display:flex!important;flex-direction:column!important;gap:6px!important;
- padding:10px!important;background:#090f0c!important;
- border:1px solid #35483e!important;border-radius:10px!important;
+ padding:10px!important;background:#101010!important;
+ border:1px solid #404040!important;border-radius:10px!important;
  box-shadow:0 8px 26px #000b!important;white-space:normal!important;z-index:1205!important;
 }
 #mapCanvasWrap .map-route-disclosure .map-location-toolbar button{
  width:100%!important;min-height:34px!important;white-space:normal!important;
  font-size:12px!important;line-height:1.25!important;text-align:left!important;
- color:#fff!important;background:#14231b!important;
+ color:#fff!important;background:#202020!important;
 }
 #mapCanvasWrap .map-route-disclosure:not([open]) .map-location-toolbar{display:none!important}
+
+
+/* FO-CHG-040 · QA · 2026-10-15
+   Neutral dark surfaces, following Impacto Social reference.
+   The corporate green remains an accent, not a panel background. */
+:root{
+ --brand-black:#000000;--brand-gray:#58595B;--brand-primary:#43FFA5;
+ --brand-surface:#151515;--brand-surface-raised:#1C1C1C;
+ --brand-control:#242424;--brand-border:#444444;
+ --fz-page:#000000;--fz-surface:#151515;--fz-surface-raised:#1C1C1C;
+ --fz-surface-inner:#202020;--fz-surface-hover:#292929;
+ --fz-control:#242424;--fz-control-hover:#303030;
+ --fz-control-active:#303030;--fz-border:#444444;
+ --fz-border-strong:#58595B;--fz-small-surface:#202020;
+ --fz-large-surface:#151515;--fz-text:#FFFFFF;--fz-muted:#D0D0D0;
+}
+html,body{background-color:#000!important;color:#fff}
+.hero-header,.panel,.admin-panel,.public-panel,.result-panel,
+.map-panel,.auth-card,.app-nav,.intro-panel,.form-workspace,.records,
+.competition-analysis,.operator-library,.filters-panel,.summary-card,
+#mapCanvasWrap .map-floating-tools,#mapCanvasWrap .map-floating-content,
+#mapCanvasWrap .map-filters-panel,#mapCanvasWrap .map-layers-panel,
+#mapCanvasWrap .map-search-shell,#mapFloatingTools,#mapFiltersPanel,#mapLayersPanel{
+ background:#151515!important;color:#fff!important;
+}
+#mapCanvasWrap .map-typeahead,#mapCanvasWrap .map-typeahead input,
+#mapCanvasWrap .map-barrio-search input,#mapCanvasWrap .map-estrato-search,
+#mapCanvasWrap .map-layer-disclosure .map-selective-option,
+#mapCanvasWrap .map-route-disclosure .map-location-toolbar,
+#mapCanvasWrap .map-route-disclosure .map-location-toolbar button,
+#mapFloatingTools .map-point-legend-card,#mapFloatingTools .map-reference-group,
+#mapFloatingTools .map-reference-list,#mapFloatingTools .map-reference-row,
+#mapFloatingTools .map-layer-disclosure .map-selective-option,
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options,
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options button,
+.leaflet-popup-content-wrapper,.leaflet-popup-tip,.map-popup,.polygon-popup,
+.fz-help-popover,.admin-box,.admin-box-content,.admin-permission-options,
+.admin-permission-row,.admin-person-permissions,.compact-box,
+.map-coordinate-sheet,.map-coordinate-modal,.map-filter-disclosure,
+.map-selective-layer,.map-reference-row,.result-card{
+ background:#202020!important;color:#fff!important;
+}
+#mapFloatingTools .map-layer-disclosure .map-selective-option:hover,
+#mapFloatingTools .map-layer-disclosure .map-selective-option.active,
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options button:hover,
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options button[aria-selected=true]{
+ background:#303030!important;
+}
+input:not([type=checkbox]):not([type=radio]),select,textarea,
+.secondary-button,.map-dock-icon{background-color:#242424!important;color:#fff!important}
