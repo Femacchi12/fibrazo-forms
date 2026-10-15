@@ -219,6 +219,43 @@
         if(id==="mapCityFilter")group.open=true;
       }
     }
+    // FO-CHG-042: one unified filter/layer panel; retain original select and layer logic.
+    const unified=panels.filters;
+    if(unified&&panels.layers){
+      const filterHost=unified.querySelector(".map-filters");
+      const layerSwitches=panels.layers.querySelector(".map-layer-switches");
+      const extra=filterHost?.querySelector(".map-extra-filters");
+      const bySummary=label=>[...(filterHost?.querySelectorAll(".map-filter-disclosure")||[])].find(e=>e.querySelector("summary")?.textContent?.trim()===label);
+      const byLayer=label=>[...(layerSwitches?.querySelectorAll(".map-layer-disclosure")||[])].find(e=>e.querySelector("summary>span")?.textContent?.trim()===label);
+      if(filterHost&&layerSwitches){
+        const secondary=document.createElement("details");
+        secondary.className="map-extra-filters map-unified-extra";
+        const extraTitle=document.createElement("summary");
+        extraTitle.textContent="Más filtros";
+        const extraBody=document.createElement("div");
+        extraBody.className="map-extra-content";
+        secondary.append(extraTitle,extraBody);
+        for(const item of [bySummary("Ciudades"),bySummary("Operadores"),byLayer("Estratos"),byLayer("Barrios")]){
+          if(item){filterHost.appendChild(item);item.open=false;}
+        }
+        for(const item of [bySummary("Tipo de formulario"),bySummary("Usuarios")])if(item)extraBody.appendChild(item);
+        if(extra)extraBody.appendChild(extra);
+        filterHost.appendChild(secondary);
+        const troncales=byLayer("Troncales");
+        if(troncales){
+          const technical=document.createElement("details");technical.className="map-extra-filters";
+          technical.innerHTML="<summary>Capas adicionales · Troncales</summary>";
+          technical.appendChild(troncales);filterHost.appendChild(technical);
+        }
+        panels.layers.hidden=true;
+        panels.layers.dataset.unified="true";
+      }
+      const tabs=panel.querySelector(".map-floating-tabs");
+      const layerTab=tabs?.querySelector('[data-floating-tab="layers"]');
+      if(layerTab)layerTab.remove();
+      const filterTab=tabs?.querySelector('[data-floating-tab="filters"]');
+      if(filterTab)filterTab.textContent="Filtros/Capas";
+    }
     const strata=document.createElement("details");
     strata.className="map-reference-group map-strata-index";
     strata.setAttribute("aria-label","Índice de estratos");
