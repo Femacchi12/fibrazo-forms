@@ -30,6 +30,7 @@
     polygonIndexControllers:{barrios:null,estratos:null},
     polygonIndexData:{barrios:[],estratos:[]},
     polygonSelections:{barrios:new Set(),estratos:new Set(["1","2","3"])},
+    cityCatalog:[],
     barrioListMode:"all",
     barrioAllSelected:false,
     barrioExcluded:new Set(),
@@ -727,6 +728,7 @@
     if(city){
       const current=filterValues("mapCityFilter");
       const cityMap=new Map();
+      for(const raw of state.cityCatalog){if(raw&&!cityMap.has(norm(raw)))cityMap.set(norm(raw),cityLabel(raw));}
       for(const point of state.points){
         const raw=String(point.city?.assigned||point.observedCity||"").trim();
         if(raw&&!cityMap.has(norm(raw)))cityMap.set(norm(raw),cityLabel(raw));
@@ -755,6 +757,18 @@
     }
     updateFilterCount();
     updateVisibilityBadge();
+  }
+
+  async function loadCityCatalog(){
+    try{
+      const data=await authorizedFetch("/api/map-city-catalog");
+      if(Array.isArray(data.cities)){
+        state.cityCatalog=data.cities;
+        updateFilters();
+      }
+    }catch(error){
+      console.warn("CITY_CATALOG_UNAVAILABLE",error?.message||error);
+    }
   }
 
   function updateKpis(filtered=state.filtered){
@@ -1609,6 +1623,7 @@
     updateLayerButtons();
     updatePolygonStatus();
     updateTrackingUi();
+    loadCityCatalog();
     for(const layer of ["barrios","estratos"])if(state.polygonActive[layer])refreshPolygonLayer(layer,{silent:true});
     if(!state.autoLocated){
       state.autoLocated=true;
@@ -1656,7 +1671,10 @@
     });
     ["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter","mapDateFrom","mapDateTo","mapPhotosFilter"].forEach(id=>$(id)?.addEventListener("change",()=>{
       updateFilterCount();renderMarkers();
-      if(id==="mapCityFilter")schedulePolygonFilterRefresh();
+      if(id==="mapCityFilter"){
+        updateFilters();
+        schedulePolygonFilterRefresh();
+      }
     }));
     $("mapShowTests")?.addEventListener("change",()=>{renderMarkers();updateFilterCount();loadPoints({silent:true});});
     $("mapRefresh")?.addEventListener("click",refreshMapNow);
