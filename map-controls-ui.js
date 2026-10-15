@@ -141,7 +141,7 @@
     const switches=panels.layers?.querySelector(".map-layer-switches");
     if(switches&&!switches.dataset.grouped){
       switches.dataset.grouped="1";
-      for(const [key,title,controlId] of [["barrios","Barrios","mapBarrioControls"],["estratos","Estratos","mapEstratoControls"],["troncales","Troncales","mapTroncalControls"]]){
+      for(const [key,title,controlId] of [["estratos","Estratos","mapEstratoControls"],["troncales","Troncales","mapTroncalControls"],["barrios","Barrios","mapBarrioControls"]]){
         const toggle=$(key==="barrios"?"mapLayerBarrios":key==="estratos"?"mapLayerEstratos":"mapLayerTroncales");
         const content=$(controlId);if(!toggle||!content)continue;
         const disclosure=document.createElement("details");disclosure.className="map-layer-disclosure";
@@ -152,7 +152,7 @@
         if(action){
           action.classList.add("map-layer-eye-action");
           action.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();});
-          summary.append(label,action,count);
+          summary.append(action,label,count);
         }else summary.append(label,count);
         toggle.hidden=true;toggle.setAttribute("aria-hidden","true");toggle.tabIndex=-1;
         disclosure.append(summary,toggle,content);
