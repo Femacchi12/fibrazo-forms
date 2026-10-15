@@ -2667,3 +2667,16 @@ table{color:#fff}th{color:#fff!important;background:#121a16!important;font-weigh
  .map-search-dock.beside-panel{left:calc(min(315px,100% - 75px) + 20px)!important}
  .map-tools-dock{right:7px!important;bottom:9px!important}
 }
+
+/* FO-CHG-036 · Final QA styling and coverage feedback */
+.map-floating-host .map-filters{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:1px!important}
+.map-filter-disclosure{min-width:0}
+.map-filter-disclosure .map-typeahead{max-width:100%!important}
+.map-filter-disclosure .map-typeahead>input{width:100%!important;min-width:0!important}
+.map-layer-city-coverage{display:block;padding:7px 9px;margin:3px 1px 8px;border-radius:8px;background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.28);font-size:10px;color:#d8dabe;line-height:1.4}
+.map-layer-city-coverage[hidden]{display:none!important}
+.map-tools-dock,.map-tools-dock.below-search{bottom:51px!important}
+.map-route-disclosure:not([open]) .map-location-toolbar{display:none!important}
+.map-layer-disclosure>summary .map-layer-eye-action{font-family:Arial,sans-serif!important;font-size:18px!important}
+.map-layer-disclosure>summary .map-layer-eye-action.eye-hidden{color:#e4b2b2!important}
+.map-layer-disclosure>summary .map-layer-eye-action:focus-visible,.map-dock-icon:focus-visible,.map-filter-disclosure>summary:focus-visible{outline:2px solid #43ffa5;outline-offset:2px}
