@@ -1007,6 +1007,7 @@
     const host=$("mapEstratoControls"),options=$("mapEstratoOptions"),hint=$("mapEstratoHint");
     if(!host||!options)return;
     host.dataset.selectedCount=String(state.polygonSelections.estratos.size);
+    const action=$("mapClearEstratos");if(action)action.textContent=state.polygonSelections.estratos.size?"Ocultar todo":"Seleccionar todos";
     host.hidden=!state.polygonActive.estratos;
     if(host.hidden)return;
     const query=norm($("mapEstratoSearch")?.value||"");
@@ -1038,6 +1039,7 @@
       ?Math.max(0,(state.polygonIndexData.barrios||[]).length-state.barrioExcluded.size)
       :state.polygonSelections.barrios.size;
     host.dataset.selectedCount=String(selectedTotal);
+    const allAction=$("mapSelectAllBarrios");if(allAction)allAction.textContent=selectedTotal?"Ocultar todo":"Seleccionar todos";
     host.hidden=!state.polygonActive.barrios;
     if(host.hidden)return;
     const search=norm($("mapBarrioSearch")?.value||"");
@@ -1668,9 +1670,15 @@
     // FO-CHG-033: activar automáticamente la capa y los estratos 1, 2 y 3 al iniciar mapa.
     if(!state.polygonActive.estratos)togglePolygonLayer("estratos");
     $("mapViewBucaramanga")?.addEventListener("click",viewBucaramanga);
-    $("mapClearEstratos")?.addEventListener("click",()=>clearLayerSelection("estratos"));
+    $("mapClearEstratos")?.addEventListener("click",()=>{
+      if(state.polygonSelections.estratos.size)clearLayerSelection("estratos");
+      else {state.polygonSelections.estratos=new Set(["1","2","3","4","5","6"]);renderLayerControls();loadPolygonLayer("estratos",{silent:true});}
+    });
     $("mapClearBarrios")?.addEventListener("click",()=>clearLayerSelection("barrios"));
-    $("mapSelectAllBarrios")?.addEventListener("click",selectAllBarrios);
+    $("mapSelectAllBarrios")?.addEventListener("click",()=>{
+      const selected=state.barrioAllSelected?Math.max(0,state.polygonIndexData.barrios.length-state.barrioExcluded.size):state.polygonSelections.barrios.size;
+      if(selected)clearLayerSelection("barrios");else selectAllBarrios();
+    });
     $("mapBarrioModeVisible")?.addEventListener("click",()=>setBarrioListMode("visible"));
     $("mapBarrioModeAll")?.addEventListener("click",()=>setBarrioListMode("all"));
     $("mapBarrioSearch")?.addEventListener("input",renderBarrioControls);
