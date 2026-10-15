@@ -1024,7 +1024,7 @@
     const host=$("mapEstratoControls"),options=$("mapEstratoOptions"),hint=$("mapEstratoHint");
     if(!host||!options)return;
     host.dataset.selectedCount=String(state.polygonSelections.estratos.size);
-    const action=$("mapClearEstratos");if(action)action.textContent=state.polygonSelections.estratos.size?"◉":"◉";action.title=state.polygonSelections.estratos.size?"Ocultar todo":"Mostrar todo";action.setAttribute("aria-label",action.title);action.classList.toggle("eye-hidden",!!state.polygonSelections.estratos.size);
+    const action=$("mapClearEstratos");if(action)action.textContent="👁";action.title=state.polygonSelections.estratos.size?"Ocultar todo":"Mostrar todo";action.setAttribute("aria-label",action.title);action.classList.toggle("eye-hidden",!!state.polygonSelections.estratos.size);
     host.hidden=!state.polygonActive.estratos;
     if(host.hidden)return;
     const query=norm($("mapEstratoSearch")?.value||"");
@@ -1056,7 +1056,7 @@
       ?Math.max(0,(state.polygonIndexData.barrios||[]).length-state.barrioExcluded.size)
       :state.polygonSelections.barrios.size;
     host.dataset.selectedCount=String(selectedTotal);
-    const allAction=$("mapSelectAllBarrios");if(allAction)allAction.textContent="◉";allAction.title=selectedTotal?"Ocultar todo":"Mostrar todo";allAction.setAttribute("aria-label",allAction.title);allAction.classList.toggle("eye-hidden",!!selectedTotal);
+    const allAction=$("mapSelectAllBarrios");if(allAction)allAction.textContent="👁";allAction.title=selectedTotal?"Ocultar todo":"Mostrar todo";allAction.setAttribute("aria-label",allAction.title);allAction.classList.toggle("eye-hidden",!!selectedTotal);
     host.hidden=!state.polygonActive.barrios;
     if(host.hidden)return;
     const search=norm($("mapBarrioSearch")?.value||"");
