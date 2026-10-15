@@ -199,3 +199,7 @@ Referencia funcional: Dashboard Impacto Social; origen de identidad: guía docum
 
 ### FO-CHG-038 — Jerarquía de superficies por escala (15/10/2026)
 Solicitud visual QA: reservar la superficie verde oscura sólida (#101B15) para encabezados, secciones y contenedores de primer nivel; unificar elementos internos pequeños, filas, acordeones, campos, controles, tarjetas anidadas y popups del mapa sobre superficie oscura sólida (#090F0C), siguiendo los módulos «Formularios activos/inactivos». Conservar texto blanco, verde oficial #43FFA5, Montserrat/Poppins y colores semánticos de estado. Código aplicado en brand-alignment.css y actualización de cache; no producción. Pendiente: revisión visual exhaustiva de los módulos y accesibilidad en móvil/escritorio.
+
+
+### FO-CHG-039 — Mapa: referencia, recorrido y selectores planos (15/10/2026)
+Rama QA: se aplicaron paneles sólidos oscuros (#090F0C), texto blanco y el estilo de contraste aprobado en la pestaña Referencia; el menú de Inicio/Limpieza/Seguimiento de recorrido se organiza verticalmente con anchura y altura controladas; las opciones de los filtros incorporan casillas de selección múltiple con listado alineado a Capas; Barrios/Estratos eliminan marcos interiores innecesarios, márgenes y, para barrios, la marca circular verde. Se conservaron la lógica de selección y los colores de estratos. Se invalidó la caché PWA. Pendiente inspección visual, accesibilidad y comprobación del menú en móvil/escritorio antes de aprobar producción.
