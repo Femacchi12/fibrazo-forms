@@ -1933,3 +1933,49 @@ body.form-mode #formWorkspace .operator-memory-inline button{
  background-color:#101b15!important;color:#fff!important
 }
 .leaflet-popup-content-wrapper :is(span,strong,b,p,small){color:#fff!important}
+
+
+/* FO-CHG-038: sombreado jerárquico (QA). Oscuro en componentes internos;
+   verde oscuro reservado para los contenedores grandes. */
+:root{
+ --fz-surface:#101b15;--fz-surface-raised:#101b15;
+ --fz-surface-inner:#090f0c;--fz-control:#090f0c;
+ --fz-control-hover:#15211a;--fz-control-active:#19281f;
+ --fz-border:#35483e;--fz-text:#fff;
+ --fz-small-surface:#090f0c;--fz-large-surface:#101b15;
+}
+.hero-header,.panel,.admin-panel,.public-panel,.result-panel,.map-panel,
+.auth-card,.map-floating-tools,.map-floating-content,
+#mapFiltersPanel,#mapLayersPanel{
+ background-color:var(--fz-large-surface)!important;
+}
+.admin-permission-row,.admin-person-permissions,.admin-box,
+.admin-box-content,.admin-permission-options,.admin-add-row,
+.admin-access-note,.compact-box,.map-selective-layer,
+.map-layer-disclosure,.map-filter-disclosure,.map-typeahead,
+.map-typeahead-options,.map-selective-option,.map-reference-row,
+.map-route-disclosure .map-location-toolbar,.map-search-shell,
+.map-popup,.polygon-popup,.leaflet-popup-content-wrapper,
+.leaflet-popup-tip,.map-coordinate-sheet,.map-coordinate-modal,
+.panel .card,.panel article,.panel details>section,
+fieldset,.form-group,.form-field,.result-card,.map-filter-actions{
+ background-color:var(--fz-small-surface)!important;
+ color:#fff!important;
+}
+input:not([type="checkbox"]):not([type="radio"]),select,textarea,
+.map-barrio-search input,.map-estrato-search,.map-typeahead input,
+.map-typeahead-options button,.secondary-button,.map-dock-icon,
+.map-route-disclosure>summary,.map-layer-eye-action{
+ background-color:var(--fz-small-surface)!important;
+ color:#fff!important;
+}
+.map-selective-option.active,.admin-permission-row:hover,
+.map-typeahead-options button:hover,.secondary-button:hover{
+ background-color:#15211a!important;
+}
+.map-floating-tabs,.map-floating-handle,.map-layer-switches{
+ background-color:var(--fz-large-surface)!important;
+}
+:is(.map-popup,.polygon-popup,.leaflet-popup-content-wrapper) :is(p,span,strong,b,small){
+ color:#fff!important;
+}
