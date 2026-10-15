@@ -1979,3 +1979,79 @@ input:not([type="checkbox"]):not([type="radio"]),select,textarea,
 :is(.map-popup,.polygon-popup,.leaflet-popup-content-wrapper) :is(p,span,strong,b,small){
  color:#fff!important;
 }
+
+
+/* FO-CHG-039 · map refinement: flat layers, matching checkable filters, solid legend, usable route menu */
+#mapCanvasWrap .map-point-legend-card,
+#mapCanvasWrap .map-reference-group,
+#mapCanvasWrap .map-reference-list,
+#mapCanvasWrap .map-reference-row,
+#mapCanvasWrap .map-point-legend-card summary,
+#mapFloatingTools .map-point-legend-card,
+#mapFloatingTools .map-reference-group,
+#mapFloatingTools .map-reference-list,
+#mapFloatingTools .map-reference-row{
+ background:#090f0c!important;color:#fff!important;
+}
+#mapFloatingTools .map-point-legend-card :is(span,small,b,strong,p,summary),
+#mapFloatingTools .map-reference-row,
+#mapFloatingTools .map-reference-row *{color:#fff!important}
+#mapFloatingTools .map-reference-group{border-color:#26362e!important}
+#mapFloatingTools .map-layer-disclosure,
+#mapFloatingTools .map-layer-disclosure>.map-selective-layer,
+#mapFloatingTools .map-layer-disclosure .map-selective-layer-head,
+#mapFloatingTools .map-layer-disclosure .map-barrio-search,
+#mapFloatingTools .map-layer-disclosure .map-barrio-options,
+#mapFloatingTools .map-layer-disclosure .map-estrato-options,
+#mapFloatingTools .map-layer-disclosure .map-selective-option,
+#mapFloatingTools .map-filter-disclosure .map-typeahead,
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options{
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+}
+#mapFloatingTools .map-layer-disclosure .map-selective-layer{padding:4px 0!important;margin:0!important}
+#mapFloatingTools .map-layer-disclosure .map-selective-option{
+ background:#090f0c!important;display:flex!important;align-items:center!important;
+ padding:8px 5px!important;margin:0!important;min-height:35px!important;
+ border-bottom:1px solid #1f2d26!important;gap:9px!important;
+}
+#mapFloatingTools .map-layer-disclosure .map-selective-option:hover,
+#mapFloatingTools .map-layer-disclosure .map-selective-option.active{background:#14231b!important}
+#mapFloatingTools #mapBarrioOptions .map-selective-option i{display:none!important}
+#mapFloatingTools #mapBarrioOptions .map-selective-option span,
+#mapFloatingTools #mapEstratoOptions .map-selective-option span{padding:0!important;margin:0!important;flex:1}
+#mapFloatingTools #mapBarrioOptions .map-selective-option :is(b,small),
+#mapFloatingTools #mapEstratoOptions .map-selective-option b{color:#fff!important}
+#mapFloatingTools .map-layer-disclosure .map-selective-layer-head{display:none!important}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options{position:static!important;max-height:230px;overflow:auto;background:#090f0c!important;padding:0!important}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options button{
+ width:100%;min-height:36px;padding:7px 5px!important;background:#090f0c!important;
+ display:flex!important;align-items:center!important;gap:10px!important;
+ border:0!important;border-bottom:1px solid #1f2d26!important;border-radius:0!important;
+ text-align:left!important;color:#fff!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options button:hover,
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options button[aria-selected="true"]{background:#14231b!important}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options input[type=checkbox]{appearance:auto!important;pointer-events:none;accent-color:#43ffa5;width:15px;height:15px;flex:0 0 15px}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options button span{color:#fff!important}
+#mapCanvasWrap .map-tools-dock{
+ position:absolute!important;top:auto!important;bottom:65px!important;
+ left:auto!important;right:10px!important;display:flex!important;align-items:flex-end!important;
+ gap:8px!important;z-index:1200!important;overflow:visible!important;
+}
+#mapCanvasWrap .map-route-disclosure{position:relative!important;overflow:visible!important}
+#mapCanvasWrap .map-route-disclosure .map-location-toolbar{
+ position:absolute!important;top:auto!important;bottom:calc(100% + 10px)!important;
+ right:0!important;left:auto!important;
+ width:220px!important;max-width:min(220px,calc(100vw - 24px))!important;
+ max-height:min(260px,50vh)!important;overflow-y:auto!important;
+ display:flex!important;flex-direction:column!important;gap:6px!important;
+ padding:10px!important;background:#090f0c!important;
+ border:1px solid #35483e!important;border-radius:10px!important;
+ box-shadow:0 8px 26px #000b!important;white-space:normal!important;z-index:1205!important;
+}
+#mapCanvasWrap .map-route-disclosure .map-location-toolbar button{
+ width:100%!important;min-height:34px!important;white-space:normal!important;
+ font-size:12px!important;line-height:1.25!important;text-align:left!important;
+ color:#fff!important;background:#14231b!important;
+}
+#mapCanvasWrap .map-route-disclosure:not([open]) .map-location-toolbar{display:none!important}
