@@ -168,6 +168,28 @@
         updateCount();
       }
     }
+    // Diferenciar la cobertura del catálogo de ciudades y las capas disponibles.
+    const cityFilter=$("mapCityFilter"),layersHeader=panels.layers?.querySelector(".map-layers-head");
+    if(cityFilter&&layersHeader){
+      const notice=document.createElement("small");
+      notice.className="map-layer-city-coverage";
+      layersHeader.after(notice);
+      const normCity=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
+      const amb=new Set(["bucaramanga","floridablanca","giron","piedecuesta"]);
+      const refresh=()=>{
+        const cities=[...cityFilter.selectedOptions].map(o=>o.value).filter(v=>v&&v!=="all");
+        if(!cities.length){notice.hidden=true;return;}
+        const includesAMB=cities.some(name=>amb.has(normCity(name)));
+        const includesOthers=cities.some(name=>!amb.has(normCity(name)));
+        notice.hidden=!includesOthers;
+        if(!notice.hidden)notice.textContent=includesAMB?
+          "Las capas cartográficas validadas corresponden únicamente al área de Bucaramanga; las otras ciudades no tienen estas capas en esta base.":
+          "No hay capas territoriales validadas en este mapa para las ciudades seleccionadas. Los puntos siguen disponibles.";
+      };
+      cityFilter.addEventListener("change",refresh);
+      refresh();
+    }
+
     // Referencia solo en su pestaña: no ocupa espacio en filtros ni capas.
     // FO-CHG-036: filtros con el mismo patrón de acordeón que Capas.
     const filterHost=panels.filters?.querySelector(".map-filters");
