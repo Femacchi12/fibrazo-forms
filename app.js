@@ -208,32 +208,77 @@
   }
   window.FIBRAZO_SET_VIEW=setView;
 
-  // FO-CHG-018: resumen CURADO de pendientes operativos. La hoja PENDIENTES
-  // es la fuente oficial; esta vista estática no pretende sincronización en vivo.
-  const FORM_PENDING_SUMMARY=[
-    {id:"FO-PEN-003",title:"Capacidad Vercel",detail:"Verificar Function Storage y autorización de consulta antes de nuevas publicaciones.",priority:"ALTA"},
-    {id:"FO-PEN-004",title:"Exploración virtual · coordenadas",detail:"Revisión funcional postergada: campo obligatorio asociado a una sección inexistente. No corregir sin validar el formulario.",priority:"ALTA"},
-    {id:"FO-PEN-005",title:"Flujos Draw.io · apertura visual",detail:"Validación estructural y geométrica correcta. Falta abrir y revisar las siete páginas en diagrams.net.",priority:"MEDIA"}
-  ];
+  // FO-CHG-030: seguimiento dinámico. La hoja PENDIENTES continúa como única fuente de verdad.
+  const PENDING_SHEET_URL="https://docs.google.com/spreadsheets/d/1khSXy3s44k6wuRrIjP5-an9C5Kr1qPpAF6iWECKrI3c/edit";
+  const PENDING_REFRESH_MS=120000;
+  let pendingLastLoad=0,pendingRequest=null;
   const appPendingHub=document.querySelector(".pending-hub");
   if(appPendingHub)appPendingHub.dataset.pendingOwner="app";
+
+  function renderPendingData(data){
+    const list=$("pendingList"),badge=$("pendingCount"),toggle=$("pendingToggle");
+    if(!list||!badge||!toggle)return;
+    const count=Number(data.activeCount)||0;
+    badge.textContent=String(count);
+    badge.setAttribute("aria-label",count+" pendientes activos");
+    toggle.setAttribute("aria-label","⚠️ "+count+" pendientes activos");
+    const counts='<small class="pending-live-summary">'+count+' activos · '+(Number(data.pausedCount)||0)+' en pausa · fuente oficial</small>';
+    const rows=(data.items||[]).filter(item=>item.type!=="closed").map(item=>
+      '<article class="pending-item"><div><strong>'+escapeHtml(item.id+" · "+item.title)+'</strong>'+
+      '<p>'+escapeHtml(item.status)+'</p>'+
+      (item.requirement?'<small>'+escapeHtml(item.requirement)+'</small>':"")+
+      '</div><span>'+escapeHtml(item.type==="paused"?"EN PAUSA":item.priority||"PENDIENTE")+'</span></article>'
+    ).join("");
+    list.innerHTML=counts+(rows||'<p>No hay pendientes activos ni pausados.</p>')+
+      '<a href="'+PENDING_SHEET_URL+'" target="_blank" rel="noopener noreferrer">↗ Abrir seguimiento oficial en Sheets</a>';
+  }
+
+  async function refreshPendingData({force=false}={}){
+    if(pendingRequest)return pendingRequest;
+    if(!force&&pendingLastLoad&&Date.now()-pendingLastLoad<PENDING_REFRESH_MS)return;
+    const list=$("pendingList"),badge=$("pendingCount");
+    pendingRequest=(async()=>{
+      try{
+        const user=firebase.auth().currentUser;
+        if(!user)throw new Error("AUTH_REQUIRED");
+        const token=await user.getIdToken();
+        const response=await fetch((apiBase||"").replace(/\\/$/,"")+"/api/pending",{
+          headers:{Authorization:"Bearer "+token},cache:"no-store"
+        });
+        if(!response.ok)throw new Error("PENDING_HTTP_"+response.status);
+        const data=await response.json();
+        if(!data.ok||!Array.isArray(data.items))throw new Error("INVALID_PENDING_RESPONSE");
+        renderPendingData(data);
+        pendingLastLoad=Date.now();
+      }catch(error){
+        // No presentar valores hardcodeados como si fueran la hoja actual.
+        if(badge)badge.textContent="—";
+        if(list)list.innerHTML='<p>No se pudo sincronizar el seguimiento oficial. Revisa permisos de la hoja y conexión del servidor.</p>'+
+          '<a href="'+PENDING_SHEET_URL+'" target="_blank" rel="noopener noreferrer">↗ Consultar pendientes en Sheets</a>';
+        console.warn("PENDING_DASHBOARD_SYNC_UNAVAILABLE",error?.message||error);
+      }
+    })();
+    try{await pendingRequest;}finally{pendingRequest=null;}
+  }
+
   function initPendingCenter(){
     const toggle=$("pendingToggle"),popover=$("pendingPopover"),list=$("pendingList"),badge=$("pendingCount"),close=$("pendingClose"),hub=document.querySelector(".pending-hub");
     if(!toggle||!popover||!list||!badge||!close)return;
     if(hub)hub.hidden=false;
-    badge.textContent=String(FORM_PENDING_SUMMARY.length);
-    toggle.setAttribute("aria-label","⚠️ "+FORM_PENDING_SUMMARY.length+" pendientes de desarrollo");
-    list.innerHTML=FORM_PENDING_SUMMARY.map(item=>
-      '<article class="pending-item"><div><strong>'+escapeHtml(item.id+" · "+item.title)+'</strong><p>'+escapeHtml(item.detail)+'</p></div><span>'+escapeHtml(item.priority)+'</span></article>'
-    ).join("")+'<a href="https://docs.google.com/spreadsheets/d/1khSXy3s44k6wuRrIjP5-an9C5Kr1qPpAF6iWECKrI3c/edit" target="_blank" rel="noopener noreferrer">↗ Ver seguimiento actualizado en Sheets</a>'+
-      '<small style="color:var(--fz-muted)">Resumen del 12/10/2026; el estado oficial se mantiene en PENDIENTES.</small>';
-    if(toggle.dataset.pendingBound==="1")return;
-    toggle.dataset.pendingBound="1";
-    const setOpen=open=>{popover.hidden=!open;toggle.setAttribute("aria-expanded",String(open));};
-    toggle.addEventListener("click",()=>setOpen(popover.hidden));
-    close.addEventListener("click",()=>setOpen(false));
-    document.addEventListener("pointerdown",event=>{if(!popover.hidden&&!popover.contains(event.target)&&!toggle.contains(event.target))setOpen(false);});
-    document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!popover.hidden){setOpen(false);toggle.focus();}});
+    if(toggle.dataset.pendingBound!=="1"){
+      toggle.dataset.pendingBound="1";
+      const setOpen=open=>{popover.hidden=!open;toggle.setAttribute("aria-expanded",String(open));if(open)refreshPendingData();};
+      toggle.addEventListener("click",()=>setOpen(popover.hidden));
+      close.addEventListener("click",()=>setOpen(false));
+      document.addEventListener("pointerdown",event=>{if(!popover.hidden&&!popover.contains(event.target)&&!toggle.contains(event.target))setOpen(false);});
+      document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!popover.hidden){setOpen(false);toggle.focus();}});
+      window.addEventListener("focus",()=>{if(!popover.hidden)refreshPendingData();});
+      window.setInterval(()=>{if(!popover.hidden&&document.visibilityState==="visible")refreshPendingData();},PENDING_REFRESH_MS);
+    }
+    badge.textContent="…";
+    list.innerHTML='<p>Consultando pendientes en la hoja oficial…</p>';
+    pendingLastLoad=0;
+    refreshPendingData({force:true});
   }
 
 
