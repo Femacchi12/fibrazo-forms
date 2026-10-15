@@ -174,3 +174,7 @@ Archivos: `index.html`, `map-controls-ui.js`, `map-v01.js`, `api/map-polygons.js
 ## FO-CHG-030/031/032 — QA de mapa y pendientes (14/10/2026)
 Barrios/Estratos: flechas claras, filas compactas y buscador visible; Seleccionar todos/Limpiar alineados. Pendientes: menú corporativo con scroll y contador obtenido desde hoja oficial autenticada, sin resumen estático ni escrituras. Geografía: límite de aproximaciones del backend y caché de coordenadas de cinco minutos.
 Archivos: index.html, styles.css, app.js, map-v01.js, api/_territorial.js, api/pending.js. Estado: rama feat/forms-map-qa-20261013, no producción. QA real de acceso al Sheet con service account, responsive, y permisos de usuario todavía pendientes.
+
+
+### FO-CHG-033 — Panel Capas compactado, estratos predeterminados y controles fijos (15/10/2026)
+En QA, Estratos se inicia con 1, 2 y 3 seleccionados (estrato 0 no figura en las opciones). Se oculta el control Leaflet +/− preservando zoom por gestos. El panel se ancla arriba a la izquierda; abierto se cierra con «−» y contraído solo muestra «☰» para abrir. Se elimina arrastre del panel; Barrios/Estratos se representan como listas desplegables compactas con indicador, sin divisores repetidos, manteniendo búsqueda y selección múltiple. Cambios: map-v01.js, map-controls-ui.js, styles.css, index.html y service-worker.js. Solo rama feat/forms-map-qa-20261013; quedan pruebas visuales desktop/móvil y confirmación de publicación Preview READY; producción no tocada.
