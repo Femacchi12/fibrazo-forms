@@ -8,7 +8,9 @@
   }
   const REFRESH_MS=60000;
   const REFRESH_SLOW_MS=150000;
-  const TERRITORIAL_CACHE_KEY="fibrazoTerritorialPointCacheV1";
+  const TERRITORIAL_CACHE_KEY="fibrazoTerritorialPointCacheV2";
+  const TERRITORIAL_CACHE_TTL_MS=5*60*1000;
+  const CITY_NEARBY_LIMIT_M=20000;
   const BUCARAMANGA_BOUNDS=[[7.070607677,-73.172095278],[7.195892798,-73.093548025]];
 
   const state={
@@ -129,7 +131,7 @@
     try{
       const raw=JSON.parse(localStorage.getItem(userScopedKey(TERRITORIAL_CACHE_KEY))||"{}");
       const hit=raw?.[territorialCacheKey(lat,lng)];
-      return hit&&hit.data?hit.data:null;
+      return hit?.data&&Number.isFinite(Number(hit.ts))&&Date.now()-Number(hit.ts)<TERRITORIAL_CACHE_TTL_MS?hit.data:null;
     }catch(_){return null;}
   }
   function writeTerritorialCache(lat,lng,data){
@@ -446,9 +448,11 @@
       const distance=formatDistance(layer?.distanceM);
       if(status==="DENTRO")return {label,value:assigned||"Disponible",state:"ok"};
       if(status==="FUERA"){
+        if(label==="Ciudad / municipio"&&Number(layer?.distanceM)>CITY_NEARBY_LIMIT_M)return {label,value:"Sin coincidencia territorial cercana",state:"missing"};
         if(label==="Barrio"&&nearby)return {label,value:"Barrio más cercano: "+nearby+(distance?" · "+distance:""),state:"near"};
         return {label,value:"Fuera del polígono"+(nearby?" · cercano: "+nearby:"")+(distance?" · "+distance:""),state:"near"};
       }
+      if(status==="FUERA_COBERTURA")return {label,value:"Sin coincidencia territorial cercana",state:"missing"};
       return {label,value:"No disponible en nuestra base",state:"missing"};
     };
 
