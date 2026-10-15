@@ -25,6 +25,10 @@ const CONFIG={
     name:"Estrato",
     minZoom:11,
     maxFeatures:650
+  },
+  troncales:{
+    sheet:"04_TRONCALES",metaRanges:["A:I","K:O"],wktCol:"J",
+    id:"ID_Troncal",name:"Troncal",minZoom:10,maxFeatures:320
   }
 };
 
@@ -87,6 +91,7 @@ function featureProperties(row,cfg,layer){
       households:safeValue(row,"Hogares")
     };
   }
+  if(layer==="troncales")return {...common,estado:safeValue(row,"Estado")};
   return {
     ...common,
     estrato:safeValue(row,"Estrato"),
@@ -95,7 +100,17 @@ function featureProperties(row,cfg,layer){
   };
 }
 function geometryFromWkt(wkt){
-  const polygons=_internals.parseWkt(String(wkt||""));
+  const raw=String(wkt||"").trim();
+  const parseLine=value=>value.split(",").map(pair=>pair.trim().split(/\s+/).map(Number)).filter(p=>p.length>=2&&Number.isFinite(p[0])&&Number.isFinite(p[1]));
+  if(/^LINESTRING\s*\(/i.test(raw)){
+    const coords=parseLine(raw.replace(/^LINESTRING\s*\(/i,"").replace(/\)\s*$/,""));
+    return coords.length>=2?{type:"LineString",coordinates:coords}:null;
+  }
+  if(/^MULTILINESTRING\s*\(/i.test(raw)){
+    const lines=[...raw.matchAll(/\(([^()]+)\)/g)].map(m=>parseLine(m[1])).filter(line=>line.length>=2);
+    return lines.length?{type:"MultiLineString",coordinates:lines}:null;
+  }
+  const polygons=_internals.parseWkt(raw);
   if(!polygons?.length)return null;
   return polygons.length===1
     ?{type:"Polygon",coordinates:polygons[0]}
@@ -241,12 +256,12 @@ function indexItems(layer,rows){
   }
   const map=new Map();
   for(const row of rows){
-    const id=safeValue(row,"ID_Barrio");
+    const id=safeValue(row,layer==="troncales"?"ID_Troncal":"ID_Barrio");
     if(!id)continue;
     if(!map.has(id)){
       map.set(id,{
         id,
-        name:safeValue(row,"Barrio")||id,
+        name:safeValue(row,layer==="troncales"?"Troncal":"Barrio")||id,
         municipio:safeValue(row,"Municipio")||safeValue(row,"Ciudad"),
         comuna:safeValue(row,"Comuna_Localidad")
       });
@@ -266,11 +281,11 @@ function applySelection(layer,rows,query){
   }
   const excluded=new Set(parseList(query.excludeIds));
   if(String(query.allBarrios||"")==="1"){
-    return rows.filter(row=>!excluded.has(safeValue(row,"ID_Barrio")));
+    return rows.filter(row=>!excluded.has(safeValue(row,layer==="troncales"?"ID_Troncal":"ID_Barrio")));
   }
   const selected=new Set(parseList(query.ids));
   if(!selected.size)return [];
-  return rows.filter(row=>selected.has(safeValue(row,"ID_Barrio")));
+  return rows.filter(row=>selected.has(safeValue(row,layer==="troncales"?"ID_Troncal":"ID_Barrio")));
 }
 
 module.exports=async(req,res)=>{
@@ -297,7 +312,7 @@ module.exports=async(req,res)=>{
 
     const cityRows=applyCityFilter(meta.rows,req.query);
 
-    if(mode==="index"&&layer==="barrios"&&indexScope==="all"){
+    if(mode==="index"&&(layer==="barrios"||layer==="troncales")&&indexScope==="all"){
       return res.status(200).json({
         ok:true,
         mode:"index",
