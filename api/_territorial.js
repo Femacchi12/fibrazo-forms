@@ -3,7 +3,10 @@ const {google}=require("googleapis");
 const TERRITORIAL_MASTER_SHEET_ID =
   process.env.TERRITORIAL_MASTER_SHEET_ID ||
   "1cVAEv60ZdDTcQoPmmiSbJV_gfhAXKwywbzf0F0WDp_0";
-const TERRITORIAL_VERSION="3.2";
+const TERRITORIAL_VERSION="3.3";
+// No aceptar una ciudad a cientos de km como resultado territorial del punto.
+const CITY_NEARBY_MAX_M=20000;
+const LAYER_NEARBY_MAX_M={barrio:5000,estrato:5000,troncal:10000};
 const DANE_QUERY=
   process.env.DANE_MUNICIPIO_QUERY||
   "https://geoportal.dane.gov.co/mparcgis/rest/services/Hosted/Serv_Mpio_MGN_2025/FeatureServer/317/query";
@@ -212,11 +215,17 @@ async function loadCityItems(auth){
   const sheets=google.sheets({version:"v4",auth});
   const catalog=await loadCatalog(auth);
   const responses=await Promise.all(catalog.map(async entry=>{
-    const r=await sheets.spreadsheets.values.get({
-      spreadsheetId:entry.fileId,
-      range:"11_POLIGONOS_CIUDAD!A:O"
-    }).catch(()=>({data:{values:[]}}));
-    return{entry,values:r.data.values||[]};
+    try{
+      const r=await sheets.spreadsheets.values.get({
+        spreadsheetId:entry.fileId,
+        range:"11_POLIGONOS_CIUDAD!A:O"
+      });
+      return {entry,values:r.data.values||[]};
+    }catch(error){
+      // No convertir fallas de permisos/conectividad en una ciudad lejana falsa.
+      console.error("TERRITORIAL_CITY_SOURCE_UNAVAILABLE",entry.id,error?.code||error?.message||"READ_FAILED");
+      return {entry,values:[]};
+    }
   }));
   const out=[];
   for(const {entry,values} of responses){
@@ -342,7 +351,8 @@ async function resolveLayer(auth,meta,lon,lat){
     }
     index+=slice.length;
   }
-  return best?outside(best,bestDistance):empty("SIN_CAPA_CANONICA");
+  const maxDistance=LAYER_NEARBY_MAX_M[meta.kind]??5000;
+  return best&&bestDistance<=maxDistance?outside(best,bestDistance):empty("FUERA_COBERTURA");
 }
 
 function code5(value){
@@ -403,7 +413,9 @@ async function resolveCityItems(items,lon,lat){
     const distance=geometryDistance(lon,lat,candidate.item.polygons);
     if(Number.isFinite(distance)&&distance<bestDistance){best=candidate.item;bestDistance=distance;}
   }
-  return best?{result:outside(best,bestDistance),catalog:best.catalog}:{result:empty("SIN_CAPA"),catalog:null};
+  return best&&bestDistance<=CITY_NEARBY_MAX_M
+    ?{result:outside(best,bestDistance),catalog:best.catalog}
+    :{result:empty("FUERA_COBERTURA"),catalog:null};
 }
 
 async function resolveTerritorial(auth,latValue,lonValue){
