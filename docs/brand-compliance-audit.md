@@ -195,3 +195,7 @@ En QA se retiran de la cabecera los botones Actualizar y Ver todos los puntos; s
 
 ## FO-CHG-037 — Sistema visual oscuro de alto contraste (15/10/2026)
 Referencia funcional: Dashboard Impacto Social; origen de identidad: guía documental FIBRAZO (Montserrat; Poppins tablas; #43FFA5, #000000, #58595B). En rama QA se unifican texto blanco, superficies sólidas para tarjetas, controles, formularios, paneles flotantes y popups Leaflet, jerarquía Montserrat, tablas Poppins y contrastes por planos en lugar de bordes excesivos. Paleta de fondos adaptada para web y no considerada nuevo color oficial. Impacto Social se trabaja en rama aislada, sin alterar GitHub Pages. Falta QA visual/contraste y aprobación explícita para producción.
+
+
+### FO-CHG-038 — Jerarquía de superficies por escala (15/10/2026)
+Solicitud visual QA: reservar la superficie verde oscura sólida (#101B15) para encabezados, secciones y contenedores de primer nivel; unificar elementos internos pequeños, filas, acordeones, campos, controles, tarjetas anidadas y popups del mapa sobre superficie oscura sólida (#090F0C), siguiendo los módulos «Formularios activos/inactivos». Conservar texto blanco, verde oficial #43FFA5, Montserrat/Poppins y colores semánticos de estado. Código aplicado en brand-alignment.css y actualización de cache; no producción. Pendiente: revisión visual exhaustiva de los módulos y accesibilidad en móvil/escritorio.
