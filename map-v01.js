@@ -29,7 +29,7 @@
     polygonControllers:{barrios:null,estratos:null},
     polygonIndexControllers:{barrios:null,estratos:null},
     polygonIndexData:{barrios:[],estratos:[]},
-    polygonSelections:{barrios:new Set(),estratos:new Set()},
+    polygonSelections:{barrios:new Set(),estratos:new Set(["1","2","3"])},
     barrioListMode:"all",
     barrioAllSelected:false,
     barrioExcluded:new Set(),
@@ -205,7 +205,7 @@
     patchLeafletRotateSafety();
     const rotateSupported=typeof L.Map?.prototype?.setBearing==="function";
     state.map=L.map("explorationMap",{
-      zoomControl:true,
+      zoomControl:false,
       preferCanvas:false,
       rotate:rotateSupported,
       touchRotate:rotateSupported,
@@ -1278,7 +1278,9 @@
     const group=state.polygonGroups[layer];
 
     if(next){
-      state.polygonSelections[layer].clear();
+      if(layer==="estratos"){
+        if(!state.estratosInitialized){state.polygonSelections.estratos=new Set(["1","2","3"]);state.estratosInitialized=true;}
+      }else state.polygonSelections[layer].clear();
       state.polygonIndexData[layer]=[];
       if(layer==="barrios"){
         state.barrioAllSelected=false;
