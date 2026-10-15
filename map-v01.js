@@ -742,6 +742,18 @@
       city.innerHTML='<option value="all">Todas las ciudades</option>'+cities.map(([key,label])=>'<option value="'+esc(key)+'">'+esc(label)+'</option>').join("");
       selectFilterValues(city,current);
     }
+    const eligibleCities=new Set(filterValues("mapCityFilter"));
+    const eligiblePoints=state.points.filter(p=>!eligibleCities.size||eligibleCities.has(norm(p.city?.assigned||p.observedCity||"")));
+    const typeSelect=$("mapTypeFilter");
+    if(typeSelect){
+      const availableTypes=new Set(eligiblePoints.map(p=>norm(formType(p.type))).filter(Boolean));
+      for(const option of typeSelect.options){
+        if(option.value==="all")continue;
+        option.disabled=!availableTypes.has(norm(option.value));
+        option.hidden=option.disabled;
+        if(option.disabled)option.selected=false;
+      }
+    }
     if(operator){
       const current=filterValues("mapOperatorFilter");
       const activeCities=new Set(filterValues("mapCityFilter"));
@@ -1352,7 +1364,9 @@
       state.polygonStatus[layer]="actualizando índice…";
       updateLayerButtons();
       const requiredZoom=layer==="estratos"?11:10;
-      if(!viewTouchesBucaramanga()||state.map.getZoom()<requiredZoom){
+      const cities=filterValues("mapCityFilter");
+      const selectsAMB=!cities.length||cities.some(name=>["bucaramanga","floridablanca","giron","piedecuesta"].includes(norm(name)));
+      if(selectsAMB&&(!viewTouchesBucaramanga()||state.map.getZoom()<requiredZoom)){
         viewBucaramanga();
       }else{
         refreshPolygonLayer(layer);
