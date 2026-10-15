@@ -63,7 +63,7 @@
     };
     const draw=()=>{
       const query=norm(input.value);
-      const opts=[...select.options].filter(o=>norm(o.textContent).includes(query)).slice(0,100);
+      const opts=[...select.options].filter(o=>!o.disabled&&!o.hidden&&norm(o.textContent).includes(query)).slice(0,100);
       menu.replaceChildren();
       opts.forEach(opt=>{
         const button=document.createElement("button");
