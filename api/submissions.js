@@ -570,7 +570,7 @@ module.exports=async(req,res)=>{
     }
     const appended=await sheets.spreadsheets.values.append({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!${isExploration(form.id)?"A:CE":form.id==="INTELIGENCIA_OPERADOR"?"A:AF":"A:AC"}`,
+      range:`${form.sheet}!A1:B1`,
       valueInputOption:"RAW",
       insertDataOption:"INSERT_ROWS",
       requestBody:{values:[submissionRow]}
