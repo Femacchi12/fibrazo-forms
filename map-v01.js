@@ -757,9 +757,11 @@
       }
     }
     if(operator){
-      const current=filterValues("mapOperatorFilter");
-      const activeCities=new Set(filterValues("mapCityFilter"));
-      const eligiblePoints=state.points.filter(p=>!activeCities.size||activeCities.has(norm(p.city?.assigned||p.observedCity||"")));
+      const selectedCities=filterValues("mapCityFilter");
+      const cityReady=selectedCities.length===1;
+      const current=cityReady?filterValues("mapOperatorFilter"):[];
+      const activeCities=new Set(selectedCities);
+      const eligiblePoints=cityReady?state.points.filter(p=>activeCities.has(norm(p.city?.assigned||p.observedCity||""))):[];
       const profiles=eligiblePoints.map(operatorProfile);
       const incumbents=new Set(profiles.flatMap(profile=>profile.incumbents));
       const hasOnlyIsps=profiles.some(profile=>profile.others.length>0&&profile.incumbents.length===0);
@@ -773,6 +775,8 @@
       ].filter(([value])=>incumbents.has(value));
       if(hasOnlyIsps)bases.push(["isps","Solo ISPs · sin incumbentes"]);
       operator.innerHTML='<option value="all">Todos los operadores</option>'+bases.map(([value,label])=>'<option value="'+value+'">'+label+'</option>').join("")+isps.map(([key,label])=>'<option value="isp:'+esc(key)+'">ISP · '+esc(label)+'</option>').join("");
+      operator.dataset.cityScope=cityReady?"ready":"locked";
+      operator.disabled=!cityReady;
       selectFilterValues(operator,current);
     }
     if(user){

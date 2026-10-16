@@ -4,6 +4,10 @@
   const $=id=>document.getElementById(id);
   const norm=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
   const ids=["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter"];
+  const selectedCityCount=()=>[...($("mapCityFilter")?.selectedOptions||[])].filter(option=>option.value&&option.value!=="all").length;
+  const cityLockMessage=()=>selectedCityCount()>1?
+    "Debes dejar seleccionada una sola ciudad para poder seleccionar esto.":
+    "Debes seleccionar al menos una ciudad para poder seleccionar esto.";
   function searchable(select){
     if(!select||select.dataset.typeaheadReady)return;
     select.dataset.typeaheadReady="1";
@@ -34,6 +38,11 @@
     const close=()=>{menu.hidden=true;input.setAttribute("aria-expanded","false");input.value="";};
     const sync=()=>{
       wrap.hidden=select.hidden;
+      const locked=select.disabled||select.dataset.cityScope==="locked";
+      wrap.classList.toggle("is-locked",locked);
+      input.disabled=locked;
+      input.title=locked?cityLockMessage():"";
+      if(locked)close();
       const chosen=values();
       selections.replaceChildren(...chosen.map(value=>{
         const option=[...select.options].find(item=>item.value===value);
@@ -63,6 +72,7 @@
       select.dispatchEvent(new Event("change",{bubbles:true}));
     };
     const draw=()=>{
+      if(select.disabled||select.dataset.cityScope==="locked")return;
       const query=norm(input.value);
       const opts=[...select.options].filter(o=>!o.disabled&&!o.hidden&&norm(o.textContent).includes(query)).slice(0,100);
       menu.replaceChildren();
@@ -80,7 +90,7 @@
       if(!opts.length){const msg=document.createElement("p");msg.textContent="No hay coincidencias";menu.appendChild(msg);}
       active=0;menu.hidden=false;input.setAttribute("aria-expanded","true");
     };
-    input.addEventListener("focus",()=>{input.value="";draw();});
+    input.addEventListener("focus",()=>{if(input.disabled)return;input.value="";draw();});
     input.addEventListener("input",draw);
     input.addEventListener("keydown",event=>{
       const buttons=[...menu.querySelectorAll("button")];
@@ -106,10 +116,10 @@
       if(button)choose(button.dataset.removeValue);
     });
     input.addEventListener("blur",()=>setTimeout(()=>{close();sync();},130));
-    select._typeaheadOpen=()=>{input.value="";draw();};
+    select._typeaheadOpen=()=>{if(input.disabled)return;input.value="";draw();};
     select._typeaheadClose=()=>{close();sync();};
     select.addEventListener("change",()=>{sync();if(!menu.hidden)draw();});
-    new MutationObserver(()=>{sync();if(!menu.hidden)draw();}).observe(select,{childList:true,subtree:true,attributes:true,attributeFilter:["hidden"]});
+    new MutationObserver(()=>{sync();if(!menu.hidden)draw();}).observe(select,{childList:true,subtree:true,attributes:true,attributeFilter:["hidden","disabled","data-city-scope"]});
     sync();
   }
   function floatingPanel(){
@@ -167,9 +177,13 @@
           count.textContent=selected+" seleccionado"+(selected===1?"":"s");
           disclosure.classList.toggle("territorial-ready",ready);
           disclosure.classList.toggle("territorial-locked",!ready);
+          const lockedMessage=ready?"":cityLockMessage();
+          summary.title=lockedMessage;
+          count.title=lockedMessage;
+          summary.setAttribute("aria-disabled",String(!ready));
           if(action){
             action.disabled=!ready;
-            action.title=ready?action.title:"Selecciona una sola ciudad para habilitar esta capa";
+            action.title=lockedMessage;
           }
         };
         summary.addEventListener("click",event=>{
@@ -252,17 +266,25 @@
         group.appendChild(box);
         const updateCount=()=>{
           const selected=[...control.selectedOptions].filter(option=>option.value&&option.value!=="all").length;
-          count.textContent=selected?selected+" "+(selected===1?meta.one:meta.many):meta.all;
+          const locked=id==="mapOperatorFilter"&&control.dataset.cityScope!=="ready";
+          count.textContent=locked?"0 seleccionados":selected?selected+" "+(selected===1?meta.one:meta.many):meta.all;
           group.classList.toggle("has-selection",selected>0);
+          group.classList.toggle("filter-locked",locked);
+          const lockedMessage=locked?cityLockMessage():"";
+          summary.title=lockedMessage;
+          count.title=lockedMessage;
+          summary.setAttribute("aria-disabled",String(locked));
           if(eyeEnabled){
             if(selected)group.dataset.savedValues=[...control.selectedOptions].filter(option=>option.value&&option.value!=="all").map(option=>option.value).join("|");
             leading.classList.toggle("eye-hidden",selected>0);
-            leading.title=selected?"Apagar este filtro":group.dataset.savedValues?"Restaurar este filtro":"Selecciona opciones para activar el filtro";
+            leading.disabled=locked;
+            leading.title=locked?lockedMessage:selected?"Apagar este filtro":group.dataset.savedValues?"Restaurar este filtro":"Selecciona opciones para activar el filtro";
             leading.setAttribute("aria-label",leading.title);
           }
         };
         if(eyeEnabled)leading.addEventListener("click",event=>{
           event.preventDefault();event.stopPropagation();
+          if(id==="mapOperatorFilter"&&control.dataset.cityScope!=="ready")return;
           const selected=[...control.selectedOptions].filter(option=>option.value&&option.value!=="all");
           const saved=(group.dataset.savedValues||"").split("|").filter(Boolean);
           if(selected.length){
@@ -278,9 +300,18 @@
           control.dispatchEvent(new Event("change",{bubbles:true}));
         });
         control.addEventListener("change",updateCount);
-        new MutationObserver(updateCount).observe(control,{childList:true,subtree:true,attributes:true,attributeFilter:["selected"]});
+        new MutationObserver(updateCount).observe(control,{childList:true,subtree:true,attributes:true,attributeFilter:["selected","disabled","data-city-scope"]});
         updateCount();
+        summary.addEventListener("click",event=>{
+          if(id==="mapOperatorFilter"&&control.dataset.cityScope!=="ready"){
+            event.preventDefault();
+            group.open=false;
+          }
+        });
         group.addEventListener("toggle",()=>{
+          if(group.open&&id==="mapOperatorFilter"&&control.dataset.cityScope!=="ready"){
+            group.open=false;updateCount();return;
+          }
           if(group.open)control._typeaheadOpen?.();
           else control._typeaheadClose?.();
         });

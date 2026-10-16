@@ -40,7 +40,7 @@
 #mapBarrioControls .map-barrio-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important;width:100%!important;justify-content:stretch!important;align-items:stretch!important;margin:0!important}
 #mapBarrioControls .map-barrio-actions button{display:flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important;width:100%!important;height:40px!important;min-height:40px!important;margin:0!important;padding:6px 4px!important;font-size:12px!important;white-space:nowrap!important}
 </style>
-  <link rel="stylesheet" href="/executive-density.css?v=20261016-48">
+  <link rel="stylesheet" href="/executive-density.css?v=20261016-49">
 </head>
 <body class="auth-pending">
   <section id="authGate" class="auth-gate" aria-live="polite">
@@ -364,7 +364,7 @@
               <option value="Presencial" selected>Exploración presencial · ●</option>
               <option value="Inteligencia de operadores">Inteligencia de operadores · ▲</option>
             </select>
-            <select id="mapOperatorFilter" aria-label="Filtrar operador" multiple>
+            <select id="mapOperatorFilter" aria-label="Filtrar operador" data-city-scope="locked" multiple disabled>
               <option value="all">Todos los operadores</option>
               <option value="tigo">Tigo · esté solo o acompañado</option>
               <option value="claro">Claro · esté solo o acompañado</option>
@@ -376,9 +376,6 @@
             <label class="map-photos-filter" id="mapTestControl" hidden><input id="mapShowTests" type="checkbox"> Mostrar pruebas (QA)</label>
             <input id="mapDateFrom" type="date" aria-label="Fecha desde" title="Fecha desde">
             <input id="mapDateTo" type="date" aria-label="Fecha hasta" title="Fecha hasta">
-          </div>
-          <div class="map-filter-actions">
-            <button id="mapClearFilters" class="secondary-button compact" type="button">Limpiar filtros</button>
           </div>
         </div>
 
@@ -462,10 +459,11 @@
                 <button type="button" data-floating-tab="filters" class="active">Filtros</button>
                 <button type="button" data-floating-tab="layers">Capas</button>
                 <button type="button" data-floating-tab="legend">Referencia</button>
+                <button id="mapClearFilters" class="map-panel-reset" type="button" title="Limpiar todos los filtros" aria-label="Limpiar todos los filtros">↺ <span>Limpiar</span></button>
               </div>
               <div id="mapFloatingHost" class="map-floating-host"></div>
             </div>
-          </section><div class="map-quick-actions"><button id="mapFullscreen" type="button" title="Ver mapa en pantalla completa" aria-pressed="false">⛶ <span>Pantalla completa</span></button><button id="mapBaseToggle" type="button" title="Cambiar a vista satelital" aria-label="Cambiar a vista satelital">▧ <span>Satélite</span></button><button id="mapQuickRefresh" type="button" title="Actualizar puntos y capas">↻ <span>Actualizar</span></button><button id="mapQuickReset" type="button" title="Borrar todos los filtros">× <span>Filtros</span></button></div>
+          </section><div class="map-quick-actions"><button id="mapFullscreen" type="button" title="Ver mapa en pantalla completa" aria-pressed="false">⛶ <span>Pantalla completa</span></button><button id="mapBaseToggle" type="button" title="Cambiar a vista satelital" aria-label="Cambiar a vista satelital">▧ <span>Satélite</span></button><button id="mapQuickRefresh" type="button" title="Actualizar puntos y capas">↻ <span>Actualizar</span></button></div>
         </div>
         <div id="mapStatus" class="map-status">Abre el mapa para cargar los puntos.</div>
 
@@ -521,7 +519,7 @@
   <script src="/admin-v03.js?v=2026.10.11.16"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.umd.min.js"></script>
-  <script src="/map-v01.js?v=20261016-dissolve01"></script>
-  <script src="/map-controls-ui.js?v=2026.10.15.46"></script>
+  <script src="/map-v01.js?v=20261016-49"></script>
+  <script src="/map-controls-ui.js?v=20261016-49"></script>
 </body>
 </html>

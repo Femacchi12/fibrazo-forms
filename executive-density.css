@@ -262,3 +262,219 @@ body.form-mode #formWorkspace .form-actions{border-top:0!important}
 @media(max-width:560px){
   #resultsView .records td{grid-template-columns:minmax(78px,.34fr) minmax(0,.66fr)!important}
 }
+
+/* FO-CHG-049 · Panel del mapa sin marcos internos y bloqueo territorial coherente. */
+#mapFloatingTools{
+  border:1px solid rgba(67,255,165,.38)!important;
+  border-radius:14px!important;
+  box-shadow:0 12px 30px rgba(0,0,0,.48)!important;
+  background:#0f1110!important;
+}
+#mapFloatingTools .map-floating-handle{
+  min-height:38px!important;
+  padding:6px 9px!important;
+  border:0!important;
+  border-radius:13px 13px 0 0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+#mapFloatingTools .map-floating-handle>span{
+  font-size:11px!important;
+  letter-spacing:0!important;
+}
+#mapFloatingTools :is(#mapFloatingMinimize,#mapFloatingOpen){
+  width:28px!important;
+  height:28px!important;
+  min-width:28px!important;
+  min-height:28px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:7px!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  color:#43ffa5!important;
+}
+#mapFloatingTools :is(#mapFloatingMinimize,#mapFloatingOpen):hover{
+  background:rgba(255,255,255,.055)!important;
+}
+#mapFloatingTools .map-floating-content{
+  padding:0 7px 7px!important;
+  border:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+#mapFloatingTools .map-floating-tabs{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,.78fr) auto!important;
+  align-items:center!important;
+  gap:2px!important;
+  margin:0!important;
+  padding:2px 0 5px!important;
+  border:0!important;
+  box-shadow:none!important;
+  background:#0f1110!important;
+}
+#mapFloatingTools .map-floating-tabs>button{
+  width:auto!important;
+  min-width:0!important;
+  min-height:28px!important;
+  padding:4px 7px!important;
+  border:0!important;
+  border-radius:6px!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  color:#c4cec9!important;
+  font-size:9px!important;
+  font-weight:750!important;
+  white-space:nowrap!important;
+}
+#mapFloatingTools .map-floating-tabs>button:hover{
+  background:rgba(255,255,255,.055)!important;
+  color:#fff!important;
+}
+#mapFloatingTools .map-floating-tabs>button.active{
+  border:0!important;
+  background:rgba(67,255,165,.09)!important;
+  color:#43ffa5!important;
+}
+#mapFloatingTools .map-floating-tabs>.map-panel-reset{
+  justify-self:end!important;
+  padding-inline:6px!important;
+  color:#aeb9b3!important;
+}
+#mapFloatingTools .map-floating-tabs>.map-panel-reset span{
+  font-size:8px!important;
+}
+#mapFloatingTools :is(.map-floating-host,.map-filters-panel,.map-layers-panel,.map-filters,.map-layer-switches){
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+#mapFloatingTools .map-filter-disclosure,
+#mapFloatingTools .map-layer-disclosure,
+#mapFloatingTools .map-filter-disclosure[open],
+#mapFloatingTools .map-layer-disclosure[open]{
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  overflow:visible!important;
+}
+#mapFloatingTools .map-filter-disclosure>summary,
+#mapFloatingTools .map-layer-disclosure>summary,
+#mapFloatingTools .map-filter-disclosure[open]>summary,
+#mapFloatingTools .map-layer-disclosure[open]>summary{
+  min-height:34px!important;
+  padding:3px 6px!important;
+  border:0!important;
+  border-radius:6px!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+#mapFloatingTools .map-filter-disclosure>summary:hover,
+#mapFloatingTools .map-layer-disclosure>summary:hover,
+#mapFloatingTools .map-filter-disclosure[open]>summary,
+#mapFloatingTools .map-layer-disclosure[open]>summary{
+  background:rgba(255,255,255,.05)!important;
+}
+#mapFloatingTools .map-filter-disclosure>.map-typeahead,
+#mapFloatingTools .map-layer-disclosure>.map-selective-layer{
+  margin:0!important;
+  padding:3px 6px 5px!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead>input,
+#mapFloatingTools .map-layer-disclosure :is(.map-estrato-search,.map-barrio-search input){
+  min-height:29px!important;
+  height:29px!important;
+  margin:0 0 3px!important;
+  border:0!important;
+  border-radius:6px!important;
+  box-shadow:none!important;
+  background:rgba(255,255,255,.055)!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead>input:hover,
+#mapFloatingTools .map-layer-disclosure :is(.map-estrato-search,.map-barrio-search input):hover{
+  background:rgba(255,255,255,.075)!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options,
+#mapFloatingTools :is(#mapEstratoOptions,#mapBarrioOptions,#mapTroncalOptions){
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options button,
+#mapFloatingTools .map-layer-disclosure .map-selective-option{
+  min-height:28px!important;
+  padding:3px 5px!important;
+  border:0!important;
+  border-radius:5px!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+#mapFloatingTools .map-unified-extra,
+#mapFloatingTools .map-unified-extra[open],
+#mapFloatingTools .map-unified-extra>.map-extra-content,
+#mapFloatingTools .map-reference-group,
+#mapFloatingTools .map-reference-group[open],
+#mapFloatingTools .map-reference-list,
+#mapFloatingTools .map-reference-row{
+  border:0!important;
+  box-shadow:none!important;
+}
+#mapFloatingTools .map-unified-extra>summary,
+#mapFloatingTools .map-unified-extra[open]>summary{
+  min-height:34px!important;
+  padding:4px 6px 4px 37px!important;
+  border:0!important;
+  border-radius:6px!important;
+  background:transparent!important;
+}
+#mapFloatingTools .map-unified-extra>summary:hover,
+#mapFloatingTools .map-unified-extra[open]>summary{
+  background:rgba(255,255,255,.05)!important;
+}
+#mapFloatingTools .map-layer-city-coverage,
+#mapFloatingTools .map-layer-status{
+  border:0!important;
+  box-shadow:none!important;
+}
+#mapFloatingTools .map-filter-disclosure.filter-locked>summary,
+#mapFloatingTools .map-layer-disclosure.territorial-locked>summary{
+  cursor:not-allowed!important;
+}
+#mapFloatingTools .map-filter-disclosure.filter-locked .map-control-count,
+#mapFloatingTools .map-layer-disclosure.territorial-locked .map-control-count{
+  color:#ff6767!important;
+}
+#mapFloatingTools .map-filter-disclosure.filter-locked .map-filter-eye-action,
+#mapFloatingTools .map-typeahead.is-locked{
+  opacity:.42!important;
+}
+#mapFloatingTools .map-filter-disclosure.filter-locked .map-filter-eye-action{
+  cursor:not-allowed!important;
+}
+#mapFloatingTools .map-filter-eye-action.eye-hidden::after{
+  display:none!important;
+}
+#mapFloatingTools .map-filter-eye-action.eye-hidden{
+  opacity:.62!important;
+}
+
+@media(max-width:560px){
+  #mapFloatingTools .map-floating-tabs{
+    grid-template-columns:minmax(0,1fr) minmax(0,.76fr) auto!important;
+  }
+  #mapFloatingTools .map-floating-tabs>.map-panel-reset span{display:none!important}
+}
