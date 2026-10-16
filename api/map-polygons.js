@@ -194,6 +194,45 @@ async function getGeometries(auth,cfg,rows){
   }
   return out;
 }
+
+/* QA-only opt-in geometry dissolve. Source rows remain immutable.
+   Do not bridge or buffer gaps: union only truly intersecting/touching polygons.
+   This affects drawing, never territorial point classification. */
+function dissolveEstratos(features){
+  const pc=require("polygon-clipping");
+  const groups=new Map();
+  for(const feature of features){
+    const type=feature.geometry?.type;
+    if(type!=="Polygon"&&type!=="MultiPolygon")continue;
+    const key=String(feature.properties?.estrato||"").trim();
+    if(!key)continue;
+    if(!groups.has(key))groups.set(key,[]);
+    groups.get(key).push(feature);
+  }
+  const result=[];
+  for(const [estrato,items] of groups){
+    try{
+      // Process bounded batches to avoid one enormous union call.
+      let merged=null;
+      for(let i=0;i<items.length;i+=40){
+        const polygons=items.slice(i,i+40).map(x=>x.geometry.type==="Polygon"?[x.geometry.coordinates]:x.geometry.coordinates);
+        const part=pc.union(...polygons);
+        merged=merged?pc.union(merged,part):part;
+      }
+      if(!merged?.length){result.push(...items);continue;}
+      result.push({type:"Feature",id:"QA_DISSOLVED_"+estrato,properties:{
+        ...items[0].properties,id:"QA_DISSOLVED_"+estrato,estrato,
+        name:"Estrato "+estrato+" · vista optimizada",originalCount:items.length,
+        qaOptimized:true
+      },geometry:{type:"MultiPolygon",coordinates:merged}});
+    }catch(error){
+      console.warn("MAP_ESTRATO_DISSOLVE_FALLBACK",estrato,error?.message||error);
+      result.push(...items);
+    }
+  }
+  return result;
+}
+
 function bboxArea(row){
   return Math.max(0,row.maxLon-row.minLon)*Math.max(0,row.maxLat-row.minLat);
 }
@@ -381,7 +420,13 @@ module.exports=async(req,res)=>{
       });
     }
 
+    const optimized=req.query.qaDissolve==="1"&&layer==="estratos";
+    const optimizedFeatures=optimized?dissolveEstratos(features):features;
     return res.status(200).json({
+      qaOptimized:optimized,
+      originalFeatureCount:features.length,
+      optimizedFeatureCount:optimizedFeatures.length,
+      optimizedIncomplete:optimized&&truncated,
       ok:true,
       mode:"geometry",
       layer,
@@ -391,7 +436,7 @@ module.exports=async(req,res)=>{
       truncated,
       totalVisible,
       displayMode:truncated?"GENERAL":"DETALLE",
-      features
+      features:optimizedFeatures
     });
   }catch(error){
     const status=error.status||500;
