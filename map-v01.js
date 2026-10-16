@@ -34,6 +34,7 @@
     barrioListMode:"all",
     barrioAllSelected:false,
     barrioExcluded:new Set(),
+    qaDissolveEstratos:false,
     polygonReloadTimer:null,
     polygonSelectionTimers:{barrios:null,estratos:null,troncales:null},
     polygonFilterTimer:null,
@@ -1324,7 +1325,8 @@
       :("&estratos="+encodeURIComponent(selected.join(",")));
     try{
       const cityFilter=cities?"&cities="+encodeURIComponent(cities):"";
-      const url="/api/map-polygons?mode=geometry&layer="+encodeURIComponent(layer)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom)+filter+cityFilter;
+      const optimized=layer==="estratos"&&state.qaDissolveEstratos?"&qaDissolve=1":"";
+      const url="/api/map-polygons?mode=geometry&layer="+encodeURIComponent(layer)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom)+filter+cityFilter+optimized;
       const data=await authorizedFetch(url,controller,{ttl:90000});
       if(cities!==filterValues("mapCityFilter").join(","))return;
       if(data.requiresZoom){
@@ -1336,7 +1338,9 @@
       const features=Array.isArray(data.features)?data.features:[];
       const drawn=drawPolygonLayer(layer,features);
       const received=features.length;
-      state.polygonStatus[layer]=data.truncated
+      state.polygonStatus[layer]=layer==="estratos"&&state.qaDissolveEstratos
+        ?("Piloto optimizado · "+Number(data.originalFeatureCount||features.length)+" originales → "+features.length+" geometrías"+(data.optimizedIncomplete?" · vista incompleta por límite":""))
+        :data.truncated
         ?("vista general · "+received+" recibidos · "+drawn+" dibujados · "+Number(data.totalVisible||received)+" seleccionados")
         :(received+" recibidos · "+drawn+" dibujados");
       if(received>0&&drawn===0){
@@ -1808,6 +1812,10 @@
     }));
     $("mapShowTests")?.addEventListener("change",()=>{renderMarkers();updateFilterCount();loadPoints({silent:true});});
     $("mapRefresh")?.addEventListener("click",refreshMapNow);
+    $("mapEstratoOptimizePilot")?.addEventListener("change",event=>{
+      state.qaDissolveEstratos=!!event.target.checked;
+      if(state.polygonActive.estratos)loadPolygonLayer("estratos",{silent:false});
+    });
     $("mapQuickRefresh")?.addEventListener("click",refreshMapNow);
     $("mapQuickReset")?.addEventListener("click",clearAllMapFilters);
     $("mapFullscreen")?.addEventListener("click",()=>setMapFullscreen());
