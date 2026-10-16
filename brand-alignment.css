@@ -2368,3 +2368,9 @@ input:not([type=checkbox]):not([type=radio]),select,textarea,
 #mapFloatingTools .map-filter-disclosure .map-typeahead-options button{
  min-height:31px!important;padding:4px 5px!important;gap:7px!important;font-size:11px!important;
 }
+
+/* FO-CHG-047 · isolated QA estrato geometry optimization toggle */
+.map-estrato-pilot-toggle{display:flex;align-items:center;gap:10px;padding:10px 6px;margin-top:10px;
+ color:#e5e5e5;font-size:13px;font-weight:600;line-height:1.4;background:#202020;
+ border:1px dashed #58595b;border-radius:7px;cursor:pointer}
+.map-estrato-pilot-toggle input{width:18px;height:18px;accent-color:#43FFA5}
