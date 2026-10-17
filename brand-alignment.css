@@ -2392,3 +2392,24 @@ input:not([type=checkbox]):not([type=radio]),select,textarea,
 }
 #mapQaOptimizeToolbar:focus-visible{outline:2px solid #43ffa5!important;outline-offset:2px}
 @media(max-width:650px){#mapQaOptimizeToolbar{white-space:normal;min-width:0;font-size:12px!important}}
+
+/* FO-CHG-051: comparison action belongs in map overlay, including fullscreen.
+   Neutral black surfaces; use the Fibrazo green only for the enabled outline/text. */
+.map-quick-actions #mapQuickEstratoUnion[hidden]{display:none!important}
+.map-quick-actions #mapQuickEstratoUnion{
+  display:inline-flex;align-items:center;justify-content:center;
+  background:#171717!important;border:1px solid #727b76!important;
+  color:#f2f2f2!important;min-height:38px;white-space:nowrap;
+  font-weight:700!important;letter-spacing:0;font-size:12px!important;
+}
+.map-quick-actions #mapQuickEstratoUnion.qa-active{
+  background:#171717!important;border-color:#43ffa5!important;
+  color:#43ffa5!important;
+}
+.map-quick-actions #mapQuickEstratoUnion:focus-visible{
+  outline:2px solid #43ffa5!important;outline-offset:2px;
+}
+@media(max-width:750px){
+  .map-quick-actions #mapQuickEstratoUnion{font-size:11px!important;padding:7px!important;white-space:normal;max-width:108px;line-height:1.2}
+  .map-quick-actions{gap:4px!important}
+}
