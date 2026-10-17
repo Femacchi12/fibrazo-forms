@@ -13,6 +13,12 @@
   const TERRITORIAL_CACHE_TTL_MS=5*60*1000;
   const CITY_NEARBY_LIMIT_M=20000;
   const BUCARAMANGA_BOUNDS=[[7.070607677,-73.172095278],[7.195892798,-73.093548025]];
+  // QA city-specific extent from validated SHP bounds (EPSG:4326).
+  const QA_CITY_BOUNDS={
+    neiva:[[2.88679,-75.30872],[2.98355,-75.23607]],
+    villavicencio:[[4.05402,-73.68193],[4.18333,-73.53185]],
+    ibague:[[4.37573,-75.27256],[4.46508,-75.11995]]
+  };
 
   const state={
     map:null,
@@ -1207,6 +1213,16 @@
     };
   }
 
+  function centerQaCityIfEmpty(){
+    const selected=filterValues("mapCityFilter");
+    if(selected.length!==1||!ensureMap()||filteredPoints().length)return;
+    const bounds=QA_CITY_BOUNDS[selected[0]];
+    if(bounds){
+      state.polygonFocusUntil=Date.now()+500;
+      state.map.fitBounds(bounds,{padding:[24,24],maxZoom:13});
+    }
+  }
+
   function resetTerritorialScopeForCity(){
     const ready=territorialCityReady();
     polygonResponseCache.clear();
@@ -1342,7 +1358,9 @@
       const features=Array.isArray(data.features)?data.features:[];
       const drawn=drawPolygonLayer(layer,features);
       const received=features.length;
-      state.polygonStatus[layer]=layer==="estratos"&&state.qaDissolveEstratos
+      state.polygonStatus[layer]=data.precomputed
+        ?("QA precalculado · "+Number(data.totalVisible||0)+" componentes en vista · "+features.length+" estratos")
+        :layer==="estratos"&&state.qaDissolveEstratos
         ?("Piloto optimizado · "+Number(data.originalFeatureCount||features.length)+" originales → "+features.length+" geometrías"+(data.optimizedIncomplete?" · vista incompleta por límite":""))
         :data.truncated
         ?("vista general · "+received+" recibidos · "+drawn+" dibujados · "+Number(data.totalVisible||received)+" seleccionados")
@@ -1811,6 +1829,7 @@
         updateFilters();
         resetTerritorialScopeForCity();
         renderMarkers({fit:filterValues("mapCityFilter").length>0});
+        centerQaCityIfEmpty();
         schedulePolygonFilterRefresh();
       }else renderMarkers();
     }));
