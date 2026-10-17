@@ -81,8 +81,15 @@ assert.ok(map.includes('const queryBbox=completeCity?"-180,-90,180,90":bbox')&&m
 assert.ok(map.includes('state.polygonFullKey===fullKey')&&map.includes('state.polygonFullLoadingKey===fullKey'),"Evita reconsultas y redibujos de multipolígonos completos ante navegación");
 assert.ok(map.includes('s (carga + dibujo)'),"Expone segundos de carga y dibujo para comparar modo original vs optimizado");
 
-assert.ok(map.includes('isAmbCity(cities)&&!state.qaDissolveEstratos')&&map.includes('mode=index&layer=')&&map.includes('&qaDissolve=1'),"Solo modo original pagina; el índice y geometría optimizados comparten fuente");
+assert.ok(map.includes('!state.qaDissolveEstratos')&&map.includes('mode=index&layer=')&&map.includes('&qaDissolve=1'),"La carga AMB original pagina; la optimizada está precalculada");
 assert.ok(map.includes('QA precalculado · '),"Estado del mapa identifica capas precomputadas");
+assert.ok(map.includes('scopeCity=value=>')&&map.includes('"bucaramanga-amb"')&&map.includes('matchesCitySelection'),"Bucaramanga y los tres municipios del AMB comparten filtro de puntos y operadores");
+assert.ok(read("api/map-city-catalog.js").includes('visibleCity')&&read("api/map-city-catalog.js").includes('"Bucaramanga + AMB"'),"Catálogo solo muestra la agrupación Bucaramanga + AMB");
+assert.ok(read("api/map-polygons.js").includes('cities.has("bucaramanga-amb")')&&read("api/map-polygons.js").includes('"floridablanca","giron","piedecuesta"'),"Bucaramanga + AMB filtra todos los municipios de barrios y troncales");
+assert.ok(read("api/_estratos-amb-precalc.js").includes('loadCombined')&&read("api/_estratos-amb-precalc.js").includes('polygons:matches.flatMap(row=>row.polygons)'),"AMB unido se entrega como máximo en seis Features MultiPolygon sin inventar superficies");
+assert.ok(read("api/_estratos-precalc.js").includes('delivery:"FULL_CITY_MULTIPOLYGON"')&&!read("api/_estratos-precalc.js").includes('hits('),"Neiva, Ibagué y Villavicencio entregan toda su geometría, sin viewport");
+assert.ok(map.includes('hasStaticEstratos(cities)')&&map.includes('state.polygonFullKey===fullKey'),"Capas de todas las ciudades con estratos se conservan durante pan y zoom");
+
 
 assert.ok(read("api/map-city-catalog.js").includes("QA_ESTRATOS"),"Ciudades en estado QA se ofrecen solo en versión QA");
 assert.ok(map.includes("centerQaCityIfEmpty")&&map.includes("QA_CITY_BOUNDS"),"Mapa centra ciudades nuevas sin puntos");
