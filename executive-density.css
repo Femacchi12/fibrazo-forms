@@ -665,3 +665,363 @@ body.form-mode #formWorkspace .form-actions{border-top:0!important}
   #formsView{width:100%!important}
   #formsView>.intro-panel{padding:13px!important}
 }
+
+/* FO-CHG-051 · jerarquía tipográfica, desplegables contenidos y formularios sobrios. */
+
+/* Los encabezados conservan jerarquía; las opciones vuelven a peso regular. */
+#mapFloatingTools :is(.map-filter-disclosure,.map-layer-disclosure)>summary{
+  min-height:32px!important;
+  padding:2px 5px!important;
+}
+#mapFloatingTools :is(.map-filter-disclosure,.map-layer-disclosure)>summary .map-control-label{
+  font-size:12px!important;
+  font-weight:650!important;
+  letter-spacing:0!important;
+}
+#mapFloatingTools :is(.map-filter-disclosure,.map-layer-disclosure)>summary .map-control-count{
+  font-size:8.5px!important;
+  font-weight:600!important;
+}
+
+/* Solo el contenido abierto recibe marco y una sangría que indica su origen. */
+#mapFloatingTools .map-filter-disclosure[open]>.map-typeahead,
+#mapFloatingTools .map-layer-disclosure[open]>.map-selective-layer{
+  box-sizing:border-box!important;
+  width:calc(100% - 30px)!important;
+  margin:1px 6px 5px 24px!important;
+  padding:4px!important;
+  border:1px solid #33483e!important;
+  border-radius:8px!important;
+  background:#0d1210!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead>input,
+#mapFloatingTools .map-layer-disclosure :is(.map-estrato-search,.map-barrio-search input){
+  min-height:27px!important;
+  height:27px!important;
+  margin-bottom:2px!important;
+  padding-block:3px!important;
+  font-size:10px!important;
+  font-weight:450!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options,
+#mapFloatingTools :is(#mapEstratoOptions,#mapBarrioOptions,#mapTroncalOptions){
+  max-height:174px!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options button,
+#mapFloatingTools .map-layer-disclosure .map-selective-option{
+  min-height:25px!important;
+  height:auto!important;
+  padding:2px 4px!important;
+  gap:5px!important;
+  font-size:10px!important;
+  font-weight:450!important;
+  line-height:1.15!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options button span,
+#mapFloatingTools .map-layer-disclosure .map-selective-option :is(b,small,span){
+  font-size:10px!important;
+  font-weight:450!important;
+  line-height:1.15!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options input[type="checkbox"],
+#mapFloatingTools :is(#mapEstratoOptions,#mapBarrioOptions,#mapTroncalOptions) .map-selective-option input[type="checkbox"]{
+  width:12px!important;
+  height:12px!important;
+  min-width:12px!important;
+  flex-basis:12px!important;
+}
+#mapFloatingTools #mapEstratoOptions .map-selective-option{
+  grid-template-columns:12px 6px minmax(0,1fr)!important;
+  column-gap:5px!important;
+}
+#mapFloatingTools #mapEstratoOptions .map-selective-option>i{
+  width:6px!important;
+  height:6px!important;
+  min-width:6px!important;
+}
+
+/* Formularios abiertos: una sola superficie, controles discretos y menos marcos. */
+body.form-mode #formsView,
+body.form-mode #formWorkspace,
+body.form-mode #reviewWorkspace,
+body.form-mode #successWorkspace{
+  width:min(100%,1120px)!important;
+  margin-inline:auto!important;
+}
+body.form-mode #formWorkspace,
+body.form-mode #reviewWorkspace,
+body.form-mode #successWorkspace{
+  padding:14px!important;
+  border:0!important;
+  border-radius:12px!important;
+  box-shadow:none!important;
+  background:#0b100d!important;
+}
+body.form-mode #formWorkspace .workspace-topbar,
+body.form-mode #reviewWorkspace .workspace-topbar{
+  position:sticky!important;
+  top:6px!important;
+  margin:0 0 8px!important;
+  padding:5px 0!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  background:rgba(11,16,13,.94)!important;
+}
+body.form-mode #formWorkspace .workspace-topbar :is(button,a),
+body.form-mode #reviewWorkspace .workspace-topbar :is(button,a){
+  min-height:34px!important;
+  height:34px!important;
+  padding:5px 10px!important;
+  border-width:1px!important;
+  border-radius:8px!important;
+  font-size:11px!important;
+  font-weight:600!important;
+}
+body.form-mode #formWorkspace .workspace-status,
+body.form-mode #reviewWorkspace .workspace-status{
+  font-weight:500!important;
+}
+body.form-mode #formWorkspace :is(#formNetworkStatus,#formStepCounter),
+body.form-mode #reviewWorkspace .step-counter{
+  font-weight:550!important;
+}
+body.form-mode #formWorkspace .workspace-hero,
+body.form-mode #reviewWorkspace .workspace-hero{
+  grid-template-columns:minmax(0,1.6fr) minmax(220px,.55fr)!important;
+  gap:12px!important;
+  margin:0!important;
+  padding:12px 0 9px!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+body.form-mode #formWorkspace .workspace-hero h1,
+body.form-mode #reviewWorkspace .workspace-hero h1{
+  margin:4px 0!important;
+  font-size:23px!important;
+  font-weight:750!important;
+}
+body.form-mode #formWorkspace .workspace-hero>div:first-child>span,
+body.form-mode #reviewWorkspace .workspace-hero>div:first-child>span,
+body.form-mode #formWorkspace .section-heading>span{
+  font-weight:700!important;
+}
+body.form-mode #formWorkspace .form-user-card,
+body.form-mode #reviewWorkspace .form-user-card{
+  padding:8px 10px!important;
+  border:0!important;
+  border-radius:8px!important;
+  box-shadow:none!important;
+  background:rgba(255,255,255,.045)!important;
+}
+body.form-mode #formWorkspace .form-user-card :is(span,strong,small),
+body.form-mode #reviewWorkspace .form-user-card :is(span,strong,small){
+  font-weight:550!important;
+}
+body.form-mode #formWorkspace .form-history{
+  margin:3px 0 8px!important;
+  border:0!important;
+  border-radius:7px!important;
+  box-shadow:none!important;
+  background:rgba(255,255,255,.028)!important;
+}
+body.form-mode #formWorkspace .form-history summary{
+  min-height:30px!important;
+  padding:5px 8px!important;
+  font-size:9.5px!important;
+  font-weight:600!important;
+}
+body.form-mode #formWorkspace .section-stepper{
+  gap:5px!important;
+  margin:7px 0 8px!important;
+}
+body.form-mode #formWorkspace .section-stepper .step{
+  min-height:42px!important;
+  padding:6px 8px!important;
+  border:0!important;
+  border-radius:8px!important;
+  box-shadow:none!important;
+  background:rgba(255,255,255,.045)!important;
+}
+body.form-mode #formWorkspace .section-stepper .step.active{
+  background:rgba(67,255,165,.12)!important;
+}
+body.form-mode #formWorkspace .section-stepper .step :is(span,small){
+  font-weight:550!important;
+}
+body.form-mode #formWorkspace .section-stepper .step.active :is(span,small){
+  font-weight:650!important;
+}
+body.form-mode #formWorkspace .section-stepper .step span{
+  border-width:1px!important;
+}
+body.form-mode #formWorkspace .section-heading{
+  margin:7px 0 5px!important;
+  padding:2px 0!important;
+  border:0!important;
+}
+body.form-mode #formWorkspace .section-heading h2{
+  margin:3px 0!important;
+  font-size:20px!important;
+  font-weight:750!important;
+}
+body.form-mode #formWorkspace .fbz-description-disclosure{
+  margin-top:5px!important;
+  border:0!important;
+  border-radius:7px!important;
+  box-shadow:none!important;
+  background:rgba(255,255,255,.035)!important;
+}
+body.form-mode #formWorkspace .fbz-description-disclosure summary{
+  padding:6px 8px!important;
+  font-weight:550!important;
+}
+
+/* Las preguntas se separan por espacio; solo el control editable conserva borde. */
+body.form-mode #formWorkspace .form-grid{
+  gap:2px!important;
+  margin-top:5px!important;
+}
+body.form-mode #formWorkspace .form-grid>.field,
+body.form-mode #formWorkspace .form-grid>.operator-element-group,
+body.form-mode #formWorkspace .form-qa-flag{
+  padding:8px 4px!important;
+  border:0!important;
+  border-radius:7px!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+body.form-mode #formWorkspace .form-grid>.field:focus-within{
+  border:0!important;
+  box-shadow:none!important;
+  background:rgba(67,255,165,.035)!important;
+}
+body.form-mode #formWorkspace .form-grid>.field label.field-label,
+body.form-mode #formWorkspace .form-qa-flag legend{
+  margin-bottom:5px!important;
+  font-size:12px!important;
+  font-weight:650!important;
+}
+body.form-mode #formWorkspace .field-help,
+body.form-mode #formWorkspace .form-qa-flag small{
+  font-weight:400!important;
+}
+body.form-mode #formWorkspace :is(input[type="text"],input[type="number"],input[type="date"],select,textarea,.gps-value,.gps-exec-coordinate){
+  border-width:1px!important;
+  border-color:rgba(174,190,181,.48)!important;
+  box-shadow:none!important;
+  font-weight:450!important;
+}
+body.form-mode #formWorkspace :is(.segment-option,.binary-toggle-button,.choice){
+  border-width:1px!important;
+  box-shadow:none!important;
+  font-weight:550!important;
+}
+body.form-mode #formWorkspace .segment-option{
+  min-height:39px!important;
+}
+body.form-mode #formWorkspace .segment-option.selected{
+  border-color:#25d98f!important;
+  background:rgba(37,217,143,.11)!important;
+}
+body.form-mode #formWorkspace .segment-detail:not([hidden]){
+  min-height:0!important;
+  margin-top:5px!important;
+  padding:7px 9px!important;
+  border:0!important;
+  border-radius:7px!important;
+  box-shadow:none!important;
+  background:rgba(67,255,165,.055)!important;
+  font-weight:500!important;
+}
+body.form-mode #formWorkspace .operator-memory-inline,
+body.form-mode #formWorkspace .coordinate-mode-choice,
+body.form-mode #formWorkspace .gps-executive,
+body.form-mode #formWorkspace .territorial-coordinate-summary{
+  padding:5px!important;
+  border:0!important;
+  border-radius:8px!important;
+  box-shadow:none!important;
+  background:rgba(255,255,255,.025)!important;
+}
+body.form-mode #formWorkspace .operator-memory-inline button,
+body.form-mode #formWorkspace .coordinate-mode-choice button,
+body.form-mode #formWorkspace .gps-executive button{
+  border-width:1px!important;
+  font-weight:600!important;
+}
+body.form-mode #formWorkspace .form-actions{
+  margin-top:7px!important;
+  padding-top:7px!important;
+  border:0!important;
+  background:linear-gradient(to top,#0b100d 78%,rgba(11,16,13,.9))!important;
+}
+body.form-mode #formWorkspace .form-actions button{
+  border-width:1px!important;
+  font-weight:650!important;
+}
+
+/* La revisión final usa la misma gramática plana. */
+body.form-mode #reviewWorkspace .review-section,
+body.form-mode #reviewWorkspace .review-section-head,
+body.form-mode #reviewWorkspace .review-row{
+  border:0!important;
+  box-shadow:none!important;
+}
+body.form-mode #reviewWorkspace .review-section{
+  background:rgba(255,255,255,.025)!important;
+}
+body.form-mode #reviewWorkspace .review-section-head{
+  background:rgba(255,255,255,.035)!important;
+}
+body.form-mode #reviewWorkspace .review-row :is(span,strong){
+  font-weight:500!important;
+}
+body.form-mode #reviewWorkspace .review-section-head h2{
+  font-weight:700!important;
+}
+
+@media(max-width:680px){
+  #mapFloatingTools .map-filter-disclosure[open]>.map-typeahead,
+  #mapFloatingTools .map-layer-disclosure[open]>.map-selective-layer{
+    width:calc(100% - 26px)!important;
+    margin-left:20px!important;
+  }
+  #mapFloatingTools .map-filter-disclosure .map-typeahead-options button,
+  #mapFloatingTools .map-layer-disclosure .map-selective-option{
+    min-height:29px!important;
+  }
+  body.form-mode #formsView,
+  body.form-mode #formWorkspace,
+  body.form-mode #reviewWorkspace,
+  body.form-mode #successWorkspace{width:100%!important}
+  body.form-mode #formWorkspace,
+  body.form-mode #reviewWorkspace,
+  body.form-mode #successWorkspace{padding:9px!important}
+  body.form-mode #formWorkspace .workspace-hero,
+  body.form-mode #reviewWorkspace .workspace-hero{
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:6px!important;
+  }
+  body.form-mode #formWorkspace .workspace-topbar{
+    border:0!important;
+    box-shadow:none!important;
+    background:rgba(11,16,13,.96)!important;
+  }
+  body.form-mode #formWorkspace .workspace-topbar .workspace-status{
+    padding:3px 1px!important;
+    border:0!important;
+    background:transparent!important;
+  }
+  body.form-mode #formWorkspace .section-stepper .step{
+    min-height:36px!important;
+    height:36px!important;
+    border:0!important;
+  }
+  body.form-mode #formWorkspace .form-grid>.field{
+    padding:7px 3px!important;
+    border:0!important;
+  }
+}
