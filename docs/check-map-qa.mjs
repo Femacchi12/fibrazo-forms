@@ -67,7 +67,7 @@ assert.ok(read("api/map-polygons.js").includes("requestedCityCount===1?cfg.maxFe
 assert.ok(html.includes('id="mapQaOptimizeToolbar"')&&map.includes('updateQaToolbar')&&map.includes('mapQaOptimizeToolbar'),"El botón QA de unión es visible junto a Actualizar");
 assert.equal(html.split('id="mapQuickEstratoUnion"').length,2,"El botón de unión aparece una sola vez en la barra real del mapa fullscreen");
 assert.ok(html.includes('id="mapQuickEstratoUnion"')&&html.includes('id="mapQuickRefresh"')&&map.includes('$("mapQuickEstratoUnion")?.addEventListener("click"'),"El botón visible fullscreen está conectado a la unificación");
-assert.ok(map.includes('quick.hidden=!isBuc')&&map.includes('quick.setAttribute("aria-pressed"')&&map.includes('state.qaDissolveEstratos=false;'),"El botón QA se muestra en AMB y inicia en modo original para comparar");
+assert.ok(map.includes('quick.hidden=!isBuc')&&map.includes('quick.setAttribute("aria-pressed"')&&map.includes('state.qaDissolveEstratos=true;'),"El botón QA se muestra en AMB e inicia con la capa multipolígono precalculada");
 assert.ok(map.includes("completeBuc")&&map.includes('fullCoverage=1')&&map.includes('baseUrl+"&page="'),"Bucaramanga solicita páginas completas y evita el límite 650");
 assert.ok(read("api/map-polygons.js").includes("candidates.slice(page*limit")&&read("api/map-polygons.js").includes("pageCount"),"API envía todas las geometrías solicitadas en lotes");
 assert.ok(map.includes("state.manualRefreshId")&&map.includes("recargando cobertura")&&map.includes('forceRefresh=1'),"Actualizar vuelve a solicitar capas sin vaciar prematuramente");
@@ -76,6 +76,11 @@ assert.ok(read("api/map-polygons.js").includes("precalcCity")&&read("api/_estrat
 assert.ok(read("api/map-polygons.js").includes('ambPrecalcCity')&&read("api/_estratos-amb-precalc.js").includes('AMB_QA_PRECALCULATED'),"AMB utiliza adaptador offline en modo optimizado");
 assert.ok(read("api/_estratos-amb-precalc.js").includes("11T-x0QBB9W1GYUf0AaAvB9f5yvsLIGfJ")&&read("api/_estratos-amb-precalc.js").includes('["1","2","3","4","5","6"]'),"Fuente versionada de Drive y seis estratos AMB");
 assert.ok(read("api/map-polygons.js").includes('(precalcCity||ambPrecalcCity)?Promise.resolve(null):loadMeta'),"Modo optimizado evita escanear el Sheet de polígonos");
+assert.ok(read("api/_estratos-amb-precalc.js").includes('const detail="full"')&&read("api/_estratos-amb-precalc.js").includes('viewportFiltered:false')&&!read("api/_estratos-amb-precalc.js").includes('intersects('),"AMB optimizado devuelve geometrías completas sin filtrar por zona visible");
+assert.ok(map.includes('const queryBbox=completeCity?"-180,-90,180,90":bbox')&&map.includes('const queryZoom=completeCity?15:zoom'),"Las solicitudes AMB optimizadas no cambian por desplazamiento o zoom");
+assert.ok(map.includes('state.polygonFullKey===fullKey')&&map.includes('state.polygonFullLoadingKey===fullKey'),"Evita reconsultas y redibujos de multipolígonos completos ante navegación");
+assert.ok(map.includes('s (carga + dibujo)'),"Expone segundos de carga y dibujo para comparar modo original vs optimizado");
+
 assert.ok(map.includes('isAmbCity(cities)&&!state.qaDissolveEstratos')&&map.includes('mode=index&layer=')&&map.includes('&qaDissolve=1'),"Solo modo original pagina; el índice y geometría optimizados comparten fuente");
 assert.ok(map.includes('QA precalculado · '),"Estado del mapa identifica capas precomputadas");
 
