@@ -133,6 +133,9 @@ async function loadMeta(auth,layer){
     const row={__row:i+2};
     for(const part of parts)Object.assign(row,part[i]||{});
     const id=safeValue(row,cfg.id);
+    // FO-CHG-053: avoid indexing or parsing unclassified estrato geometries
+    // in the original fallback. Source Sheet remains untouched.
+    if(layer==="estratos"&&!/^[1-6]$/.test(String(row.Estrato||row.Categoria_Estrato||"").trim()))continue;
     const minLon=num(row.Min_Lon),minLat=num(row.Min_Lat),maxLon=num(row.Max_Lon),maxLat=num(row.Max_Lat);
     if(!id||!truthy(row.Preferida_Analisis)||!stateOk(row.Estado_Calidad))continue;
     if(![minLon,minLat,maxLon,maxLat].every(Number.isFinite))continue;
