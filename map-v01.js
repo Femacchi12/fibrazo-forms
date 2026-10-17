@@ -1409,6 +1409,7 @@
     if(fullKey&&!state.manualRefreshId&&
        (state.polygonFullLoadingKey===fullKey||
          (state.polygonFullKey===fullKey&&state.polygonFeatures.estratos.length)))return;
+    const loadStarted=performance.now();
     const selection=state.polygonSelections[layer];
     const group=state.polygonGroups[layer];
     if(!state.map.hasLayer(group))group.addTo(state.map);
@@ -1476,7 +1477,7 @@
       const received=features.length;
       state.polygonStatus[layer]=data.precomputed
         ?(data.delivery==="FULL_CITY_MULTIPOLYGON"
-          ?"QA multipolígono completo · "+features.length+" estratos · "+Number(data.totalVisible||0)+" superficies (sin recorte por vista)"
+          ?"QA multipolígono completo · "+features.length+" estratos · "+Number(data.totalVisible||0)+" superficies · "+((performance.now()-loadStarted)/1000).toFixed(1)+" s (carga + dibujo)"
           :"QA precalculado · "+Number(data.totalVisible||0)+" componentes en vista → "+features.length+" grupos por estrato · detalle "+(data.detail||""))
         :completeBuc
         ?("AMB original · "+Number(data.totalVisible||0)+" polígonos sin muestreo → "+received+" geometrías")
@@ -1959,8 +1960,10 @@
     $("mapEstratoOptimizePilot")?.addEventListener("change",event=>{
       state.qaDissolveEstratos=!!event.target.checked;
       polygonResponseCache.clear();
+      state.polygonFullKey="";
+      state.polygonFullLoadingKey="";
       updateQaToolbar();
-      if(state.polygonActive.estratos)loadPolygonLayer("estratos",{silent:false});
+      if(state.polygonActive.estratos)loadLayerIndex("estratos",{silent:false});
     });
     $("mapQaOptimizeToolbar")?.addEventListener("click",()=>{
       const checkbox=$("mapEstratoOptimizePilot");
