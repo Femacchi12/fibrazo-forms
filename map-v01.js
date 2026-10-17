@@ -41,6 +41,8 @@
     barrioAllSelected:false,
     barrioExcluded:new Set(),
     qaDissolveEstratos:false,
+    manualRefreshId:null,
+    previousTerritorialCity:"",
     polygonReloadTimer:null,
     polygonSelectionTimers:{barrios:null,estratos:null,troncales:null},
     polygonFilterTimer:null,
@@ -861,18 +863,47 @@
     mapStatus("Filtros del mapa restablecidos.","success");
   }
 
-  function refreshMapNow(){
+  async function refreshMapNow(){
+    const refreshButton=$("mapRefresh"),quickButton=$("mapQuickRefresh");
+    if(refreshButton?.disabled)return;
+    if(refreshButton){refreshButton.disabled=true;refreshButton.textContent="↻ Actualizando…";}
+    if(quickButton)quickButton.disabled=true;
+    state.manualRefreshId=String(Date.now());
     polygonResponseCache.clear();
-    loadPoints({fit:false});
-    // Explicit refresh must re-fetch each visible polygon and re-render active selections.
-    for(const layer of ["estratos","troncales","barrios"]){
-      if(!state.polygonActive[layer])continue;
-      state.polygonIndexData[layer]=[];
+    // Keep rendered polygons on screen while fetching a fresh, complete replacement.
+    const layers=["estratos","troncales","barrios"].filter(layer=>state.polygonActive[layer]);
+    for(const layer of layers){
+      state.polygonControllers[layer]?.abort();
       state.polygonIndexControllers[layer]?.abort();
-      state.polygonIndexControllers[layer]=null;
-      clearPolygonLayer(layer,{keepStatus:true});
-      refreshPolygonLayer(layer,{silent:false});
+      state.polygonStatus[layer]="recargando cobertura…";
     }
+    updatePolygonStatus();
+    try{
+      await Promise.allSettled([loadPoints({fit:false}),...layers.map(layer=>refreshPolygonLayer(layer,{silent:false}))]);
+      if(!layers.length)mapStatus("Puntos actualizados. Seleccioná una ciudad para cargar estratos.","success");
+    }finally{
+      state.manualRefreshId=null;
+      if(refreshButton){refreshButton.disabled=false;refreshButton.textContent="↻ Actualizar";}
+      if(quickButton)quickButton.disabled=false;
+    }
+  }
+
+  function updateQaToolbar(){
+    const button=$("mapQaOptimizeToolbar");
+    if(!button)return;
+    const cities=filterValues("mapCityFilter");
+    const city=cities.length===1?cities[0]:"";
+    const precomputed=!!QA_CITY_BOUNDS[city];
+    const isBuc=city==="bucaramanga";
+    button.disabled=!isBuc;
+    button.classList.toggle("qa-active",isBuc&&state.qaDissolveEstratos);
+    button.textContent=precomputed?"✓ Estratos unificados (QA)":isBuc
+      ?(state.qaDissolveEstratos?"✓ Unificación QA activa":"Unificar estratos (QA)")
+      :"Estratos QA · elegí Bucaramanga";
+    button.title=precomputed
+      ?"Esta ciudad ya utiliza polígonos unidos y precalculados"
+      :isBuc?"Comparar cobertura original completa y unificación QA por lotes"
+      :"Seleccioná Bucaramanga para alternar la unificación";
   }
 
   function clearFilters(){
@@ -1227,6 +1258,8 @@
     const ready=territorialCityReady();
     const selected=filterValues("mapCityFilter");
     const city=selected.length===1?selected[0]:"";
+    if(city==="bucaramanga"&&state.previousTerritorialCity!=="bucaramanga")state.qaDissolveEstratos=true;
+    state.previousTerritorialCity=city;
     const title=document.querySelector("#mapLayersPanel .map-layers-head strong");
     const cityName=city==="ibague"?"Ibagué":city?cityLabel(city):"Selecciona una ciudad";
     if(title)title.textContent=cityName;
@@ -1247,6 +1280,7 @@
           :"Comparar capas originales y unificadas de Bucaramanga";
       }
     }
+    updateQaToolbar();
     polygonResponseCache.clear();
     for(const layer of ["barrios","estratos","troncales"]){
       state.polygonControllers[layer]?.abort();
@@ -1307,8 +1341,9 @@
     try{
       const scope=layer==="barrios"?state.barrioListMode:layer==="troncales"?"all":"visible";
       const cityFilter=cities?"&cities="+encodeURIComponent(cities):"";
-      const url="/api/map-polygons?mode=index&layer="+encodeURIComponent(layer)+"&scope="+encodeURIComponent(scope)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom)+cityFilter;
-      const data=await authorizedFetch(url,controller,{ttl:45000});
+      const reload=state.manualRefreshId?"&reload="+encodeURIComponent(state.manualRefreshId)+"&forceRefresh=1":"";
+      const url="/api/map-polygons?mode=index&layer="+encodeURIComponent(layer)+"&scope="+encodeURIComponent(scope)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom)+cityFilter+reload;
+      const data=await authorizedFetch(url,controller,{ttl:reload?0:45000});
       if(cities!==filterValues("mapCityFilter").join(","))return;
       if(data.requiresZoom){
         state.polygonIndexData[layer]=[];
@@ -1368,19 +1403,38 @@
     try{
       const cityFilter=cities?"&cities="+encodeURIComponent(cities):"";
       const optimized=layer==="estratos"&&state.qaDissolveEstratos?"&qaDissolve=1":"";
-      const url="/api/map-polygons?mode=geometry&layer="+encodeURIComponent(layer)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom)+filter+cityFilter+optimized;
-      const data=await authorizedFetch(url,controller,{ttl:90000});
-      if(cities!==filterValues("mapCityFilter").join(","))return;
+      const completeBuc=layer==="estratos"&&cities==="bucaramanga";
+      const full=completeBuc?"&fullCoverage=1":"";
+      const reload=state.manualRefreshId?"&reload="+encodeURIComponent(state.manualRefreshId):"";
+      const baseUrl="/api/map-polygons?mode=geometry&layer="+encodeURIComponent(layer)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom)+filter+cityFilter+optimized+full+reload;
+      const url=baseUrl+(completeBuc?"&page=0":"");
+      const data=await authorizedFetch(url,controller,{ttl:reload?0:90000});
+      if(controller.signal.aborted||cities!==filterValues("mapCityFilter").join(","))return;
       if(data.requiresZoom){
         clearPolygonLayer(layer,{keepStatus:true});
         state.polygonStatus[layer]="acércate al mapa (zoom "+data.minZoom+"+)";
         renderLayerControls();
         return;
       }
-      const features=Array.isArray(data.features)?data.features:[];
+      let features=Array.isArray(data.features)?[...data.features]:[];
+      const pages=completeBuc?Math.max(1,Math.min(40,Number(data.pageCount)||1)):1;
+      // Transport all visible Bucaramanga geometries without the 650 polygon sample.
+      // Three parallel requests at a time avoids overloading the Sheets adapter.
+      for(let next=1;next<pages;next+=3){
+        const indexes=Array.from({length:Math.min(3,pages-next)},(_,j)=>next+j);
+        const replies=await Promise.all(indexes.map(page=>
+          authorizedFetch(baseUrl+"&page="+page,controller,{ttl:reload?0:90000})
+        ));
+        if(controller.signal.aborted||cities!==filterValues("mapCityFilter").join(","))return;
+        for(const part of replies)if(Array.isArray(part.features))features.push(...part.features);
+        state.polygonStatus[layer]="cargando cobertura completa · "+Math.min(pages,next+indexes.length)+"/"+pages+" partes";
+        updatePolygonStatus();
+      }
       const drawn=drawPolygonLayer(layer,features);
       const received=features.length;
-      state.polygonStatus[layer]=data.precomputed
+      state.polygonStatus[layer]=completeBuc
+        ?("Bucaramanga · "+Number(data.totalVisible||0)+" polígonos sin muestreo → "+received+" geometrías"+(state.qaDissolveEstratos?" · unión QA por lotes":" · original"))
+        :data.precomputed
         ?("QA precalculado · "+Number(data.totalVisible||0)+" componentes en vista · "+features.length+" estratos")
         :layer==="estratos"&&state.qaDissolveEstratos
         ?("Piloto optimizado · "+Number(data.originalFeatureCount||features.length)+" originales → "+features.length+" geometrías"+(data.optimizedIncomplete?" · vista incompleta por límite":""))
@@ -1403,8 +1457,8 @@
   }
 
   function refreshPolygonLayer(layer,{silent=false}={}){
-    if(!territorialCityReady()||!state.polygonActive[layer])return;
-    loadLayerIndex(layer,{silent});
+    if(!territorialCityReady()||!state.polygonActive[layer])return Promise.resolve();
+    return loadLayerIndex(layer,{silent});
   }
 
   function schedulePolygonReload(){
@@ -1859,7 +1913,15 @@
     $("mapRefresh")?.addEventListener("click",refreshMapNow);
     $("mapEstratoOptimizePilot")?.addEventListener("change",event=>{
       state.qaDissolveEstratos=!!event.target.checked;
+      polygonResponseCache.clear();
+      updateQaToolbar();
       if(state.polygonActive.estratos)loadPolygonLayer("estratos",{silent:false});
+    });
+    $("mapQaOptimizeToolbar")?.addEventListener("click",()=>{
+      const checkbox=$("mapEstratoOptimizePilot");
+      if(!checkbox||checkbox.disabled)return;
+      checkbox.checked=!checkbox.checked;
+      checkbox.dispatchEvent(new Event("change",{bubbles:true}));
     });
     $("mapQuickRefresh")?.addEventListener("click",refreshMapNow);
     $("mapQuickReset")?.addEventListener("click",clearAllMapFilters);
