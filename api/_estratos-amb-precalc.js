@@ -10,8 +10,10 @@ const CITIES={
   bucaramanga:"Bucaramanga",
   floridablanca:"Floridablanca",
   giron:"Girón",
-  piedecuesta:"Piedecuesta"
+  piedecuesta:"Piedecuesta",
+  "bucaramanga-amb":"Bucaramanga + AMB"
 };
+const AMB_MEMBERS=["bucaramanga","floridablanca","giron","piedecuesta"];
 const TTL=10*60*1000;
 let archiveValue=null,archiveExpiry=0,archiveJob=null;
 const parsed=new Map(),inflight=new Map();
@@ -19,7 +21,9 @@ function norm(x){return String(x||"").normalize("NFD").replace(/[\u0300-\u036f]/
 function target(query){
   if(String(query?.qaDissolve||"")!=="1")return null;
   const parts=String(query?.cities||"").split(",").map(norm).filter(Boolean);
-  return parts.length===1&&CITIES[parts[0]]?parts[0]:null;
+  if(parts.length!==1)return null;
+  const city=parts[0]==="bucaramanga + amb"?"bucaramanga-amb":parts[0];
+  return CITIES[city]?city:null;
 }
 async function archive(auth){
   if(archiveValue&&archiveExpiry>Date.now())return archiveValue;
@@ -56,12 +60,32 @@ async function load(auth,city,detail){
   inflight.set(key,job);
   try{return await job;}finally{inflight.delete(key);}
 }
+// Combine already-dissolved municipality-specific MultiPolygons into six
+// city-group Features. No corridors, buffering, union on request or WKT reads.
+async function loadCombined(auth,detail){
+  const key="bucaramanga-amb/"+detail;
+  const cached=parsed.get(key);
+  if(cached&&cached.expires>Date.now())return cached.rows;
+  if(inflight.has(key))return inflight.get(key);
+  const job=(async()=>{
+    const sources=await Promise.all(AMB_MEMBERS.map(city=>load(auth,city,detail)));
+    const rows=["1","2","3","4","5","6"].map(estrato=>{
+      const matches=sources.flatMap(entries=>entries.filter(row=>row.estrato===estrato));
+      return {estrato,originalCount:matches.reduce((total,row)=>total+row.originalCount,0),
+        polygons:matches.flatMap(row=>row.polygons)};
+    });
+    parsed.set(key,{rows,expires:Date.now()+TTL});
+    return rows;
+  })();
+  inflight.set(key,job);
+  try{return await job;}finally{inflight.delete(key);}
+}
 async function handle(auth,req,res,city,bbox,zoom){
   // FO-CHG-054: prove the full MultiPolygon delivery without viewport clipping.
   // This QA test intentionally transfers each municipal stratum in its entirety;
   // Leaflet is responsible for viewport clipping when drawing. No lossy LOD.
   const detail="full";
-  const visible=await load(auth,city,detail);
+  const visible=city==="bucaramanga-amb"?await loadCombined(auth,detail):await load(auth,city,detail);
   const components=visible.reduce((n,row)=>n+row.polygons.length,0);
   if(String(req.query.mode||"geometry").toLowerCase()==="index"){
     return res.status(200).json({
