@@ -64,6 +64,9 @@ assert.ok(map.includes("const incumbents=new Set")&&map.includes("hasOnlyIsps"),
 assert.ok(read("api/map-polygons.js").includes("requestedCityCount===1?cfg.maxFeatures"),"Una sola ciudad usa el límite completo de geometrías de la capa");
 
 assert.ok(html.includes('id="mapQaOptimizeToolbar"')&&map.includes('updateQaToolbar')&&map.includes('mapQaOptimizeToolbar'),"El botón QA de unión es visible junto a Actualizar");
+assert.equal(html.split('id="mapQuickEstratoUnion"').length,2,"El botón de unión aparece una sola vez en la barra real del mapa fullscreen");
+assert.ok(html.includes('id="mapQuickEstratoUnion"')&&html.includes('id="mapQuickRefresh"')&&map.includes('$("mapQuickEstratoUnion")?.addEventListener("click"'),"El botón visible fullscreen está conectado a la unificación");
+assert.ok(map.includes('quick.hidden=!isBuc')&&map.includes('quick.setAttribute("aria-pressed"')&&map.includes('state.qaDissolveEstratos=false;'),"El botón QA se muestra en AMB y inicia en modo original para comparar");
 assert.ok(map.includes("completeBuc")&&map.includes('fullCoverage=1')&&map.includes('baseUrl+"&page="'),"Bucaramanga solicita páginas completas y evita el límite 650");
 assert.ok(read("api/map-polygons.js").includes("candidates.slice(page*limit")&&read("api/map-polygons.js").includes("pageCount"),"API envía todas las geometrías solicitadas en lotes");
 assert.ok(map.includes("state.manualRefreshId")&&map.includes("recargando cobertura")&&map.includes('forceRefresh=1'),"Actualizar vuelve a solicitar capas sin vaciar prematuramente");
