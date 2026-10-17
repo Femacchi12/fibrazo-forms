@@ -1273,7 +1273,8 @@
     const ready=territorialCityReady();
     const selected=filterValues("mapCityFilter");
     const city=selected.length===1?selected[0]:"";
-    if(isAmbCity(city)&&city!==state.previousTerritorialCity)state.qaDissolveEstratos=true;
+    // Explicit comparison: start with original full coverage, never silently enable union.
+    if(isAmbCity(city)&&!isAmbCity(state.previousTerritorialCity))state.qaDissolveEstratos=false;
     state.previousTerritorialCity=city;
     const title=document.querySelector("#mapLayersPanel .map-layers-head strong");
     const cityName=city==="ibague"?"Ibagué":city?cityLabel(city):"Selecciona una ciudad";
