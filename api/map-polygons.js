@@ -339,12 +339,18 @@ module.exports=async(req,res)=>{
     const zoom=Number(req.query.zoom||0);
     const bbox=parseBbox(req.query.bbox);
     const auth=gauth();
+    const precalcCity=layer==="estratos"?require("./_estratos-precalc").target(req.query):null;
     const [forms,caps,meta]=await Promise.all([
       loadForms(auth),
       userCapabilities(auth,user.email),
-      loadMeta(auth,layer)
+      precalcCity?Promise.resolve(null):loadMeta(auth,layer)
     ]);
     if(!canUseDashboard(user,caps.adminActive,forms))throw httpError("DASHBOARD_ACCESS_DENIED",403);
+    if(precalcCity){
+      // The city-specific ZIP is read from the corporate Growth shared drive,
+      // keeping source KMZ and Bucaramanga metadata untouched.
+      return require("./_estratos-precalc").handle(auth,req,res,precalcCity,[bbox.minLon,bbox.minLat,bbox.maxLon,bbox.maxLat],zoom);
+    }
 
     const mode=String(req.query.mode||"geometry").toLowerCase();
     const indexScope=String(req.query.scope||"visible").toLowerCase();
