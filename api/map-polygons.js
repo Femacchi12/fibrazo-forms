@@ -355,10 +355,11 @@ module.exports=async(req,res)=>{
     const auth=gauth();
     const precalcCity=layer==="estratos"?require("./_estratos-precalc").target(req.query):null;
     const ambPrecalcCity=layer==="estratos"?require("./_estratos-amb-precalc").target(req.query):null;
+    const ctgHistoricCity=layer==="estratos"&&require("./_estratos-ctg-historic").target(req.query);
     const [forms,caps,meta]=await Promise.all([
       loadForms(auth),
       userCapabilities(auth,user.email),
-      (precalcCity||ambPrecalcCity)?Promise.resolve(null):loadMeta(auth,layer)
+      (precalcCity||ambPrecalcCity||ctgHistoricCity)?Promise.resolve(null):loadMeta(auth,layer)
     ]);
     if(!canUseDashboard(user,caps.adminActive,forms))throw httpError("DASHBOARD_ACCESS_DENIED",403);
     if(precalcCity){
@@ -368,6 +369,11 @@ module.exports=async(req,res)=>{
       // Separate, versioned offline-derived layer. No per-request polygon union or
       // 9,570-row territorial metadata scan. Original mode stays unchanged.
       return require("./_estratos-amb-precalc").handle(auth,req,res,ambPrecalcCity,[bbox.minLon,bbox.minLat,bbox.maxLon,bbox.maxLat],zoom);
+    }
+
+    if(ctgHistoricCity){
+      // Historical 2022: clearly labelled visual QA; never classify surveyed points.
+      return require("./_estratos-ctg-historic").handle(auth,req,res);
     }
 
     const mode=String(req.query.mode||"geometry").toLowerCase();
