@@ -84,6 +84,7 @@
     return select?[...select.selectedOptions].map(option=>option.value).filter(value=>value&&value!=="all"):[];
   };
   const territorialCityReady=()=>filterValues("mapCityFilter").length===1;
+  const isAmbCity=city=>["bucaramanga","floridablanca","giron","piedecuesta"].includes(city);
   const selectFilterValues=(select,values)=>{
     if(!select)return;
     const wanted=new Set(values||[]);
@@ -894,7 +895,7 @@
     const cities=filterValues("mapCityFilter");
     const city=cities.length===1?cities[0]:"";
     const precomputed=!!QA_CITY_BOUNDS[city];
-    const isBuc=city==="bucaramanga";
+    const isBuc=isAmbCity(city);
     button.disabled=!isBuc;
     button.classList.toggle("qa-active",isBuc&&state.qaDissolveEstratos);
     button.textContent=precomputed?"✓ Estratos unificados (QA)":isBuc
@@ -1258,7 +1259,7 @@
     const ready=territorialCityReady();
     const selected=filterValues("mapCityFilter");
     const city=selected.length===1?selected[0]:"";
-    if(city==="bucaramanga"&&state.previousTerritorialCity!=="bucaramanga")state.qaDissolveEstratos=true;
+    if(isAmbCity(city)&&city!==state.previousTerritorialCity)state.qaDissolveEstratos=true;
     state.previousTerritorialCity=city;
     const title=document.querySelector("#mapLayersPanel .map-layers-head strong");
     const cityName=city==="ibague"?"Ibagué":city?cityLabel(city):"Selecciona una ciudad";
@@ -1403,7 +1404,7 @@
     try{
       const cityFilter=cities?"&cities="+encodeURIComponent(cities):"";
       const optimized=layer==="estratos"&&state.qaDissolveEstratos?"&qaDissolve=1":"";
-      const completeBuc=layer==="estratos"&&cities==="bucaramanga";
+      const completeBuc=layer==="estratos"&&isAmbCity(cities);
       const full=completeBuc?"&fullCoverage=1":"";
       const reload=state.manualRefreshId?"&reload="+encodeURIComponent(state.manualRefreshId):"";
       const baseUrl="/api/map-polygons?mode=geometry&layer="+encodeURIComponent(layer)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom)+filter+cityFilter+optimized+full+reload;
@@ -1433,7 +1434,7 @@
       const drawn=drawPolygonLayer(layer,features);
       const received=features.length;
       state.polygonStatus[layer]=completeBuc
-        ?("Bucaramanga · "+Number(data.totalVisible||0)+" polígonos sin muestreo → "+received+" geometrías"+(state.qaDissolveEstratos?" · unión QA por lotes":" · original"))
+        ?("AMB · "+Number(data.totalVisible||0)+" polígonos sin muestreo → "+received+" geometrías"+(state.qaDissolveEstratos?" · unión QA por lotes":" · original"))
         :data.precomputed
         ?("QA precalculado · "+Number(data.totalVisible||0)+" componentes en vista · "+features.length+" estratos")
         :layer==="estratos"&&state.qaDissolveEstratos
