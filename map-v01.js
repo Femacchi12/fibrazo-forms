@@ -41,6 +41,8 @@
     barrioAllSelected:false,
     barrioExcluded:new Set(),
     qaDissolveEstratos:false,
+    polygonFullKey:"",
+    polygonFullLoadingKey:"",
     manualRefreshId:null,
     previousTerritorialCity:"",
     polygonReloadTimer:null,
@@ -1044,6 +1046,9 @@
   function clearPolygonLayer(layer,{keepStatus=false}={}){
     const group=state.polygonGroups?.[layer];
     if(group)group.clearLayers();
+    if(layer==="estratos"){
+      state.polygonFullKey="";state.polygonFullLoadingKey="";
+    }
     state.polygonFeatures[layer]=[];
     state.polygonRefs[layer]=new Map();
     if(!keepStatus)state.polygonStatus[layer]="";
@@ -1274,7 +1279,9 @@
     const selected=filterValues("mapCityFilter");
     const city=selected.length===1?selected[0]:"";
     // Explicit comparison: start with original full coverage, never silently enable union.
-    if(isAmbCity(city)&&!isAmbCity(state.previousTerritorialCity))state.qaDissolveEstratos=false;
+    // This QA trial starts with the complete, already-unified MultiPolygon layer.
+    // The visible button still allows an explicit switch to the original geometry.
+    if(isAmbCity(city)&&!isAmbCity(state.previousTerritorialCity))state.qaDissolveEstratos=true;
     state.previousTerritorialCity=city;
     const title=document.querySelector("#mapLayersPanel .map-layers-head strong");
     const cityName=city==="ibague"?"Ibagué":city?cityLabel(city):"Selecciona una ciudad";
@@ -1348,6 +1355,9 @@
 
   async function loadLayerIndex(layer,{silent=false}={}){
     if(!territorialCityReady()||!state.polygonActive[layer]||!ensureMap())return;
+    const selectedCity=filterValues("mapCityFilter").join(",");
+    if(layer==="estratos"&&state.qaDissolveEstratos&&isAmbCity(selectedCity)&&!state.manualRefreshId&&
+       (state.polygonFullKey||state.polygonFullLoadingKey))return;
     state.polygonIndexControllers[layer]?.abort();
     const controller=new AbortController();
     state.polygonIndexControllers[layer]=controller;
@@ -1358,8 +1368,11 @@
       const scope=layer==="barrios"?state.barrioListMode:layer==="troncales"?"all":"visible";
       const cityFilter=cities?"&cities="+encodeURIComponent(cities):"";
       const optimized=layer==="estratos"&&state.qaDissolveEstratos?"&qaDissolve=1":"";
+      const fullAmb=layer==="estratos"&&state.qaDissolveEstratos&&isAmbCity(cities);
+      const queryBbox=fullAmb?"-180,-90,180,90":bbox;
+      const queryZoom=fullAmb?15:zoom;
       const reload=state.manualRefreshId?"&reload="+encodeURIComponent(state.manualRefreshId)+"&forceRefresh=1":"";
-      const url="/api/map-polygons?mode=index&layer="+encodeURIComponent(layer)+"&scope="+encodeURIComponent(scope)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom)+cityFilter+optimized+reload;
+      const url="/api/map-polygons?mode=index&layer="+encodeURIComponent(layer)+"&scope="+encodeURIComponent(scope)+"&bbox="+encodeURIComponent(queryBbox)+"&zoom="+encodeURIComponent(queryZoom)+cityFilter+optimized+reload;
       const data=await authorizedFetch(url,controller,{ttl:reload?0:45000});
       if(cities!==filterValues("mapCityFilter").join(","))return;
       if(data.requiresZoom){
@@ -1389,6 +1402,13 @@
 
   async function loadPolygonLayer(layer,{silent=false}={}){
     if(!territorialCityReady()||!state.polygonActive[layer]||!ensureMap())return;
+    const fullCity=filterValues("mapCityFilter").join(",");
+    const fullKey=layer==="estratos"&&state.qaDissolveEstratos&&isAmbCity(fullCity)
+      ?fullCity+"|"+[...state.polygonSelections.estratos].sort().join(","):"";
+    // A full-city MultiPolygon does not change when panning or zooming.
+    if(fullKey&&!state.manualRefreshId&&
+       (state.polygonFullLoadingKey===fullKey||
+         (state.polygonFullKey===fullKey&&state.polygonFeatures.estratos.length)))return;
     const selection=state.polygonSelections[layer];
     const group=state.polygonGroups[layer];
     if(!state.map.hasLayer(group))group.addTo(state.map);
@@ -1423,7 +1443,11 @@
       const completeBuc=layer==="estratos"&&isAmbCity(cities)&&!state.qaDissolveEstratos;
       const full=completeBuc?"&fullCoverage=1":"";
       const reload=state.manualRefreshId?"&reload="+encodeURIComponent(state.manualRefreshId):"";
-      const baseUrl="/api/map-polygons?mode=geometry&layer="+encodeURIComponent(layer)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom)+filter+cityFilter+optimized+full+reload;
+      const completeCity=!!fullKey;
+      const queryBbox=completeCity?"-180,-90,180,90":bbox;
+      const queryZoom=completeCity?15:zoom;
+      const baseUrl="/api/map-polygons?mode=geometry&layer="+encodeURIComponent(layer)+"&bbox="+encodeURIComponent(queryBbox)+"&zoom="+encodeURIComponent(queryZoom)+filter+cityFilter+optimized+full+reload;
+      if(completeCity)state.polygonFullLoadingKey=fullKey;
       const url=baseUrl+(completeBuc?"&page=0":"");
       const data=await authorizedFetch(url,controller,{ttl:reload?0:90000});
       if(controller.signal.aborted||cities!==filterValues("mapCityFilter").join(","))return;
@@ -1448,9 +1472,12 @@
         updatePolygonStatus();
       }
       const drawn=drawPolygonLayer(layer,features);
+      if(layer==="estratos")state.polygonFullKey=fullKey;
       const received=features.length;
       state.polygonStatus[layer]=data.precomputed
-        ?("QA precalculado · "+Number(data.totalVisible||0)+" componentes en vista → "+features.length+" grupos por estrato · detalle "+(data.detail||""))
+        ?(data.delivery==="FULL_CITY_MULTIPOLYGON"
+          ?"QA multipolígono completo · "+features.length+" estratos · "+Number(data.totalVisible||0)+" superficies (sin recorte por vista)"
+          :"QA precalculado · "+Number(data.totalVisible||0)+" componentes en vista → "+features.length+" grupos por estrato · detalle "+(data.detail||""))
         :completeBuc
         ?("AMB original · "+Number(data.totalVisible||0)+" polígonos sin muestreo → "+received+" geometrías")
         :layer==="estratos"&&state.qaDissolveEstratos
@@ -1468,6 +1495,7 @@
       state.polygonStatus[layer]=kept?("conexión inestable · manteniendo "+kept+" polígonos dibujados"):"error al dibujar selección";
       renderLayerControls();
     }finally{
+      if(fullKey&&state.polygonFullLoadingKey===fullKey)state.polygonFullLoadingKey="";
       endMapBusy(busyToken);
       if(state.polygonControllers[layer]===controller)state.polygonControllers[layer]=null;
     }
