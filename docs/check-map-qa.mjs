@@ -51,6 +51,7 @@ assert.ok(!html.includes('id="mapBaseStreet"')&&!html.includes('id="mapBaseSatel
 assert.ok(map.includes("installCoordinateSheetDrag")&&map.includes("map-coordinate-primary")&&map.includes('>↗ Ir</button>'),"Punto seleccionado movible y compacto");
 assert.ok(map.includes("polygonResponseCache")&&map.includes("ttl:90000")&&read("api/map-polygons.js").includes("geometryCache"),"Caché cliente/servidor para polígonos");
 assert.ok(read("api/map-polygons.js").includes("applyCityFilter")&&map.includes('cities:filterValues("mapCityFilter")'),"Capas territoriales respetan ciudades filtradas");
+assert.ok(read("api/map-polygons.js").includes('if(layer==="estratos"&&!/^[1-6]$/.test(String(row.Estrato||row.Categoria_Estrato||"").trim()))continue;'),"Se excluyen estratos sin clasificación del índice original sin alterar el maestro");
 assert.ok(types.includes("content.dataset.selectedCount")&&map.includes("host.dataset.selectedCount"),"El resumen de capas conserva el conteo real aunque el filtro o viewport oculten opciones");
 assert.ok(types.includes('byLayer("Barrios"),byLayer("Troncales")')&&!types.includes("Capas adicionales · Troncales"),"Troncales aparece inmediatamente debajo de Barrios, sin bloque separado");
 assert.ok(types.includes('map-control-label')&&types.includes('map-control-count')&&read("brand-alignment.css").includes("FO-CHG-043"),"Filtros y capas comparten fila, contador y jerarquía visual");
