@@ -1025,3 +1025,244 @@ body.form-mode #reviewWorkspace .review-section-head h2{
     border:0!important;
   }
 }
+
+/* FO-CHG-052 · segunda pasada de densidad global para mapa y formularios. */
+
+/* Catálogos del mapa: una métrica única, sin negrita y sin aire heredado. */
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options,
+#mapFloatingTools :is(#mapEstratoOptions,#mapBarrioOptions,#mapTroncalOptions),
+#mapFloatingTools .map-reference-list{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-auto-rows:max-content!important;
+  align-content:start!important;
+  gap:0!important;
+  padding:0!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options button,
+#mapFloatingTools .map-layer-disclosure .map-selective-option,
+#mapFloatingTools .map-reference-row,
+#mapFloatingTools .map-point-legend-item{
+  box-sizing:border-box!important;
+  min-height:23px!important;
+  height:auto!important;
+  margin:0!important;
+  padding:2px 4px!important;
+  gap:5px!important;
+  border:0!important;
+  border-radius:4px!important;
+  font-size:10px!important;
+  font-weight:400!important;
+  line-height:1.08!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options button{
+  display:flex!important;
+  align-items:center!important;
+}
+#mapFloatingTools .map-layer-disclosure .map-selective-option{
+  align-items:center!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options button :is(span,b,strong,small),
+#mapFloatingTools .map-layer-disclosure .map-selective-option :is(span,b,strong,small),
+#mapFloatingTools .map-reference-row :is(span,b,strong,small),
+#mapFloatingTools .map-point-legend-item :is(span,b,strong,small){
+  margin:0!important;
+  font-size:10px!important;
+  font-weight:400!important;
+  line-height:1.08!important;
+}
+#mapFloatingTools .map-layer-disclosure .map-selective-option>span,
+#mapFloatingTools .map-point-legend-item>span{
+  gap:0!important;
+}
+#mapFloatingTools :is(#mapBarrioOptions,#mapTroncalOptions) .map-selective-option{
+  min-height:27px!important;
+}
+#mapFloatingTools :is(#mapBarrioOptions,#mapTroncalOptions) .map-selective-option small,
+#mapFloatingTools .map-point-legend-item small{
+  margin-top:1px!important;
+  font-size:8px!important;
+  font-weight:400!important;
+  line-height:1!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead-options input[type="checkbox"],
+#mapFloatingTools :is(#mapEstratoOptions,#mapBarrioOptions,#mapTroncalOptions) .map-selective-option input[type="checkbox"]{
+  width:11px!important;
+  height:11px!important;
+  min-width:11px!important;
+  min-height:11px!important;
+  flex:0 0 11px!important;
+  margin:0!important;
+}
+#mapFloatingTools #mapEstratoOptions .map-selective-option{
+  grid-template-columns:11px 6px minmax(0,1fr)!important;
+  column-gap:4px!important;
+}
+#mapFloatingTools #mapEstratoOptions .map-selective-option>i{
+  width:5px!important;
+  height:5px!important;
+  min-width:5px!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead>input,
+#mapFloatingTools .map-layer-disclosure :is(.map-estrato-search,.map-barrio-search input){
+  min-height:25px!important;
+  height:25px!important;
+  margin-bottom:1px!important;
+  padding:2px 7px!important;
+  font-size:9.5px!important;
+  font-weight:400!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead>input{
+  padding-left:25px!important;
+}
+#mapFloatingTools .map-filter-disclosure .map-typeahead::before{
+  left:11px!important;
+  top:10px!important;
+  font-size:12px!important;
+}
+#mapFloatingTools .map-reference-group{
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+#mapFloatingTools .map-reference-group>summary{
+  min-height:30px!important;
+  padding:3px 5px!important;
+  border:0!important;
+  font-size:10px!important;
+  line-height:1.1!important;
+}
+#mapFloatingTools .map-reference-group>summary span{
+  font-weight:650!important;
+}
+#mapFloatingTools .map-reference-group>summary small{
+  font-size:8px!important;
+  font-weight:500!important;
+}
+
+/* Formularios: reduce huecos verticales manteniendo títulos y controles legibles. */
+body.form-mode #formWorkspace,
+body.form-mode #reviewWorkspace,
+body.form-mode #successWorkspace{
+  padding:10px!important;
+}
+body.form-mode #formWorkspace .workspace-topbar,
+body.form-mode #reviewWorkspace .workspace-topbar{
+  margin-bottom:4px!important;
+  padding:3px 0!important;
+}
+body.form-mode #formWorkspace .workspace-hero,
+body.form-mode #reviewWorkspace .workspace-hero{
+  gap:8px!important;
+  padding:7px 0 5px!important;
+}
+body.form-mode #formWorkspace .workspace-hero h1,
+body.form-mode #reviewWorkspace .workspace-hero h1{
+  margin:2px 0!important;
+  font-size:21px!important;
+}
+body.form-mode #formWorkspace .form-user-card,
+body.form-mode #reviewWorkspace .form-user-card{
+  padding:6px 8px!important;
+}
+body.form-mode #formWorkspace .form-history{
+  margin:2px 0 5px!important;
+}
+body.form-mode #formWorkspace .form-history summary{
+  min-height:27px!important;
+  padding:3px 6px!important;
+}
+body.form-mode #formWorkspace .section-stepper{
+  gap:3px!important;
+  margin:4px 0 5px!important;
+}
+body.form-mode #formWorkspace .section-stepper .step{
+  min-height:34px!important;
+  padding:4px 6px!important;
+}
+body.form-mode #formWorkspace .section-heading{
+  margin:4px 0 2px!important;
+  padding:1px 0!important;
+}
+body.form-mode #formWorkspace .section-heading h2{
+  margin:2px 0!important;
+  font-size:18px!important;
+}
+body.form-mode #formWorkspace .fbz-description-disclosure{
+  margin-top:3px!important;
+}
+body.form-mode #formWorkspace .fbz-description-disclosure summary{
+  min-height:27px!important;
+  padding:4px 6px!important;
+}
+body.form-mode #formWorkspace .form-grid{
+  gap:0!important;
+  margin-top:3px!important;
+}
+body.form-mode #formWorkspace .form-grid>.field,
+body.form-mode #formWorkspace .form-grid>.operator-element-group,
+body.form-mode #formWorkspace .form-qa-flag{
+  padding:6px 3px!important;
+}
+body.form-mode #formWorkspace .form-grid>.field label.field-label,
+body.form-mode #formWorkspace .form-qa-flag legend{
+  margin-bottom:3px!important;
+}
+body.form-mode #formWorkspace :is(input[type="text"],input[type="number"],input[type="date"],select,.gps-value,.gps-exec-coordinate){
+  min-height:36px!important;
+  padding:7px 9px!important;
+}
+body.form-mode #formWorkspace textarea{
+  min-height:76px!important;
+  padding:7px 9px!important;
+}
+body.form-mode #formWorkspace :is(.choice-grid,.segment-grid,.review-test-choices){
+  gap:4px!important;
+}
+body.form-mode #formWorkspace :is(.segment-option,.binary-toggle-button,.choice){
+  min-height:34px!important;
+  padding:5px 8px!important;
+}
+body.form-mode #formWorkspace .segment-detail:not([hidden]){
+  margin-top:3px!important;
+  padding:5px 7px!important;
+}
+body.form-mode #formWorkspace :is(.operator-memory-inline,.coordinate-mode-choice,.gps-executive,.territorial-coordinate-summary){
+  gap:4px!important;
+  margin-block:3px!important;
+  padding:4px!important;
+}
+body.form-mode #formWorkspace .form-actions{
+  gap:7px!important;
+  margin-top:4px!important;
+  padding-top:4px!important;
+}
+body.form-mode #reviewWorkspace .review-section{
+  margin-block:5px!important;
+}
+body.form-mode #reviewWorkspace .review-section-head,
+body.form-mode #reviewWorkspace .review-row{
+  padding-block:5px!important;
+}
+
+@media(max-width:680px){
+  #mapFloatingTools .map-filter-disclosure .map-typeahead-options button,
+  #mapFloatingTools .map-layer-disclosure .map-selective-option,
+  #mapFloatingTools .map-reference-row,
+  #mapFloatingTools .map-point-legend-item{
+    min-height:24px!important;
+  }
+  #mapFloatingTools :is(#mapBarrioOptions,#mapTroncalOptions) .map-selective-option{
+    min-height:28px!important;
+  }
+  body.form-mode #formWorkspace,
+  body.form-mode #reviewWorkspace,
+  body.form-mode #successWorkspace{
+    padding:7px!important;
+  }
+  body.form-mode #formWorkspace .form-grid>.field{
+    padding:5px 2px!important;
+  }
+}
