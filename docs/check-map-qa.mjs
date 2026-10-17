@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
 const read=p=>fs.readFileSync(new URL("../"+p,import.meta.url),"utf8");
-const scripts=["map-v01.js","map-controls-ui.js","ux-v04.js","api/submissions.js","api/map.js","api/map-polygons.js","api/_estratos-precalc.js","api/map-city-catalog.js","api/isps.js","app.js","service-worker.js"];
+const scripts=["map-v01.js","map-controls-ui.js","ux-v04.js","api/submissions.js","api/map.js","api/map-polygons.js","api/_estratos-precalc.js","api/_estratos-amb-precalc.js","api/map-city-catalog.js","api/isps.js","app.js","service-worker.js"];
 for(const path of scripts)new vm.Script(read(path),{filename:path});
 const html=read("index.html"),css=read("styles.css"),map=read("map-v01.js"),backend=read("api/submissions.js"),apiMap=read("api/map.js"),ui=read("ux-v04.js"),types=read("map-controls-ui.js");
 const expectedPalette={"1":"#22C55E","2":"#FACC15","3":"#3B82F6","4":"#EF4444","5":"#A855F7","6":"#EC4899"};
@@ -72,6 +72,12 @@ assert.ok(read("api/map-polygons.js").includes("candidates.slice(page*limit")&&r
 assert.ok(map.includes("state.manualRefreshId")&&map.includes("recargando cobertura")&&map.includes('forceRefresh=1'),"Actualizar vuelve a solicitar capas sin vaciar prematuramente");
 
 assert.ok(read("api/map-polygons.js").includes("precalcCity")&&read("api/_estratos-precalc.js").includes("QA_PRECALCULATED"),"Adapter QA de estratos precalculados conectado");
+assert.ok(read("api/map-polygons.js").includes('ambPrecalcCity')&&read("api/_estratos-amb-precalc.js").includes('AMB_QA_PRECALCULATED'),"AMB utiliza adaptador offline en modo optimizado");
+assert.ok(read("api/_estratos-amb-precalc.js").includes("11T-x0QBB9W1GYUf0AaAvB9f5yvsLIGfJ")&&read("api/_estratos-amb-precalc.js").includes('["1","2","3","4","5","6"]'),"Fuente versionada de Drive y seis estratos AMB");
+assert.ok(read("api/map-polygons.js").includes('(precalcCity||ambPrecalcCity)?Promise.resolve(null):loadMeta'),"Modo optimizado evita escanear el Sheet de polígonos");
+assert.ok(map.includes('isAmbCity(cities)&&!state.qaDissolveEstratos')&&map.includes('mode=index&layer=')&&map.includes('&qaDissolve=1'),"Solo modo original pagina; el índice y geometría optimizados comparten fuente");
+assert.ok(map.includes('QA precalculado · '),"Estado del mapa identifica capas precomputadas");
+
 assert.ok(read("api/map-city-catalog.js").includes("QA_ESTRATOS"),"Ciudades en estado QA se ofrecen solo en versión QA");
 assert.ok(map.includes("centerQaCityIfEmpty")&&map.includes("QA_CITY_BOUNDS"),"Mapa centra ciudades nuevas sin puntos");
 assert.equal(html.split('id="mapEstratoOptimizePilot"').length,2,"Control QA de estratos único");
