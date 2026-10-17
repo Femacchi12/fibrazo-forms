@@ -1231,6 +1231,22 @@
     const cityName=city==="ibague"?"Ibagué":city?cityLabel(city):"Selecciona una ciudad";
     if(title)title.textContent=cityName;
     if($("mapViewBucaramanga"))$("mapViewBucaramanga").textContent=QA_CITY_BOUNDS[city]?"◎ Ver "+cityName:"◎ Ver Bucaramanga";
+    const qaToggle=$("mapEstratoOptimizePilot");
+    if(qaToggle){
+      const isPrecomputed=!!QA_CITY_BOUNDS[city];
+      qaToggle.disabled=isPrecomputed;
+      qaToggle.checked=isPrecomputed||state.qaDissolveEstratos;
+      const label=qaToggle.closest("label");
+      if(label){
+        const textNode=[...label.childNodes].find(node=>node.nodeType===3);
+        if(textNode)textNode.nodeValue=isPrecomputed
+          ?" Estratos precalculados y unificados (QA)"
+          :" Prueba QA: unificar polígonos por estrato";
+        label.title=isPrecomputed
+          ?"Esta ciudad utiliza por defecto los polígonos unificados del paquete QA"
+          :"Comparar capas originales y unificadas de Bucaramanga";
+      }
+    }
     polygonResponseCache.clear();
     for(const layer of ["barrios","estratos","troncales"]){
       state.polygonControllers[layer]?.abort();
