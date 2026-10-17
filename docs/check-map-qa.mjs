@@ -62,6 +62,12 @@ assert.ok(alignmentCss.includes("FO-CHG-045")&&alignmentCss.includes("min-height
 assert.ok(map.includes("resetTerritorialScopeForCity")&&map.includes('cities!==filterValues("mapCityFilter").join(",")'),"El cambio de ciudad cancela y descarta respuestas territoriales anteriores");
 assert.ok(map.includes("const incumbents=new Set")&&map.includes("hasOnlyIsps"),"Operadores disponibles dependen de los puntos de la ciudad seleccionada");
 assert.ok(read("api/map-polygons.js").includes("requestedCityCount===1?cfg.maxFeatures"),"Una sola ciudad usa el límite completo de geometrías de la capa");
+
+assert.ok(html.includes('id="mapQaOptimizeToolbar"')&&map.includes('updateQaToolbar')&&map.includes('mapQaOptimizeToolbar'),"El botón QA de unión es visible junto a Actualizar");
+assert.ok(map.includes("completeBuc")&&map.includes('fullCoverage=1')&&map.includes('baseUrl+"&page="'),"Bucaramanga solicita páginas completas y evita el límite 650");
+assert.ok(read("api/map-polygons.js").includes("candidates.slice(page*limit")&&read("api/map-polygons.js").includes("pageCount"),"API envía todas las geometrías solicitadas en lotes");
+assert.ok(map.includes("state.manualRefreshId")&&map.includes("recargando cobertura")&&map.includes('forceRefresh=1'),"Actualizar vuelve a solicitar capas sin vaciar prematuramente");
+
 assert.ok(read("api/map-polygons.js").includes("precalcCity")&&read("api/_estratos-precalc.js").includes("QA_PRECALCULATED"),"Adapter QA de estratos precalculados conectado");
 assert.ok(read("api/map-city-catalog.js").includes("QA_ESTRATOS"),"Ciudades en estado QA se ofrecen solo en versión QA");
 assert.ok(map.includes("centerQaCityIfEmpty")&&map.includes("QA_CITY_BOUNDS"),"Mapa centra ciudades nuevas sin puntos");
