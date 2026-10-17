@@ -1480,7 +1480,7 @@
           ?"QA multipolígono completo · "+features.length+" estratos · "+Number(data.totalVisible||0)+" superficies · "+((performance.now()-loadStarted)/1000).toFixed(1)+" s (carga + dibujo)"
           :"QA precalculado · "+Number(data.totalVisible||0)+" componentes en vista → "+features.length+" grupos por estrato · detalle "+(data.detail||""))
         :completeBuc
-        ?("AMB original · "+Number(data.totalVisible||0)+" polígonos sin muestreo → "+received+" geometrías")
+        ?("AMB original · "+Number(data.totalVisible||0)+" polígonos sin muestreo → "+received+" geometrías · "+((performance.now()-loadStarted)/1000).toFixed(1)+" s (carga + dibujo)")
         :layer==="estratos"&&state.qaDissolveEstratos
         ?("Piloto optimizado · "+Number(data.originalFeatureCount||features.length)+" originales → "+features.length+" geometrías"+(data.optimizedIncomplete?" · vista incompleta por límite":""))
         :data.truncated
