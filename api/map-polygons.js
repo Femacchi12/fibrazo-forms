@@ -282,6 +282,10 @@ function parseList(value){
 }
 function applyCityFilter(rows,query){
   const cities=new Set(parseList(query.cities).map(norm));
+  // One UI selection intentionally includes every AMB municipality and layer.
+  if(cities.has("bucaramanga-amb")||cities.has("bucaramanga + amb")){
+    for(const name of ["bucaramanga","floridablanca","giron","piedecuesta"])cities.add(name);
+  }
   if(!cities.size)return rows;
   return rows.filter(row=>cities.has(norm(safeValue(row,"Municipio")||safeValue(row,"Ciudad"))));
 }
@@ -341,7 +345,7 @@ module.exports=async(req,res)=>{
 
     const zoom=Number(req.query.zoom||0);
     const bbox=parseBbox(req.query.bbox);
-    const fullCoverage=layer==="estratos"&&req.query.fullCoverage==="1";
+    const fullCoverage=req.query.fullCoverage==="1"&&["estratos","barrios","troncales"].includes(layer);
     // Manual refresh forces fresh sheet metadata and bypasses stale HTTP caches.
     if(req.query.forceRefresh==="1"){
       cache.delete(layer);
