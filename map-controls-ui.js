@@ -6,8 +6,8 @@
   const ids=["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter"];
   const selectedCityCount=()=>[...($("mapCityFilter")?.selectedOptions||[])].filter(option=>option.value&&option.value!=="all").length;
   const cityLockMessage=()=>selectedCityCount()>1?
-    "Debes dejar seleccionada una sola ciudad para poder seleccionar esto.":
-    "Debes seleccionar al menos una ciudad para poder seleccionar esto.";
+    "Debe dejar seleccionada una sola ciudad.":
+    "Debe seleccionar al menos una ciudad.";
   function searchable(select){
     if(!select||select.dataset.typeaheadReady)return;
     select.dataset.typeaheadReady="1";
@@ -179,6 +179,8 @@
           disclosure.classList.toggle("territorial-locked",!ready);
           const lockedMessage=ready?"":cityLockMessage();
           summary.title=lockedMessage;
+          if(lockedMessage)summary.dataset.lockMessage=lockedMessage;
+          else delete summary.dataset.lockMessage;
           count.title=lockedMessage;
           summary.setAttribute("aria-disabled",String(!ready));
           if(action){
@@ -272,6 +274,8 @@
           group.classList.toggle("filter-locked",locked);
           const lockedMessage=locked?cityLockMessage():"";
           summary.title=lockedMessage;
+          if(lockedMessage)summary.dataset.lockMessage=lockedMessage;
+          else delete summary.dataset.lockMessage;
           count.title=lockedMessage;
           summary.setAttribute("aria-disabled",String(locked));
           if(eyeEnabled){

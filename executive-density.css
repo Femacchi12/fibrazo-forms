@@ -478,3 +478,190 @@ body.form-mode #formWorkspace .form-actions{border-top:0!important}
   }
   #mapFloatingTools .map-floating-tabs>.map-panel-reset span{display:none!important}
 }
+
+/* FO-CHG-050 · Más filtros, muestras de estrato y catálogo más compactos. */
+
+/* El catálogo se centra y limita en escritorio; los formularios abiertos no cambian. */
+#formsView{
+  width:min(100%,1120px)!important;
+  margin-inline:auto!important;
+}
+#formsView>.intro-panel{
+  padding:16px!important;
+}
+#formsView #formCards.form-cards{
+  margin-top:12px!important;
+  gap:6px!important;
+}
+#formsView #formCards .form-card{
+  padding:9px 10px!important;
+  border-radius:8px!important;
+}
+#formsView #formCards .form-card .form-card-title{
+  margin-bottom:7px!important;
+  font-size:16px!important;
+}
+#formsView #formCards .form-card .form-open-button{
+  min-height:36px!important;
+  height:36px!important;
+  border-radius:8px!important;
+  font-size:12px!important;
+}
+#formsView #formCards .form-card-details{
+  margin-top:5px!important;
+}
+#formsView #formCards .form-card-details summary{
+  min-height:27px!important;
+  padding:3px 2px!important;
+  font-size:10px!important;
+}
+
+/* Más filtros conserva la misma superficie plana que el resto del panel. */
+#mapFloatingTools .map-unified-extra,
+#mapFloatingTools .map-unified-extra[open],
+#mapFloatingTools .map-unified-extra>.map-extra-content,
+#mapFloatingTools .map-unified-extra .map-extra-filters,
+#mapFloatingTools .map-unified-extra .map-extra-filters[open],
+#mapFloatingTools .map-unified-extra .map-extra-content{
+  margin:0!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+#mapFloatingTools .map-unified-extra>.map-extra-content{
+  padding:2px 0 3px!important;
+  gap:0!important;
+}
+#mapFloatingTools .map-unified-extra .map-extra-filters>summary,
+#mapFloatingTools .map-unified-extra .map-extra-filters[open]>summary{
+  min-height:30px!important;
+  padding:3px 6px!important;
+  border:0!important;
+  border-radius:5px!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  color:#c4cec9!important;
+  font-size:9px!important;
+  line-height:1.2!important;
+}
+#mapFloatingTools .map-unified-extra .map-extra-filters>summary:hover,
+#mapFloatingTools .map-unified-extra .map-extra-filters[open]>summary{
+  background:rgba(255,255,255,.05)!important;
+  color:#fff!important;
+}
+#mapFloatingTools .map-unified-extra .map-extra-filters>.map-extra-content{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:1px!important;
+  padding:2px 6px 4px!important;
+}
+#mapFloatingTools .map-unified-extra .map-extra-content>.map-photos-filter{
+  min-height:29px!important;
+  padding:3px 5px!important;
+  border:0!important;
+  border-radius:5px!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  font-size:10px!important;
+  font-weight:650!important;
+}
+#mapFloatingTools .map-unified-extra .map-extra-content>.map-photos-filter:hover{
+  background:rgba(255,255,255,.05)!important;
+}
+#mapFloatingTools .map-unified-extra .map-extra-content>.map-photos-filter input{
+  width:14px!important;
+  height:14px!important;
+  min-width:14px!important;
+  flex-basis:14px!important;
+}
+#mapFloatingTools .map-unified-extra .map-extra-date{
+  display:grid!important;
+  grid-template-columns:35px minmax(0,1fr)!important;
+  align-items:center!important;
+  gap:5px!important;
+  min-height:31px!important;
+  padding:2px 5px!important;
+  color:#aeb9b3!important;
+  font-size:9px!important;
+  font-weight:650!important;
+}
+#mapFloatingTools .map-unified-extra .map-extra-date>input{
+  min-height:28px!important;
+  height:28px!important;
+  padding:3px 6px!important;
+  border:0!important;
+  border-radius:5px!important;
+  box-shadow:none!important;
+  background:rgba(255,255,255,.055)!important;
+  font-size:10px!important;
+}
+
+/* Todos los bloqueos usan el mismo ojo gris y una ayuda breve al pasar el cursor. */
+#mapFloatingTools .map-filter-disclosure.filter-locked .map-filter-eye-action,
+#mapFloatingTools .map-layer-disclosure.territorial-locked .map-layer-eye-action{
+  color:#626a66!important;
+  opacity:.72!important;
+  filter:grayscale(1)!important;
+}
+#mapFloatingTools :is(.map-filter-disclosure.filter-locked,.map-layer-disclosure.territorial-locked)>summary[data-lock-message]{
+  position:relative!important;
+}
+#mapFloatingTools :is(.map-filter-disclosure.filter-locked,.map-layer-disclosure.territorial-locked)>summary[data-lock-message]:hover::before{
+  content:attr(data-lock-message)!important;
+  position:absolute!important;
+  z-index:30!important;
+  top:calc(100% - 1px)!important;
+  left:31px!important;
+  max-width:220px!important;
+  padding:5px 7px!important;
+  border:0!important;
+  border-radius:6px!important;
+  background:#252927!important;
+  box-shadow:0 5px 14px rgba(0,0,0,.38)!important;
+  color:#f2f5f3!important;
+  font-size:9px!important;
+  font-weight:650!important;
+  line-height:1.3!important;
+  white-space:normal!important;
+  pointer-events:none!important;
+}
+
+/* Las referencias de estrato son puntos discretos; las listas pierden separadores. */
+#mapFloatingTools :is(#mapEstratoOptions,#mapBarrioOptions,#mapTroncalOptions) .map-selective-option{
+  min-height:26px!important;
+  padding:2px 4px!important;
+  border:0!important;
+  border-radius:5px!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+#mapFloatingTools #mapEstratoOptions .map-selective-option{
+  grid-template-columns:14px 7px minmax(0,1fr)!important;
+  column-gap:6px!important;
+}
+#mapFloatingTools #mapEstratoOptions .map-selective-option>i{
+  width:7px!important;
+  height:7px!important;
+  min-width:7px!important;
+  border:0!important;
+  border-radius:50%!important;
+  margin:0!important;
+}
+#mapFloatingTools :is(#mapEstratoOptions,#mapBarrioOptions,#mapTroncalOptions) .map-selective-option input[type="checkbox"]{
+  width:13px!important;
+  height:13px!important;
+  min-width:13px!important;
+}
+#mapFloatingTools :is(#mapEstratoOptions,#mapBarrioOptions,#mapTroncalOptions) .map-selective-option :is(b,small){
+  font-size:10px!important;
+  line-height:1.1!important;
+}
+#mapFloatingTools :is(#mapEstratoOptions,#mapBarrioOptions,#mapTroncalOptions){
+  max-height:185px!important;
+}
+
+@media(max-width:900px){
+  #formsView{width:100%!important}
+  #formsView>.intro-panel{padding:13px!important}
+}
