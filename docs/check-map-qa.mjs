@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
 const read=p=>fs.readFileSync(new URL("../"+p,import.meta.url),"utf8");
-const scripts=["map-v01.js","map-controls-ui.js","ux-v04.js","api/submissions.js","api/map.js","api/map-polygons.js","api/_estratos-precalc.js","api/_estratos-amb-precalc.js","api/map-city-catalog.js","api/isps.js","app.js","service-worker.js"];
+const scripts=["map-v01.js","map-controls-ui.js","ux-v04.js","api/submissions.js","api/map.js","api/map-polygons.js","api/_estratos-precalc.js","api/_estratos-amb-precalc.js","api/_estratos-ctg-historic.js","api/map-city-catalog.js","api/isps.js","app.js","service-worker.js"];
 for(const path of scripts)new vm.Script(read(path),{filename:path});
 const html=read("index.html"),css=read("styles.css"),map=read("map-v01.js"),backend=read("api/submissions.js"),apiMap=read("api/map.js"),ui=read("ux-v04.js"),types=read("map-controls-ui.js");
 const expectedPalette={"1":"#22C55E","2":"#FACC15","3":"#3B82F6","4":"#EF4444","5":"#A855F7","6":"#EC4899"};
@@ -89,6 +89,10 @@ assert.ok(read("api/map-polygons.js").includes('cities.has("bucaramanga-amb")')&
 assert.ok(read("api/_estratos-amb-precalc.js").includes('loadCombined')&&read("api/_estratos-amb-precalc.js").includes('polygons:matches.flatMap(row=>row.polygons)'),"AMB unido se entrega como máximo en seis Features MultiPolygon sin inventar superficies");
 assert.ok(read("api/_estratos-precalc.js").includes('delivery:"FULL_CITY_MULTIPOLYGON"')&&!read("api/_estratos-precalc.js").includes('hits('),"Neiva, Ibagué y Villavicencio entregan toda su geometría, sin viewport");
 assert.ok(map.includes('hasStaticEstratos(cities)')&&map.includes('state.polygonFullKey===fullKey'),"Capas de todas las ciudades con estratos se conservan durante pan y zoom");
+assert.ok(read("api/map-polygons.js").includes("ctgHistoricCity")&&read("api/_estratos-ctg-historic.js").includes("HISTORICO_2022_NO_VIGENTE"),"Cartagena QA se entrega desde archivo histórico declarado sin activar estratos vigentes");
+assert.ok(read("api/_estratos-ctg-historic.js").includes("1iM1ClOL205PTpPekbn3apTpGCiPTGJe5")&&read("api/_estratos-ctg-historic.js").includes("canonical:false"),"Cartagena usa paquete Growth versionado y nunca se declara fuente canónica");
+assert.ok(map.includes("HISTÓRICO 2022 · SOLO QA")&&read("map-controls-ui.js").includes("únicamente como referencia visual QA"),"Advertencia de datos históricos claramente visible");
+
 
 
 assert.ok(read("api/map-city-catalog.js").includes("QA_ESTRATOS"),"Ciudades en estado QA se ofrecen solo en versión QA");
