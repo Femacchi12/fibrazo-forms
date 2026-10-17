@@ -21,16 +21,6 @@ function target(query){
   const parts=String(query?.cities||"").split(",").map(norm).filter(Boolean);
   return parts.length===1&&CITIES[parts[0]]?parts[0]:null;
 }
-function componentBox(coords){
-  let minLon=Infinity,minLat=Infinity,maxLon=-Infinity,maxLat=-Infinity;
-  for(const ring of coords)for(const p of ring){
-    const x=p[0],y=p[1];
-    if(x<minLon)minLon=x;if(x>maxLon)maxLon=x;
-    if(y<minLat)minLat=y;if(y>maxLat)maxLat=y;
-  }
-  return [minLon,minLat,maxLon,maxLat];
-}
-function intersects(a,b){return !(a[2]<b[0]||a[0]>b[2]||a[3]<b[1]||a[1]>b[3]);}
 async function archive(auth){
   if(archiveValue&&archiveExpiry>Date.now())return archiveValue;
   if(archiveJob)return archiveJob;
@@ -58,7 +48,7 @@ async function load(auth,city,detail){
       const estrato=String(f.properties?.estrato||"");
       if(!/^[1-6]$/.test(estrato)||f.geometry?.type!=="MultiPolygon")throw Error("AMB_PRECOMPUTED_INVALID_STRATUM");
       return {estrato,originalCount:Number(f.properties.originalCount||0),
-        polygons:f.geometry.coordinates.map(coords=>({coords,box:componentBox(coords)}))};
+        polygons:f.geometry.coordinates};
     });
     parsed.set(key,{rows,expires:Date.now()+TTL});
     return rows;
@@ -93,7 +83,7 @@ async function handle(auth,req,res,city,bbox,zoom){
       source:"FIBRAZO_Territorial_Bucaramanga_AMB · offline dissolve · QA",
       quality:"VALIDADO_DERIVADO_VISUAL",qaOptimized:true,
       geometryVersion:VERSION,detail},
-    geometry:{type:"MultiPolygon",coordinates:row.polygons.map(p=>p.coords)}
+    geometry:{type:"MultiPolygon",coordinates:row.polygons}
   }));
   const payload={
     ok:true,mode:"geometry",layer:"estratos",scope:"AMB_"+city+"_PRECALCULATED",
