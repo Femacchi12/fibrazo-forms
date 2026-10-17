@@ -890,21 +890,35 @@
   }
 
   function updateQaToolbar(){
-    const button=$("mapQaOptimizeToolbar");
-    if(!button)return;
     const cities=filterValues("mapCityFilter");
     const city=cities.length===1?cities[0]:"";
     const precomputed=!!QA_CITY_BOUNDS[city];
     const isBuc=isAmbCity(city);
-    button.disabled=!isBuc;
-    button.classList.toggle("qa-active",isBuc&&state.qaDissolveEstratos);
-    button.textContent=precomputed?"✓ Estratos unificados (QA)":isBuc
-      ?(state.qaDissolveEstratos?"✓ Unificación QA activa":"Unificar estratos (QA)")
-      :"Estratos QA · elegí Bucaramanga";
-    button.title=precomputed
+    const active=isBuc&&state.qaDissolveEstratos;
+    const label=active?"✓ Estratos unidos (QA)":"Unificar estratos (QA)";
+    const title=precomputed
       ?"Esta ciudad ya utiliza polígonos unidos y precalculados"
-      :isBuc?"Comparar cobertura original completa y unificación QA por lotes"
-      :"Seleccioná Bucaramanga para alternar la unificación";
+      :isBuc?(active?"Ver polígonos originales para comparar":"Unir por estrato en QA; se procesa por lotes, sin modificar la base")
+      :"Seleccioná Bucaramanga o un municipio del AMB para comparar";
+    const button=$("mapQaOptimizeToolbar");
+    if(button){
+      button.disabled=!isBuc;
+      button.classList.toggle("qa-active",active);
+      button.setAttribute("aria-pressed",String(active));
+      button.textContent=precomputed?"✓ Estratos precalculados (QA)":isBuc?label:"Estratos QA · elegí ciudad";
+      button.title=title;
+    }
+    // This is the actual toolbar visible inside the fullscreen map, unlike
+    // mapQaOptimizeToolbar which lives in the hidden external map heading.
+    const quick=$("mapQuickEstratoUnion");
+    if(quick){
+      quick.hidden=!isBuc;
+      quick.disabled=!isBuc;
+      quick.classList.toggle("qa-active",active);
+      quick.setAttribute("aria-pressed",String(active));
+      quick.textContent=label;
+      quick.title=title;
+    }
   }
 
   function clearFilters(){
@@ -1919,6 +1933,12 @@
       if(state.polygonActive.estratos)loadPolygonLayer("estratos",{silent:false});
     });
     $("mapQaOptimizeToolbar")?.addEventListener("click",()=>{
+      const checkbox=$("mapEstratoOptimizePilot");
+      if(!checkbox||checkbox.disabled)return;
+      checkbox.checked=!checkbox.checked;
+      checkbox.dispatchEvent(new Event("change",{bubbles:true}));
+    });
+    $("mapQuickEstratoUnion")?.addEventListener("click",()=>{
       const checkbox=$("mapEstratoOptimizePilot");
       if(!checkbox||checkbox.disabled)return;
       checkbox.checked=!checkbox.checked;
