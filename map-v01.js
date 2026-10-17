@@ -898,7 +898,7 @@
     const label=active?"✓ Estratos unidos (QA)":"Unificar estratos (QA)";
     const title=precomputed
       ?"Esta ciudad ya utiliza polígonos unidos y precalculados"
-      :isBuc?(active?"Ver polígonos originales para comparar":"Unir por estrato en QA; se procesa por lotes, sin modificar la base")
+      :isBuc?(active?"Volver a los polígonos originales; la vista actual usa la capa precalculada en Growth":"Cargar la capa unificada precalculada en Growth, sin recalcularla ni alterar la base")
       :"Seleccioná Bucaramanga o un municipio del AMB para comparar";
     const button=$("mapQaOptimizeToolbar");
     if(button){
