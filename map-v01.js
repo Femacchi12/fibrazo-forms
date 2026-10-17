@@ -18,6 +18,7 @@
     neiva:[[2.88679,-75.30872],[2.98355,-75.23607]],
     villavicencio:[[4.05402,-73.68193],[4.18333,-73.53185]],
     ibague:[[4.37573,-75.27256],[4.46508,-75.11995]],
+    cartagena:[[10.342622,-75.563443],[10.451148,-75.447686]],
     "bucaramanga-amb":[[6.965660534,-73.18725248],[7.180187214,-72.99589389]]
   };
 
@@ -898,11 +899,14 @@
   function updateQaToolbar(){
     const cities=filterValues("mapCityFilter");
     const city=cities.length===1?cities[0]:"";
-    const precomputed=["neiva","villavicencio","ibague"].includes(city);
+    const precomputed=["neiva","villavicencio","ibague","cartagena"].includes(city);
     const isBuc=isAmbCity(city);
+    const historic=city==="cartagena";
     const active=isBuc&&state.qaDissolveEstratos;
     const label=active?"✓ Estratos unidos (QA)":"Unificar estratos (QA)";
-    const title=precomputed
+    const title=historic
+      ?"Cartagena: datos históricos 2022 para prueba visual QA, sin validez operativa"
+      :precomputed
       ?"Esta ciudad ya utiliza polígonos unidos y precalculados"
       :isBuc?(active?"Volver a los polígonos originales; la vista actual usa la capa precalculada en Growth":"Cargar la capa unificada precalculada en Growth, sin recalcularla ni alterar la base")
       :"Seleccioná Bucaramanga o un municipio del AMB para comparar";
@@ -911,7 +915,7 @@
       button.disabled=!isBuc;
       button.classList.toggle("qa-active",active);
       button.setAttribute("aria-pressed",String(active));
-      button.textContent=precomputed?"✓ Estratos precalculados (QA)":isBuc?label:"Estratos QA · elegí ciudad";
+      button.textContent=historic?"Estratos 2022 · históricos QA":precomputed?"✓ Estratos precalculados (QA)":isBuc?label:"Estratos QA · elegí ciudad";
       button.title=title;
     }
     // This is the actual toolbar visible inside the fullscreen map, unlike
@@ -1293,13 +1297,15 @@
     if($("mapViewBucaramanga"))$("mapViewBucaramanga").textContent=QA_CITY_BOUNDS[city]?"◎ Ver "+cityName:"◎ Ver Bucaramanga + AMB";
     const qaToggle=$("mapEstratoOptimizePilot");
     if(qaToggle){
-      const isPrecomputed=["neiva","villavicencio","ibague"].includes(city);
+      const isPrecomputed=["neiva","villavicencio","ibague","cartagena"].includes(city);
       qaToggle.disabled=isPrecomputed;
       qaToggle.checked=isPrecomputed||state.qaDissolveEstratos;
       const label=qaToggle.closest("label");
       if(label){
         const textNode=[...label.childNodes].find(node=>node.nodeType===3);
-        if(textNode)textNode.nodeValue=isPrecomputed
+        if(textNode)textNode.nodeValue=city==="cartagena"
+          ?" Estratos históricos 2022 (QA, sin vigencia validada)"
+          :isPrecomputed
           ?" Estratos precalculados y unificados (QA)"
           :" Prueba QA: unificar polígonos por estrato";
         label.title=isPrecomputed
@@ -1479,7 +1485,9 @@
       const drawn=drawPolygonLayer(layer,features);
       if(layer==="estratos")state.polygonFullKey=fullKey;
       const received=features.length;
-      state.polygonStatus[layer]=data.precomputed
+      state.polygonStatus[layer]=data.qaHistorical
+        ?("HISTÓRICO 2022 · SOLO QA · "+features.length+" estratos · vigencia no validada · "+((performance.now()-loadStarted)/1000).toFixed(1)+" s (carga + dibujo)")
+        :data.precomputed
         ?(data.delivery==="FULL_CITY_MULTIPOLYGON"
           ?"QA multipolígono completo · "+features.length+" estratos · "+Number(data.totalVisible||0)+" superficies · "+((performance.now()-loadStarted)/1000).toFixed(1)+" s (carga + dibujo)"
           :"QA precalculado · "+Number(data.totalVisible||0)+" componentes en vista → "+features.length+" grupos por estrato · detalle "+(data.detail||""))
