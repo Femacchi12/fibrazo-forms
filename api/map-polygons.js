@@ -338,6 +338,13 @@ module.exports=async(req,res)=>{
 
     const zoom=Number(req.query.zoom||0);
     const bbox=parseBbox(req.query.bbox);
+    const fullCoverage=layer==="estratos"&&req.query.fullCoverage==="1";
+    // Manual refresh forces fresh sheet metadata and bypasses stale HTTP caches.
+    if(req.query.forceRefresh==="1"){
+      cache.delete(layer);
+      for(const key of geometryCache.keys())if(key.startsWith(CONFIG[layer].sheet+":"))geometryCache.delete(key);
+      res.setHeader("Cache-Control","no-store");
+    }
     const auth=gauth();
     const precalcCity=layer==="estratos"?require("./_estratos-precalc").target(req.query):null;
     const [forms,caps,meta]=await Promise.all([
@@ -409,9 +416,13 @@ module.exports=async(req,res)=>{
     }
 
     const requestedCityCount=parseList(req.query.cities).length;
-    const limit=requestedCityCount===1?cfg.maxFeatures:featureLimit(layer,zoom);
-    const truncated=candidates.length>limit;
-    candidates=spatialSample(candidates,limit,bbox);
+    const limit=fullCoverage?300:(requestedCityCount===1?cfg.maxFeatures:featureLimit(layer,zoom));
+    const page=fullCoverage?Math.max(0,Math.min(100,Math.floor(Number(req.query.page)||0))):0;
+    const pageCount=fullCoverage?Math.ceil(candidates.length/limit):1;
+    const truncated=!fullCoverage&&candidates.length>limit;
+    // QA paged transport: never discard an eligible stratum polygon.
+    // Sampling only remains for legacy / non-strata requests.
+    candidates=fullCoverage?candidates.slice(page*limit,(page+1)*limit):spatialSample(candidates,limit,bbox);
 
     const geometries=await getGeometries(auth,cfg,candidates);
     const features=[];
@@ -433,6 +444,7 @@ module.exports=async(req,res)=>{
       originalFeatureCount:features.length,
       optimizedFeatureCount:optimizedFeatures.length,
       optimizedIncomplete:optimized&&truncated,
+      fullCoverage,page,pageCount,
       ok:true,
       mode:"geometry",
       layer,
