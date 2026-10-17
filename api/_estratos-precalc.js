@@ -5,6 +5,20 @@ const {gzipSync}=require("node:zlib");
 const ARCHIVE="1iLbZP5F-xJB2DRbXTDM9Mu5IoxvvRmro";
 const CITIES={neiva:["NEIVA","Neiva"],villavicencio:["VILLAVICENCIO","Villavicencio"],ibague:["IBAGUE","Ibagué"]};
 const cache=new Map(),pending=new Map(),TTL=600000;
+let zipCached=null,zipUntil=0,zipPending=null;
+async function archive(auth){
+  if(zipCached&&zipUntil>Date.now())return zipCached;
+  if(zipPending)return zipPending;
+  const work=(async()=>{
+    const drive=google.drive({version:"v3",auth});
+    const response=await drive.files.get({fileId:ARCHIVE,alt:"media",supportsAllDrives:true},{responseType:"arraybuffer"});
+    zipCached=new AdmZip(Buffer.from(response.data));
+    zipUntil=Date.now()+TTL;
+    return zipCached;
+  })();
+  zipPending=work;
+  try{return await work;}finally{zipPending=null;}
+}
 function norm(x){return String(x||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();}
 function target(query){
   const parts=String(query?.cities||"").split(",").map(norm).filter(Boolean);
@@ -20,9 +34,7 @@ async function load(auth,city){
   const current=cache.get(city[0]);if(current&&current.until>Date.now())return current.data;
   if(pending.has(city[0]))return pending.get(city[0]);
   const job=(async()=>{
-    const drive=google.drive({version:"v3",auth});
-    const r=await drive.files.get({fileId:ARCHIVE,alt:"media",supportsAllDrives:true},{responseType:"arraybuffer"});
-    const zip=new AdmZip(Buffer.from(r.data));
+    const zip=await archive(auth);
     const entry=zip.getEntry(city[0]+"/"+city[0]+"_estratos_unificados.geojson");
     if(!entry)throw Error("CITY_ZIP_ENTRY_NOT_FOUND");
     const geo=JSON.parse(zip.readAsText(entry));
