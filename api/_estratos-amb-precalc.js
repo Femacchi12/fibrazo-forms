@@ -67,20 +67,17 @@ async function load(auth,city,detail){
   try{return await job;}finally{inflight.delete(key);}
 }
 async function handle(auth,req,res,city,bbox,zoom){
-  if(Number.isFinite(zoom)&&zoom<11)return res.status(200).json({
-    ok:true,layer:"estratos",requiresZoom:true,minZoom:11,
-    truncated:false,totalVisible:0,features:[]
-  });
-  // The full geometry is kept for detailed zoom. Reduced vertex counts for
-  // distant views are strictly visualization-only and do not bridge gaps.
-  const detail=zoom>=15?"full":zoom>=13?"medio":"general";
-  const rows=await load(auth,city,detail);
-  const visible=rows.map(row=>({...row,polygons:row.polygons.filter(p=>intersects(p.box,bbox))}));
+  // FO-CHG-054: prove the full MultiPolygon delivery without viewport clipping.
+  // This QA test intentionally transfers each municipal stratum in its entirety;
+  // Leaflet is responsible for viewport clipping when drawing. No lossy LOD.
+  const detail="full";
+  const visible=await load(auth,city,detail);
   const components=visible.reduce((n,row)=>n+row.polygons.length,0);
   if(String(req.query.mode||"geometry").toLowerCase()==="index"){
     return res.status(200).json({
       ok:true,mode:"index",layer:"estratos",scope:"AMB_"+city+"_PRECALCULATED",
       minZoom:11,requiresZoom:false,truncated:false,totalVisible:components,
+      delivery:"FULL_CITY_MULTIPOLYGON",
       items:["1","2","3","4","5","6"].map(value=>({
         value,count:visible.find(row=>row.estrato===value)?.polygons.length||0
       }))
@@ -100,6 +97,7 @@ async function handle(auth,req,res,city,bbox,zoom){
   }));
   const payload={
     ok:true,mode:"geometry",layer:"estratos",scope:"AMB_"+city+"_PRECALCULATED",
+    delivery:"FULL_CITY_MULTIPOLYGON",viewportFiltered:false,
     requiresZoom:false,minZoom:11,displayMode:"PRECALCULADA",precomputed:true,
     qaOptimized:true,geometryVersion:VERSION,detail,truncated:false,pageCount:1,
     originalFeatureCount:chosen.reduce((n,row)=>n+row.originalCount,0),
