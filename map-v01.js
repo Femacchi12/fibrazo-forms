@@ -1372,7 +1372,7 @@
       const scope=layer==="barrios"?state.barrioListMode:layer==="troncales"?"all":"visible";
       const cityFilter=cities?"&cities="+encodeURIComponent(cities):"";
       const optimized=layer==="estratos"&&state.qaDissolveEstratos?"&qaDissolve=1":"";
-      const fullAmb=layer==="estratos"&&((state.qaDissolveEstratos&&isAmbCity(cities))||hasStaticEstratos(cities));
+      const fullAmb=layer==="estratos"&&hasStaticEstratos(cities)&&(!isAmbCity(cities)||state.qaDissolveEstratos);
       const queryBbox=fullAmb?"-180,-90,180,90":bbox;
       const queryZoom=fullAmb?15:zoom;
       const reload=state.manualRefreshId?"&reload="+encodeURIComponent(state.manualRefreshId)+"&forceRefresh=1":"";
@@ -1445,7 +1445,7 @@
     try{
       const cityFilter=cities?"&cities="+encodeURIComponent(cities):"";
       const optimized=layer==="estratos"&&state.qaDissolveEstratos?"&qaDissolve=1":"";
-      const completeBuc=layer==="estratos"&&isAmbCity(cities)&&!state.qaDissolveEstratos;
+      const completeBuc=isAmbCity(cities)&&((layer==="estratos"&&!state.qaDissolveEstratos)||layer==="barrios"||layer==="troncales");
       const full=completeBuc?"&fullCoverage=1":"";
       const reload=state.manualRefreshId?"&reload="+encodeURIComponent(state.manualRefreshId):"";
       const completeCity=!!fullKey;
@@ -1464,7 +1464,7 @@
       }
       let features=Array.isArray(data.features)?[...data.features]:[];
       const pages=completeBuc?Math.max(1,Math.min(40,Number(data.pageCount)||1)):1;
-      // Transport all visible Bucaramanga geometries without the 650 polygon sample.
+      // Transport all selected original AMB polygons from all four municipalities without spatial sampling.
       // Three parallel requests at a time avoids overloading the Sheets adapter.
       for(let next=1;next<pages;next+=3){
         const indexes=Array.from({length:Math.min(3,pages-next)},(_,j)=>next+j);
