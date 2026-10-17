@@ -1266,3 +1266,48 @@ body.form-mode #reviewWorkspace .review-row{
     padding:5px 2px!important;
   }
 }
+
+/* FO-CHG-053 · peso normal y buscador uniforme en Estratos y Barrios. */
+#mapFloatingTools #mapEstratoOptions .map-selective-option,
+#mapFloatingTools #mapBarrioOptions .map-selective-option,
+#mapFloatingTools #mapEstratoOptions .map-selective-option :is(span,b,strong,small),
+#mapFloatingTools #mapBarrioOptions .map-selective-option :is(span,b,strong,small){
+  font-weight:400!important;
+}
+
+#mapFloatingTools #mapBarrioControls .map-barrio-search{
+  display:block!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+}
+#mapFloatingTools #mapBarrioControls #mapBarrioSearch{
+  display:block!important;
+  visibility:visible!important;
+  position:static!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:25px!important;
+  height:25px!important;
+  margin:0 0 1px!important;
+  padding:2px 7px!important;
+  border:0!important;
+  border-radius:6px!important;
+  outline:none!important;
+  background:rgba(255,255,255,.055)!important;
+  box-shadow:none!important;
+  color:#f1f6f3!important;
+  font-size:9.5px!important;
+  font-weight:400!important;
+  line-height:1.08!important;
+}
+#mapFloatingTools #mapBarrioControls #mapBarrioSearch:focus{
+  border:0!important;
+  background:rgba(255,255,255,.075)!important;
+  box-shadow:none!important;
+}
+#mapFloatingTools #mapBarrioControls .map-barrio-actions{
+  margin:0!important;
+}
