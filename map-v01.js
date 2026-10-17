@@ -17,7 +17,8 @@
   const QA_CITY_BOUNDS={
     neiva:[[2.88679,-75.30872],[2.98355,-75.23607]],
     villavicencio:[[4.05402,-73.68193],[4.18333,-73.53185]],
-    ibague:[[4.37573,-75.27256],[4.46508,-75.11995]]
+    ibague:[[4.37573,-75.27256],[4.46508,-75.11995]],
+    "bucaramanga-amb":[[6.965660534,-73.18725248],[7.180187214,-72.99589389]]
   };
 
   const state={
@@ -80,16 +81,19 @@
   const $=id=>document.getElementById(id);
   const esc=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[ch]));
   const norm=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
-  const cityLabel=value=>String(value||"").trim().toLocaleLowerCase("es-CO").replace(/(^|[\s-])([a-záéíóúüñ])/g,(_,space,letter)=>space+letter.toLocaleUpperCase("es-CO"));
+  const cityLabel=value=>String(value||"")==="bucaramanga-amb"?"Bucaramanga + AMB":String(value||"").trim().toLocaleLowerCase("es-CO").replace(/(^|[\s-])([a-záéíóúüñ])/g,(_,space,letter)=>space+letter.toLocaleUpperCase("es-CO"));
+  const scopeCity=value=>["bucaramanga","floridablanca","giron","piedecuesta","bucaramanga + amb","bucaramanga-amb"].includes(norm(value))?"bucaramanga-amb":norm(value);
+  const hasStaticEstratos=city=>city==="bucaramanga-amb"||!!QA_CITY_BOUNDS[city];
+  const matchesCitySelection=(selected,raw)=>selected.has(scopeCity(raw));
   const filterValues=id=>{
     const select=$(id);
     return select?[...select.selectedOptions].map(option=>option.value).filter(value=>value&&value!=="all"):[];
   };
   const territorialCityReady=()=>filterValues("mapCityFilter").length===1;
-  const isAmbCity=city=>["bucaramanga","floridablanca","giron","piedecuesta"].includes(city);
+  const isAmbCity=city=>city==="bucaramanga-amb";
   const selectFilterValues=(select,values)=>{
     if(!select)return;
-    const wanted=new Set(values||[]);
+    const wanted=new Set((values||[]).map(v=>select.id==="mapCityFilter"?scopeCity(v):v));
     let matched=0;
     for(const option of select.options){
       option.selected=option.value!=="all"&&wanted.has(option.value);
@@ -719,7 +723,7 @@
       if(point.isTest&&!showTests)return false;
       const pointCity=String(point.city?.assigned||point.observedCity||"").trim();
       const when=new Date(point.timestamp);
-      if(cities.length&&!cities.includes(norm(pointCity)))return false;
+      if(cities.length&&!cities.includes(scopeCity(pointCity)))return false;
       if(onlyPhotos&&!(Array.isArray(point.photos)&&point.photos.some(Boolean)))return false;
       if(types.length&&!types.includes(formType(point.type)))return false;
       if(users.length&&!users.includes(String(point.user||"")))return false;
@@ -746,17 +750,17 @@
     if(city){
       const current=filterValues("mapCityFilter");
       const cityMap=new Map();
-      for(const raw of state.cityCatalog){if(raw&&!cityMap.has(norm(raw)))cityMap.set(norm(raw),cityLabel(raw));}
+      for(const raw of state.cityCatalog){const key=scopeCity(raw);if(raw&&!cityMap.has(key))cityMap.set(key,cityLabel(key));}
       for(const point of state.points){
         const raw=String(point.city?.assigned||point.observedCity||"").trim();
-        if(raw&&!cityMap.has(norm(raw)))cityMap.set(norm(raw),cityLabel(raw));
+        const key=scopeCity(raw);if(raw&&!cityMap.has(key))cityMap.set(key,cityLabel(key));
       }
       const cities=[...cityMap.entries()].sort((a,b)=>a[1].localeCompare(b[1],"es",{sensitivity:"base"}));
       city.innerHTML='<option value="all">Todas las ciudades</option>'+cities.map(([key,label])=>'<option value="'+esc(key)+'">'+esc(label)+'</option>').join("");
       selectFilterValues(city,current);
     }
     const eligibleCities=new Set(filterValues("mapCityFilter"));
-    const eligiblePoints=state.points.filter(p=>!eligibleCities.size||eligibleCities.has(norm(p.city?.assigned||p.observedCity||"")));
+    const eligiblePoints=state.points.filter(p=>!eligibleCities.size||matchesCitySelection(eligibleCities,p.city?.assigned||p.observedCity||""));
     const typeSelect=$("mapTypeFilter");
     if(typeSelect){
       const availableTypes=new Set(eligiblePoints.map(p=>norm(formType(p.type))).filter(Boolean));
@@ -772,7 +776,7 @@
       const cityReady=selectedCities.length===1;
       const current=cityReady?filterValues("mapOperatorFilter"):[];
       const activeCities=new Set(selectedCities);
-      const eligiblePoints=cityReady?state.points.filter(p=>activeCities.has(norm(p.city?.assigned||p.observedCity||""))):[];
+      const eligiblePoints=cityReady?state.points.filter(p=>matchesCitySelection(activeCities,p.city?.assigned||p.observedCity||"")):[];
       const profiles=eligiblePoints.map(operatorProfile);
       const incumbents=new Set(profiles.flatMap(profile=>profile.incumbents));
       const hasOnlyIsps=profiles.some(profile=>profile.others.length>0&&profile.incumbents.length===0);
@@ -793,7 +797,7 @@
     if(user){
       const current=filterValues("mapUserFilter");
       const activeCities=new Set(filterValues("mapCityFilter"));
-      const users=[...new Set(state.points.filter(p=>!activeCities.size||activeCities.has(norm(p.city?.assigned||p.observedCity||""))).map(p=>String(p.user||"").trim()).filter(Boolean))].sort();
+      const users=[...new Set(state.points.filter(p=>!activeCities.size||matchesCitySelection(activeCities,p.city?.assigned||p.observedCity||"")).map(p=>String(p.user||"").trim()).filter(Boolean))].sort();
       user.innerHTML='<option value="all">Todos los usuarios</option>'+users.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join("");
       user.hidden=state.visibility!=="team";
       selectFilterValues(user,current);
@@ -819,7 +823,7 @@
     if($("mapPointCount"))$("mapPointCount").textContent=list.length;
     if($("mapVirtualCount"))$("mapVirtualCount").textContent=list.filter(p=>formType(p.type)==="Virtual").length;
     if($("mapPresentialCount"))$("mapPresentialCount").textContent=list.filter(p=>formType(p.type)==="Presencial").length;
-    if($("mapCityCount"))$("mapCityCount").textContent=new Set(list.map(p=>norm(p.city?.assigned||p.observedCity)).filter(Boolean)).size;
+    if($("mapCityCount"))$("mapCityCount").textContent=new Set(list.map(p=>scopeCity(p.city?.assigned||p.observedCity)).filter(Boolean)).size;
     updateRouteMetrics();
   }
 
@@ -894,7 +898,7 @@
   function updateQaToolbar(){
     const cities=filterValues("mapCityFilter");
     const city=cities.length===1?cities[0]:"";
-    const precomputed=!!QA_CITY_BOUNDS[city];
+    const precomputed=["neiva","villavicencio","ibague"].includes(city);
     const isBuc=isAmbCity(city);
     const active=isBuc&&state.qaDissolveEstratos;
     const label=active?"✓ Estratos unidos (QA)":"Unificar estratos (QA)";
@@ -1286,10 +1290,10 @@
     const title=document.querySelector("#mapLayersPanel .map-layers-head strong");
     const cityName=city==="ibague"?"Ibagué":city?cityLabel(city):"Selecciona una ciudad";
     if(title)title.textContent=cityName;
-    if($("mapViewBucaramanga"))$("mapViewBucaramanga").textContent=QA_CITY_BOUNDS[city]?"◎ Ver "+cityName:"◎ Ver Bucaramanga";
+    if($("mapViewBucaramanga"))$("mapViewBucaramanga").textContent=QA_CITY_BOUNDS[city]?"◎ Ver "+cityName:"◎ Ver Bucaramanga + AMB";
     const qaToggle=$("mapEstratoOptimizePilot");
     if(qaToggle){
-      const isPrecomputed=!!QA_CITY_BOUNDS[city];
+      const isPrecomputed=["neiva","villavicencio","ibague"].includes(city);
       qaToggle.disabled=isPrecomputed;
       qaToggle.checked=isPrecomputed||state.qaDissolveEstratos;
       const label=qaToggle.closest("label");
@@ -1356,7 +1360,7 @@
   async function loadLayerIndex(layer,{silent=false}={}){
     if(!territorialCityReady()||!state.polygonActive[layer]||!ensureMap())return;
     const selectedCity=filterValues("mapCityFilter").join(",");
-    if(layer==="estratos"&&state.qaDissolveEstratos&&isAmbCity(selectedCity)&&!state.manualRefreshId&&
+    if(layer==="estratos"&&hasStaticEstratos(selectedCity)&&(!isAmbCity(selectedCity)||state.qaDissolveEstratos)&&!state.manualRefreshId&&
        (state.polygonFullKey||state.polygonFullLoadingKey))return;
     state.polygonIndexControllers[layer]?.abort();
     const controller=new AbortController();
@@ -1368,7 +1372,7 @@
       const scope=layer==="barrios"?state.barrioListMode:layer==="troncales"?"all":"visible";
       const cityFilter=cities?"&cities="+encodeURIComponent(cities):"";
       const optimized=layer==="estratos"&&state.qaDissolveEstratos?"&qaDissolve=1":"";
-      const fullAmb=layer==="estratos"&&state.qaDissolveEstratos&&isAmbCity(cities);
+      const fullAmb=layer==="estratos"&&((state.qaDissolveEstratos&&isAmbCity(cities))||hasStaticEstratos(cities));
       const queryBbox=fullAmb?"-180,-90,180,90":bbox;
       const queryZoom=fullAmb?15:zoom;
       const reload=state.manualRefreshId?"&reload="+encodeURIComponent(state.manualRefreshId)+"&forceRefresh=1":"";
@@ -1403,7 +1407,7 @@
   async function loadPolygonLayer(layer,{silent=false}={}){
     if(!territorialCityReady()||!state.polygonActive[layer]||!ensureMap())return;
     const fullCity=filterValues("mapCityFilter").join(",");
-    const fullKey=layer==="estratos"&&state.qaDissolveEstratos&&isAmbCity(fullCity)
+    const fullKey=layer==="estratos"&&hasStaticEstratos(fullCity)&&(!isAmbCity(fullCity)||state.qaDissolveEstratos)
       ?fullCity+"|"+[...state.polygonSelections.estratos].sort().join(","):"";
     // A full-city MultiPolygon does not change when panning or zooming.
     if(fullKey&&!state.manualRefreshId&&
