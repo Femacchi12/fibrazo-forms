@@ -1225,6 +1225,12 @@
 
   function resetTerritorialScopeForCity(){
     const ready=territorialCityReady();
+    const selected=filterValues("mapCityFilter");
+    const city=selected.length===1?selected[0]:"";
+    const title=document.querySelector("#mapLayersPanel .map-layers-head strong");
+    const cityName=city==="ibague"?"Ibagué":city?cityLabel(city):"Selecciona una ciudad";
+    if(title)title.textContent=cityName;
+    if($("mapViewBucaramanga"))$("mapViewBucaramanga").textContent=QA_CITY_BOUNDS[city]?"◎ Ver "+cityName:"◎ Ver Bucaramanga";
     polygonResponseCache.clear();
     for(const layer of ["barrios","estratos","troncales"]){
       state.polygonControllers[layer]?.abort();
@@ -1852,7 +1858,12 @@
     $("mapLayerTroncales")?.addEventListener("click",()=>togglePolygonLayer("troncales"));
     // FO-CHG-046: las capas territoriales se habilitan solo con una ciudad exacta.
     resetTerritorialScopeForCity();
-    $("mapViewBucaramanga")?.addEventListener("click",viewBucaramanga);
+    $("mapViewBucaramanga")?.addEventListener("click",()=>{
+      const city=filterValues("mapCityFilter")[0]||"";
+      const bounds=QA_CITY_BOUNDS[city];
+      if(bounds&&ensureMap())state.map.fitBounds(bounds,{padding:[22,22],maxZoom:13});
+      else viewBucaramanga();
+    });
     $("mapClearEstratos")?.addEventListener("click",()=>{
       if(state.polygonSelections.estratos.size)clearLayerSelection("estratos");
       else {state.polygonSelections.estratos=new Set(["1","2","3","4","5","6"]);renderLayerControls();loadPolygonLayer("estratos",{silent:true});}
