@@ -1357,8 +1357,9 @@
     try{
       const scope=layer==="barrios"?state.barrioListMode:layer==="troncales"?"all":"visible";
       const cityFilter=cities?"&cities="+encodeURIComponent(cities):"";
+      const optimized=layer==="estratos"&&state.qaDissolveEstratos?"&qaDissolve=1":"";
       const reload=state.manualRefreshId?"&reload="+encodeURIComponent(state.manualRefreshId)+"&forceRefresh=1":"";
-      const url="/api/map-polygons?mode=index&layer="+encodeURIComponent(layer)+"&scope="+encodeURIComponent(scope)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom)+cityFilter+reload;
+      const url="/api/map-polygons?mode=index&layer="+encodeURIComponent(layer)+"&scope="+encodeURIComponent(scope)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom)+cityFilter+optimized+reload;
       const data=await authorizedFetch(url,controller,{ttl:reload?0:45000});
       if(cities!==filterValues("mapCityFilter").join(","))return;
       if(data.requiresZoom){
@@ -1419,7 +1420,7 @@
     try{
       const cityFilter=cities?"&cities="+encodeURIComponent(cities):"";
       const optimized=layer==="estratos"&&state.qaDissolveEstratos?"&qaDissolve=1":"";
-      const completeBuc=layer==="estratos"&&isAmbCity(cities);
+      const completeBuc=layer==="estratos"&&isAmbCity(cities)&&!state.qaDissolveEstratos;
       const full=completeBuc?"&fullCoverage=1":"";
       const reload=state.manualRefreshId?"&reload="+encodeURIComponent(state.manualRefreshId):"";
       const baseUrl="/api/map-polygons?mode=geometry&layer="+encodeURIComponent(layer)+"&bbox="+encodeURIComponent(bbox)+"&zoom="+encodeURIComponent(zoom)+filter+cityFilter+optimized+full+reload;
@@ -1448,10 +1449,10 @@
       }
       const drawn=drawPolygonLayer(layer,features);
       const received=features.length;
-      state.polygonStatus[layer]=completeBuc
-        ?("AMB · "+Number(data.totalVisible||0)+" polígonos sin muestreo → "+received+" geometrías"+(state.qaDissolveEstratos?" · unión QA por lotes":" · original"))
-        :data.precomputed
-        ?("QA precalculado · "+Number(data.totalVisible||0)+" componentes en vista · "+features.length+" estratos")
+      state.polygonStatus[layer]=data.precomputed
+        ?("QA precalculado · "+Number(data.totalVisible||0)+" componentes en vista → "+features.length+" grupos por estrato · detalle "+(data.detail||""))
+        :completeBuc
+        ?("AMB original · "+Number(data.totalVisible||0)+" polígonos sin muestreo → "+received+" geometrías")
         :layer==="estratos"&&state.qaDissolveEstratos
         ?("Piloto optimizado · "+Number(data.originalFeatureCount||features.length)+" originales → "+features.length+" geometrías"+(data.optimizedIncomplete?" · vista incompleta por límite":""))
         :data.truncated
