@@ -211,16 +211,15 @@
       notice.className="map-layer-city-coverage";
       layersHeader.after(notice);
       const normCity=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
-      const amb=new Set(["bucaramanga","floridablanca","giron","piedecuesta"]);
+      const qaEstratos=new Set(["neiva","villavicencio","ibague"]);
       const refresh=()=>{
         const cities=[...cityFilter.selectedOptions].map(o=>o.value).filter(v=>v&&v!=="all");
-        if(!cities.length){notice.hidden=true;return;}
-        const includesAMB=cities.some(name=>amb.has(normCity(name)));
-        const includesOthers=cities.some(name=>!amb.has(normCity(name)));
-        notice.hidden=!includesOthers;
-        if(!notice.hidden)notice.textContent=includesAMB?
-          "Las capas cartográficas validadas corresponden únicamente al área de Bucaramanga; las otras ciudades no tienen estas capas en esta base.":
-          "No hay capas territoriales validadas en este mapa para las ciudades seleccionadas. Los puntos siguen disponibles.";
+        if(cities.length!==1){notice.hidden=true;return;}
+        const city=normCity(cities[0]);
+        notice.hidden=city==="bucaramanga-amb";
+        if(qaEstratos.has(city))notice.textContent="Estratos disponibles en QA. Barrios y troncales de esta ciudad todavía están pendientes.";
+        else if(city==="cartagena")notice.textContent="Cartagena tiene estratos históricos de 2022 sin validación de vigencia; no están habilitados en esta capa.";
+        else notice.textContent="Esta ciudad aún no tiene capas territoriales de estratos validadas para el mapa.";
       };
       cityFilter.addEventListener("change",refresh);
       refresh();
