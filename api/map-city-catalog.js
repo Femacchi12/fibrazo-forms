@@ -14,7 +14,7 @@ module.exports=async(req,res)=>{
     const result=await google.sheets({version:"v4",auth}).spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"01_CIUDADES!A1:E250"});
     const rows=result.data.values||[];
     if(rows[0]?.[0]!=="ID_Ciudad")throw new Error("INVALID_CITY_CATALOG");
-    cache=unique(rows.slice(1).filter(row=>String(row[4]||"").trim().toUpperCase()==="ACTIVO").flatMap(row=>String(row[2]||row[1]||"").split(";"))).sort((a,b)=>a.localeCompare(b,"es"));
+    cache=unique(rows.slice(1).filter(row=>["ACTIVO","QA_ESTRATOS"].includes(String(row[4]||"").trim().toUpperCase())).flatMap(row=>String(row[2]||row[1]||"").split(";"))).sort((a,b)=>a.localeCompare(b,"es"));
     expires=Date.now()+5*60*1000;
     return res.status(200).json({ok:true,cities:cache});
   }catch(error){console.error("MAP_CITY_CATALOG_FAILED",error?.message||error);return res.status(503).json({error:"CITY_CATALOG_UNAVAILABLE"});}
