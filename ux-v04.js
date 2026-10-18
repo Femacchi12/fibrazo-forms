@@ -1128,6 +1128,14 @@
   function edit(){$("reviewWorkspace").hidden=true;$("formWorkspace").hidden=false;renderSection();}
   function buildReview(){
     const host=$("reviewContent");host.innerHTML="";
+    if(mayIdentifyTest()){
+      const decision=document.createElement("section");
+      decision.className="review-section";
+      decision.innerHTML='<div class="review-section-head"><span>CLASIFICACIÓN DEL REGISTRO</span><h2>'+
+        (state.isTest===true?"PRUEBA QA · excluida del análisis":"REAL · registro operativo")+
+        '</h2></div>';
+      host.appendChild(decision);
+    }
     activeSections().forEach(section=>{const visible=state.form.fields.filter(f=>f.section===section.id&&conditionMet(f));if(!visible.length)return;const card=document.createElement("section");card.className="review-section";const rows=visible.map(f=>'<div class="review-row"><span>'+esc(f.label)+'</span><strong>'+esc(reviewValue(f))+'</strong></div>').join("");card.innerHTML='<div class="review-section-head"><span>SECCIÓN</span><h2>'+esc(section.title)+"</h2></div>"+rows;host.appendChild(card);});
   }
   function reviewValue(field){
