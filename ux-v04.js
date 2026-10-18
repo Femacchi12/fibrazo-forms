@@ -1535,6 +1535,14 @@
       invalidateTerritorialOnCoordinateChange(p.coords.latitude,p.coords.longitude);state.gps={lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy,cityDetected:"",citySource:""};
       if(value._onGpsCaptured)value._onGpsCaptured(state.gps);
       else value.textContent=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+" · ±"+Math.round(state.gps.accuracy)+" m";
+      // Register territorial enrichment BEFORE signaling GPS completion.
+      // Review can now safely await the same in-flight lookup even when the
+      // user advanced to another section during geolocation.
+      const gpsPoint={lat:state.gps.lat,lng:state.gps.lng};
+      const territorialTask=isExplorationForm()&&key==="coordenadas"
+        ?Promise.resolve().then(()=>resolveExplorationMunicipality(gpsPoint.lat,gpsPoint.lng,key))
+        :null;
+      if(territorialTask)state.geoPromise=territorialTask;
       settleCapture(true);
       const gpsInputNode=document.querySelector(".gps-manual-editor input");if(gpsInputNode)gpsInputNode.value=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6);
       const accuracyNotice=document.querySelector("[data-gps-accuracy]");if(accuracyNotice){accuracyNotice.textContent="Precisión GPS: ±"+Math.round(state.gps.accuracy)+" m";accuracyNotice.hidden=false;}
@@ -1558,10 +1566,14 @@
           if(resolved)applyDetectedCity(resolved);
           else if(cityStatus&&!fallback)cityStatus.textContent="Ciudad GPS: no se pudo identificar · selección manual disponible";
         }
-      }else if(isExplorationForm()&&key==="coordenadas"){
-        const promise=resolveExplorationMunicipality(state.gps.lat,state.gps.lng,key);
-        state.geoPromise=promise;
-        try{await promise;}finally{if(state.geoPromise===promise)state.geoPromise=null;}
+      }else if(territorialTask){
+        try{await territorialTask;}
+        catch(error){
+          console.error("GPS_TERRITORIAL_BACKGROUND_ERROR",error?.message||"LOOKUP_FAILED");
+          setStatus("Se obtuvo el GPS, pero la consulta territorial no terminó. Podés reintentarla en Validación territorial.","error");
+        }finally{
+          if(state.geoPromise===territorialTask)state.geoPromise=null;
+        }
       }
       btn.disabled=false;btn.textContent=btn.dataset.gpsOriginalLabel||"Actualizar ubicación";state.locationBusy=false;if(value._onGpsSettled)value._onGpsSettled();clearError(key);
     };
