@@ -1366,3 +1366,8 @@ body.form-mode #formWorkspace .operator-element-group>.field label.field-label::
   body.form-mode #formWorkspace .operator-element-group>.field label.field-label,
   body.form-mode #formWorkspace .form-qa-flag legend{font-size:13.5px!important;}
 }
+
+/* FO-CHG-064 · Required explicit classification of each corporate QA/form response. */
+body.form-mode #formWorkspace .form-qa-flag .form-test-choice-error{display:block!important;color:#ffdc84!important;border:1px solid rgba(255,205,65,.55)!important;border-radius:8px!important;padding:8px 10px!important;background:rgba(255,205,65,.09)!important;font-weight:750!important;font-size:12px!important;}
+body.form-mode #formWorkspace .form-qa-flag .form-test-choice-error[hidden]{display:none!important;}
+body.form-mode #formWorkspace .form-qa-flag legend .required{color:#43ffa5!important;}
