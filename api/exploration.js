@@ -115,10 +115,20 @@ module.exports=async(req,res)=>{
         return null;
       })
       :Promise.resolve(null);
-    const [territorial,competition,referenceCandidate]=await Promise.all([
+    // FO-CHG-065: parallel noncanonical city/barrio lookup for pilot maps.
+    // Reuse the corporate DANE and FO-CHG-058 sources, never activate them.
+    const pilotTask=process.env.VERCEL_ENV==="preview"
+      ?Promise.resolve().then(()=>require("./_territorial-qa").resolveQaTerritorial(
+        auth,lat,lng,canonicalCity(req.query.city||"")
+      )).catch(error=>{
+        console.error("QA_TERRITORIAL_REFERENCE_ERROR",error?.code||error?.message||"READ_FAILED");
+        return null;
+      }):Promise.resolve(null);
+    const [territorial,competition,referenceCandidate,pilotCandidate]=await Promise.all([
       resolveTerritorial(auth,lat,lng),
       loadCompetition(auth),
-      referenceTask
+      referenceTask,
+      pilotTask
     ]);
     // Never substitute noncanonical QA geometry for an operational layer.
     const qaStratum=["SIN_CAPA","SIN_CAPA_CANONICA"].includes(territorial.estrato?.status)
@@ -145,6 +155,7 @@ module.exports=async(req,res)=>{
       ok:true,
       territorialVersion:TERRITORIAL_VERSION,
       qaStratum,
+      qaTerritorial:pilotCandidate,
       city,
       cityStatus:territorial.city?.status||"",
       cityNearby,
