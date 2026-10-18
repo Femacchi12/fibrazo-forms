@@ -647,7 +647,7 @@
         copy.textContent="✓ Copiado";setTimeout(()=>copy.textContent="⧉ Copiar",1200);
       }catch(_){feedback.textContent="No se pudo copiar la coordenada";feedback.hidden=false;}
     });
-    const maps=document.createElement("button");maps.type="button";maps.textContent="↗ Google Maps";
+    const maps=document.createElement("button");maps.type="button";maps.textContent="↗ Ir";maps.setAttribute("aria-label","Ir a la coordenada en Google Maps");;
     maps.addEventListener("click",()=>{
       if(!state.gps||input.dataset.coordinateDirty==="1")return;
       window.open("https://www.google.com/maps?q="+state.gps.lat+","+state.gps.lng,"_blank","noopener");
@@ -707,14 +707,14 @@
     input.addEventListener("keydown",event=>{
       if(event.key==="Enter"){event.preventDefault();if(!search.disabled)search.click();}
     });
-    actions.append(auto,search);box.appendChild(actions);
+    actions.append(auto,search);
     const info=document.createElement("div");info.className="gps-exec-status";
     const city=document.createElement("div");city.className="gps-city";city.dataset.gpsCityFor=field.key;
     city.textContent="Municipio: "+(state.detectedCity||"pendiente");
     const accuracy=document.createElement("div");accuracy.className="gps-accuracy-notice";accuracy.dataset.gpsAccuracy="1";
     accuracy.textContent=state.gps?.accuracy!=null?"Precisión GPS: ±"+Math.round(state.gps.accuracy)+" m":"Coordenada manual · sin precisión GPS";
     accuracy.hidden=!state.gps;
-    info.append(city,accuracy);box.appendChild(info);
+    info.append(city,accuracy);box.appendChild(info);box.appendChild(actions);
     const geo=document.createElement("div");geo.className="geo-enrichment";geo.dataset.geoEnrichment="1";geo.hidden=true;
     const txt=document.createElement("span");txt.dataset.geoEnrichmentText="1";
     const stop=document.createElement("button");stop.type="button";stop.className="secondary-button compact";
