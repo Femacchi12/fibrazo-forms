@@ -1471,7 +1471,7 @@
       const qaStratum=data.qaStratum?.status==="DENTRO"&&data.qaStratum?.canonical===false?data.qaStratum:null;
       const qaNearby=data.qaStratum?.status==="FUERA"&&data.qaStratum?.canonical===false&&Array.isArray(data.qaStratum.nearby)
         ?data.qaStratum.nearby.filter(item=>/^[1-6]$/.test(String(item.estrato))):[];
-      const estratoDisplay=data.estratoStatus==="DENTRO"?data.estrato:(data.estratoStatus==="FUERA"?data.estratoNearby:(qaStratum?qaStratum.value:""));
+      const estratoDisplay=data.estratoStatus==="DENTRO"?data.estrato:""; // Reference QA and nearby strata are advisory, never assigned.
       setGeoField("sector_barrio",barrioDisplay||"","");
       setGeoField("estrato",estratoDisplay||"","Sin información");
 
