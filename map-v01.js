@@ -516,7 +516,7 @@
       }
       const nearby=Array.isArray(reference.nearby)?reference.nearby.filter(item=>/^[1-6]$/.test(String(item.estrato))):[];
       if(reference.status==="FUERA"&&nearby.length){
-        const details=nearby.map(item=>"Estrato "+item.estrato+" (cercano: "+formatDistance(item.distanceM)+")");
+        const details=nearby.map(item=>"Estrato "+item.estrato+" (cercano: "+Number(item.distanceM).toFixed(1).replace(".",",")+" m)");
         return{label,value:details.join(" · ")+" · QA referencial; no asignado",state:"near"};
       }
       if(reference.status==="AMBIGUO")return{label,value:"Polígonos superpuestos · QA sin asignación automática",state:"near"};
