@@ -1484,15 +1484,35 @@
   function captureGps(value,btn,key){
     if(!navigator.geolocation){if(value._onGpsStatus)value._onGpsStatus("GPS no disponible en este navegador.");else value.textContent="GPS no disponible en este navegador.";return;}
     btn.disabled=true;btn.textContent="Buscando mejor señal…";state.locationBusy=isExplorationForm()&&key==="coordenadas";state.gpsCapturePending=isExplorationForm()&&key==="coordenadas";state.locationValidated=false;
+    let settleCapture=()=>{};
+    if(state.gpsCapturePending){
+      const task=new Promise(resolve=>{
+        settleCapture=success=>{
+          if(state.gpsCapturePromise===task)state.gpsCapturePromise=null;
+          state.gpsCapturePending=false;
+          resolve(success);
+        };
+      });
+      state.gpsCapturePromise=task;
+    }
     let best=null,finished=false,watchId=null,timer=null;
     const finish=async p=>{
       if(finished)return;finished=true;if(watchId!==null)navigator.geolocation.clearWatch(watchId);clearTimeout(timer);
-      if(!p){state.gpsCapturePending=false;if(value._onGpsStatus)value._onGpsStatus("No se pudo obtener el GPS. Revisa el permiso del navegador.");else value.textContent="No se pudo obtener la ubicación. Revisa el permiso del navegador.";btn.disabled=false;btn.textContent=btn.dataset.gpsOriginalLabel||"Reintentar";state.locationBusy=false;if(value._onGpsSettled)value._onGpsSettled();return;}
+      if(!p){
+        settleCapture(false);
+        if(value._onGpsStatus)value._onGpsStatus("No se pudo obtener el GPS. Revisa el permiso del navegador.");
+        else value.textContent="No se pudo obtener la ubicación. Revisa el permiso del navegador.";
+        btn.disabled=false;btn.textContent=btn.dataset.gpsOriginalLabel||"Reintentar";
+        state.locationBusy=false;
+        if(value._onGpsSettled)value._onGpsSettled();
+        setStatus("No se obtuvo el GPS. Podés volver a Coordenada para reintentar o pegar una.","error");
+        return;
+      }
       const advanceAfterGps=(state.form?.id==="EXPLORACION_PRESENCIAL"||state.form?.id==="INTELIGENCIA_OPERADOR")&&key==="coordenadas"&&currentSection()?.id==="coordenada"&&!state.gps&&!value.closest(".gps-executive");
-      state.gpsCapturePending=false;
       invalidateTerritorialOnCoordinateChange(p.coords.latitude,p.coords.longitude);state.gps={lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy,cityDetected:"",citySource:""};
       if(value._onGpsCaptured)value._onGpsCaptured(state.gps);
       else value.textContent=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+" · ±"+Math.round(state.gps.accuracy)+" m";
+      settleCapture(true);
       const gpsInputNode=document.querySelector(".gps-manual-editor input");if(gpsInputNode)gpsInputNode.value=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6);
       const accuracyNotice=document.querySelector("[data-gps-accuracy]");if(accuracyNotice){accuracyNotice.textContent="Precisión GPS: ±"+Math.round(state.gps.accuracy)+" m";accuracyNotice.hidden=false;}
       const summaryValue=document.querySelector(".territorial-coordinate-summary .territorial-coordinate-value");
@@ -1513,7 +1533,9 @@
           else if(cityStatus&&!fallback)cityStatus.textContent="Ciudad GPS: no se pudo identificar · selección manual disponible";
         }
       }else if(isExplorationForm()&&key==="coordenadas"){
-        state.geoPromise=resolveExplorationMunicipality(state.gps.lat,state.gps.lng,key);await state.geoPromise;state.geoPromise=null;
+        const promise=resolveExplorationMunicipality(state.gps.lat,state.gps.lng,key);
+        state.geoPromise=promise;
+        try{await promise;}finally{if(state.geoPromise===promise)state.geoPromise=null;}
       }
       btn.disabled=false;btn.textContent=btn.dataset.gpsOriginalLabel||"Actualizar ubicación";state.locationBusy=false;if(value._onGpsSettled)value._onGpsSettled();clearError(key);
     };
