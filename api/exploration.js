@@ -139,7 +139,8 @@ module.exports=async(req,res)=>{
       :"";
     const cityNearby=canonicalCity(territorial.city?.nearby?.name||"");
     const hint=canonicalCity(req.query.city||"");
-    const ispCity=city||cityNearby||hint;
+    const qaCity=pilotCandidate?.city?.status==="DENTRO"?String(pilotCandidate.city.assigned?.name||""):"";
+    const ispCity=city||qaCity||cityNearby||hint;
 
     const barrio=territorial.barrio?.status==="DENTRO"
       ?String(territorial.barrio.assigned?.name||"")
