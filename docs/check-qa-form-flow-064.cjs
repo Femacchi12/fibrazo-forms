@@ -34,7 +34,7 @@ assert.ok(nextFnSource.includes("entry._applyManualCoordinate()"));
 function exerciseContinue(valid){
   const state={form:{id:"EXPLORACION_PRESENCIAL"},sectionIndex:0,maxSectionReached:0,gps:null};
   let applied=0,validated=0,rendered=0;
-  const coordinate={dataset:{coordinateDirty:"1"},_applyManualCoordinate(){
+  const coordinate={value:"2.9252688, -75.2738189",dataset:{coordinateDirty:"1"},_applyManualCoordinate(){
     applied++;if(!valid)return false;
     state.gps={lat:2.9252688,lng:-75.2738189};return true;
   }};
