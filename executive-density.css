@@ -1412,3 +1412,31 @@ body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coord
     font-size:10px!important;padding:4px 5px!important;
   }
 }
+
+/* FO-CHG-067 · compact final coordinate controls without changing their order */
+body.form-mode #formWorkspace .territorial-coordinate-summary{gap:5px!important;}
+body.form-mode #formWorkspace .territorial-coordinate-summary>.territorial-coordinate-edit{gap:5px!important;}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-edit>input{
+  font-size:11px!important;font-weight:650!important;line-height:1.1!important;
+  height:34px!important;min-height:34px!important;padding:5px 9px!important;
+  letter-spacing:0!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-actions{
+  align-items:flex-start!important;gap:5px!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-actions>button{
+  width:auto!important;max-width:100%!important;
+  height:32px!important;min-height:32px!important;
+  padding:4px 10px!important;font-size:11px!important;
+  font-weight:700!important;line-height:1.2!important;
+  border-radius:9px!important;box-shadow:none!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-quick>button{
+  font-size:11px!important;height:34px!important;min-height:34px!important;
+}
+@media(max-width:390px){
+  body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-actions>button{
+    font-size:10px!important;padding:4px 8px!important;
+  }
+  body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-edit>input{font-size:10px!important;}
+}
