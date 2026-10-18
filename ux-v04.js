@@ -1121,7 +1121,7 @@
             }
           }
         }
-        if(entry.dataset.coordinateDirty==="1"){
+        if(entry.dataset.coordinateDirty==="1"&&!noCoordinate){
           if(typeof entry._applyManualCoordinate!=="function"||!entry._applyManualCoordinate())return;
         }
       }
