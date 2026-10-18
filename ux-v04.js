@@ -694,7 +694,10 @@
       feedback.hidden=true;
       sync();
     });
-    input._onGpsStatus=message=>{feedback.textContent=message;feedback.hidden=false;};
+    input._onGpsStatus=message=>{
+      if(String(message).includes("GPS no disponible"))input._continueAfterGps=false;
+      feedback.textContent=message;feedback.hidden=false;
+    };
     input._onGpsCaptured=point=>{
       input.value=format(point);input.dataset.coordinateDirty="0";
       auto.dataset.gpsOriginalLabel="◎ Mejorar precisión";
@@ -1095,18 +1098,23 @@
     // automatically on an empty field; there is one location-lookup pipeline.
     if(isExplorationForm()&&currentSection()?.id==="coordenada"){
       const entry=document.querySelector(".gps-exec-coordinate");
-      if(entry?.dataset.coordinateDirty==="1"){
-        if(typeof entry._applyManualCoordinate!=="function"||!entry._applyManualCoordinate())return;
-      }else if(entry&&!state.gps){
-        if(state.gpsCapturePending||entry._continueAfterGps)return;
-        const gpsButton=document.querySelector(".gps-exec-auto");
-        if(!gpsButton||gpsButton.disabled){
-          setError("coordenadas","No es posible iniciar el GPS. Revisá los permisos del navegador.");
+      if(entry){
+        const inputText=String(entry.value||"").trim();
+        const noCoordinate=!inputText&&(!state.gps||entry.dataset.coordinateDirty==="1");
+        if(noCoordinate){
+          if(state.gpsCapturePending||entry._continueAfterGps)return;
+          const gpsButton=document.querySelector(".gps-exec-auto");
+          if(!gpsButton||gpsButton.disabled){
+            setError("coordenadas","No es posible iniciar el GPS. Revisá los permisos del navegador.");
+            return;
+          }
+          entry._continueAfterGps=true;
+          gpsButton.click();
           return;
         }
-        entry._continueAfterGps=true;
-        gpsButton.click();
-        return;
+        if(entry.dataset.coordinateDirty==="1"){
+          if(typeof entry._applyManualCoordinate!=="function"||!entry._applyManualCoordinate())return;
+        }
       }
     }
     if(state.form?.id==="INTELIGENCIA_OPERADOR"&&currentSection()?.id==="calidad")saveLastOperatorTendidoQuality();
