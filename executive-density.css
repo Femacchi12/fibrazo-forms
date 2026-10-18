@@ -1440,3 +1440,23 @@ body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coord
   }
   body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-edit>input{font-size:10px!important;}
 }
+
+/* FO-CHG-068 · compact paired coordinate actions */
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-actions{
+  display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;
+  align-items:center!important;justify-content:flex-start!important;
+  gap:6px!important;width:100%!important;min-width:0!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-actions>button{
+  display:inline-flex!important;flex:0 1 auto!important;width:auto!important;max-width:100%!important;
+  height:32px!important;min-height:32px!important;
+  padding:4px 9px!important;font-size:11px!important;white-space:nowrap!important;
+}
+@media(max-width:390px){
+  body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-actions{
+    flex-wrap:nowrap!important;gap:4px!important;
+  }
+  body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-actions>button{
+    min-width:0!important;padding:4px 6px!important;font-size:10px!important;
+  }
+}
