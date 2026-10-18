@@ -2,7 +2,7 @@
   const forms=window.FIBRAZO_FORMS||{};
   const $=id=>document.getElementById(id);
   const publicMode=document.body.classList.contains("public-mode");
-  const state={form:null,policy:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:"",ispOptions:[],geoController:null,geoLookupId:0,geoLookupCancelled:false,locationBusy:false,maxSectionReached:0,locationValidated:false,geoPromise:null,editId:"",existingPhotoFields:{},serverHistory:[],isTest:false};
+  const state={form:null,policy:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:"",ispOptions:[],geoController:null,geoLookupId:0,geoLookupCancelled:false,locationBusy:false,maxSectionReached:0,locationValidated:false,geoPromise:null,editId:"",existingPhotoFields:{},serverHistory:[],isTest:false,qaReference:null};
   const pending=window.FIBRAZO_PENDING||[];
   const pendingOwnedByApp=document.querySelector(".pending-hub")?.dataset.pendingOwner==="app";
 
@@ -29,6 +29,7 @@
     if(!mayIdentifyTest()||!event.target.matches('input[type="radio"]'))return;
     state.isTest=event.target.value==="Sí";
     updateTestReview();
+    refreshQaStratumAutofill();
   });
 
   function renderPending(){
@@ -99,7 +100,7 @@
     const form=forms[id];if(!form)return;
     if(!publicMode&&window.FIBRAZO_ACCESS&&window.FIBRAZO_ACCESS[id]===false)return;
     const policy=policyFor(id);
-    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.isTest=false;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.gpsCapturePending=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
+    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.isTest=false;state.qaReference=null;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.gpsCapturePending=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
     document.body.classList.add("form-mode");
     $("formTitle").textContent=form.name;
     $("formDescription").textContent=form.description||"";
@@ -566,6 +567,10 @@
     (field.options||[]).forEach(o=>{const x=document.createElement("option");x.value=o;x.textContent=o;s.appendChild(x);});
     s.addEventListener("change",()=>{
       if(field.autoGeo&&s.dataset.geoWriting!=="1")s.dataset.geoManual="1";
+      if(field.key==="estrato"&&s.dataset.qaAuto==="1"&&s.dataset.geoWriting!=="1"){
+        delete s.dataset.qaAuto;
+        if(state.gps){state.gps.estratoStatus="QA_SELECCION_MANUAL";state.gps.estratoMatch="qa_manual";state.gps.estratoQaSelected=String(s.value||"");}
+      }
       const isManualCity=(state.form?.id==="CHURN"&&field.key==="ciudad")||((state.form?.id==="EXPLORACION_PRESENCIAL"||state.form?.id==="INTELIGENCIA_OPERADOR")&&field.key==="municipio");
       if(isManualCity&&s.dataset.autoGps!=="1"){
         const city=String(s.value||"").trim();
@@ -1071,6 +1076,11 @@
       const accuracy=Number.isFinite(Number(state.gps.accuracy))?" · ±"+Math.round(Number(state.gps.accuracy))+" m":"";
       return state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+accuracy+(state.gps.cityDetected?" · "+state.gps.cityDetected:"");
     }
+    if(field.key==="estrato"&&state.gps&&String(state.gps.estratoStatus||"").startsWith("QA_")){
+      const chosen=String(fieldValue("estrato")||"Sin información");
+      const alternatives=(state.gps.estratoQaCandidates||[]).map(x=>"E"+x.estrato+" "+Number(x.distanceM).toFixed(1)+" m").join("; ");
+      return chosen+" · sugerencia provisional QA, no canónica"+(alternatives?" · candidatos: "+alternatives:"");
+    }
     if((field.key==="estrato"||field.key==="sector_barrio")&&state.gps){
       const prefix=field.key==="estrato"?"estrato":"barrio";
       const geoState=String(state.gps[prefix+"Status"]||"");
@@ -1114,6 +1124,17 @@
       editId:state.editId||"",
       existingPhotoFields:state.existingPhotoFields||{}
     };
+    // Defensa: una sugerencia de QA jamás se guarda como estrato
+    // operativo cuando el usuario desmarca el indicador de prueba.
+    if(!payload.isTest&&String(payload.location?.estratoStatus||"").startsWith("QA_")){
+      payload.data.estrato=state.qaReference?.canonicalValue||"Sin información";
+      payload.location.estratoStatus=state.qaReference?.canonicalStatus||"SIN_CAPA";
+      payload.location.estratoSource=state.qaReference?.canonicalSource||"";
+      payload.location.estratoMatch=state.qaReference?.canonicalMatch||"";
+      delete payload.location.estratoQaSuggested;
+      delete payload.location.estratoQaCandidates;
+      delete payload.location.estratoQaSelected;
+    }
     try{
       let result;
       if(publicMode){
@@ -1416,6 +1437,64 @@
     clearError(key);
   }
 
+  // FO-CHG-063: provisional value only for corporate QA tests, never a
+  // canonical territorial assignment or a production classification.
+  function refreshQaStratumAutofill(){
+    const box=document.querySelector('[data-key="estrato"]');
+    const control=box?.querySelector('[name="estrato"]');
+    if(!box||!control)return;
+    const ref=state.qaReference;
+    const current=!!state.gps&&!!ref&&Number(ref.lat)===Number(state.gps.lat)&&Number(ref.lng)===Number(state.gps.lng);
+    const allowed=mayIdentifyTest()&&state.isTest&&isExplorationForm()&&current;
+    const suggested=allowed?window.FIBRAZO_QA_STRATUM_POLICY?.suggest(ref.reference):null;
+    const label=box.querySelector(".field-label");
+    if(label)label.textContent=suggested?"Estrato sugerido (QA · no canónico)":"Estrato automático (Motor Territorial)";
+    const info=box.querySelector('[data-geo-info-for="estrato"]');
+    if(!suggested){
+      if(control.dataset.qaAuto==="1"){
+        delete control.dataset.qaAuto;
+        if(control.dataset.geoManual!=="1")setGeoField("estrato",ref?.canonicalValue||"","Sin información");
+      }
+      if(ref&&state.gps){
+        state.gps.estratoStatus=ref.canonicalStatus;
+        state.gps.estratoSource=ref.canonicalSource;
+        state.gps.estratoMatch=ref.canonicalMatch;
+        state.gps.estratoNearby=ref.canonicalNearby;
+        state.gps.estratoDistanceM=ref.canonicalDistanceM;
+        delete state.gps.estratoQaSuggested;
+        delete state.gps.estratoQaCandidates;
+        delete state.gps.estratoQaSelected;
+      }
+      if(info&&ref){info.textContent=ref.message||"";info.hidden=!ref.message;}
+      return;
+    }
+    if(control.dataset.geoManual!=="1"){
+      setGeoField("estrato",suggested.value,"Sin información");
+      control.dataset.qaAuto="1";
+    }
+    const selected=String(control.value||"");
+    const description=suggested.candidates.map(item=>
+      "Estrato "+item.estrato+(suggested.match==="QA_DENTRO"?" (dentro)":" (cercano: "+item.distanceM.toFixed(1).replace(".",",")+" m)")
+    ).join(" · ");
+    if(state.gps){
+      state.gps.estratoStatus=control.dataset.geoManual==="1"?"QA_SELECCION_MANUAL":"QA_SUGERIDO";
+      state.gps.estratoSource="MultiPolygon precalculado · QA referencial, no canónico";
+      state.gps.estratoMatch=suggested.match;
+      state.gps.estratoNearby=suggested.candidates.filter(item=>item.estrato!==selected).map(item=>item.estrato).join(", ");
+      state.gps.estratoDistanceM=suggested.candidates.find(item=>item.estrato===selected)?.distanceM??null;
+      state.gps.estratoQaSuggested=suggested.value;
+      state.gps.estratoQaCandidates=suggested.candidates;
+      state.gps.estratoQaSelected=selected;
+    }
+    if(info){
+      info.textContent="Sugerencia QA: "+description+
+        (suggested.ambiguous?" · Hay varios estratos cercanos; verificá y corregí la selección si corresponde.":"")+
+        " · Valor provisional, no es clasificación canónica.";
+      info.className="field-geo-info geo-outside";
+      info.hidden=false;
+    }
+  }
+
   function distanceNumber(value){
     if(value===null||value===undefined||value==="")return null;
     const n=Number(value);
@@ -1474,6 +1553,10 @@
       const estratoDisplay=data.estratoStatus==="DENTRO"?data.estrato:""; // Reference QA and nearby strata are advisory, never assigned.
       setGeoField("sector_barrio",barrioDisplay||"","");
       setGeoField("estrato",estratoDisplay||"","Sin información");
+      state.qaReference={lat,lng,reference:data.qaStratum||null,canonicalValue:estratoDisplay,
+        canonicalStatus:data.estratoStatus||"",canonicalSource:data.estratoSource||"",
+        canonicalMatch:data.estratoMatch||"",canonicalNearby:data.estratoNearby||"",
+        canonicalDistanceM:distanceNumber(data.estratoDistanceM),message:""};
 
       if(state.gps){
         Object.assign(state.gps,{
@@ -1516,8 +1599,10 @@
             ?qaNearby.map(item=>"Estrato "+item.estrato+" (cercano: "+(Math.round(Number(item.distanceM)*10)/10).toString().replace(".",",")+" m)").join(" · ")+" · Solo referencia QA; sin asignación automática."
             :geoLayerDetail(data.estratoStatus,data.estrato,data.estratoNearby,data.estratoDistanceM,data.estratoSource,"Estrato");
         estratoInfo.textContent=detail;estratoInfo.hidden=!detail;
+        if(state.qaReference)state.qaReference.message=detail;
         estratoInfo.className="field-geo-info "+(qaStratum||qaNearby.length?"geo-outside":data.estratoStatus==="DENTRO"?"geo-inside":data.estratoStatus==="FUERA"?"geo-outside":"geo-missing");
       }
+      refreshQaStratumAutofill();
       const cityStatus=document.querySelector('[data-gps-city-for="coordenadas"]');
       if(cityStatus){
         const cityDistance=distanceNumber(data.cityDistanceM);
