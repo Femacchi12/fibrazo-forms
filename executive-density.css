@@ -1460,3 +1460,36 @@ body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coord
     min-width:0!important;padding:4px 6px!important;font-size:10px!important;
   }
 }
+
+/* FO-CHG-069 · compact persistent feedback for asynchronous GPS/territorial reads */
+body.form-mode #formWorkspace .territorial-progress{
+  display:flex!important;align-items:center!important;gap:10px!important;
+  min-width:0!important;padding:10px 12px!important;margin:0 0 12px!important;
+  border:1px solid rgba(148,163,154,.33)!important;border-radius:10px!important;
+  background:rgba(148,163,154,.06)!important;
+}
+body.form-mode #formWorkspace .territorial-progress[hidden]{display:none!important;}
+body.form-mode #formWorkspace .territorial-progress-content{
+  display:flex!important;flex-direction:column!important;gap:2px!important;min-width:0!important;
+}
+body.form-mode #formWorkspace .territorial-progress-content>strong{
+  font-size:12px!important;line-height:1.35!important;font-weight:750!important;
+}
+body.form-mode #formWorkspace .territorial-progress-content>small{
+  font-size:11px!important;line-height:1.4!important;color:var(--fz-muted,#b8c9c0)!important;
+}
+body.form-mode #formWorkspace .territorial-progress-icon{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  flex:none!important;width:16px!important;height:16px!important;
+}
+body.form-mode #formWorkspace .territorial-progress[data-phase="gps"] .territorial-progress-icon,
+body.form-mode #formWorkspace .territorial-progress[data-phase="territorial"] .territorial-progress-icon{
+  border:2px solid rgba(180,200,187,.28)!important;border-top-color:currentColor!important;
+  border-radius:50%!important;animation:fibrazo-territorial-wait .95s linear infinite!important;
+}
+body.form-mode #formWorkspace .territorial-progress[data-phase="complete"] .territorial-progress-icon::before{content:"✓";font-weight:800!important;}
+body.form-mode #formWorkspace .territorial-progress[data-phase="warning"] .territorial-progress-icon::before{content:"!";font-weight:800!important;}
+@keyframes fibrazo-territorial-wait{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){
+  body.form-mode #formWorkspace .territorial-progress-icon{animation:none!important;}
+}
