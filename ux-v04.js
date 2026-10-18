@@ -1824,7 +1824,7 @@
     state.geoLookupCancelled=false;
     state.geoController?.abort();
     const controller=new AbortController();state.geoController=controller;
-    const timer=setTimeout(()=>controller.abort(),15000);
+    const timer=setTimeout(()=>controller.abort(),27000); // FO-CHG-068: allow cold QA territory layers to load in background
     geoStatus("Consultando Maestro Territorial FIBRAZO…",{busy:true});
     try{
       const user=currentUser();
