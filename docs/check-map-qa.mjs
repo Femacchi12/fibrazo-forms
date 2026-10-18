@@ -83,6 +83,11 @@ assert.ok(map.includes('s (carga + dibujo)'),"Expone segundos de carga y dibujo 
 
 assert.ok(map.includes('!state.qaDissolveEstratos')&&map.includes('mode=index&layer=')&&map.includes('&qaDissolve=1'),"La carga AMB original pagina; la optimizada está precalculada");
 assert.ok(map.includes('QA precalculado · '),"Estado del mapa identifica capas precomputadas");
+assert.ok(map.includes('territorialDisplay=(layer,kind)=>')&&map.includes('" (cercano)"')&&map.includes('" · a "+meters+" del polígono"'),"Popups muestran estrato/barrio cercano con distancia y sin asignación falsa");
+assert.ok(map.includes('statusLine("",point.barrio,"barrio")')&&map.includes('statusLine("",point.estrato,"estrato")'),"Ficha de punto aplica formato territorial tanto a barrio como estrato");
+assert.ok(map.includes('if(label==="Barrio"||label==="Estrato")'),"El selector de coordenadas aplica el mismo formato territorial");
+assert.ok(map.includes('"Sin estrato clasificado"'),"Estrato Sin información heredado no se anuncia como estrato exacto");
+
 assert.ok(map.includes('scopeCity=value=>')&&map.includes('"bucaramanga-amb"')&&map.includes('matchesCitySelection'),"Bucaramanga y los tres municipios del AMB comparten filtro de puntos y operadores");
 assert.ok(read("api/map-city-catalog.js").includes('visibleCity')&&read("api/map-city-catalog.js").includes('"Bucaramanga + AMB"'),"Catálogo solo muestra la agrupación Bucaramanga + AMB");
 assert.ok(read("api/map-polygons.js").includes('cities.has("bucaramanga-amb")')&&read("api/map-polygons.js").includes('"floridablanca","giron","piedecuesta"'),"Bucaramanga + AMB filtra todos los municipios de barrios y troncales");
