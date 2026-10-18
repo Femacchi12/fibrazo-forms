@@ -29,7 +29,7 @@ blank.next();assert.equal(blank.summary().clicked,1); // no redundant GPS reques
 blank.state.gps={lat:2.9252688,lng:-75.2738189};
 blank.entry.value="2.9252688, -75.2738189";blank.entry.dataset.coordinateDirty="0";
 blank.entry._continueAfterGps=false;
-blank.next();assert.equal(blank.state.sectionIndex,1);
+blank.next();assert.equal(blank.state.sectionIndex,3); // mocked section stays "coordenada" for each simulated step
 const denied=simulate({disabled:true});denied.next();assert.deepEqual(denied.summary(),{clicked:0,validated:0,rendered:0,errors:1});
 const cleared=simulate({dirty:"1",originalGps:{lat:4.1557452,lng:-73.6268849}});
 cleared.next();assert.equal(cleared.summary().clicked,1);assert.equal(cleared.state.sectionIndex,1);
