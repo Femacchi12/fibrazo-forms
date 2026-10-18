@@ -635,6 +635,19 @@
   // FBZ-GPS-ONE-FIELD-20261011-11 / FO-CHG-010
   // Single editable coordinate field. Search applies typed coordinates and
   // resolves territory; GPS refresh replaces it only on a successful fix.
+  function invalidateTerritorialOnCoordinateChange(lat,lng){
+    if(!isExplorationForm())return;
+    if(state.gps&&Number(state.gps.lat)===Number(lat)&&Number(state.gps.lng)===Number(lng))return;
+    // A re-positioned point cannot inherit barrio/estrato from the last point.
+    for(const key of ["estrato","sector_barrio"]){
+      const control=document.querySelector('[name="'+key+'"]');
+      if(!control)continue;
+      for(const prop of ["geoManual","qaAuto","qaSession","qaBarrioSession"])delete control.dataset[prop];
+    }
+    state.qaReference=null;
+    state.locationValidated=false;
+  }
+
   function gpsInputExecutive(field){
     const box=document.createElement("div");box.className="gps-box gps-executive gps-one-field";
     const top=document.createElement("div");top.className="gps-exec-top";
@@ -706,18 +719,8 @@
       if(input.dataset.coordinateDirty!=="1"&&state.gps&&
         Number(state.gps.lat)===parsed.lat&&Number(state.gps.lng)===parsed.lng)return true;
       input.dataset.coordinateDirty="0";
-      // A new coordinate invalidates any previous manually selected QA stratum.
-      const lastCoordinate=state.gps;
-      if(lastCoordinate&&(Number(lastCoordinate.lat)!==parsed.lat||Number(lastCoordinate.lng)!==parsed.lng)){
-        const stratum=document.querySelector('[name="estrato"]');
-        if(stratum){
-          delete stratum.dataset.geoManual;
-          delete stratum.dataset.qaAuto;
-          delete stratum.dataset.qaSession;
-        }
-      }
+      invalidateTerritorialOnCoordinateChange(parsed.lat,parsed.lng);
       state.gps={lat:parsed.lat,lng:parsed.lng,accuracy:null,cityDetected:"",citySource:"manual-coordinate"};
-      state.qaReference=null;
       state.detectedCity="";state.locationValidated=false;state.locationBusy=true;
       input.value=format(parsed);
       const accuracy=box.querySelector("[data-gps-accuracy]");
@@ -784,7 +787,7 @@
         const parsed=parseCoordinateText(input.value);
         if(!parsed){input.setCustomValidity("Coordenada inválida");input.reportValidity();return;}
         input.setCustomValidity("");
-        state.gps={lat:parsed.lat,lng:parsed.lng,accuracy:null,cityDetected:"",citySource:"manual-coordinate"};
+        invalidateTerritorialOnCoordinateChange(parsed.lat,parsed.lng);state.gps={lat:parsed.lat,lng:parsed.lng,accuracy:null,cityDetected:"",citySource:"manual-coordinate"};
         value.textContent=parsed.lat.toFixed(6)+", "+parsed.lng.toFixed(6)+" · corrección manual";
         const accuracyNotice=box.querySelector("[data-gps-accuracy]");if(accuracyNotice)accuracyNotice.textContent="Coordenada manual · sin precisión GPS";
         state.locationBusy=true;state.locationValidated=false;state.geoPromise=resolveExplorationMunicipality(parsed.lat,parsed.lng,field.key);state.geoPromise.finally(()=>{state.locationBusy=false;state.geoPromise=null;});
@@ -815,7 +818,7 @@
       const raw=String(input.value||"").trim(),parsed=parseCoordinateText(raw);
       if(!raw){state.gps=null;state.detectedCity="";state.citySource="";status.textContent="Municipio: pendiente";return;}
       if(!parsed){state.gps=null;state.detectedCity="";state.citySource="";status.textContent="Formato esperado: latitud, longitud";return;}
-      state.gps={lat:parsed.lat,lng:parsed.lng,accuracy:null,cityDetected:"",citySource:"manual-coordinate"};state.locationValidated=false;
+      invalidateTerritorialOnCoordinateChange(parsed.lat,parsed.lng);state.gps={lat:parsed.lat,lng:parsed.lng,accuracy:null,cityDetected:"",citySource:"manual-coordinate"};state.locationValidated=false;
       status.textContent="Municipio: identificando…";
       timer=setTimeout(()=>{state.locationBusy=true;state.geoPromise=resolveExplorationMunicipality(parsed.lat,parsed.lng,field.key);state.geoPromise.finally(()=>{state.locationBusy=false;state.geoPromise=null;});},350);
     });
@@ -994,7 +997,7 @@
             const parsed=parseCoordinateText(editInput.value);
             if(!parsed){editInput.setCustomValidity("Coordenada inválida");editInput.reportValidity();return;}
             editInput.setCustomValidity("");
-            state.gps={lat:parsed.lat,lng:parsed.lng,accuracy:null,cityDetected:"",citySource:"manual-coordinate"};
+            invalidateTerritorialOnCoordinateChange(parsed.lat,parsed.lng);state.gps={lat:parsed.lat,lng:parsed.lng,accuracy:null,cityDetected:"",citySource:"manual-coordinate"};
             const valueNode=box.querySelector(".territorial-coordinate-value");if(valueNode)valueNode.textContent=parsed.lat.toFixed(6)+", "+parsed.lng.toFixed(6)+" · corrección manual";
             state.locationBusy=true;state.locationValidated=false;
             applyEdit.disabled=true;applyEdit.textContent="Recalculando…";
@@ -1400,7 +1403,7 @@
       if(!p){state.gpsCapturePending=false;if(value._onGpsStatus)value._onGpsStatus("No se pudo obtener el GPS. Revisa el permiso del navegador.");else value.textContent="No se pudo obtener la ubicación. Revisa el permiso del navegador.";btn.disabled=false;btn.textContent=btn.dataset.gpsOriginalLabel||"Reintentar";state.locationBusy=false;if(value._onGpsSettled)value._onGpsSettled();return;}
       const advanceAfterGps=(state.form?.id==="EXPLORACION_PRESENCIAL"||state.form?.id==="INTELIGENCIA_OPERADOR")&&key==="coordenadas"&&currentSection()?.id==="coordenada"&&!state.gps&&!value.closest(".gps-executive");
       state.gpsCapturePending=false;
-      state.gps={lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy,cityDetected:"",citySource:""};
+      invalidateTerritorialOnCoordinateChange(p.coords.latitude,p.coords.longitude);state.gps={lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy,cityDetected:"",citySource:""};
       if(value._onGpsCaptured)value._onGpsCaptured(state.gps);
       else value.textContent=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+" · ±"+Math.round(state.gps.accuracy)+" m";
       const gpsInputNode=document.querySelector(".gps-manual-editor input");if(gpsInputNode)gpsInputNode.value=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6);
