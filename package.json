@@ -12,6 +12,6 @@
     "adm-zip": "^0.5.16"
   },
   "scripts": {
-    "test:forms": "node docs/check-flow-sync.mjs && node docs/check-map-qa.mjs && node docs/check-territorial-fallback.cjs"
+    "test:forms": "node docs/check-flow-sync.mjs && node docs/check-map-qa.mjs && node docs/check-territorial-fallback.cjs && node docs/check-qa-point-strata.cjs"
   }
 }
