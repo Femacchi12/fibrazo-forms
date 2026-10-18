@@ -40,11 +40,11 @@ const start=ui.indexOf("    input._onGpsCaptured=point=>{");
 const end=ui.indexOf("    input._onGpsSettled=",start);
 assert.ok(start>0&&end>start);
 const callbackText=ui.slice(start,end);
-const input={value:"",dataset:{coordinateDirty:"1"},_continueAfterGps:true,isConnected:true};
+const input={value:"",dataset:{coordinateDirty:"1"},_continueAfterGps:true,isConnected:true,setCustomValidity(){}};
 const auto={dataset:{}},state={gps:{lat:4.1557452,lng:-73.6268849}};
 let advanced=0;
-const capture=new Function("input","box","format","auto","sync","queueMicrotask","currentSection","state","next",callbackText+"return input._onGpsCaptured;")(
-  input,{querySelector:()=>null},p=>p.lat+","+p.lng,auto,()=>{},f=>f(),
+const capture=new Function("input","box","format","auto","sync","feedback","queueMicrotask","currentSection","state","next",callbackText+"return input._onGpsCaptured;")(
+  input,{querySelector:()=>null},p=>p.lat+","+p.lng,auto,()=>{},{hidden:true},f=>f(),
   ()=>({id:"coordenada"}),state,()=>{advanced++;}
 );
 capture({...state.gps,accuracy:8});
