@@ -1153,6 +1153,8 @@
       const alternatives=(state.gps.estratoQaCandidates||[]).map(x=>"E"+x.estrato+" "+Number(x.distanceM).toFixed(1)+" m").join("; ");
       return chosen+" · sugerencia provisional QA, no canónica"+(alternatives?" · candidatos: "+alternatives:"");
     }
+    if(field.key==="sector_barrio"&&state.gps?.barrioStatus==="QA_DENTRO")
+      return String(fieldValue("sector_barrio")||"—")+" · coincidencia exacta QA (no canónica)";
     if((field.key==="estrato"||field.key==="sector_barrio")&&state.gps){
       const prefix=field.key==="estrato"?"estrato":"barrio";
       const geoState=String(state.gps[prefix+"Status"]||"");
