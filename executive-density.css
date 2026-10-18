@@ -1311,3 +1311,58 @@ body.form-mode #reviewWorkspace .review-row{
 #mapFloatingTools #mapBarrioControls .map-barrio-actions{
   margin:0!important;
 }
+
+/* FO-QA-UI-060-20261018 · Keep upward autocomplete menus above all neighbouring fields
+   and section headers; apply a consistent label hierarchy in every form. */
+body.form-mode #formWorkspace .form-grid>.field,
+body.form-mode #formWorkspace .form-grid>.operator-element-group{
+  position:relative!important;
+}
+body.form-mode #formWorkspace .form-grid>.field:focus-within,
+body.form-mode #formWorkspace .form-grid>.operator-element-group:focus-within{
+  z-index:75!important;
+}
+body.form-mode #formWorkspace .operator-element-group>.field:focus-within{
+  position:relative!important;
+  z-index:76!important;
+}
+body.form-mode #formWorkspace .isp-autocomplete:focus-within,
+body.form-mode #formWorkspace .editable-options:focus-within{
+  position:relative!important;
+  z-index:77!important;
+}
+body.form-mode #formWorkspace .isp-autocomplete .isp-suggestion-list:not([hidden]),
+body.form-mode #formWorkspace .editable-options .editable-options-menu:not([hidden]){
+  z-index:78!important;
+  box-shadow:0 -12px 32px rgba(0,0,0,.80)!important;
+  background:#111d17!important;
+  border:1px solid #729787!important;
+}
+body.form-mode #formWorkspace .form-grid>.field label.field-label,
+body.form-mode #formWorkspace .operator-element-group>.field label.field-label,
+body.form-mode #formWorkspace .form-qa-flag legend{
+  display:block!important;
+  color:#F6FFF9!important;
+  font-size:14px!important;
+  font-weight:800!important;
+  line-height:1.35!important;
+  letter-spacing:.004em!important;
+  margin-bottom:6px!important;
+}
+body.form-mode #formWorkspace .form-grid>.field label.field-label::before,
+body.form-mode #formWorkspace .operator-element-group>.field label.field-label::before{
+  content:"";
+  display:inline-block;
+  width:6px;
+  height:6px;
+  flex:none;
+  border-radius:50%;
+  background:#43FFA5;
+  margin:0 8px 2px 1px;
+  vertical-align:middle;
+}
+@media(max-width:560px){
+  body.form-mode #formWorkspace .form-grid>.field label.field-label,
+  body.form-mode #formWorkspace .operator-element-group>.field label.field-label,
+  body.form-mode #formWorkspace .form-qa-flag legend{font-size:13.5px!important;}
+}
