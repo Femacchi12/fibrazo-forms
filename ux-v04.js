@@ -688,6 +688,7 @@
     };
     input.addEventListener("input",()=>{
       input.dataset.coordinateDirty="1";
+      input._continueAfterGps=false;
       auto.dataset.gpsOriginalLabel="📍 Automático por GPS";
       input.setCustomValidity("");
       feedback.hidden=true;
@@ -701,8 +702,17 @@
       const accuracy=box.querySelector("[data-gps-accuracy]");
       if(accuracy){accuracy.textContent="Precisión GPS: ±"+Math.round(point.accuracy)+" m";accuracy.hidden=false;}
       sync();
+      if(input._continueAfterGps){
+        input._continueAfterGps=false;
+        queueMicrotask(()=>{
+          if(input.isConnected&&currentSection()?.id==="coordenada"&&state.gps)next();
+        });
+      }
     };
-    input._onGpsSettled=sync;
+    input._onGpsSettled=()=>{
+      if(!state.gps)input._continueAfterGps=false;
+      sync();
+    };
     auto.textContent=gpsLabel();auto.dataset.gpsOriginalLabel=auto.textContent;
     auto.addEventListener("click",()=>{search.disabled=true;captureGps(input,auto,field.key);});
     const applyManualCoordinate=()=>{
@@ -989,26 +999,61 @@
         if(first&&!document.querySelector(".territorial-coordinate-summary")){
           const box=document.createElement("div");box.className="territorial-coordinate-summary";
           const gps=state.gps;
-          box.innerHTML='<strong>Coordenada relevada</strong><span class="territorial-coordinate-value">'+(gps?(gps.lat.toFixed(6)+", "+gps.lng.toFixed(6)+(Number.isFinite(Number(gps.accuracy))?" · ±"+Math.round(Number(gps.accuracy))+" m":"")):"Sin coordenada")+'</span><small>Puedes corregirla aquí antes de finalizar. Al cambiarla se recalcula la lectura territorial sin volver al primer paso.</small>';
+          box.innerHTML='<strong>Coordenada relevada</strong><small>Podés corregir la ubicación antes de finalizar. El sistema actualizará la lectura territorial.</small>';
           const editRow=document.createElement("div");editRow.className="territorial-coordinate-edit";
-          const editInput=document.createElement("input");editInput.type="text";editInput.inputMode="decimal";editInput.placeholder="7.10485, -73.10280";editInput.value=gps?(gps.lat.toFixed(6)+", "+gps.lng.toFixed(6)):"";
+          const editInput=document.createElement("input");editInput.type="text";editInput.inputMode="decimal";editInput.placeholder="Latitud, longitud";editInput.setAttribute("aria-label","Coordenada relevada: latitud, longitud");
+          editInput.value=gps?(gps.lat.toFixed(7)+", "+gps.lng.toFixed(7)):"";
+          const quick=document.createElement("div");quick.className="territorial-coordinate-quick";
+          const actions=document.createElement("div");actions.className="territorial-coordinate-actions";
+          const summaryValue=document.createElement("span");summaryValue.className="territorial-coordinate-value";summaryValue.textContent=gps?
+            (Number.isFinite(Number(gps.accuracy))&&gps.accuracy!==null?"Precisión GPS: ±"+Math.round(Number(gps.accuracy))+" m":"Coordenada manual · sin precisión GPS"):"Coordenada pendiente";
           const applyEdit=document.createElement("button");applyEdit.type="button";applyEdit.className="secondary-button compact";applyEdit.textContent="Aplicar y recalcular";
           applyEdit.addEventListener("click",async()=>{
             const parsed=parseCoordinateText(editInput.value);
-            if(!parsed){editInput.setCustomValidity("Coordenada inválida");editInput.reportValidity();return;}
+            if(!parsed){editInput.setCustomValidity("Ingresá una latitud y una longitud válidas.");editInput.reportValidity();return;}
             editInput.setCustomValidity("");
             invalidateTerritorialOnCoordinateChange(parsed.lat,parsed.lng);state.gps={lat:parsed.lat,lng:parsed.lng,accuracy:null,cityDetected:"",citySource:"manual-coordinate"};
-            const valueNode=box.querySelector(".territorial-coordinate-value");if(valueNode)valueNode.textContent=parsed.lat.toFixed(6)+", "+parsed.lng.toFixed(6)+" · corrección manual";
+            summaryValue.textContent="Coordenada manual · sin precisión GPS";
+            editInput.value=parsed.lat.toFixed(7)+", "+parsed.lng.toFixed(7);
+            editInput.dataset.coordinateDirty="0";
+            syncActions();
             state.locationBusy=true;state.locationValidated=false;
             applyEdit.disabled=true;applyEdit.textContent="Recalculando…";
             try{state.geoPromise=resolveExplorationMunicipality(parsed.lat,parsed.lng,"coordenadas");await state.geoPromise;}
             finally{state.locationBusy=false;state.geoPromise=null;applyEdit.disabled=false;applyEdit.textContent="Aplicar y recalcular";}
           });
-          const gpsEdit=document.createElement("button");gpsEdit.type="button";gpsEdit.className="secondary-button compact";gpsEdit.textContent="📍 Actualizar por GPS";
-          gpsEdit.addEventListener("click",()=>captureGps(box.querySelector(".territorial-coordinate-value"),gpsEdit,"coordenadas"));
-          const copyCoord=document.createElement("button");copyCoord.type="button";copyCoord.className="secondary-button compact";copyCoord.textContent="⧉ Copiar";copyCoord.addEventListener("click",()=>{if(state.gps)navigator.clipboard?.writeText(state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)).catch(()=>{});});
-          const mapsCoord=document.createElement("button");mapsCoord.type="button";mapsCoord.className="secondary-button compact";mapsCoord.textContent="↗ Google Maps";mapsCoord.addEventListener("click",()=>{if(state.gps)window.open("https://www.google.com/maps?q="+state.gps.lat+","+state.gps.lng,"_blank","noopener");});
-          editRow.append(editInput,applyEdit,gpsEdit,copyCoord,mapsCoord);box.appendChild(editRow);first.parentElement?.insertBefore(box,first);
+          const gpsEdit=document.createElement("button");gpsEdit.type="button";gpsEdit.className="primary-button compact";gpsEdit.textContent="📍 Actualizar por GPS";
+          gpsEdit.addEventListener("click",()=>captureGps(summaryValue,gpsEdit,"coordenadas"));
+          const copyCoord=document.createElement("button");copyCoord.type="button";copyCoord.className="secondary-button compact";copyCoord.textContent="⧉ Copiar";
+          const mapsCoord=document.createElement("button");mapsCoord.type="button";mapsCoord.className="secondary-button compact";mapsCoord.textContent="↗ Ir";mapsCoord.setAttribute("aria-label","Ir a la coordenada en Google Maps");
+          const syncActions=()=>{
+            const dirty=editInput.dataset.coordinateDirty==="1";
+            const ready=!!state.gps&&!dirty;
+            copyCoord.disabled=!ready;mapsCoord.disabled=!ready;
+          };
+          editInput.addEventListener("input",()=>{editInput.dataset.coordinateDirty="1";editInput.setCustomValidity("");syncActions();});
+          copyCoord.addEventListener("click",()=>{
+            if(!state.gps||editInput.dataset.coordinateDirty==="1")return;
+            navigator.clipboard?.writeText(state.gps.lat.toFixed(7)+", "+state.gps.lng.toFixed(7)).catch(()=>{});
+          });
+          mapsCoord.addEventListener("click",()=>{
+            if(!state.gps||editInput.dataset.coordinateDirty==="1")return;
+            window.open("https://www.google.com/maps?q="+state.gps.lat+","+state.gps.lng,"_blank","noopener");
+          });
+          summaryValue._onGpsCaptured=point=>{
+            editInput.value=point.lat.toFixed(7)+", "+point.lng.toFixed(7);
+            editInput.dataset.coordinateDirty="0";
+            summaryValue.textContent="Precisión GPS: ±"+Math.round(point.accuracy)+" m";
+            syncActions();
+          };
+          summaryValue._onGpsStatus=message=>{summaryValue.textContent=message;};
+          summaryValue._onGpsSettled=syncActions;
+          editRow.append(editInput,quick);
+          quick.append(copyCoord,mapsCoord);
+          actions.append(applyEdit,gpsEdit);
+          box.append(editRow,summaryValue,actions);
+          syncActions();
+          first.parentElement?.insertBefore(box,first);
         }
       });
     }
@@ -1046,11 +1091,22 @@
   }
   function prev(){if(state.sectionIndex>0){state.sectionIndex--;renderSection();}}
   function next(){
-    // FO-CHG-064: paste + Continuar triggers the same coordinate apply as Buscar.
+    // FO-CHG-066: Continuar uses a pasted coordinate, or starts GPS
+    // automatically on an empty field; there is one location-lookup pipeline.
     if(isExplorationForm()&&currentSection()?.id==="coordenada"){
       const entry=document.querySelector(".gps-exec-coordinate");
       if(entry?.dataset.coordinateDirty==="1"){
         if(typeof entry._applyManualCoordinate!=="function"||!entry._applyManualCoordinate())return;
+      }else if(entry&&!state.gps){
+        if(state.gpsCapturePending||entry._continueAfterGps)return;
+        const gpsButton=document.querySelector(".gps-exec-auto");
+        if(!gpsButton||gpsButton.disabled){
+          setError("coordenadas","No es posible iniciar el GPS. Revisá los permisos del navegador.");
+          return;
+        }
+        entry._continueAfterGps=true;
+        gpsButton.click();
+        return;
       }
     }
     if(state.form?.id==="INTELIGENCIA_OPERADOR"&&currentSection()?.id==="calidad")saveLastOperatorTendidoQuality();
