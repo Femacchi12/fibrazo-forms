@@ -15,7 +15,7 @@ assert.equal(suggest({status:"FUERA",canonical:false,nearby:[{estrato:"3",distan
 assert.equal(suggest({status:"AMBIGUO",canonical:false}),null);
 const ux=fs.readFileSync(path.join(__dirname,"../ux-v04.js"),"utf8");
 const html=fs.readFileSync(path.join(__dirname,"../index.html"),"utf8");
-assert.ok(ux.includes('const allowed=mayIdentifyTest()&&state.isTest&&isExplorationForm()&&current;'));
+assert.ok(ux.includes('const allowed=mayIdentifyTest()&&state.isTest!==false&&isExplorationForm()&&current;'));
 assert.ok(ux.includes('if(!payload.isTest&&String(payload.location?.estratoStatus||"").startsWith("QA_"))'));
 assert.ok(ux.includes('control.dataset.qaSession="1"'));
 assert.ok(ux.includes('delete control.dataset.qaSession;'));
