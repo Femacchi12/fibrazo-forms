@@ -1539,7 +1539,10 @@
       const gpsInputNode=document.querySelector(".gps-manual-editor input");if(gpsInputNode)gpsInputNode.value=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6);
       const accuracyNotice=document.querySelector("[data-gps-accuracy]");if(accuracyNotice){accuracyNotice.textContent="Precisión GPS: ±"+Math.round(state.gps.accuracy)+" m";accuracyNotice.hidden=false;}
       const summaryValue=document.querySelector(".territorial-coordinate-summary .territorial-coordinate-value");
-      if(summaryValue)summaryValue.textContent=value.textContent;
+      if(summaryValue&&summaryValue!==value){
+        if(summaryValue._onGpsCaptured)summaryValue._onGpsCaptured(state.gps);
+        else summaryValue.textContent="Precisión GPS: ±"+Math.round(state.gps.accuracy)+" m";
+      }
       const summaryInput=document.querySelector(".territorial-coordinate-summary .territorial-coordinate-edit input");
       if(summaryInput)summaryInput.value=state.gps.lat.toFixed(7)+", "+state.gps.lng.toFixed(7);
       if(advanceAfterGps&&currentSection()?.id==="coordenada"){
