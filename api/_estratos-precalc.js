@@ -103,10 +103,12 @@ function referenceResult(rows,lat,lon){
     estrato:row.estrato,
     distanceM:Math.round(geometryDistance(lon,lat,row.polygons)*10)/10
   })).filter(item=>Number.isFinite(item.distanceM)).sort((a,b)=>a.distanceM-b.distanceM);
+  const closest=ranked[0]?.distanceM<=5000?ranked[0]:null;
   return{
     status:"FUERA",value:"",
     nearby:ranked.filter(item=>item.distanceM<=NEAR_LIMIT_M),
-    distanceM:ranked.length?ranked[0].distanceM:null
+    closest,
+    distanceM:closest?closest.distanceM:null
   };
 }
 async function lookupReference(auth,latValue,lonValue,cityName=""){
