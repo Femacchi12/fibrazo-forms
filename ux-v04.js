@@ -1469,6 +1469,8 @@
       if(data.cityStatus==="DENTRO"&&data.city)applyDetectedCity(data.city,"territorial");
       const barrioDisplay=data.barrioStatus==="DENTRO"?data.barrio:(data.barrioStatus==="FUERA"?data.barrioNearby:"");
       const qaStratum=data.qaStratum?.status==="DENTRO"&&data.qaStratum?.canonical===false?data.qaStratum:null;
+      const qaNearby=data.qaStratum?.status==="FUERA"&&data.qaStratum?.canonical===false&&Array.isArray(data.qaStratum.nearby)
+        ?data.qaStratum.nearby.filter(item=>/^[1-6]$/.test(String(item.estrato))):[];
       const estratoDisplay=data.estratoStatus==="DENTRO"?data.estrato:(data.estratoStatus==="FUERA"?data.estratoNearby:(qaStratum?qaStratum.value:""));
       setGeoField("sector_barrio",barrioDisplay||"","");
       setGeoField("estrato",estratoDisplay||"","Sin información");
@@ -1510,9 +1512,11 @@
       if(estratoInfo){
         const detail=qaStratum
           ?"Estrato "+qaStratum.value+" · coincidencia geométrica referencial QA; no es capa canónica. Verificar en campo."
-          :geoLayerDetail(data.estratoStatus,data.estrato,data.estratoNearby,data.estratoDistanceM,data.estratoSource,"Estrato");
+          :qaNearby.length
+            ?qaNearby.map(item=>"Estrato "+item.estrato+" (cercano: "+(Math.round(Number(item.distanceM)*10)/10).toString().replace(".",",")+" m)").join(" · ")+" · Solo referencia QA; sin asignación automática."
+            :geoLayerDetail(data.estratoStatus,data.estrato,data.estratoNearby,data.estratoDistanceM,data.estratoSource,"Estrato");
         estratoInfo.textContent=detail;estratoInfo.hidden=!detail;
-        estratoInfo.className="field-geo-info "+(qaStratum?"geo-outside":data.estratoStatus==="DENTRO"?"geo-inside":data.estratoStatus==="FUERA"?"geo-outside":"geo-missing");
+        estratoInfo.className="field-geo-info "+(qaStratum||qaNearby.length?"geo-outside":data.estratoStatus==="DENTRO"?"geo-inside":data.estratoStatus==="FUERA"?"geo-outside":"geo-missing");
       }
       const cityStatus=document.querySelector('[data-gps-city-for="coordenadas"]');
       if(cityStatus){
