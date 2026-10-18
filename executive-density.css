@@ -1371,3 +1371,44 @@ body.form-mode #formWorkspace .operator-element-group>.field label.field-label::
 body.form-mode #formWorkspace .form-qa-flag .form-test-choice-error{display:block!important;color:#ffdc84!important;border:1px solid rgba(255,205,65,.55)!important;border-radius:8px!important;padding:8px 10px!important;background:rgba(255,205,65,.09)!important;font-weight:750!important;font-size:12px!important;}
 body.form-mode #formWorkspace .form-qa-flag .form-test-choice-error[hidden]{display:none!important;}
 body.form-mode #formWorkspace .form-qa-flag legend .required{color:#43ffa5!important;}
+
+/* FO-CHG-066 · Shared first/final coordinate layout */
+body.form-mode #formWorkspace .territorial-coordinate-summary{
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;
+  gap:8px!important;width:100%!important;min-width:0!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary>.territorial-coordinate-edit{
+  display:grid!important;grid-template-columns:minmax(0,1fr) max-content!important;
+  align-items:center!important;gap:6px!important;width:100%!important;min-width:0!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-edit>input{
+  grid-column:1!important;width:100%!important;min-width:0!important;margin:0!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-quick{
+  grid-column:2!important;display:flex!important;flex-direction:row!important;align-items:center!important;
+  width:max-content!important;min-width:0!important;gap:4px!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-quick>button{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  width:auto!important;min-width:0!important;height:34px!important;min-height:34px!important;
+  padding:4px 8px!important;font-size:11px!important;white-space:nowrap!important;line-height:1!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-value{
+  display:block!important;font-size:11px!important;font-weight:650!important;line-height:1.35!important;
+  color:var(--fz-muted,#b8cec3)!important;margin:0!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-actions{
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;
+  gap:7px!important;width:100%!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-actions>button{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:100%!important;min-height:39px!important;
+}
+@media(max-width:390px){
+  body.form-mode #formWorkspace .territorial-coordinate-summary>.territorial-coordinate-edit{gap:4px!important;}
+  body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-quick{gap:3px!important;}
+  body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-quick>button{
+    font-size:10px!important;padding:4px 5px!important;
+  }
+}
