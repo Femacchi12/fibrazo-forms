@@ -1468,7 +1468,8 @@
 
       if(data.cityStatus==="DENTRO"&&data.city)applyDetectedCity(data.city,"territorial");
       const barrioDisplay=data.barrioStatus==="DENTRO"?data.barrio:(data.barrioStatus==="FUERA"?data.barrioNearby:"");
-      const estratoDisplay=data.estratoStatus==="DENTRO"?data.estrato:(data.estratoStatus==="FUERA"?data.estratoNearby:"");
+      const qaStratum=data.qaStratum?.status==="DENTRO"&&data.qaStratum?.canonical===false?data.qaStratum:null;
+      const estratoDisplay=data.estratoStatus==="DENTRO"?data.estrato:(data.estratoStatus==="FUERA"?data.estratoNearby:(qaStratum?qaStratum.value:""));
       setGeoField("sector_barrio",barrioDisplay||"","");
       setGeoField("estrato",estratoDisplay||"","Sin información");
 
@@ -1484,10 +1485,10 @@
           barrioStatus:data.barrioStatus||"",
           barrioNearby:data.barrioNearby||"",
           barrioDistanceM:distanceNumber(data.barrioDistanceM),
-          estratoSource:data.estratoSource||"",
-          estratoStatus:data.estratoStatus||"",
+          estratoSource:qaStratum?qaStratum.source:(data.estratoSource||""),
+          estratoStatus:qaStratum?"QA_REFERENCIAL":(data.estratoStatus||""),
           estratoNearby:data.estratoNearby||"",
-          estratoMatch:data.estratoMatch||"",
+          estratoMatch:qaStratum?"qa_referencial":(data.estratoMatch||""),
           estratoDistanceM:distanceNumber(data.estratoDistanceM),
           troncalSource:data.troncalSource||"",
           troncalStatus:data.troncalStatus||"",
@@ -1507,9 +1508,11 @@
       }
       const estratoInfo=document.querySelector('[data-geo-info-for="estrato"]');
       if(estratoInfo){
-        const detail=geoLayerDetail(data.estratoStatus,data.estrato,data.estratoNearby,data.estratoDistanceM,data.estratoSource,"Estrato");
+        const detail=qaStratum
+          ?"Estrato "+qaStratum.value+" · coincidencia geométrica referencial QA; no es capa canónica. Verificar en campo."
+          :geoLayerDetail(data.estratoStatus,data.estrato,data.estratoNearby,data.estratoDistanceM,data.estratoSource,"Estrato");
         estratoInfo.textContent=detail;estratoInfo.hidden=!detail;
-        estratoInfo.className="field-geo-info "+(data.estratoStatus==="DENTRO"?"geo-inside":data.estratoStatus==="FUERA"?"geo-outside":"geo-missing");
+        estratoInfo.className="field-geo-info "+(qaStratum?"geo-outside":data.estratoStatus==="DENTRO"?"geo-inside":data.estratoStatus==="FUERA"?"geo-outside":"geo-missing");
       }
       const cityStatus=document.querySelector('[data-gps-city-for="coordenadas"]');
       if(cityStatus){
@@ -1563,6 +1566,12 @@
 
     if(observed){
       applyDetectedCity(observed,"reverse-geocode");
+      // On QA previews retry with the confirmed municipality so the server may
+      // offer a distinctly-labelled, noncanonical precomputed strata reference.
+      if(["neiva","villavicencio","ibague"].includes(normalizeCityName(observed))){
+        await queryExplorationEnrichment(lat,lng,observed);
+        if(!currentCoordinate())return"";
+      }
       if(status){
         const territorialContext=data?.cityStatus==="FUERA"
           ?(" · fuera del ámbito FIBRAZO"+(data.cityNearby?" · cercano: "+data.cityNearby:"")+(Number.isFinite(Number(data.cityDistanceM))?" · ~"+Math.round(Number(data.cityDistanceM))+" m":""))
