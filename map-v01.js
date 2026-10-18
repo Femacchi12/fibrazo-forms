@@ -167,7 +167,7 @@
     }catch(_){return[];}
   };
   const saveRoute=()=>{try{localStorage.setItem(userScopedKey(ROUTE_KEY),JSON.stringify(state.route.slice(-5000)));}catch(_){}};
-  function territorialCacheKey(lat,lng){return Number(lat).toFixed(5)+","+Number(lng).toFixed(5);}
+  function territorialCacheKey(lat,lng){return Number(lat).toFixed(7)+","+Number(lng).toFixed(7);}
   function readTerritorialCache(lat,lng){
     try{
       const raw=JSON.parse(localStorage.getItem(userScopedKey(TERRITORIAL_CACHE_KEY))||"{}");
