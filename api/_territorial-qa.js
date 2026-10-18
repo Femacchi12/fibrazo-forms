@@ -2,10 +2,12 @@
 // and distance algorithms without activating pilot source books as canonical.
 const {google}=require("googleapis");
 const {_internals:{parseWkt,inGeometry,geometryDistance,bboxDistance}}=require("./_territorial");
+// Bounds read from each city's DANE 2025 11_POLIGONOS_CIUDAD. They only
+// route lookups; municipal membership is still proven with the full WKT.
 const PILOTS={
-  neiva:{city:"Neiva",id:"NVA",sheet:"1_w8eEE0c6X-CBZaxv5J8TMCC8IPQlMTEQ3rFhZ68y-4"},
-  villavicencio:{city:"Villavicencio",id:"VVC",sheet:"1Kr1ZLsTgi06vNVSf-v6XgqsTpMPihiIwytJfbkoJHKU"},
-  ibague:{city:"Ibagué",id:"IBG",sheet:"1DnFwlMUFQucl2B12m5jSBjEvqcx537cl16znAQSr1NA"}
+  neiva:{city:"Neiva",id:"NVA",sheet:"1_w8eEE0c6X-CBZaxv5J8TMCC8IPQlMTEQ3rFhZ68y-4",bounds:[-75.621607,2.72341,-74.94464,3.284017]},
+  villavicencio:{city:"Villavicencio",id:"VVC",sheet:"1Kr1ZLsTgi06vNVSf-v6XgqsTpMPihiIwytJfbkoJHKU",bounds:[-73.768037,3.935022,-73.174991,4.28504]},
+  ibague:{city:"Ibagué",id:"IBG",sheet:"1DnFwlMUFQucl2B12m5jSBjEvqcx537cl16znAQSr1NA",bounds:[-75.5221,4.259546,-74.96571,4.700691]}
 };
 const TTL=600000,NEAR_BARRIO_M=5000,NEAR_CITY_M=20000;
 const cache=new Map(),pending=new Map(),wkts=new Map();
@@ -121,7 +123,12 @@ function referenceCity(footprint,lat,lon){
 async function resolveQaTerritorial(auth,latValue,lonValue,cityHint=""){
   const lat=num(latValue),lon=num(lonValue);
   if(!Number.isFinite(lat)||!Number.isFinite(lon)||lat<-90||lat>90||lon<-180||lon>180)return null;
-  const hint=norm(cityHint),match=Object.entries(PILOTS).filter(([key,p])=>!hint||hint===key||hint===norm(p.city));
+  const hint=norm(cityHint),margin=0.20;
+  const match=Object.entries(PILOTS).filter(([key,p])=>{
+    if(hint&&hint!==key&&hint!==norm(p.city))return false;
+    const [west,south,east,north]=p.bounds;
+    return lon>=west-margin&&lon<=east+margin&&lat>=south-margin&&lat<=north+margin;
+  });
   if(!match.length)return null;
   // A coordinate can be outside the stratum archive footprint but inside the
   // official municipality. Determine municipality using actual DANE WKT.
