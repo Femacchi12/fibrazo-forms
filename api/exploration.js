@@ -105,26 +105,24 @@ module.exports=async(req,res)=>{
     }
 
     const auth=gauth();
-    const [territorial,competition]=await Promise.all([
-      resolveTerritorial(auth,lat,lng),
-      loadCompetition(auth)
-    ]);
-
-    // Reference-only pilot. Preview may read complete precomputed QA strata when
-    // the canonical layer is missing. Never substitute a QA result in production.
-    let qaStratum=null;
-    if(process.env.VERCEL_ENV==="preview"&&
-      ["SIN_CAPA","SIN_CAPA_CANONICA"].includes(territorial.estrato?.status)){
-      const hint=canonicalCity(req.query.city||"");
-      // The map coordinate sheet usually has no explicit city hint.
-      // Only the validated pilot footprints can be inferred; never assign
-      // operational strata from a QA reference.
-      try{
-        qaStratum=await require("./_estratos-precalc").lookupReference(auth,lat,lng,hint);
-      }catch(error){
+    // The full QA archive can be expensive on a cold request: start it alongside
+    // canonical enrichment, never after it. Production does not run this lookup.
+    const referenceTask=process.env.VERCEL_ENV==="preview"
+      ?Promise.resolve().then(()=>require("./_estratos-precalc").lookupReference(
+        auth,lat,lng,canonicalCity(req.query.city||"")
+      )).catch(error=>{
         console.error("QA_STRATA_REFERENCE_ERROR",error?.code||error?.message||"READ_FAILED");
-      }
-    }
+        return null;
+      })
+      :Promise.resolve(null);
+    const [territorial,competition,referenceCandidate]=await Promise.all([
+      resolveTerritorial(auth,lat,lng),
+      loadCompetition(auth),
+      referenceTask
+    ]);
+    // Never substitute noncanonical QA geometry for an operational layer.
+    const qaStratum=["SIN_CAPA","SIN_CAPA_CANONICA"].includes(territorial.estrato?.status)
+      ?referenceCandidate:null;
 
     const city=territorial.city?.status==="DENTRO"
       ?canonicalCity(territorial.city.assigned?.name||"")
