@@ -102,6 +102,7 @@
     const form=forms[id];if(!form)return;
     if(!publicMode&&window.FIBRAZO_ACCESS&&window.FIBRAZO_ACCESS[id]===false)return;
     const policy=policyFor(id);
+    state.cancelGpsCapture?.();state.cancelGpsCapture=null;
     state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.isTest=null;state.qaReference=null;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.gpsCapturePending=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
     document.body.classList.add("form-mode");
     $("formTitle").textContent=form.name;
@@ -306,6 +307,7 @@
     if(/^\/form\//i.test(location.pathname))history.replaceState({},"","/");
     document.body.classList.remove("form-mode");
     $("formWorkspace").hidden=true;$("reviewWorkspace").hidden=true;$("successWorkspace").hidden=true;
+    state.cancelGpsCapture?.();state.cancelGpsCapture=null;
     state.geoController?.abort();state.geoController=null;state.form=null;window.FIBRAZO_ACTIVE_FORM_ID="";state.policy=null;state.gps=null;state.photos=[];state.detectedCity="";state.citySource="";state.ispOptions=[];window.scrollTo({top:0,behavior:"smooth"});
   }
 
@@ -732,6 +734,7 @@
       if(input.dataset.coordinateDirty!=="1"&&state.gps&&
         Number(state.gps.lat)===parsed.lat&&Number(state.gps.lng)===parsed.lng)return true;
       input.dataset.coordinateDirty="0";
+      state.cancelGpsCapture?.();
       invalidateTerritorialOnCoordinateChange(parsed.lat,parsed.lng);
       state.gps={lat:parsed.lat,lng:parsed.lng,accuracy:null,cityDetected:"",citySource:"manual-coordinate"};
       state.detectedCity="";state.locationValidated=false;state.locationBusy=true;
@@ -1015,6 +1018,7 @@
             const parsed=parseCoordinateText(editInput.value);
             if(!parsed){editInput.setCustomValidity("Ingresá una latitud y una longitud válidas.");editInput.reportValidity();return;}
             editInput.setCustomValidity("");
+            state.cancelGpsCapture?.();
             invalidateTerritorialOnCoordinateChange(parsed.lat,parsed.lng);state.gps={lat:parsed.lat,lng:parsed.lng,accuracy:null,cityDetected:"",citySource:"manual-coordinate"};
             summaryValue.textContent="Coordenada manual · sin precisión GPS";
             editInput.value=parsed.lat.toFixed(7)+", "+parsed.lng.toFixed(7);
@@ -1488,16 +1492,35 @@
     if(state.gpsCapturePending){
       const task=new Promise(resolve=>{
         settleCapture=success=>{
-          if(state.gpsCapturePromise===task)state.gpsCapturePromise=null;
-          state.gpsCapturePending=false;
+          if(state.gpsCapturePromise===task){
+            state.gpsCapturePromise=null;
+            state.gpsCapturePending=false;
+          }
           resolve(success);
         };
       });
       state.gpsCapturePromise=task;
     }
+    const captureForm=state.form,captureStartedAt=state.startedAt;
     let best=null,finished=false,watchId=null,timer=null;
+    state.cancelGpsCapture=()=>{
+      if(finished)return;
+      finished=true;
+      if(watchId!==null)navigator.geolocation.clearWatch(watchId);
+      clearTimeout(timer);
+      settleCapture(false);
+      if(state.form===captureForm&&state.startedAt===captureStartedAt){
+        state.locationBusy=false;
+        btn.disabled=false;
+        btn.textContent=btn.dataset.gpsOriginalLabel||"Actualizar ubicación";
+        if(value._onGpsSettled)value._onGpsSettled();
+      }
+      state.cancelGpsCapture=null;
+    };
     const finish=async p=>{
       if(finished)return;finished=true;if(watchId!==null)navigator.geolocation.clearWatch(watchId);clearTimeout(timer);
+      if(state.form!==captureForm||state.startedAt!==captureStartedAt){settleCapture(false);return;}
+      state.cancelGpsCapture=null;
       if(!p){
         settleCapture(false);
         if(value._onGpsStatus)value._onGpsStatus("No se pudo obtener el GPS. Revisa el permiso del navegador.");
