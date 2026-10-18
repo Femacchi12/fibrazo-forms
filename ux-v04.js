@@ -1102,15 +1102,20 @@
         const inputText=String(entry.value||"").trim();
         const noCoordinate=!inputText&&(!state.gps||entry.dataset.coordinateDirty==="1");
         if(noCoordinate){
-          if(state.gpsCapturePending||entry._continueAfterGps)return;
-          const gpsButton=document.querySelector(".gps-exec-auto");
-          if(!gpsButton||gpsButton.disabled){
-            setError("coordenadas","No es posible iniciar el GPS. Revisá los permisos del navegador.");
-            return;
+          if(!state.gpsCapturePending){
+            const gpsButton=document.querySelector(".gps-exec-auto");
+            if(!gpsButton||gpsButton.disabled){
+              setError("coordenadas","No es posible iniciar el GPS. Revisá los permisos del navegador.");
+              return;
+            }
+            // Navigation is independent from the asynchronous GPS capture.
+            entry._continueAfterGps=false;
+            gpsButton.click();
+            if(!state.gpsCapturePending){
+              setError("coordenadas","No se pudo iniciar el GPS. Revisá permisos o pegá una coordenada.");
+              return;
+            }
           }
-          entry._continueAfterGps=true;
-          gpsButton.click();
-          return;
         }
         if(entry.dataset.coordinateDirty==="1"){
           if(typeof entry._applyManualCoordinate!=="function"||!entry._applyManualCoordinate())return;
@@ -1127,6 +1132,8 @@
     state.sectionIndex++;
     state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);
     renderSection();
+    if(isExplorationForm()&&state.gpsCapturePending)
+      setStatus("Buscando tu ubicación por GPS en segundo plano. Podés continuar el formulario.","");
   }
 
   function hasExplorationOperator(){
@@ -1191,7 +1198,14 @@
 
   async function review(){
     if(!requireTestChoice())return;
-    if(isExplorationForm()&&state.locationBusy){setStatus("Terminando ubicación y datos territoriales…","");try{await state.geoPromise;}catch(_){}}
+    if(isExplorationForm()&&state.gpsCapturePending){
+      setStatus("Esperando la ubicación GPS antes de revisar las respuestas…","");
+      try{await state.gpsCapturePromise;}catch(_){}
+    }
+    if(isExplorationForm()&&state.geoPromise){
+      setStatus("Terminando ubicación y datos territoriales…","");
+      try{await state.geoPromise;}catch(_){}
+    }
     if(isExplorationForm()&&state.gps&&!state.locationValidated){setStatus("Validando datos territoriales antes del resumen…","");try{state.geoPromise=resolveExplorationMunicipality(state.gps.lat,state.gps.lng,"coordenadas");await state.geoPromise;}catch(_){}finally{state.geoPromise=null;}}
     const errors=validateAll();if(errors.length){const sections=activeSections(),idx=sections.findIndex(s=>s.id===errors[0].field.section);state.maxSectionReached=Math.max(state.maxSectionReached,sections.length-1);if(idx>=0&&idx!==state.sectionIndex){state.sectionIndex=idx;renderSection();}showValidation(errors.filter(x=>x.field.section===currentSection().id));return;}
     $("formWorkspace").hidden=true;$("reviewWorkspace").hidden=false;$("successWorkspace").hidden=true;buildReview();setStatus("","");window.scrollTo({top:0,behavior:"smooth"});
@@ -1250,6 +1264,15 @@
       $("reviewWorkspace").hidden=true;$("formWorkspace").hidden=false;$("successWorkspace").hidden=true;
       state.sectionIndex=activeSections().length-1;renderSection();
       requireTestChoice();
+      return;
+    }
+    // Defense if the user returned to review while a fix is still pending.
+    if(isExplorationForm()&&(state.gpsCapturePending||!state.gps)){
+      $("reviewWorkspace").hidden=true;$("formWorkspace").hidden=false;
+      const index=activeSections().findIndex(section=>section.id==="coordenada");
+      if(index>=0)state.sectionIndex=index;
+      renderSection();
+      setStatus(state.gpsCapturePending?"El GPS sigue buscando: aguardá o ingresá una coordenada.":"No se obtuvo una coordenada. Reintentá GPS o ingresala manualmente.","error");
       return;
     }
     const btn=$("confirmSubmit");btn.disabled=true;setStatus("Guardando respuesta…","");
