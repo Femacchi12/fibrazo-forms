@@ -1451,9 +1451,11 @@
     if(label)label.textContent=suggested?"Estrato sugerido (QA · no canónico)":"Estrato automático (Motor Territorial)";
     const info=box.querySelector('[data-geo-info-for="estrato"]');
     if(!suggested){
-      if(control.dataset.qaAuto==="1"){
+      if(control.dataset.qaSession==="1"){
         delete control.dataset.qaAuto;
-        if(control.dataset.geoManual!=="1")setGeoField("estrato",ref?.canonicalValue||"","Sin información");
+        delete control.dataset.qaSession;
+        delete control.dataset.geoManual;
+        setGeoField("estrato",ref?.canonicalValue||"","Sin información");
       }
       if(ref&&state.gps){
         state.gps.estratoStatus=ref.canonicalStatus;
@@ -1468,6 +1470,7 @@
       if(info&&ref){info.textContent=ref.message||"";info.hidden=!ref.message;}
       return;
     }
+    control.dataset.qaSession="1";
     if(control.dataset.geoManual!=="1"){
       setGeoField("estrato",suggested.value,"Sin información");
       control.dataset.qaAuto="1";
@@ -1552,6 +1555,14 @@
         ?data.qaStratum.nearby.filter(item=>/^[1-6]$/.test(String(item.estrato))):[];
       const estratoDisplay=data.estratoStatus==="DENTRO"?data.estrato:""; // Reference QA and nearby strata are advisory, never assigned.
       setGeoField("sector_barrio",barrioDisplay||"","");
+      const estratoControl=document.querySelector('[name="estrato"]');
+      const previousReference=state.qaReference;
+      if(estratoControl?.dataset.qaSession==="1"&&previousReference&&
+        (Number(previousReference.lat)!==Number(lat)||Number(previousReference.lng)!==Number(lng))){
+        delete estratoControl.dataset.geoManual;
+        delete estratoControl.dataset.qaAuto;
+        delete estratoControl.dataset.qaSession;
+      }
       setGeoField("estrato",estratoDisplay||"","Sin información");
       state.qaReference={lat,lng,reference:data.qaStratum||null,canonicalValue:estratoDisplay,
         canonicalStatus:data.estratoStatus||"",canonicalSource:data.estratoSource||"",
