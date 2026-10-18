@@ -705,6 +705,16 @@
       if(input.dataset.coordinateDirty!=="1"&&state.gps&&
         Number(state.gps.lat)===parsed.lat&&Number(state.gps.lng)===parsed.lng)return true;
       input.dataset.coordinateDirty="0";
+      // A new coordinate invalidates any previous manually selected QA stratum.
+      const lastCoordinate=state.gps;
+      if(lastCoordinate&&(Number(lastCoordinate.lat)!==parsed.lat||Number(lastCoordinate.lng)!==parsed.lng)){
+        const stratum=document.querySelector('[name="estrato"]');
+        if(stratum){
+          delete stratum.dataset.geoManual;
+          delete stratum.dataset.qaAuto;
+          delete stratum.dataset.qaSession;
+        }
+      }
       state.gps={lat:parsed.lat,lng:parsed.lng,accuracy:null,cityDetected:"",citySource:"manual-coordinate"};
       state.qaReference=null;
       state.detectedCity="";state.locationValidated=false;state.locationBusy=true;
