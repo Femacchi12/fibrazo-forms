@@ -112,7 +112,27 @@
   const formatDistance=meters=>{
     const n=validNum(meters);
     if(n===null)return"";
+    if(n<1&&n>0)return n.toFixed(1).replace(".",",")+" m";
     return n>=1000?(n/1000).toFixed(n>=10000?0:1).replace(".",",")+" km":Math.round(n)+" m";
+  };
+  // A nearby polygon is NOT an assigned polygon. Label the category and
+  // distance clearly without silently converting FUERA to DENTRO.
+  const territorialDisplay=(layer,kind)=>{
+    const status=String(layer?.status||"");
+    const name=value=>String(value?.name??value??"").trim();
+    const assigned=name(layer?.assigned),nearby=name(layer?.nearby);
+    const readable=value=>kind==="estrato"&&/^[1-6]$/.test(value)?"Estrato "+value:value;
+    if(status==="DENTRO")return kind==="estrato"&&!/^[1-6]$/.test(assigned)
+      ?"Sin estrato clasificado":readable(assigned)||"Coincidencia exacta";
+    if(status==="FUERA"){
+      const meters=formatDistance(layer?.distanceM);
+      return nearby?readable(nearby)+" (cercano)"+(meters?" · a "+meters+" del polígono":"")
+        :"Fuera del polígono"+(meters?" · "+meters:"");
+    }
+    if(status==="FUERA_COBERTURA")return"Sin polígono cercano";
+    if(status==="SIN_CAPA_CANONICA")return"Sin capa canónica";
+    if(status==="SIN_CAPA")return"Sin capa";
+    return"Sin información";
   };
   const formatDate=value=>{
     const d=new Date(value);
@@ -471,6 +491,9 @@
       const assigned=String(layer?.assigned?.name||"").trim();
       const nearby=String(layer?.nearby?.name||"").trim();
       const distance=formatDistance(layer?.distanceM);
+      if(label==="Barrio"||label==="Estrato")return {label,
+        value:territorialDisplay(layer,label==="Estrato"?"estrato":"barrio"),
+        state:status==="DENTRO"?"ok":status==="FUERA"?"near":"missing"};
       if(status==="DENTRO")return {label,value:assigned||"Disponible",state:"ok"};
       if(status==="FUERA"){
         if(label==="Ciudad / municipio"&&Number(layer?.distanceM)>CITY_NEARBY_LIMIT_M)return {label,value:"Sin coincidencia territorial cercana",state:"missing"};
@@ -558,7 +581,8 @@
     });
   }
 
-  function statusLine(label,layer){
+  function statusLine(label,layer,kind=""){
+    if(kind==="barrio"||kind==="estrato")return label+": "+territorialDisplay(layer,kind);
     const status=String(layer?.status||"");
     const assigned=String(layer?.assigned||"").trim();
     const nearby=String(layer?.nearby||"").trim();
@@ -582,8 +606,8 @@
       '<div class="map-popup-row"><b>Fecha</b><span>'+esc(formatDate(point.timestamp))+'</span></div>'+
       '<div class="map-popup-row"><b>Usuario</b><span>'+esc(point.user||"—")+'</span></div>'+
       '<div class="map-popup-row"><b>Ciudad</b><span>'+esc(statusLine("",point.city).replace(/^:\s*/,""))+'</span></div>'+
-      '<div class="map-popup-row"><b>Barrio</b><span>'+esc(statusLine("",point.barrio).replace(/^:\s*/,""))+'</span></div>'+
-      '<div class="map-popup-row"><b>Estrato</b><span>'+esc(statusLine("",point.estrato).replace(/^:\s*/,""))+'</span></div>'+
+      '<div class="map-popup-row"><b>Barrio</b><span>'+esc(statusLine("",point.barrio,"barrio").replace(/^:\s*/,""))+'</span></div>'+
+      '<div class="map-popup-row"><b>Estrato</b><span>'+esc(statusLine("",point.estrato,"estrato").replace(/^:\s*/,""))+'</span></div>'+
       '<div class="map-popup-row"><b>Coordenadas</b><span>'+coordinateCopyButton(point.lat,point.lng)+'</span></div>'+
       (point.isTest?'<div class="map-popup-test">⚠ Registro de prueba · excluido de análisis</div>':"")+
       operators+note+
