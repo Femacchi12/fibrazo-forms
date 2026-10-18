@@ -15,10 +15,10 @@ assert.ok(start>=0&&end>start);
 const source=ux.slice(start,end);
 const create=new Function("navigator","state","isExplorationForm","setTimeout",
   "clearTimeout","invalidateTerritorialOnCoordinateChange","document",
-  "resolveExplorationMunicipality","setStatus","clearError",
+  "resolveExplorationMunicipality","setStatus","clearError","setTerritorialProgress",
   "currentSection","renderSection",source+"return captureGps;");
 async function run(){
-  let watch,finishLookup,lookups=0,settled=0;
+  let watch,finishLookup,lookups=0,settled=0;const phases=[];
   const state={form:{id:"EXPLORACION_PRESENCIAL"},startedAt:42,gps:null,
     gpsCapturePending:false,geoPromise:null,locationValidated:false};
   const value={textContent:"",_onGpsStatus(){},_onGpsCaptured(){},
@@ -33,7 +33,7 @@ async function run(){
     async (lat,lng)=>{
       lookups++;assert.equal(lat,2.9252688);assert.equal(lng,-75.2738189);
       return new Promise(resolve=>{finishLookup=resolve;});
-    },()=>{},()=>{},()=>({id:"operadores"}),()=>{});
+    },()=>{},()=>{},phase=>phases.push(phase),()=>({id:"operadores"}),()=>{});
   capture(value,button,"coordenadas");
   assert.equal(state.gpsCapturePending,true);
   assert.ok(state.gpsCapturePromise);
@@ -54,6 +54,7 @@ async function run(){
   assert.equal(state.locationBusy,false);
   assert.equal(button.disabled,false);
   assert.equal(settled,1);
+  assert.deepEqual(phases,["gps","territorial"]);
 }
 run().then(()=>console.log("FO-CHG-068 GPS fix -> parallel territorial lookup -> review wait PASS"))
   .catch(error=>{console.error(error);process.exitCode=1;});
