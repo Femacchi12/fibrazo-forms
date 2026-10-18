@@ -177,10 +177,11 @@
           <fieldset id="formTestFlag" class="form-qa-flag field full" hidden>
             <legend>¿Este registro es una prueba?</legend>
             <div class="review-test-choices">
-              <label><input type="radio" name="qaTestEntry" value="No" checked> No · Registro real</label>
+              <label><input type="radio" name="qaTestEntry" value="No"> No · Registro real</label>
               <label><input type="radio" name="qaTestEntry" value="Sí"> Sí · Prueba (QA)</label>
             </div>
-            <small>Solo tu cuenta. Las pruebas quedan fuera de análisis y bases maestras; pueden verse con el filtro QA del mapa.</small>
+            <small>Selección obligatoria antes de guardar. Solo tu cuenta puede registrar pruebas QA. Las pruebas quedan fuera de análisis y bases maestras.</small>
+              <small id="formTestChoiceError" class="form-test-choice-error" role="alert" hidden>Seleccioná si este formulario es una prueba (QA) o un registro real.</small>
           </fieldset>
 
           <div id="validationSummary" class="validation-summary" hidden>
