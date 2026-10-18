@@ -110,6 +110,21 @@ module.exports=async(req,res)=>{
       loadCompetition(auth)
     ]);
 
+    // Reference-only pilot. Preview may read complete precomputed QA strata when
+    // the canonical layer is missing. Never substitute a QA result in production.
+    let qaStratum=null;
+    if(process.env.VERCEL_ENV==="preview"&&
+      ["SIN_CAPA","SIN_CAPA_CANONICA"].includes(territorial.estrato?.status)){
+      const hint=canonicalCity(req.query.city||"");
+      if(["neiva","villavicencio","ibague"].includes(norm(hint))){
+        try{
+          qaStratum=await require("./_estratos-precalc").lookupReference(auth,lat,lng,hint);
+        }catch(error){
+          console.error("QA_STRATA_REFERENCE_ERROR",error?.code||error?.message||"READ_FAILED");
+        }
+      }
+    }
+
     const city=territorial.city?.status==="DENTRO"
       ?canonicalCity(territorial.city.assigned?.name||"")
       :"";
@@ -130,6 +145,7 @@ module.exports=async(req,res)=>{
     return res.status(200).json({
       ok:true,
       territorialVersion:TERRITORIAL_VERSION,
+      qaStratum,
       city,
       cityStatus:territorial.city?.status||"",
       cityNearby,
