@@ -85,20 +85,48 @@ async function handle(auth,req,res,city,bbox,zoom){
 // FO-CHG-061 · QA-only reference lookup for a coordinate, using the same
 // precalculated MultiPolygon that the map already displays. This is NOT
 // a canonical layer and must never silently become an operational classification.
-async function lookupReference(auth,latValue,lonValue,cityName){
-  const city=Object.values(CITIES).find(value=>norm(value[1])===norm(cityName));
-  if(!city)return null;
+// Bounds verified against the same full-city geometry files (EPSG:4326).
+// This also lets map coordinate lookups resolve a QA city when no city query
+// parameter has been selected. Bbox is ONLY a routing hint, never an assignment.
+const QA_BOUNDS={
+  neiva:[-75.30873,2.88679,-75.23607,2.98355],
+  villavicencio:[-73.68194,4.05401,-73.53184,4.18334],
+  ibague:[-75.27257,4.37572,-75.11994,4.46509]
+};
+const NEAR_LIMIT_M=25;
+function referenceResult(rows,lat,lon){
+  const {inGeometry,geometryDistance}=require("./_territorial")._internals;
+  const matching=rows.filter(row=>inGeometry(lon,lat,row.polygons));
+  if(matching.length===1)return{status:"DENTRO",value:matching[0].estrato,nearby:[],distanceM:0};
+  if(matching.length>1)return{status:"AMBIGUO",value:"",nearby:[],distanceM:0};
+  const ranked=rows.map(row=>({
+    estrato:row.estrato,
+    distanceM:Math.round(geometryDistance(lon,lat,row.polygons)*10)/10
+  })).filter(item=>Number.isFinite(item.distanceM)).sort((a,b)=>a.distanceM-b.distanceM);
+  return{
+    status:"FUERA",value:"",
+    nearby:ranked.filter(item=>item.distanceM<=NEAR_LIMIT_M),
+    distanceM:ranked.length?ranked[0].distanceM:null
+  };
+}
+async function lookupReference(auth,latValue,lonValue,cityName=""){
   const lat=Number(latValue),lon=Number(lonValue);
   if(!Number.isFinite(lat)||!Number.isFinite(lon))return null;
+  const requested=norm(cityName);
+  // If city is provided, require that it matches the actual city footprint.
+  // Without a city hint, infer from non-overlapping validated QA extents.
+  const candidates=Object.entries(CITIES).filter(([key,city])=>{
+    if(requested&&norm(city[1])!==requested&&key!==requested)return false;
+    const [minLon,minLat,maxLon,maxLat]=QA_BOUNDS[key];
+    return lon>=minLon&&lon<=maxLon&&lat>=minLat&&lat<=maxLat;
+  });
+  if(candidates.length!==1)return null;
+  const city=candidates[0][1];
   const rows=await load(auth,city);
-  const {inGeometry}=require("./_territorial")._internals;
-  const matches=rows.filter(row=>inGeometry(lon,lat,row.polygons));
-  return {
-    city:city[1],
-    status:matches.length===1?"DENTRO":matches.length>1?"AMBIGUO":"FUERA",
-    value:matches.length===1?matches[0].estrato:"",
+  return{
+    city:city[1],...referenceResult(rows,lat,lon),
     source:"MultiPolygon precalculado · QA referencial · no canónico",
     canonical:false
   };
 }
-module.exports={target,handle,lookupReference};
+module.exports={target,handle,lookupReference,_internals:{referenceResult}};
