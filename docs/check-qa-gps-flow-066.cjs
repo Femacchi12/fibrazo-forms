@@ -12,10 +12,10 @@ function simulate({value="",dirty="0",originalGps=null,disabled=false}={}){
     _applyManualCoordinate(){const match=value.match(/(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);if(!match)return false;state.gps={lat:Number(match[1]),lng:Number(match[2])};return true;}};
   const auto={disabled,click(){clicked++;state.gpsCapturePending=true;}};
   const doc={querySelector:s=>s===".gps-exec-auto"?auto:entry};
-  const next=new Function("state","isExplorationForm","currentSection","document","setError",
+  const next=new Function("state","isExplorationForm","currentSection","document","setError","setStatus",
     "validateSection","renderSection","showValidation","saveLastOperatorTendidoQuality",
     "saveLastInfrastructure","saveLastOperators",nextSource+"return next;")(
-    state,()=>true,()=>({id:"coordenada"}),doc,()=>{errors++;},
+    state,()=>true,()=>({id:"coordenada"}),doc,()=>{errors++;},()=>{},
     ()=>{validated++;return state.gps||state.gpsCapturePending?[]:[{field:"coordenadas"}];},
     ()=>{rendered++;},()=>{},()=>{},()=>{},()=>{}
   );
