@@ -520,7 +520,8 @@
     function referenceStratumRow(data){
       const reference=data?.qaStratum;
       const canonical=data?.territorial?.estrato;
-      if(!reference||reference.canonical!==false)return territorialLayerText(canonical,"Estrato");
+      if(canonical?.status==="DENTRO"||!reference||reference.canonical!==false)
+        return territorialLayerText(canonical,"Estrato");
       const label="Estrato";
       if(reference.status==="DENTRO"&&/^[1-6]$/.test(String(reference.value))){
         return{label,value:"Estrato "+reference.value+" · dentro del polígono QA (referencial, no canónico)",state:"near"};
