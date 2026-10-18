@@ -116,12 +116,13 @@ module.exports=async(req,res)=>{
     if(process.env.VERCEL_ENV==="preview"&&
       ["SIN_CAPA","SIN_CAPA_CANONICA"].includes(territorial.estrato?.status)){
       const hint=canonicalCity(req.query.city||"");
-      if(["neiva","villavicencio","ibague"].includes(norm(hint))){
-        try{
-          qaStratum=await require("./_estratos-precalc").lookupReference(auth,lat,lng,hint);
-        }catch(error){
-          console.error("QA_STRATA_REFERENCE_ERROR",error?.code||error?.message||"READ_FAILED");
-        }
+      // The map coordinate sheet usually has no explicit city hint.
+      // Only the validated pilot footprints can be inferred; never assign
+      // operational strata from a QA reference.
+      try{
+        qaStratum=await require("./_estratos-precalc").lookupReference(auth,lat,lng,hint);
+      }catch(error){
+        console.error("QA_STRATA_REFERENCE_ERROR",error?.code||error?.message||"READ_FAILED");
       }
     }
 
