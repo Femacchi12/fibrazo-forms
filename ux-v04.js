@@ -580,6 +580,7 @@
         if(status)status.textContent=city?"Municipio: "+city+" · corregido manualmente":"Municipio: pendiente";
       }
       clearError(field.key);updateVisibility();
+      if(field.key==="estrato"&&s.dataset.qaSession==="1")refreshQaStratumAutofill();
     });return s;
   }
   function segmentedInput(field){
