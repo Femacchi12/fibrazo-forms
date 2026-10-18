@@ -1475,7 +1475,7 @@
       const summaryValue=document.querySelector(".territorial-coordinate-summary .territorial-coordinate-value");
       if(summaryValue)summaryValue.textContent=value.textContent;
       const summaryInput=document.querySelector(".territorial-coordinate-summary .territorial-coordinate-edit input");
-      if(summaryInput)summaryInput.value=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6);
+      if(summaryInput)summaryInput.value=state.gps.lat.toFixed(7)+", "+state.gps.lng.toFixed(7);
       if(advanceAfterGps&&currentSection()?.id==="coordenada"){
         state.sectionIndex++;state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);renderSection();
       }
@@ -1499,7 +1499,7 @@
       if(best){if(value._onGpsStatus)value._onGpsStatus("Buscando señal GPS… ±"+Math.round(best.coords.accuracy)+" m");else value.textContent="Buscando precisión… mejor lectura ±"+Math.round(best.coords.accuracy)+" m";}
       if(Number(p.coords.accuracy)<=12)finish(p);
     };
-    try{watchId=navigator.geolocation.watchPosition(onPosition,()=>{}, {enableHighAccuracy:true,maximumAge:0,timeout:18000});}
+    try{watchId=navigator.geolocation.watchPosition(onPosition,error=>{if(error?.code===1)finish(null);}, {enableHighAccuracy:true,maximumAge:0,timeout:18000});}
     catch(_){watchId=null;}
     timer=setTimeout(()=>finish(best),10000);
   }
