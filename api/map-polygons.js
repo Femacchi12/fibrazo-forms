@@ -1,11 +1,12 @@
 const {google}=require("googleapis");
 const {gauth,verifyUser,loadForms,userCapabilities,canUseDashboard,httpError}=require("./_core");
-const {_internals}=require("./_territorial");
+const {TERRITORIAL_MASTER_SHEET_ID,_internals}=require("./_territorial");
 
 const BGA_SHEET_ID="1w0uI4dTF46ZBWALGTqmDj-BF1XPkv61qJlBD3XbGDqs";
 const CACHE_MS=10*60*1000;
 const cache=new Map();
 const geometryCache=new Map();
+let sourceCatalogCache={expires:0,items:[]};
 
 const CONFIG={
   barrios:{
@@ -53,6 +54,40 @@ function tableRows(values){
     header.forEach((h,i)=>{if(String(h||"").trim())out[String(h).trim()]=row?.[i]??"";});
     return out;
   });
+}
+function sheetIdFromUrl(value){
+  const match=String(value||"").match(/\/spreadsheets\/d\/([^/]+)/i);
+  return match?match[1]:"";
+}
+async function loadPolygonSources(auth){
+  const now=Date.now();
+  if(sourceCatalogCache.expires>now)return sourceCatalogCache.items;
+  const sheets=google.sheets({version:"v4",auth});
+  const response=await sheets.spreadsheets.values.get({
+    spreadsheetId:TERRITORIAL_MASTER_SHEET_ID,
+    range:"01_CIUDADES!A:M"
+  });
+  const items=tableRows(response.data.values||[]).filter(row=>{
+    const state=norm(row.Estado_Archivo);
+    return (state==="activo"||state.startsWith("qa_"))&&sheetIdFromUrl(row.Archivo_Territorial_URL);
+  }).map(row=>({
+    id:String(row.ID_Ciudad||"").trim(),
+    city:String(row.Ciudad||"").trim(),
+    municipalities:String(row.Municipios_Ambito||"").split(";").map(x=>x.trim()).filter(Boolean),
+    spreadsheetId:sheetIdFromUrl(row.Archivo_Territorial_URL)
+  }));
+  sourceCatalogCache={expires:now+CACHE_MS,items};
+  return items;
+}
+async function polygonSource(auth,query){
+  const requested=parseList(query.cities);
+  if(requested.length!==1)return {spreadsheetId:BGA_SHEET_ID,scope:"BUC_AMB"};
+  const city=norm(requested[0]);
+  const sources=await loadPolygonSources(auth);
+  const match=sources.find(item=>[item.city,...item.municipalities].some(value=>norm(value)===city));
+  return match
+    ?{spreadsheetId:match.spreadsheetId,scope:match.id||match.city}
+    :{spreadsheetId:BGA_SHEET_ID,scope:"BUC_AMB"};
 }
 function intersects(a,b){
   return !(a.maxLon<b.minLon||a.minLon>b.maxLon||a.maxLat<b.minLat||a.minLat>b.maxLat);
@@ -116,14 +151,15 @@ function geometryFromWkt(wkt){
     ?{type:"Polygon",coordinates:polygons[0]}
     :{type:"MultiPolygon",coordinates:polygons};
 }
-async function loadMeta(auth,layer){
+async function loadMeta(auth,layer,source){
   const cfg=CONFIG[layer],now=Date.now();
-  const hit=cache.get(layer);
+  const cacheKey=source.spreadsheetId+"|"+layer;
+  const hit=cache.get(cacheKey);
   if(hit&&hit.expires>now)return hit.value;
 
   const sheets=google.sheets({version:"v4",auth});
   const response=await sheets.spreadsheets.values.batchGet({
-    spreadsheetId:BGA_SHEET_ID,
+    spreadsheetId:source.spreadsheetId,
     ranges:cfg.metaRanges.map(range=>cfg.sheet+"!"+range)
   });
   const parts=(response.data.valueRanges||[]).map(vr=>tableRows(vr.values||[]));
@@ -138,8 +174,8 @@ async function loadMeta(auth,layer){
     if(![minLon,minLat,maxLon,maxLat].every(Number.isFinite))continue;
     rows.push({...row,minLon,minLat,maxLon,maxLat});
   }
-  const value={cfg,rows};
-  cache.set(layer,{expires:now+CACHE_MS,value});
+  const value={cfg:{...cfg,spreadsheetId:source.spreadsheetId,scope:source.scope},rows};
+  cache.set(cacheKey,{expires:now+CACHE_MS,value});
   return value;
 }
 async function getWkts(auth,cfg,rows){
@@ -160,7 +196,7 @@ async function getWkts(auth,cfg,rows){
   for(let i=0;i<groups.length;i+=batchSize){
     const chunk=groups.slice(i,i+batchSize);
     const response=await sheets.spreadsheets.values.batchGet({
-      spreadsheetId:BGA_SHEET_ID,
+      spreadsheetId:cfg.spreadsheetId,
       ranges:chunk.map(g=>cfg.sheet+"!"+cfg.wktCol+g.start+":"+cfg.wktCol+g.end)
     });
     const ranges=response.data.valueRanges||[];
@@ -176,7 +212,7 @@ async function getWkts(auth,cfg,rows){
 async function getGeometries(auth,cfg,rows){
   const now=Date.now(),out=new Map(),missing=[];
   for(const row of rows){
-    const key=cfg.sheet+":"+row.__row;
+    const key=cfg.spreadsheetId+"|"+cfg.sheet+":"+row.__row;
     const hit=geometryCache.get(key);
     if(hit&&hit.expires>now)out.set(row.__row,hit.geometry);
     else missing.push(row);
@@ -185,7 +221,7 @@ async function getGeometries(auth,cfg,rows){
     const wkts=await getWkts(auth,cfg,missing);
     for(const row of missing){
       const geometry=geometryFromWkt(wkts.get(row.__row));
-      geometryCache.set(cfg.sheet+":"+row.__row,{expires:now+CACHE_MS,geometry});
+      geometryCache.set(cfg.spreadsheetId+"|"+cfg.sheet+":"+row.__row,{expires:now+CACHE_MS,geometry});
       out.set(row.__row,geometry);
     }
   }
@@ -333,25 +369,29 @@ module.exports=async(req,res)=>{
     if(req.method!=="GET")return res.status(405).json({error:"Method not allowed"});
     const user=await verifyUser(req);
     const layer=String(req.query.layer||"").toLowerCase();
-    const cfg=CONFIG[layer];
+    let cfg=CONFIG[layer];
     if(!cfg)throw httpError("INVALID_LAYER",400);
 
     const zoom=Number(req.query.zoom||0);
     const bbox=parseBbox(req.query.bbox);
     const fullCoverage=layer==="estratos"&&req.query.fullCoverage==="1";
     // Manual refresh forces fresh sheet metadata and bypasses stale HTTP caches.
-    if(req.query.forceRefresh==="1"){
-      cache.delete(layer);
-      for(const key of geometryCache.keys())if(key.startsWith(CONFIG[layer].sheet+":"))geometryCache.delete(key);
-      res.setHeader("Cache-Control","no-store");
-    }
     const auth=gauth();
     const precalcCity=layer==="estratos"?require("./_estratos-precalc").target(req.query):null;
-    const [forms,caps,meta]=await Promise.all([
+    const [forms,caps,source]=await Promise.all([
       loadForms(auth),
       userCapabilities(auth,user.email),
-      precalcCity?Promise.resolve(null):loadMeta(auth,layer)
+      precalcCity?Promise.resolve(null):polygonSource(auth,req.query)
     ]);
+    if(req.query.forceRefresh==="1"&&source){
+      cache.delete(source.spreadsheetId+"|"+layer);
+      sourceCatalogCache.expires=0;
+      const prefix=source.spreadsheetId+"|"+CONFIG[layer].sheet+":";
+      for(const key of geometryCache.keys())if(key.startsWith(prefix))geometryCache.delete(key);
+      res.setHeader("Cache-Control","no-store");
+    }
+    const meta=precalcCity?null:await loadMeta(auth,layer,source);
+    if(meta?.cfg)cfg=meta.cfg;
     if(!canUseDashboard(user,caps.adminActive,forms))throw httpError("DASHBOARD_ACCESS_DENIED",403);
     if(precalcCity){
       // The city-specific ZIP is read from the corporate Growth shared drive,
@@ -369,7 +409,7 @@ module.exports=async(req,res)=>{
         ok:true,
         mode:"index",
         layer,
-        scope:"BUC_AMB_ALL",
+        scope:cfg.scope+"_ALL",
         minZoom:cfg.minZoom,
         requiresZoom:false,
         totalVisible:cityRows.length,
@@ -390,7 +430,7 @@ module.exports=async(req,res)=>{
         ok:true,
         mode:"index",
         layer,
-        scope:"BUC_AMB_VISIBLE",
+        scope:cfg.scope+"_VISIBLE",
         minZoom:cfg.minZoom,
         requiresZoom:false,
         totalVisible:visible.length,
@@ -405,7 +445,7 @@ module.exports=async(req,res)=>{
         ok:true,
         mode:"geometry",
         layer,
-        scope:"BUC_AMB",
+        scope:cfg.scope,
         minZoom:cfg.minZoom,
         requiresZoom:false,
         truncated:false,
@@ -448,7 +488,7 @@ module.exports=async(req,res)=>{
       ok:true,
       mode:"geometry",
       layer,
-      scope:"BUC_AMB",
+      scope:cfg.scope,
       minZoom:cfg.minZoom,
       requiresZoom:false,
       truncated,
