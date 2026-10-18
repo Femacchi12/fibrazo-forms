@@ -31,6 +31,7 @@
     $("formTestChoiceError")?.setAttribute("hidden","");
     updateTestReview();
     refreshQaStratumAutofill();
+    refreshQaNeighborhood();
   });
 
   function renderPending(){
@@ -974,7 +975,10 @@
     document.querySelectorAll(".operator-memory-inline").forEach(el=>el.remove());
     document.querySelectorAll(".territorial-coordinate-summary").forEach(el=>el.remove());
     clearValidation();updateVisibility();
-    if(isExplorationForm()&&state.qaReference)refreshQaStratumAutofill();
+    if(isExplorationForm()&&state.qaReference){
+      refreshQaStratumAutofill();
+      refreshQaNeighborhood();
+    }
     if((state.form?.id==="EXPLORACION_PRESENCIAL"&&section.id==="ubicacion")||(state.form?.id==="INTELIGENCIA_OPERADOR"&&section.id==="validacion")){
       requestAnimationFrame(()=>{
         if(currentSection()?.id!==section.id)return;
@@ -1205,9 +1209,20 @@
       payload.location.estratoStatus=state.qaReference?.canonicalStatus||"SIN_CAPA";
       payload.location.estratoSource=state.qaReference?.canonicalSource||"";
       payload.location.estratoMatch=state.qaReference?.canonicalMatch||"";
+      // Reference neighborhoods must not enter a real submission either.
+      if(String(payload.location?.barrioStatus||"").startsWith("QA_")){
+        payload.data.sector_barrio=state.qaReference?.canonicalBarrio||"";
+        payload.location.barrioStatus=state.qaReference?.canonicalBarrioStatus||"SIN_CAPA";
+        payload.location.barrioSource=state.qaReference?.canonicalBarrioSource||"";
+      }
       delete payload.location.estratoQaSuggested;
       delete payload.location.estratoQaCandidates;
       delete payload.location.estratoQaSelected;
+    }
+    if(!payload.isTest&&String(payload.location?.barrioStatus||"").startsWith("QA_")){
+      payload.data.sector_barrio=state.qaReference?.canonicalBarrio||"";
+      payload.location.barrioStatus=state.qaReference?.canonicalBarrioStatus||"SIN_CAPA";
+      payload.location.barrioSource=state.qaReference?.canonicalBarrioSource||"";
     }
     try{
       let result;
@@ -1572,6 +1587,53 @@
     }
   }
 
+  // FO-CHG-065: neighborhood uses the exact same DENTRO/FUERA semantics
+  // as the canonical engine. Pilot values are only suggested for QA testing.
+  function refreshQaNeighborhood(){
+    const control=document.querySelector('[name="sector_barrio"]');
+    const info=document.querySelector('[data-geo-info-for="sector_barrio"]');
+    const ref=state.qaReference;
+    if(!control||!info||!ref)return;
+    const matched=!!state.gps&&Number(ref.lat)===Number(state.gps.lat)&&Number(ref.lng)===Number(state.gps.lng);
+    const allowed=mayIdentifyTest()&&state.isTest!==false&&isExplorationForm()&&matched;
+    const layer=allowed?ref.qaTerritorial?.barrio:null;
+    const inside=layer?.status==="DENTRO"&&layer.assigned?.name;
+    if(!inside){
+      if(control.dataset.qaBarrioSession==="1"){
+        delete control.dataset.qaBarrioSession;
+        delete control.dataset.geoManual;
+        setGeoField("sector_barrio",ref.canonicalBarrio||"","");
+      }
+      info.textContent=ref.barrioMessage||"";
+      info.hidden=!ref.barrioMessage;
+      info.className="field-geo-info "+(ref.canonicalBarrioStatus==="DENTRO"?"geo-inside":ref.canonicalBarrioStatus==="FUERA"?"geo-outside":"geo-missing");
+      if(allowed&&layer?.status==="FUERA"&&layer.nearby?.name){
+        info.textContent="Barrio cercano: "+layer.nearby.name+" · a "+Number(layer.distanceM||0).toFixed(1).replace(".",",")+" m · QA referencial; sin asignar.";
+        info.hidden=false;info.className="field-geo-info geo-outside";
+      }
+      if(state.gps){
+        state.gps.barrioStatus=ref.canonicalBarrioStatus;
+        state.gps.barrioSource=ref.canonicalBarrioSource;
+        state.gps.barrioNearby=ref.canonicalBarrioNearby;
+        state.gps.barrioDistanceM=ref.canonicalBarrioDistanceM;
+      }
+      return;
+    }
+    if(control.dataset.geoManual!=="1"){
+      setGeoField("sector_barrio",String(layer.assigned.name),"");
+      control.dataset.qaBarrioSession="1";
+    }
+    info.textContent="Coincidencia exacta · "+layer.source+" · solo referencia QA, no canónica.";
+    info.hidden=false;
+    info.className="field-geo-info geo-outside";
+    if(state.gps){
+      state.gps.barrioStatus="QA_DENTRO";
+      state.gps.barrioSource=layer.source||"FO-CHG-058 · QA";
+      state.gps.barrioNearby="";
+      state.gps.barrioDistanceM=0;
+    }
+  }
+
   function distanceNumber(value){
     if(value===null||value===undefined||value==="")return null;
     const n=Number(value);
@@ -1638,10 +1700,14 @@
         delete estratoControl.dataset.qaSession;
       }
       setGeoField("estrato",estratoDisplay||"","Sin información");
-      state.qaReference={lat,lng,reference:data.qaStratum||null,canonicalValue:estratoDisplay,
-        canonicalStatus:data.estratoStatus||"",canonicalSource:data.estratoSource||"",
+      state.qaReference={lat,lng,reference:data.qaStratum||null,qaTerritorial:data.qaTerritorial||null,
+        canonicalValue:estratoDisplay,canonicalStatus:data.estratoStatus||"",canonicalSource:data.estratoSource||"",
         canonicalMatch:data.estratoMatch||"",canonicalNearby:data.estratoNearby||"",
-        canonicalDistanceM:distanceNumber(data.estratoDistanceM),message:""};
+        canonicalDistanceM:distanceNumber(data.estratoDistanceM),
+        canonicalBarrio:barrioDisplay,canonicalBarrioStatus:data.barrioStatus||"",
+        canonicalBarrioSource:data.barrioSource||"",canonicalBarrioNearby:data.barrioNearby||"",
+        canonicalBarrioDistanceM:distanceNumber(data.barrioDistanceM),
+        barrioMessage:"",message:""};
 
       if(state.gps){
         Object.assign(state.gps,{
@@ -1674,6 +1740,7 @@
       if(barrioInfo){
         const detail=geoLayerDetail(data.barrioStatus,data.barrio,data.barrioNearby,data.barrioDistanceM,data.barrioSource,"Barrio");
         barrioInfo.textContent=detail;barrioInfo.hidden=!detail;
+        if(state.qaReference)state.qaReference.barrioMessage=detail;
         barrioInfo.className="field-geo-info "+(data.barrioStatus==="DENTRO"?"geo-inside":data.barrioStatus==="FUERA"?"geo-outside":"geo-missing");
       }
       const estratoInfo=document.querySelector('[data-geo-info-for="estrato"]');
@@ -1688,6 +1755,7 @@
         estratoInfo.className="field-geo-info "+(qaStratum||qaNearby.length?"geo-outside":data.estratoStatus==="DENTRO"?"geo-inside":data.estratoStatus==="FUERA"?"geo-outside":"geo-missing");
       }
       refreshQaStratumAutofill();
+      refreshQaNeighborhood();
       const cityStatus=document.querySelector('[data-gps-city-for="coordenadas"]');
       if(cityStatus){
         const cityDistance=distanceNumber(data.cityDistanceM);
@@ -1730,6 +1798,12 @@
     const data=await queryExplorationEnrichment(lat,lng,"");
     if(state.geoLookupCancelled||!currentCoordinate())return"";
     if(data?.cityStatus==="DENTRO"&&data.city)return data.city;
+    const qaCity=data?.qaTerritorial?.city;
+    if(qaCity?.status==="DENTRO"&&qaCity.assigned?.name&&mayIdentifyTest()&&state.isTest!==false){
+      applyDetectedCity(qaCity.assigned.name,"qa-reference-dane");
+      if(status)status.textContent="Municipio: "+qaCity.assigned.name+" · DANE · referencia QA";
+      return qaCity.assigned.name;
+    }
 
     let observed="";
     const controller=new AbortController();
