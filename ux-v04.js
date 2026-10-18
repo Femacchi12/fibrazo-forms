@@ -2,7 +2,7 @@
   const forms=window.FIBRAZO_FORMS||{};
   const $=id=>document.getElementById(id);
   const publicMode=document.body.classList.contains("public-mode");
-  const state={form:null,policy:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:"",ispOptions:[],geoController:null,geoLookupId:0,geoLookupCancelled:false,locationBusy:false,maxSectionReached:0,locationValidated:false,geoPromise:null,editId:"",existingPhotoFields:{},serverHistory:[],isTest:false,qaReference:null};
+  const state={form:null,policy:null,sectionIndex:0,gps:null,photos:[],startedAt:0,detectedCity:"",citySource:"",ispOptions:[],geoController:null,geoLookupId:0,geoLookupCancelled:false,locationBusy:false,maxSectionReached:0,locationValidated:false,geoPromise:null,editId:"",existingPhotoFields:{},serverHistory:[],isTest:null,qaReference:null};
   const pending=window.FIBRAZO_PENDING||[];
   const pendingOwnedByApp=document.querySelector(".pending-hub")?.dataset.pendingOwner==="app";
 
@@ -15,19 +15,20 @@
   }
   function updateTestReview(){
     const permitted=mayIdentifyTest();
-    if(!permitted)state.isTest=false;
+    // No default selection: real and QA are an explicit decision.
     const box=$("formTestFlag");
     if(!box)return;
     const sections=activeSections();
     const isLastSection=!!state.form&&sections.length>0&&state.sectionIndex===sections.length-1;
     box.hidden=!(permitted&&isLastSection);
     box.querySelectorAll('input[type="radio"]').forEach(input=>{
-      input.checked=input.value===(state.isTest?"Sí":"No");
+      input.checked=state.isTest!==null&&input.value===(state.isTest?"Sí":"No");
     });
   }
   $("formTestFlag")?.addEventListener("change",event=>{
     if(!mayIdentifyTest()||!event.target.matches('input[type="radio"]'))return;
     state.isTest=event.target.value==="Sí";
+    $("formTestChoiceError")?.setAttribute("hidden","");
     updateTestReview();
     refreshQaStratumAutofill();
   });
@@ -100,7 +101,7 @@
     const form=forms[id];if(!form)return;
     if(!publicMode&&window.FIBRAZO_ACCESS&&window.FIBRAZO_ACCESS[id]===false)return;
     const policy=policyFor(id);
-    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.isTest=false;state.qaReference=null;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.gpsCapturePending=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
+    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.isTest=null;state.qaReference=null;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.gpsCapturePending=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
     document.body.classList.add("form-mode");
     $("formTitle").textContent=form.name;
     $("formDescription").textContent=form.description||"";
@@ -950,6 +951,7 @@
     document.querySelectorAll(".operator-memory-inline").forEach(el=>el.remove());
     document.querySelectorAll(".territorial-coordinate-summary").forEach(el=>el.remove());
     clearValidation();updateVisibility();
+    if(isExplorationForm()&&state.qaReference)refreshQaStratumAutofill();
     if((state.form?.id==="EXPLORACION_PRESENCIAL"&&section.id==="ubicacion")||(state.form?.id==="INTELIGENCIA_OPERADOR"&&section.id==="validacion")){
       requestAnimationFrame(()=>{
         if(currentSection()?.id!==section.id)return;
@@ -1013,7 +1015,25 @@
     window.scrollTo({top:0,behavior:"smooth"});
   }
   function prev(){if(state.sectionIndex>0){state.sectionIndex--;renderSection();}}
-  function next(){if(state.form?.id==="INTELIGENCIA_OPERADOR"&&currentSection()?.id==="calidad")saveLastOperatorTendidoQuality();const e=validateSection(state.sectionIndex,true);if(e.length)return showValidation(e);if(state.form?.id==="EXPLORACION_PRESENCIAL"){if(currentSection()?.id==="infraestructura")saveLastInfrastructure();if(currentSection()?.id==="operadores")saveLastOperators();}state.sectionIndex++;state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);renderSection();}
+  function next(){
+    // FO-CHG-064: paste + Continuar triggers the same coordinate apply as Buscar.
+    if(isExplorationForm()&&currentSection()?.id==="coordenada"){
+      const entry=document.querySelector(".gps-exec-coordinate");
+      if(entry?.dataset.coordinateDirty==="1"){
+        if(typeof entry._applyManualCoordinate!=="function"||!entry._applyManualCoordinate())return;
+      }
+    }
+    if(state.form?.id==="INTELIGENCIA_OPERADOR"&&currentSection()?.id==="calidad")saveLastOperatorTendidoQuality();
+    const errors=validateSection(state.sectionIndex,true);
+    if(errors.length)return showValidation(errors);
+    if(state.form?.id==="EXPLORACION_PRESENCIAL"){
+      if(currentSection()?.id==="infraestructura")saveLastInfrastructure();
+      if(currentSection()?.id==="operadores")saveLastOperators();
+    }
+    state.sectionIndex++;
+    state.maxSectionReached=Math.max(state.maxSectionReached,state.sectionIndex);
+    renderSection();
+  }
 
   function hasExplorationOperator(){
     if(!isExplorationForm())return true;
@@ -1027,7 +1047,7 @@
 
   function validateField(field){
     if(field.type==="gps"){
-      if(field.key==="coordenadas"&&isExplorationForm()&&document.querySelector(".gps-exec-coordinate[data-coordinate-dirty='1']"))return "Presiona Buscar coordenada para aplicar el valor ingresado.";
+      if(field.key==="coordenadas"&&isExplorationForm()&&document.querySelector(".gps-exec-coordinate[data-coordinate-dirty='1']"))return "Ingresá una coordenada válida y presioná Continuar.";
       if(field.key==="coordenadas"&&isExplorationForm()&&state.gpsCapturePending&&currentSection()?.id==="coordenada")return "";
       return field.required&&!state.gps?"Ingresa y busca una coordenada o utiliza el GPS.":"";
     }
@@ -1060,7 +1080,23 @@
   function clearValidation(){if(!$("validationSummary"))return;$("validationSummary").hidden=true;$("validationList").innerHTML="";document.querySelectorAll("#dynamicFields .field").forEach(f=>f.classList.remove("invalid"));document.querySelectorAll(".field-error").forEach(e=>{e.hidden=true;e.textContent="";});}
   function showValidation(errors){const list=$("validationList");list.innerHTML="";errors.forEach(x=>{setError(x.field.key,x.message);const li=document.createElement("li");li.textContent=x.field.label+": "+x.message;list.appendChild(li);});$("validationSummary").hidden=false;document.querySelector("#dynamicFields .field.invalid:not([hidden])")?.scrollIntoView({behavior:"smooth",block:"center"});}
 
+  function requireTestChoice(){
+    if(!mayIdentifyTest())return true;
+    if(state.isTest===true||state.isTest===false){
+      $("formTestChoiceError")?.setAttribute("hidden","");
+      return true;
+    }
+    const message="Antes de continuar, elegí si este formulario es una prueba (QA) o un registro real.";
+    const error=$("formTestChoiceError");
+    if(error){error.textContent=message;error.hidden=false;}
+    setStatus(message,"error");
+    const box=$("formTestFlag");
+    if(box){box.hidden=false;box.scrollIntoView({behavior:"smooth",block:"center"});}
+    return false;
+  }
+
   async function review(){
+    if(!requireTestChoice())return;
     if(isExplorationForm()&&state.locationBusy){setStatus("Terminando ubicación y datos territoriales…","");try{await state.geoPromise;}catch(_){}}
     if(isExplorationForm()&&state.gps&&!state.locationValidated){setStatus("Validando datos territoriales antes del resumen…","");try{state.geoPromise=resolveExplorationMunicipality(state.gps.lat,state.gps.lng,"coordenadas");await state.geoPromise;}catch(_){}finally{state.geoPromise=null;}}
     const errors=validateAll();if(errors.length){const sections=activeSections(),idx=sections.findIndex(s=>s.id===errors[0].field.section);state.maxSectionReached=Math.max(state.maxSectionReached,sections.length-1);if(idx>=0&&idx!==state.sectionIndex){state.sectionIndex=idx;renderSection();}showValidation(errors.filter(x=>x.field.section===currentSection().id));return;}
@@ -1106,6 +1142,12 @@
 
   async function submit(){
     const u=currentUser();if(!state.form||(!u&&!publicMode))return;
+    if(!requireTestChoice()){
+      $("reviewWorkspace").hidden=true;$("formWorkspace").hidden=false;$("successWorkspace").hidden=true;
+      state.sectionIndex=activeSections().length-1;renderSection();
+      requireTestChoice();
+      return;
+    }
     const btn=$("confirmSubmit");btn.disabled=true;setStatus("Guardando respuesta…","");
     if(state.form.id==="EXPLORACION_PRESENCIAL"){saveLastOperators();saveLastInfrastructure();}
     if(state.form.id==="INTELIGENCIA_OPERADOR")saveLastOperatorTendidoQuality();
@@ -1446,7 +1488,7 @@
     if(!box||!control)return;
     const ref=state.qaReference;
     const current=!!state.gps&&!!ref&&Number(ref.lat)===Number(state.gps.lat)&&Number(ref.lng)===Number(state.gps.lng);
-    const allowed=mayIdentifyTest()&&state.isTest&&isExplorationForm()&&current;
+    const allowed=mayIdentifyTest()&&state.isTest!==false&&isExplorationForm()&&current;
     const suggested=allowed?window.FIBRAZO_QA_STRATUM_POLICY?.suggest(ref.reference):null;
     const label=box.querySelector(".field-label");
     if(label)label.textContent=suggested?"Estrato sugerido (QA · no canónico)":"Estrato automático (Motor Territorial)";
@@ -1669,7 +1711,7 @@
       applyDetectedCity(observed,"reverse-geocode");
       // On QA previews retry with the confirmed municipality so the server may
       // offer a distinctly-labelled, noncanonical precomputed strata reference.
-      if(["neiva","villavicencio","ibague"].includes(normalizeCityName(observed))){
+      if(["neiva","villavicencio","ibague"].includes(normalizeCityName(observed))&&!data?.qaStratum){
         await queryExplorationEnrichment(lat,lng,observed);
         if(!currentCoordinate())return"";
       }
