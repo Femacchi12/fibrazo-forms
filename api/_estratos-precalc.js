@@ -82,4 +82,23 @@ async function handle(auth,req,res,city,bbox,zoom){
   res.setHeader("X-Fibrazo-Layer-Mode","QA_PRECALCULATED");
   return res.status(200).send(gz);
 }
-module.exports={target,handle};
+// FO-CHG-061 · QA-only reference lookup for a coordinate, using the same
+// precalculated MultiPolygon that the map already displays. This is NOT
+// a canonical layer and must never silently become an operational classification.
+async function lookupReference(auth,latValue,lonValue,cityName){
+  const city=Object.values(CITIES).find(value=>norm(value[1])===norm(cityName));
+  if(!city)return null;
+  const lat=Number(latValue),lon=Number(lonValue);
+  if(!Number.isFinite(lat)||!Number.isFinite(lon))return null;
+  const rows=await load(auth,city);
+  const {inGeometry}=require("./_territorial")._internals;
+  const matches=rows.filter(row=>inGeometry(lon,lat,row.polygons));
+  return {
+    city:city[1],
+    status:matches.length===1?"DENTRO":matches.length>1?"AMBIGUO":"FUERA",
+    value:matches.length===1?matches[0].estrato:"",
+    source:"MultiPolygon precalculado · QA referencial · no canónico",
+    canonical:false
+  };
+}
+module.exports={target,handle,lookupReference};
