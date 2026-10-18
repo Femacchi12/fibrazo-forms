@@ -9,7 +9,7 @@
   const REFRESH_MS=60000;
   const REFRESH_SLOW_MS=150000;
   // FO-CHG-031 · Caché de coordenadas con expiración y clave renovada.
-  const TERRITORIAL_CACHE_KEY="fibrazoTerritorialPointCacheV3";
+  const TERRITORIAL_CACHE_KEY="fibrazoTerritorialPointCacheV4";
   const TERRITORIAL_CACHE_TTL_MS=5*60*1000;
   const CITY_NEARBY_LIMIT_M=20000;
   const BUCARAMANGA_BOUNDS=[[7.070607677,-73.172095278],[7.195892798,-73.093548025]];
@@ -505,6 +505,17 @@
       return {label,value:"No disponible en nuestra base",state:"missing"};
     };
 
+    // Use the same canonical display algorithm for QA municipality and barrio,
+    // while keeping the source and approval status clearly identifiable.
+    function layerRow(data,key,label){
+      const canonical=data?.territorial?.[key];
+      const qa=data?.qaTerritorial?.[key];
+      if(canonical?.status==="DENTRO"||!qa||qa.status==="SIN_CAPA"||qa.status==="FUERA_COBERTURA")
+        return territorialLayerText(canonical,label);
+      const row=territorialLayerText(qa,label);
+      return {...row,value:row.value+" · QA referencial (no canónico)"};
+    }
+
     // Reference-only QA strata never become an operational assignment.
     function referenceStratumRow(data){
       const reference=data?.qaStratum;
@@ -519,6 +530,10 @@
         const details=nearby.map(item=>"Estrato "+item.estrato+" (cercano: "+Number(item.distanceM).toFixed(1).replace(".",",")+" m)");
         return{label,value:details.join(" · ")+" · QA referencial; no asignado",state:"near"};
       }
+      const closest=reference.closest;
+      if(reference.status==="FUERA"&&closest&&/^[1-6]$/.test(String(closest.estrato))){
+        return {label,value:"Estrato "+closest.estrato+" (cercano) · a "+formatDistance(closest.distanceM)+" del polígono · QA referencial; no asignado",state:"near"};
+      }
       if(reference.status==="AMBIGUO")return{label,value:"Polígonos superpuestos · QA sin asignación automática",state:"near"};
       return{label,value:"Sin coincidencia exacta de estrato (QA no canónica)",state:"missing"};
     }
@@ -530,8 +545,8 @@
         if(cached){
           const territorial=cached?.territorial||cached||{};
           const rows=[
-            territorialLayerText(territorial.city,"Ciudad / municipio"),
-            territorialLayerText(territorial.barrio,"Barrio"),
+            layerRow(cached,"city","Ciudad / municipio"),
+            layerRow(cached,"barrio","Barrio"),
             referenceStratumRow(cached),
             territorialLayerText(territorial.troncal,"Troncal")
           ];
@@ -544,8 +559,8 @@
         if(!document.body.contains(sheet))return;
         const territorial=data?.territorial||{};
         const rows=[
-          territorialLayerText(territorial.city,"Ciudad / municipio"),
-          territorialLayerText(territorial.barrio,"Barrio"),
+          layerRow(data,"city","Ciudad / municipio"),
+          layerRow(data,"barrio","Barrio"),
           referenceStratumRow(data),
           territorialLayerText(territorial.troncal,"Troncal")
         ];
