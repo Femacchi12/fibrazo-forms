@@ -691,12 +691,22 @@
     input._onGpsSettled=sync;
     auto.textContent=gpsLabel();auto.dataset.gpsOriginalLabel=auto.textContent;
     auto.addEventListener("click",()=>{search.disabled=true;captureGps(input,auto,field.key);});
-    search.addEventListener("click",()=>{
+    const applyManualCoordinate=()=>{
       const parsed=parseCoordinateText(input.value);
-      if(!parsed)return;
+      if(!parsed){
+        const message="Ingresá las coordenadas como latitud, longitud (por ejemplo 2.9252688, -75.2738189).";
+        input.setCustomValidity(message);
+        input.reportValidity();
+        feedback.textContent=message;feedback.hidden=false;
+        setError(field.key,message);
+        return false;
+      }
       input.setCustomValidity("");
+      if(input.dataset.coordinateDirty!=="1"&&state.gps&&
+        Number(state.gps.lat)===parsed.lat&&Number(state.gps.lng)===parsed.lng)return true;
       input.dataset.coordinateDirty="0";
       state.gps={lat:parsed.lat,lng:parsed.lng,accuracy:null,cityDetected:"",citySource:"manual-coordinate"};
+      state.qaReference=null;
       state.detectedCity="";state.locationValidated=false;state.locationBusy=true;
       input.value=format(parsed);
       const accuracy=box.querySelector("[data-gps-accuracy]");
@@ -710,7 +720,10 @@
       state.geoPromise=promise;
       promise.catch(()=>{feedback.textContent="No se pudo consultar el municipio; puedes continuar y revisarlo al final.";feedback.hidden=false;})
         .finally(()=>{if(state.geoPromise===promise){state.locationBusy=false;state.geoPromise=null;}sync();});
-    });
+      return true;
+    };
+    input._applyManualCoordinate=applyManualCoordinate;
+    search.addEventListener("click",applyManualCoordinate);
     input.addEventListener("keydown",event=>{
       if(event.key==="Enter"){event.preventDefault();if(!search.disabled)search.click();}
     });
