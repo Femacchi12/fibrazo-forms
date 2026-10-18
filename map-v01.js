@@ -9,7 +9,7 @@
   const REFRESH_MS=60000;
   const REFRESH_SLOW_MS=150000;
   // FO-CHG-031 · Caché de coordenadas con expiración y clave renovada.
-  const TERRITORIAL_CACHE_KEY="fibrazoTerritorialPointCacheV2";
+  const TERRITORIAL_CACHE_KEY="fibrazoTerritorialPointCacheV3";
   const TERRITORIAL_CACHE_TTL_MS=5*60*1000;
   const CITY_NEARBY_LIMIT_M=20000;
   const BUCARAMANGA_BOUNDS=[[7.070607677,-73.172095278],[7.195892798,-73.093548025]];
@@ -505,6 +505,23 @@
       return {label,value:"No disponible en nuestra base",state:"missing"};
     };
 
+    // Reference-only QA strata never become an operational assignment.
+    function referenceStratumRow(data){
+      const reference=data?.qaStratum;
+      const canonical=data?.territorial?.estrato;
+      if(!reference||reference.canonical!==false)return territorialLayerText(canonical,"Estrato");
+      const label="Estrato";
+      if(reference.status==="DENTRO"&&/^[1-6]$/.test(String(reference.value))){
+        return{label,value:"Estrato "+reference.value+" · dentro del polígono QA (referencial, no canónico)",state:"near"};
+      }
+      const nearby=Array.isArray(reference.nearby)?reference.nearby.filter(item=>/^[1-6]$/.test(String(item.estrato))):[];
+      if(reference.status==="FUERA"&&nearby.length){
+        const details=nearby.map(item=>"Estrato "+item.estrato+" (cercano: "+formatDistance(item.distanceM)+")");
+        return{label,value:details.join(" · ")+" · QA referencial; no asignado",state:"near"};
+      }
+      if(reference.status==="AMBIGUO")return{label,value:"Polígonos superpuestos · QA sin asignación automática",state:"near"};
+      return{label,value:"Sin coincidencia exacta de estrato (QA no canónica)",state:"missing"};
+    }
     async function loadCoordinateTerritorial(sheet,lat,lng){
       const host=sheet?.querySelector("[data-map-territorial]");
       if(!host)return;
@@ -515,19 +532,21 @@
           const rows=[
             territorialLayerText(territorial.city,"Ciudad / municipio"),
             territorialLayerText(territorial.barrio,"Barrio"),
-            territorialLayerText(territorial.estrato,"Estrato"),
+            referenceStratumRow(cached),
             territorialLayerText(territorial.troncal,"Troncal")
           ];
           host.innerHTML=rows.map(row=>'<div class="map-coordinate-territorial-row '+esc(row.state)+'"><b>'+esc(row.label)+'</b><span>'+esc(row.value)+'</span></div>').join("");
         }
-        const data=await authorizedFetch("/api/exploration?lat="+encodeURIComponent(lat)+"&lng="+encodeURIComponent(lng));
+        const selectedCity=filterValues("mapCityFilter").length===1?cityLabel(filterValues("mapCityFilter")[0]):"";
+        const url="/api/exploration?lat="+encodeURIComponent(lat)+"&lng="+encodeURIComponent(lng)+(selectedCity?"&city="+encodeURIComponent(selectedCity):"");
+        const data=await authorizedFetch(url);
         writeTerritorialCache(lat,lng,data);
         if(!document.body.contains(sheet))return;
         const territorial=data?.territorial||{};
         const rows=[
           territorialLayerText(territorial.city,"Ciudad / municipio"),
           territorialLayerText(territorial.barrio,"Barrio"),
-          territorialLayerText(territorial.estrato,"Estrato"),
+          referenceStratumRow(data),
           territorialLayerText(territorial.troncal,"Troncal")
         ];
         host.innerHTML=rows.map(row=>
