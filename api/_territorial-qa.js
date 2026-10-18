@@ -10,7 +10,7 @@ const PILOTS={
 const TTL=600000,NEAR_BARRIO_M=5000,NEAR_CITY_M=20000;
 const cache=new Map(),pending=new Map(),wkts=new Map();
 function norm(v){return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();}
-function num(v){const n=Number(String(v??"").replace(",","."));return Number.isFinite(n)?n:NaN;}
+function num(v){const raw=String(v??"").trim();if(!raw)return NaN;const n=Number(raw.replace(",","."));return Number.isFinite(n)?n:NaN;}
 function preferred(v){return ["true","si","sí","1","yes","verdadero"].includes(norm(v));}
 function shape(row){return {minLon:num(row[0]),minLat:num(row[1]),maxLon:num(row[2]),maxLat:num(row[3])};}
 function validBox(o){return [o.minLon,o.minLat,o.maxLon,o.maxLat].every(Number.isFinite)&&o.minLon<=o.maxLon&&o.minLat<=o.maxLat;}
