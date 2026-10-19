@@ -21,7 +21,7 @@ assert.ok(backend.includes("submissionRow[28]=payload.isTest"),"Metadatos en Chu
 assert.ok(backend.includes("submissionRow[31]=payload.isTest"),"Metadatos en Inteligencia");
 assert.ok(apiMap.includes('canViewTests=email==="eduardo@fibrazo.com"'),"Solo propietario puede recuperar QA");
 assert.equal(apiMap.split("if(isTest&&(!includeTests||rowEmail!==email))continue").length,3,"Filtrar QA en ambos orígenes");
-assert.ok(ui.includes("state.isTest=false")&&ui.includes("isTest:mayIdentifyTest()&&state.isTest"),"No por defecto");
+assert.ok(ui.includes("isTest:null")&&ui.includes("state.isTest=null")&&ui.includes("isTest:mayIdentifyTest()&&state.isTest"),"La respuesta QA exige selección explícita y no inicia como prueba");
 assert.ok(types.includes('input.type="search"')&&types.includes("select.dispatchEvent"),"Filtros tecleables enlazados al select original");
 assert.ok(map.includes("googlePointUrl(lat,lng)"),"Google Maps como marcador, no ruta");
 const manifest=JSON.parse(read("docs/flow-sync-manifest.json"));
@@ -49,7 +49,7 @@ for(const id of ["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFil
 assert.ok(types.includes("map-typeahead-selections")&&types.includes('input.value="";sync();draw()'),"La búsqueda se limpia y conserva selecciones visibles");
 assert.ok(!html.includes('id="mapBaseStreet"')&&!html.includes('id="mapBaseSatellite"')&&html.includes('id="mapBaseToggle"'),"Un solo botón alterna el tipo de mapa");
 assert.ok(map.includes("installCoordinateSheetDrag")&&map.includes("map-coordinate-primary")&&map.includes('>↗ Ir</button>'),"Punto seleccionado movible y compacto");
-assert.ok(map.includes("polygonResponseCache")&&map.includes("ttl:90000")&&read("api/map-polygons.js").includes("geometryCache"),"Caché cliente/servidor para polígonos");
+assert.ok(map.includes("polygonResponseCache")&&map.includes("ttl:reload?0:90000")&&read("api/map-polygons.js").includes("geometryCache"),"Caché cliente/servidor para polígonos");
 assert.ok(read("api/map-polygons.js").includes("applyCityFilter")&&map.includes('cities:filterValues("mapCityFilter")'),"Capas territoriales respetan ciudades filtradas");
 assert.ok(read("api/map-polygons.js").includes('if(layer==="estratos"&&!/^[1-6]$/.test(String(row.Estrato||row.Categoria_Estrato||"").trim()))continue;'),"Se excluyen estratos sin clasificación del índice original sin alterar el maestro");
 assert.ok(types.includes("content.dataset.selectedCount")&&map.includes("host.dataset.selectedCount"),"El resumen de capas conserva el conteo real aunque el filtro o viewport oculten opciones");
@@ -75,7 +75,7 @@ assert.ok(map.includes("state.manualRefreshId")&&map.includes("recargando cobert
 assert.ok(read("api/map-polygons.js").includes("precalcCity")&&read("api/_estratos-precalc.js").includes("QA_PRECALCULATED"),"Adapter QA de estratos precalculados conectado");
 assert.ok(read("api/map-polygons.js").includes('ambPrecalcCity')&&read("api/_estratos-amb-precalc.js").includes('AMB_QA_PRECALCULATED'),"AMB utiliza adaptador offline en modo optimizado");
 assert.ok(read("api/_estratos-amb-precalc.js").includes("11T-x0QBB9W1GYUf0AaAvB9f5yvsLIGfJ")&&read("api/_estratos-amb-precalc.js").includes('["1","2","3","4","5","6"]'),"Fuente versionada de Drive y seis estratos AMB");
-assert.ok(read("api/map-polygons.js").includes('(precalcCity||ambPrecalcCity)?Promise.resolve(null):loadMeta'),"Modo optimizado evita escanear el Sheet de polígonos");
+assert.ok(read("api/map-polygons.js").includes('usesPrecalculated?Promise.resolve(null):polygonSource')&&read("api/map-polygons.js").includes('usesPrecalculated?null:await loadMeta'),"Modo optimizado evita escanear el Sheet de polígonos");
 assert.ok(read("api/_estratos-amb-precalc.js").includes('const detail="full"')&&read("api/_estratos-amb-precalc.js").includes('viewportFiltered:false')&&!read("api/_estratos-amb-precalc.js").includes('intersects('),"AMB optimizado devuelve geometrías completas sin filtrar por zona visible");
 assert.ok(map.includes('const queryBbox=completeCity?"-180,-90,180,90":bbox')&&map.includes('const queryZoom=completeCity?15:zoom'),"Las solicitudes AMB optimizadas no cambian por desplazamiento o zoom");
 assert.ok(map.includes('state.polygonFullKey===fullKey')&&map.includes('state.polygonFullLoadingKey===fullKey'),"Evita reconsultas y redibujos de multipolígonos completos ante navegación");

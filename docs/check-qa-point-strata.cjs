@@ -29,7 +29,7 @@ const map=fs.readFileSync(path.join(__dirname,"../map-v01.js"),"utf8");
 const api=fs.readFileSync(path.join(__dirname,"../api/exploration.js"),"utf8");
 const ux=fs.readFileSync(path.join(__dirname,"../ux-v04.js"),"utf8");
 assert.ok(map.includes("referenceStratumRow(data)"));
-assert.ok(map.includes('TERRITORIAL_CACHE_KEY="fibrazoTerritorialPointCacheV3"'));
+assert.ok(map.includes('TERRITORIAL_CACHE_KEY="fibrazoTerritorialPointCacheV4"'));
 assert.ok(map.includes("QA referencial; no asignado"));
 assert.ok(api.includes('VERCEL_ENV==="preview"'));
 assert.ok(ux.includes("Solo referencia QA; sin asignación automática."));
