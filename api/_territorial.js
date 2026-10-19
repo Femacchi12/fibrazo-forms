@@ -286,13 +286,32 @@ async function loadTerritorialBundle(auth,entry){
   const now=Date.now(),hit=cache.bundle.get(entry.fileId);
   if(hit&&hit.expires>now)return hit.value;
   const sheets=google.sheets({version:"v4",auth});
-  const ranges=["11_POLIGONOS_CIUDAD!A:O"];
-  for(const kind of ["barrio","estrato","troncal"]){
-    const cfg=LAYER[kind];
-    ranges.push(...cfg.ranges.map(range=>cfg.sheet+"!"+range));
-  }
-  const response=await sheets.spreadsheets.values.batchGet({spreadsheetId:entry.fileId,ranges});
-  const parts=response.data.valueRanges||[];
+  const coreRanges=[
+    "11_POLIGONOS_CIUDAD!A:O",
+    ...LAYER.barrio.ranges.map(range=>LAYER.barrio.sheet+"!"+range)
+  ];
+  const optionalRanges=[
+    ...LAYER.estrato.ranges.map(range=>LAYER.estrato.sheet+"!"+range),
+    ...LAYER.troncal.ranges.map(range=>LAYER.troncal.sheet+"!"+range)
+  ];
+  const [coreResponse,optionalResponse]=await Promise.all([
+    sheets.spreadsheets.values.batchGet({spreadsheetId:entry.fileId,ranges:coreRanges})
+      .catch(error=>{
+        console.error("TERRITORIAL_CITY_CORE_READ_ERROR",entry.id,entry.fileId,error?.code||error?.message||"READ_FAILED");
+        throw error;
+      }),
+    sheets.spreadsheets.values.batchGet({spreadsheetId:entry.fileId,ranges:optionalRanges})
+      .catch(error=>{
+        // A missing/unshared optional layer must not suppress municipality and
+        // barrio. The response remains explicit as SIN_CAPA.
+        console.warn("TERRITORIAL_OPTIONAL_LAYERS_UNAVAILABLE",entry.id,error?.code||error?.message||"READ_FAILED");
+        return {data:{valueRanges:optionalRanges.map(()=>({values:[]}))}};
+      })
+  ]);
+  const parts=[
+    ...(coreResponse.data.valueRanges||[]),
+    ...(optionalResponse.data.valueRanges||[])
+  ];
   const value={entry,cityItems:parseCityRows(entry,parts[0]?.values||[]),layers:{}};
   let offset=1;
   for(const kind of ["barrio","estrato","troncal"]){

@@ -40,7 +40,8 @@ const values={
   async batchGet(args){
     calls.push({method:"batchGet",...args});
     assert.equal(args.spreadsheetId,"VVC_SHEET");
-    if(args.ranges.length===7)return {data:{valueRanges:bundle}};
+    if(args.ranges.length===3)return {data:{valueRanges:bundle.slice(0,3)}};
+    if(args.ranges.length===4)return {data:{valueRanges:bundle.slice(3)}};
     assert.deepEqual(args.ranges,["02_BARRIOS!O2:O2"]);
     return {data:{valueRanges:[{values:[[barrioWkt]]}]}};
   }
@@ -63,11 +64,12 @@ Module._load=function(request,parent,isMain){
   assert.equal(result.estrato.status,"SIN_CAPA");
   assert.equal(result.troncal.status,"SIN_CAPA");
   assert.equal(calls.filter(call=>call.method==="get").length,1,"only the master catalog is read separately");
-  assert.equal(calls.filter(call=>call.method==="batchGet").length,2,"one grouped city index read plus one exact WKT read");
-  assert.ok(calls[1].ranges.includes("11_POLIGONOS_CIUDAD!A:O"));
-  assert.ok(calls[1].ranges.includes("02_BARRIOS!A:N"));
-  assert.ok(calls[1].ranges.includes("03_ESTRATOS!A:J"));
-  assert.ok(calls[1].ranges.includes("04_TRONCALES!A:I"));
+  assert.equal(calls.filter(call=>call.method==="batchGet").length,3,"one core city read, one optional-layer read and one exact WKT read");
+  const requestedRanges=calls.filter(call=>call.method==="batchGet").flatMap(call=>call.ranges);
+  assert.ok(requestedRanges.includes("11_POLIGONOS_CIUDAD!A:O"));
+  assert.ok(requestedRanges.includes("02_BARRIOS!A:N"));
+  assert.ok(requestedRanges.includes("03_ESTRATOS!A:J"));
+  assert.ok(requestedRanges.includes("04_TRONCALES!A:I"));
   assert.equal(territorial._internals.catalogForHint([{city:"Ibagué",municipalities:[]}],"ibague").city,"Ibagué");
   const read=file=>fs.readFileSync(path.join(__dirname,"..",file),"utf8");
   const exploration=read("api/exploration.js"),ui=read("ux-v04.js"),submissions=read("api/submissions.js");
