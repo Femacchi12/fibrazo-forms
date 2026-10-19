@@ -116,9 +116,10 @@ module.exports=async(req,res)=>{
 
     const auth=gauth();
     const hint=canonicalCity(req.query.city||"");
-    // The full QA archive can be expensive on a cold request: start it alongside
-    // canonical enrichment, never after it. Production does not run this lookup.
-    const referenceTask=process.env.VERCEL_ENV==="preview"
+    // FO-CHG-072: offer read-only, noncanonical strata references in Production
+    // and Preview. Start the lookup alongside canonical enrichment so GPS does
+    // not wait twice. This never activates a canonical stratum.
+    const referenceTask=["preview","production"].includes(process.env.VERCEL_ENV)
       ?Promise.resolve().then(()=>require("./_estratos-precalc").lookupReference(
         auth,lat,lng,hint
       )).catch(error=>{
