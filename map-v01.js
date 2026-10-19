@@ -1000,6 +1000,9 @@
       :"Seleccioná Bucaramanga o un municipio del AMB para comparar";
     const button=$("mapQaOptimizeToolbar");
     if(button){
+      // FO-CHG-074: precomputed strata are the default, not an extra user action.
+      // Hide the redundant QA status badge. Keep AMB's actual comparison toggle.
+      button.hidden=!isBuc;
       button.disabled=!isBuc;
       button.classList.toggle("qa-active",active);
       button.setAttribute("aria-pressed",String(active));

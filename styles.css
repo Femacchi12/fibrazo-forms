@@ -2713,3 +2713,6 @@ input::placeholder,textarea::placeholder{color:#bfcfc6!important;opacity:1}
   .map-coordinate-primary>[data-map-route]{padding:6px;font-size:9px}
   .map-coordinate-value{padding:10px 7px;font-size:11px}
 }
+
+/* FO-CHG-074 · No redundant QA precomputed status badge above map. */
+#mapQaOptimizeToolbar[hidden]{display:none!important}
