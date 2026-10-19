@@ -1980,7 +1980,9 @@
     }
 
     if(status)status.textContent="Municipio: consultando Maestro Territorial…";
-    const data=await queryExplorationEnrichment(lat,lng,"");
+    // Route the first request directly to the selected city's canonical
+    // workbook. This avoids scanning every city file and exhausting Sheets.
+    const data=await queryExplorationEnrichment(lat,lng,fallback);
     if(state.geoLookupCancelled||!currentCoordinate())return"";
     if(data?.cityStatus==="DENTRO"&&data.city)return data.city;
     const qaCity=data?.qaTerritorial?.city;
@@ -2063,7 +2065,10 @@
       {name:"Santa Marta",lat:11.2408,lng:-74.1990,maxKm:30},
       {name:"Sincelejo",lat:9.3047,lng:-75.3978,maxKm:20},
       {name:"Montería",lat:8.7480,lng:-75.8814,maxKm:25},
-      {name:"Turbaco",lat:10.3294,lng:-75.4114,maxKm:18}
+      {name:"Turbaco",lat:10.3294,lng:-75.4114,maxKm:18},
+      {name:"Neiva",lat:2.9273,lng:-75.2819,maxKm:35},
+      {name:"Villavicencio",lat:4.1420,lng:-73.6266,maxKm:40},
+      {name:"Ibagué",lat:4.4389,lng:-75.2322,maxKm:40}
     ];
     let best=null;
     for(const city of cities){

@@ -584,7 +584,9 @@ module.exports=async(req,res)=>{
     let territorialError="";
     if(usesTerritorialEngine(form.id)){
       try{
-        territorial=await resolveTerritorial(auth,payload.location?.lat,payload.location?.lng);
+        territorial=await resolveTerritorial(auth,payload.location?.lat,payload.location?.lng,{
+          cityHint:String(payload.data?.municipio||payload.location?.cityDetected||"").trim()
+        });
       }catch(geoError){
         territorialError=String(geoError?.message||"TERRITORIAL_ERROR");
         console.error("TERRITORIAL_RESOLUTION_FAILED",territorialError);

@@ -240,3 +240,11 @@ Impacto Social: rama independiente feat/brand-solid-contrast-20261015, sin modif
 - Este ajuste **no interpola** ni asigna automáticamente estrato a los 115 FUERA. Una mejora operativa futura necesita validar vacíos reales entre polígonos y calidad del dato geográfico. Los 2669 polígonos «Sin información» se mantienen excluidos de la clasificación y se conservan en el maestro para auditoría.
 - Código solo en rama QA; prueba sintáctica y siete casos de formateo validados. Pendiente validación en navegador autenticado, Vercel READY y aceptación visual antes de promover el UI a producción.
 - Catálogo de servicio de FIBRAZO: el municipio registrado en Bolívar es **Turbaco**, no Turbo, Antioquia. No abrir cobertura de estratos de Turbaco sin el archivo geográfico de origen validado.
+
+
+### FO-CHG-070 · Fuente territorial única por ciudad y reducción de cuota (19/10/2026, QA)
+- Diagnóstico en registros Vercel: `/api/exploration` devolvía `429` por cuota de lecturas de Google Sheets y luego `504` por timeout. La consulta abría archivos de todas las ciudades, tres índices de capa por separado y un segundo resolvedor QA de municipio/barrio.
+- Solución: el catálogo maestro `01_CIUDADES` enruta por ciudad a un único archivo territorial; municipio, barrios, estratos y troncales se leen en un solo `batchGet`. Solo se solicita el WKT candidato necesario para resolver el punto. El guardado reutiliza el mismo enrutamiento.
+- Neiva, Villavicencio e Ibagué se detectan localmente antes del primer pedido para evitar el barrido nacional. El resolvedor QA duplicado queda únicamente como fallback de Preview si no existe catálogo canónico.
+- La capa de estratos 1–3 continúa en el ZIP precalculado versionado de Growth, porque copiar miles de WKT a Sheets incrementaría carga y cuota. Se integra como referencia QA dentro de la misma respuesta `/api/exploration`; barrio procede del archivo territorial de la ciudad. Troncales queda `SIN_CAPA` cuando el archivo de ciudad no contiene registros: no se fabrican trazados.
+- Prueba automatizada `check-territorial-central-source.cjs`: una lectura de catálogo, una lectura agrupada del archivo de Villavicencio, una lectura WKT exacta; valida municipio y barrio `DENTRO`, y ausencia honesta de estrato/troncal canónicos. Producción no modificada.

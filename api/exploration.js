@@ -29,7 +29,10 @@ function canonicalCity(value){
     ["bucaramanga","Bucaramanga"],
     ["floridablanca","Floridablanca"],
     ["giron","Girón"],
-    ["piedecuesta","Piedecuesta"]
+    ["piedecuesta","Piedecuesta"],
+    ["neiva","Neiva"],
+    ["villavicencio","Villavicencio"],
+    ["ibague","Ibagué"]
   ];
   return aliases.find(([key])=>v.includes(key))?.[1]||String(value||"").trim();
 }
@@ -42,10 +45,17 @@ async function loadCompetition(auth){
   const now=Date.now();
   if(competitionCache.expires>now&&competitionCache.operators)return competitionCache;
   const sheets=google.sheets({version:"v4",auth});
-  const [operators,presence]=await Promise.all([
-    values(sheets,COMPETENCIA_SHEET_ID,"01_OPERADORES!A2:P1000").catch(()=>[]),
-    values(sheets,COMPETENCIA_SHEET_ID,"03_PRESENCIA!C2:J3000").catch(()=>[])
-  ]);
+  let operators=[],presence=[];
+  try{
+    const response=await sheets.spreadsheets.values.batchGet({
+      spreadsheetId:COMPETENCIA_SHEET_ID,
+      ranges:["01_OPERADORES!A2:P1000","03_PRESENCIA!C2:J3000"]
+    });
+    operators=response.data.valueRanges?.[0]?.values||[];
+    presence=response.data.valueRanges?.[1]?.values||[];
+  }catch(error){
+    console.error("EXPLORATION_COMPETITION_READ_ERROR",error?.code||error?.message||"READ_FAILED");
+  }
   competitionCache={expires:now+CACHE_MS,operators,presence};
   return competitionCache;
 }
@@ -105,31 +115,32 @@ module.exports=async(req,res)=>{
     }
 
     const auth=gauth();
+    const hint=canonicalCity(req.query.city||"");
     // The full QA archive can be expensive on a cold request: start it alongside
     // canonical enrichment, never after it. Production does not run this lookup.
     const referenceTask=process.env.VERCEL_ENV==="preview"
       ?Promise.resolve().then(()=>require("./_estratos-precalc").lookupReference(
-        auth,lat,lng,canonicalCity(req.query.city||"")
+        auth,lat,lng,hint
       )).catch(error=>{
         console.error("QA_STRATA_REFERENCE_ERROR",error?.code||error?.message||"READ_FAILED");
         return null;
       })
       :Promise.resolve(null);
-    // FO-CHG-065: parallel noncanonical city/barrio lookup for pilot maps.
-    // Reuse the corporate DANE and FO-CHG-058 sources, never activate them.
-    const pilotTask=process.env.VERCEL_ENV==="preview"
-      ?Promise.resolve().then(()=>require("./_territorial-qa").resolveQaTerritorial(
-        auth,lat,lng,canonicalCity(req.query.city||"")
+    const [territorial,competition,referenceCandidate]=await Promise.all([
+      resolveTerritorial(auth,lat,lng,{cityHint:hint}),
+      loadCompetition(auth),
+      referenceTask
+    ]);
+    // The three activated cities now use the same canonical city workbook as
+    // the map. The old QA barrio resolver is kept only as a last-resort preview
+    // fallback when no canonical catalog could be routed.
+    const pilotCandidate=process.env.VERCEL_ENV==="preview"&&!territorial.catalogId
+      ?await Promise.resolve().then(()=>require("./_territorial-qa").resolveQaTerritorial(
+        auth,lat,lng,hint
       )).catch(error=>{
         console.error("QA_TERRITORIAL_REFERENCE_ERROR",error?.code||error?.message||"READ_FAILED");
         return null;
-      }):Promise.resolve(null);
-    const [territorial,competition,referenceCandidate,pilotCandidate]=await Promise.all([
-      resolveTerritorial(auth,lat,lng),
-      loadCompetition(auth),
-      referenceTask,
-      pilotTask
-    ]);
+      }):null;
     // Never substitute noncanonical QA geometry for an operational layer.
     const qaStratum=["SIN_CAPA","SIN_CAPA_CANONICA"].includes(territorial.estrato?.status)
       ?referenceCandidate:null;
@@ -138,7 +149,6 @@ module.exports=async(req,res)=>{
       ?canonicalCity(territorial.city.assigned?.name||"")
       :"";
     const cityNearby=canonicalCity(territorial.city?.nearby?.name||"");
-    const hint=canonicalCity(req.query.city||"");
     const qaCity=pilotCandidate?.city?.status==="DENTRO"?String(pilotCandidate.city.assigned?.name||""):"";
     const ispCity=city||qaCity||cityNearby||hint;
 
@@ -179,6 +189,7 @@ module.exports=async(req,res)=>{
       troncalSource:territorial.troncal?.source||"",
       catalogId:territorial.catalogId||"",
       territorialFileId:territorial.territorialFileId||"",
+      territorialDataSource:territorial.dataSource||"",
       isps:ispOptions(ispCity,competition),
       territorial
     });
