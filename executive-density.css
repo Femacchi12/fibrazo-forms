@@ -1311,3 +1311,185 @@ body.form-mode #reviewWorkspace .review-row{
 #mapFloatingTools #mapBarrioControls .map-barrio-actions{
   margin:0!important;
 }
+
+/* FO-QA-UI-060-20261018 · Keep upward autocomplete menus above all neighbouring fields
+   and section headers; apply a consistent label hierarchy in every form. */
+body.form-mode #formWorkspace .form-grid>.field,
+body.form-mode #formWorkspace .form-grid>.operator-element-group{
+  position:relative!important;
+}
+body.form-mode #formWorkspace .form-grid>.field:focus-within,
+body.form-mode #formWorkspace .form-grid>.operator-element-group:focus-within{
+  z-index:75!important;
+}
+body.form-mode #formWorkspace .operator-element-group>.field:focus-within{
+  position:relative!important;
+  z-index:76!important;
+}
+body.form-mode #formWorkspace .isp-autocomplete:focus-within,
+body.form-mode #formWorkspace .editable-options:focus-within{
+  position:relative!important;
+  z-index:77!important;
+}
+body.form-mode #formWorkspace .isp-autocomplete .isp-suggestion-list:not([hidden]),
+body.form-mode #formWorkspace .editable-options .editable-options-menu:not([hidden]){
+  z-index:78!important;
+  box-shadow:0 -12px 32px rgba(0,0,0,.80)!important;
+  background:#111d17!important;
+  border:1px solid #729787!important;
+}
+body.form-mode #formWorkspace .form-grid>.field label.field-label,
+body.form-mode #formWorkspace .operator-element-group>.field label.field-label,
+body.form-mode #formWorkspace .form-qa-flag legend{
+  display:block!important;
+  color:#F6FFF9!important;
+  font-size:14px!important;
+  font-weight:800!important;
+  line-height:1.35!important;
+  letter-spacing:.004em!important;
+  margin-bottom:6px!important;
+}
+body.form-mode #formWorkspace .form-grid>.field label.field-label::before,
+body.form-mode #formWorkspace .operator-element-group>.field label.field-label::before{
+  content:"";
+  display:inline-block;
+  width:6px;
+  height:6px;
+  flex:none;
+  border-radius:50%;
+  background:#43FFA5;
+  margin:0 8px 2px 1px;
+  vertical-align:middle;
+}
+@media(max-width:560px){
+  body.form-mode #formWorkspace .form-grid>.field label.field-label,
+  body.form-mode #formWorkspace .operator-element-group>.field label.field-label,
+  body.form-mode #formWorkspace .form-qa-flag legend{font-size:13.5px!important;}
+}
+
+/* FO-CHG-064 · Required explicit classification of each corporate QA/form response. */
+body.form-mode #formWorkspace .form-qa-flag .form-test-choice-error{display:block!important;color:#ffdc84!important;border:1px solid rgba(255,205,65,.55)!important;border-radius:8px!important;padding:8px 10px!important;background:rgba(255,205,65,.09)!important;font-weight:750!important;font-size:12px!important;}
+body.form-mode #formWorkspace .form-qa-flag .form-test-choice-error[hidden]{display:none!important;}
+body.form-mode #formWorkspace .form-qa-flag legend .required{color:#43ffa5!important;}
+
+/* FO-CHG-066 · Shared first/final coordinate layout */
+body.form-mode #formWorkspace .territorial-coordinate-summary{
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;
+  gap:8px!important;width:100%!important;min-width:0!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary>.territorial-coordinate-edit{
+  display:grid!important;grid-template-columns:minmax(0,1fr) max-content!important;
+  align-items:center!important;gap:6px!important;width:100%!important;min-width:0!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-edit>input{
+  grid-column:1!important;width:100%!important;min-width:0!important;margin:0!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-quick{
+  grid-column:2!important;display:flex!important;flex-direction:row!important;align-items:center!important;
+  width:max-content!important;min-width:0!important;gap:4px!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-quick>button{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  width:auto!important;min-width:0!important;height:34px!important;min-height:34px!important;
+  padding:4px 8px!important;font-size:11px!important;white-space:nowrap!important;line-height:1!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-value{
+  display:block!important;font-size:11px!important;font-weight:650!important;line-height:1.35!important;
+  color:var(--fz-muted,#b8cec3)!important;margin:0!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-actions{
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;
+  gap:7px!important;width:100%!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-actions>button{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:100%!important;min-height:39px!important;
+}
+@media(max-width:390px){
+  body.form-mode #formWorkspace .territorial-coordinate-summary>.territorial-coordinate-edit{gap:4px!important;}
+  body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-quick{gap:3px!important;}
+  body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-quick>button{
+    font-size:10px!important;padding:4px 5px!important;
+  }
+}
+
+/* FO-CHG-067 · compact final coordinate controls without changing their order */
+body.form-mode #formWorkspace .territorial-coordinate-summary{gap:5px!important;}
+body.form-mode #formWorkspace .territorial-coordinate-summary>.territorial-coordinate-edit{gap:5px!important;}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-edit>input{
+  font-size:11px!important;font-weight:650!important;line-height:1.1!important;
+  height:34px!important;min-height:34px!important;padding:5px 9px!important;
+  letter-spacing:0!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-actions{
+  align-items:flex-start!important;gap:5px!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-actions>button{
+  width:auto!important;max-width:100%!important;
+  height:32px!important;min-height:32px!important;
+  padding:4px 10px!important;font-size:11px!important;
+  font-weight:700!important;line-height:1.2!important;
+  border-radius:9px!important;box-shadow:none!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-quick>button{
+  font-size:11px!important;height:34px!important;min-height:34px!important;
+}
+@media(max-width:390px){
+  body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-actions>button{
+    font-size:10px!important;padding:4px 8px!important;
+  }
+  body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-edit>input{font-size:10px!important;}
+}
+
+/* FO-CHG-068 · compact paired coordinate actions */
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-actions{
+  display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;
+  align-items:center!important;justify-content:flex-start!important;
+  gap:6px!important;width:100%!important;min-width:0!important;
+}
+body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-actions>button{
+  display:inline-flex!important;flex:0 1 auto!important;width:auto!important;max-width:100%!important;
+  height:32px!important;min-height:32px!important;
+  padding:4px 9px!important;font-size:11px!important;white-space:nowrap!important;
+}
+@media(max-width:390px){
+  body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-actions{
+    flex-wrap:nowrap!important;gap:4px!important;
+  }
+  body.form-mode #formWorkspace .territorial-coordinate-summary .territorial-coordinate-actions>button{
+    min-width:0!important;padding:4px 6px!important;font-size:10px!important;
+  }
+}
+
+/* FO-CHG-069 · compact persistent feedback for asynchronous GPS/territorial reads */
+body.form-mode #formWorkspace .territorial-progress{
+  display:flex!important;align-items:center!important;gap:10px!important;
+  min-width:0!important;padding:10px 12px!important;margin:0 0 12px!important;
+  border:1px solid rgba(148,163,154,.33)!important;border-radius:10px!important;
+  background:rgba(148,163,154,.06)!important;
+}
+body.form-mode #formWorkspace .territorial-progress[hidden]{display:none!important;}
+body.form-mode #formWorkspace .territorial-progress-content{
+  display:flex!important;flex-direction:column!important;gap:2px!important;min-width:0!important;
+}
+body.form-mode #formWorkspace .territorial-progress-content>strong{
+  font-size:12px!important;line-height:1.35!important;font-weight:750!important;
+}
+body.form-mode #formWorkspace .territorial-progress-content>small{
+  font-size:11px!important;line-height:1.4!important;color:var(--fz-muted,#b8c9c0)!important;
+}
+body.form-mode #formWorkspace .territorial-progress-icon{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  flex:none!important;width:16px!important;height:16px!important;
+}
+body.form-mode #formWorkspace .territorial-progress[data-phase="gps"] .territorial-progress-icon,
+body.form-mode #formWorkspace .territorial-progress[data-phase="territorial"] .territorial-progress-icon{
+  border:2px solid rgba(180,200,187,.28)!important;border-top-color:currentColor!important;
+  border-radius:50%!important;animation:fibrazo-territorial-wait .95s linear infinite!important;
+}
+body.form-mode #formWorkspace .territorial-progress[data-phase="complete"] .territorial-progress-icon::before{content:"✓";font-weight:800!important;}
+body.form-mode #formWorkspace .territorial-progress[data-phase="warning"] .territorial-progress-icon::before{content:"!";font-weight:800!important;}
+@keyframes fibrazo-territorial-wait{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){
+  body.form-mode #formWorkspace .territorial-progress-icon{animation:none!important;}
+}

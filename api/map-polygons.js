@@ -169,6 +169,9 @@ async function loadMeta(auth,layer,source){
     const row={__row:i+2};
     for(const part of parts)Object.assign(row,part[i]||{});
     const id=safeValue(row,cfg.id);
+    // FO-CHG-053: avoid indexing or parsing unclassified estrato geometries
+    // in the original fallback. Source Sheet remains untouched.
+    if(layer==="estratos"&&!/^[1-6]$/.test(String(row.Estrato||row.Categoria_Estrato||"").trim()))continue;
     const minLon=num(row.Min_Lon),minLat=num(row.Min_Lat),maxLon=num(row.Max_Lon),maxLat=num(row.Max_Lat);
     if(!id||!truthy(row.Preferida_Analisis)||!stateOk(row.Estado_Calidad))continue;
     if(![minLon,minLat,maxLon,maxLat].every(Number.isFinite))continue;
@@ -315,6 +318,10 @@ function parseList(value){
 }
 function applyCityFilter(rows,query){
   const cities=new Set(parseList(query.cities).map(norm));
+  // One UI selection intentionally includes every AMB municipality and layer.
+  if(cities.has("bucaramanga-amb")||cities.has("bucaramanga + amb")){
+    for(const name of ["bucaramanga","floridablanca","giron","piedecuesta"])cities.add(name);
+  }
   if(!cities.size)return rows;
   return rows.filter(row=>cities.has(norm(safeValue(row,"Municipio")||safeValue(row,"Ciudad"))));
 }
@@ -374,29 +381,40 @@ module.exports=async(req,res)=>{
 
     const zoom=Number(req.query.zoom||0);
     const bbox=parseBbox(req.query.bbox);
-    const fullCoverage=layer==="estratos"&&req.query.fullCoverage==="1";
-    // Manual refresh forces fresh sheet metadata and bypasses stale HTTP caches.
+    const fullCoverage=req.query.fullCoverage==="1"&&["estratos","barrios","troncales"].includes(layer);
     const auth=gauth();
+    if(req.query.forceRefresh==="1")sourceCatalogCache.expires=0;
     const precalcCity=layer==="estratos"?require("./_estratos-precalc").target(req.query):null;
+    const ambPrecalcCity=layer==="estratos"?require("./_estratos-amb-precalc").target(req.query):null;
+    const ctgHistoricCity=layer==="estratos"&&require("./_estratos-ctg-historic").target(req.query);
+    const usesPrecalculated=!!(precalcCity||ambPrecalcCity||ctgHistoricCity);
     const [forms,caps,source]=await Promise.all([
       loadForms(auth),
       userCapabilities(auth,user.email),
-      precalcCity?Promise.resolve(null):polygonSource(auth,req.query)
+      usesPrecalculated?Promise.resolve(null):polygonSource(auth,req.query)
     ]);
+    // Manual refresh forces fresh sheet metadata and bypasses stale HTTP caches.
     if(req.query.forceRefresh==="1"&&source){
       cache.delete(source.spreadsheetId+"|"+layer);
-      sourceCatalogCache.expires=0;
       const prefix=source.spreadsheetId+"|"+CONFIG[layer].sheet+":";
       for(const key of geometryCache.keys())if(key.startsWith(prefix))geometryCache.delete(key);
       res.setHeader("Cache-Control","no-store");
     }
-    const meta=precalcCity?null:await loadMeta(auth,layer,source);
+    const meta=usesPrecalculated?null:await loadMeta(auth,layer,source);
     if(meta?.cfg)cfg=meta.cfg;
     if(!canUseDashboard(user,caps.adminActive,forms))throw httpError("DASHBOARD_ACCESS_DENIED",403);
     if(precalcCity){
-      // The city-specific ZIP is read from the corporate Growth shared drive,
-      // keeping source KMZ and Bucaramanga metadata untouched.
       return require("./_estratos-precalc").handle(auth,req,res,precalcCity,[bbox.minLon,bbox.minLat,bbox.maxLon,bbox.maxLat],zoom);
+    }
+    if(ambPrecalcCity){
+      // Separate, versioned offline-derived layer. No per-request polygon union or
+      // 9,570-row territorial metadata scan. Original mode stays unchanged.
+      return require("./_estratos-amb-precalc").handle(auth,req,res,ambPrecalcCity,[bbox.minLon,bbox.minLat,bbox.maxLon,bbox.maxLat],zoom);
+    }
+
+    if(ctgHistoricCity){
+      // Historical 2022: clearly labelled visual QA; never classify surveyed points.
+      return require("./_estratos-ctg-historic").handle(auth,req,res);
     }
 
     const mode=String(req.query.mode||"geometry").toLowerCase();

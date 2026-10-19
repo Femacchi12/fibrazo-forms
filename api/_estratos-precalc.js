@@ -24,12 +24,6 @@ function target(query){
   const parts=String(query?.cities||"").split(",").map(norm).filter(Boolean);
   return parts.length===1&&CITIES[parts[0]]?CITIES[parts[0]]:null;
 }
-function bounds(coords){
-  let a=Infinity,b=Infinity,c=-Infinity,d=-Infinity;
-  for(const ring of coords)for(const p of ring){const x=p[0],y=p[1];a=Math.min(a,x);b=Math.min(b,y);c=Math.max(c,x);d=Math.max(d,y);}
-  return [a,b,c,d];
-}
-function hits(a,b){return !(a[2]<b[0]||a[0]>b[2]||a[3]<b[1]||a[1]>b[3]);}
 async function load(auth,city){
   const current=cache.get(city[0]);if(current&&current.until>Date.now())return current.data;
   if(pending.has(city[0]))return pending.get(city[0]);
@@ -43,7 +37,7 @@ async function load(auth,city){
       const estrato=String(f.properties?.estrato||"");
       if(!["1","2","3"].includes(estrato)||f.geometry?.type!=="MultiPolygon")throw Error("INVALID_CITY_GEOMETRY");
       return {estrato,originalCount:Number(f.properties?.cantidad)||0,
-        polygons:f.geometry.coordinates.map(coords=>({coords,bbox:bounds(coords)}))};
+        polygons:f.geometry.coordinates};
     });
     cache.set(city[0],{until:Date.now()+TTL,data});return data;
   })();
@@ -51,15 +45,14 @@ async function load(auth,city){
   try{return await job;}finally{pending.delete(city[0]);}
 }
 async function handle(auth,req,res,city,bbox,zoom){
-  if(Number.isFinite(zoom)&&zoom<11)return res.status(200).json({
-    ok:true,layer:"estratos",requiresZoom:true,minZoom:11,truncated:false,totalVisible:0,features:[]
-  });
-  const data=await load(auth,city);
-  const visible=data.map(row=>({...row,polygons:row.polygons.filter(p=>hits(p.bbox,bbox))}));
+  // QA unified-city test: load full precomputed geometry only once per city.
+  // The map keeps it on navigation; no bbox/zoom dependent downloads.
+  const visible=await load(auth,city);
   const count=visible.reduce((sum,r)=>sum+r.polygons.length,0);
   if(String(req.query.mode||"geometry")==="index")return res.status(200).json({
     ok:true,mode:"index",layer:"estratos",scope:city[0]+"_QA_PRECALCULATED",
     minZoom:11,requiresZoom:false,totalVisible:count,
+    delivery:"FULL_CITY_MULTIPOLYGON",
     items:["1","2","3","4","5","6"].map(value=>({
       value,count:visible.find(r=>r.estrato===value)?.polygons.length||0
     }))
@@ -72,10 +65,11 @@ async function handle(auth,req,res,city,bbox,zoom){
       name:"Estrato "+row.estrato,estrato:row.estrato,municipio:city[1],
       originalCount:row.originalCount,qaOptimized:true,
       source:"KMZ original · SHP y GeoJSON precalculados · QA",quality:"QA_NO_CANONICO"},
-    geometry:{type:"MultiPolygon",coordinates:row.polygons.map(p=>p.coords)}
+    geometry:{type:"MultiPolygon",coordinates:row.polygons}
   }));
   const payload={ok:true,mode:"geometry",layer:"estratos",
     scope:city[0]+"_QA_PRECALCULATED",requiresZoom:false,minZoom:11,
+    delivery:"FULL_CITY_MULTIPOLYGON",viewportFiltered:false,
     truncated:false,totalVisible:chosen.reduce((sum,r)=>sum+r.polygons.length,0),
     displayMode:"PRECALCULADA",qaOptimized:true,precomputed:true,
     originalFeatureCount:chosen.reduce((sum,r)=>sum+r.polygons.length,0),
@@ -88,4 +82,53 @@ async function handle(auth,req,res,city,bbox,zoom){
   res.setHeader("X-Fibrazo-Layer-Mode","QA_PRECALCULATED");
   return res.status(200).send(gz);
 }
-module.exports={target,handle};
+// FO-CHG-061 · QA-only reference lookup for a coordinate, using the same
+// precalculated MultiPolygon that the map already displays. This is NOT
+// a canonical layer and must never silently become an operational classification.
+// Bounds verified against the same full-city geometry files (EPSG:4326).
+// This also lets map coordinate lookups resolve a QA city when no city query
+// parameter has been selected. Bbox is ONLY a routing hint, never an assignment.
+const QA_BOUNDS={
+  neiva:[-75.30873,2.88679,-75.23607,2.98355],
+  villavicencio:[-73.68194,4.05401,-73.53184,4.18334],
+  ibague:[-75.27257,4.37572,-75.11994,4.46509]
+};
+const NEAR_LIMIT_M=25;
+function referenceResult(rows,lat,lon){
+  const {inGeometry,geometryDistance}=require("./_territorial")._internals;
+  const matching=rows.filter(row=>inGeometry(lon,lat,row.polygons));
+  if(matching.length===1)return{status:"DENTRO",value:matching[0].estrato,nearby:[],distanceM:0};
+  if(matching.length>1)return{status:"AMBIGUO",value:"",nearby:[],distanceM:0};
+  const ranked=rows.map(row=>({
+    estrato:row.estrato,
+    distanceM:Math.round(geometryDistance(lon,lat,row.polygons)*10)/10
+  })).filter(item=>Number.isFinite(item.distanceM)).sort((a,b)=>a.distanceM-b.distanceM);
+  const closest=ranked[0]?.distanceM<=5000?ranked[0]:null;
+  return{
+    status:"FUERA",value:"",
+    nearby:ranked.filter(item=>item.distanceM<=NEAR_LIMIT_M),
+    closest,
+    distanceM:closest?closest.distanceM:null
+  };
+}
+async function lookupReference(auth,latValue,lonValue,cityName=""){
+  const lat=Number(latValue),lon=Number(lonValue);
+  if(!Number.isFinite(lat)||!Number.isFinite(lon))return null;
+  const requested=norm(cityName);
+  // If city is provided, require that it matches the actual city footprint.
+  // Without a city hint, infer from non-overlapping validated QA extents.
+  const candidates=Object.entries(CITIES).filter(([key,city])=>{
+    if(requested&&norm(city[1])!==requested&&key!==requested)return false;
+    const [minLon,minLat,maxLon,maxLat]=QA_BOUNDS[key];
+    return lon>=minLon&&lon<=maxLon&&lat>=minLat&&lat<=maxLat;
+  });
+  if(candidates.length!==1)return null;
+  const city=candidates[0][1];
+  const rows=await load(auth,city);
+  return{
+    city:city[1],...referenceResult(rows,lat,lon),
+    source:"MultiPolygon precalculado · QA referencial · no canónico",
+    canonical:false
+  };
+}
+module.exports={target,handle,lookupReference,_internals:{referenceResult}};

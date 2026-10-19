@@ -44,6 +44,9 @@
     },
     "api/map-polygons.js": {
       "maxDuration": 30
+    },
+    "api/exploration.js": {
+      "maxDuration": 30
     }
   },
   "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':(exclude)docs/**' ':(exclude)README.md' || exit 1"

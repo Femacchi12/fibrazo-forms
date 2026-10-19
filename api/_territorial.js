@@ -3,7 +3,7 @@ const {google}=require("googleapis");
 const TERRITORIAL_MASTER_SHEET_ID =
   process.env.TERRITORIAL_MASTER_SHEET_ID ||
   "1cVAEv60ZdDTcQoPmmiSbJV_gfhAXKwywbzf0F0WDp_0";
-const TERRITORIAL_VERSION="3.3";
+const TERRITORIAL_VERSION="3.4";
 // FO-CHG-031 · No aceptar una ciudad a cientos de km como resultado territorial del punto.
 const CITY_NEARBY_MAX_M=20000;
 const LAYER_NEARBY_MAX_M={barrio:5000,estrato:5000,troncal:10000};
@@ -11,13 +11,14 @@ const DANE_QUERY=
   process.env.DANE_MUNICIPIO_QUERY||
   "https://geoportal.dane.gov.co/mparcgis/rest/services/Hosted/Serv_Mpio_MGN_2025/FeatureServer/317/query";
 const CACHE_MS=10*60*1000;
-const WKT_BATCH=12;
+const WKT_BATCH=48;
 
 const cache={
   catalog:null,
   catalogExpires:0,
   cityItems:null,
   cityExpires:0,
+  bundle:new Map(),
   layerMeta:new Map(),
   geometry:new Map()
 };
@@ -209,6 +210,120 @@ async function loadCatalog(auth){
   return cache.catalog;
 }
 
+function catalogForHint(catalog,hintValue){
+  const hint=norm(hintValue);
+  if(!hint)return null;
+  const exact=(catalog||[]).find(entry=>
+    [entry.city,...(entry.municipalities||[])].some(value=>norm(value)===hint)
+  );
+  if(exact)return exact;
+  return (catalog||[]).find(entry=>
+    [entry.city,...(entry.municipalities||[])].some(value=>{
+      const candidate=norm(value);
+      return candidate&&hint&&(candidate.includes(hint)||hint.includes(candidate));
+    })
+  )||null;
+}
+
+function parseCityRows(entry,values){
+  const out=[];
+  for(const row of tableRows(values)){
+    const id=String(row.ID_Ciudad_Poligono||"").trim();
+    const preferred=truthy(row.Preferida_Analisis);
+    const minLon=num(row.Min_Lon),minLat=num(row.Min_Lat),maxLon=num(row.Max_Lon),maxLat=num(row.Max_Lat);
+    const polygons=parseWkt(row.WKT);
+    if(!id||!preferred||!stateOk(row.Estado_Calidad)||!polygons.length||![minLon,minLat,maxLon,maxLat].every(Number.isFinite))continue;
+    out.push({
+      id,name:String(row.Municipio||row.Ciudad||"").trim(),
+      source:String(row.Fuente_nombre||row.Fuente_tipo||"").trim(),
+      sourceUrl:String(row.Fuente_URL||"").trim(),
+      year:String(row["Año_Vigencia"]||"").trim(),
+      minLon,minLat,maxLon,maxLat,polygons,
+      catalog:entry
+    });
+  }
+  return out;
+}
+
+function layerMetaFromRanges(fileId,kind,valueRanges){
+  const cfg=LAYER[kind];
+  const maps=(valueRanges||[]).map(vr=>tableRows(vr?.values||[]));
+  const max=Math.max(0,...maps.map(rows=>rows.length));
+  const all=[];
+  for(let i=0;i<max;i++){
+    const merged={__row:i+2};
+    for(const rows of maps){
+      const part=rows[i]||{};
+      for(const [key,value] of Object.entries(part))if(key!=="__row")merged[key]=value;
+    }
+    if(String(merged[cfg.id]||"").trim())all.push(merged);
+  }
+  const items=all.map(row=>{
+    const minLon=num(row.Min_Lon),minLat=num(row.Min_Lat),maxLon=num(row.Max_Lon),maxLat=num(row.Max_Lat);
+    return {
+      row:row.__row,
+      id:String(row[cfg.id]||"").trim(),
+      name:String(row[cfg.label]||"").trim(),
+      source:String(row.Fuente_nombre||row.Fuente_tipo||"").trim(),
+      sourceUrl:String(row.Fuente_URL||"").trim(),
+      year:String(row["Año_Vigencia"]||"").trim(),
+      minLon,minLat,maxLon,maxLat,
+      preferred:truthy(row.Preferida_Analisis),
+      quality:String(row.Estado_Calidad||"").trim()
+    };
+  }).filter(item=>item.id&&item.preferred&&stateOk(item.quality)&&
+    [item.minLon,item.minLat,item.maxLon,item.maxLat].every(Number.isFinite));
+  const usableItems=kind==="estrato"
+    ?items.filter(item=>/^[1-6]$/.test(String(item.name||"").trim()))
+    :items;
+  return {hasData:all.length>0,items:usableItems,cfg,fileId,kind};
+}
+
+// One city workbook is the canonical unit of territorial data. Reading its
+// municipality and all layer indexes in one batch avoids independent requests
+// competing for the same Google Sheets per-user quota on a cold function.
+async function loadTerritorialBundle(auth,entry){
+  const now=Date.now(),hit=cache.bundle.get(entry.fileId);
+  if(hit&&hit.expires>now)return hit.value;
+  const sheets=google.sheets({version:"v4",auth});
+  const coreRanges=[
+    "11_POLIGONOS_CIUDAD!A:O",
+    ...LAYER.barrio.ranges.map(range=>LAYER.barrio.sheet+"!"+range)
+  ];
+  const optionalRanges=[
+    ...LAYER.estrato.ranges.map(range=>LAYER.estrato.sheet+"!"+range),
+    ...LAYER.troncal.ranges.map(range=>LAYER.troncal.sheet+"!"+range)
+  ];
+  const [coreResponse,optionalResponse]=await Promise.all([
+    sheets.spreadsheets.values.batchGet({spreadsheetId:entry.fileId,ranges:coreRanges})
+      .catch(error=>{
+        console.error("TERRITORIAL_CITY_CORE_READ_ERROR",entry.id,entry.fileId,error?.code||error?.message||"READ_FAILED");
+        throw error;
+      }),
+    sheets.spreadsheets.values.batchGet({spreadsheetId:entry.fileId,ranges:optionalRanges})
+      .catch(error=>{
+        // A missing/unshared optional layer must not suppress municipality and
+        // barrio. The response remains explicit as SIN_CAPA.
+        console.warn("TERRITORIAL_OPTIONAL_LAYERS_UNAVAILABLE",entry.id,error?.code||error?.message||"READ_FAILED");
+        return {data:{valueRanges:optionalRanges.map(()=>({values:[]}))}};
+      })
+  ]);
+  const parts=[
+    ...(coreResponse.data.valueRanges||[]),
+    ...(optionalResponse.data.valueRanges||[])
+  ];
+  const value={entry,cityItems:parseCityRows(entry,parts[0]?.values||[]),layers:{}};
+  let offset=1;
+  for(const kind of ["barrio","estrato","troncal"]){
+    const count=LAYER[kind].ranges.length;
+    value.layers[kind]=layerMetaFromRanges(entry.fileId,kind,parts.slice(offset,offset+count));
+    cache.layerMeta.set(entry.fileId+"|"+kind,{expires:now+CACHE_MS,value:value.layers[kind]});
+    offset+=count;
+  }
+  cache.bundle.set(entry.fileId,{expires:now+CACHE_MS,value});
+  return value;
+}
+
 async function loadCityItems(auth){
   const now=Date.now();
   if(cache.cityItems&&cache.cityExpires>now)return cache.cityItems;
@@ -229,21 +344,7 @@ async function loadCityItems(auth){
   }));
   const out=[];
   for(const {entry,values} of responses){
-    for(const row of tableRows(values)){
-      const id=String(row.ID_Ciudad_Poligono||"").trim();
-      const preferred=truthy(row.Preferida_Analisis);
-      const minLon=num(row.Min_Lon),minLat=num(row.Min_Lat),maxLon=num(row.Max_Lon),maxLat=num(row.Max_Lat);
-      const polygons=parseWkt(row.WKT);
-      if(!id||!preferred||!stateOk(row.Estado_Calidad)||!polygons.length||![minLon,minLat,maxLon,maxLat].every(Number.isFinite))continue;
-      out.push({
-        id,name:String(row.Municipio||row.Ciudad||"").trim(),
-        source:String(row.Fuente_nombre||row.Fuente_tipo||"").trim(),
-        sourceUrl:String(row.Fuente_URL||"").trim(),
-        year:String(row["Año_Vigencia"]||"").trim(),
-        minLon,minLat,maxLon,maxLat,polygons,
-        catalog:entry
-      });
-    }
+    out.push(...parseCityRows(entry,values));
   }
   cache.cityItems=out;
   cache.cityExpires=now+CACHE_MS;
@@ -263,36 +364,7 @@ async function loadLayerMeta(auth,fileId,kind){
     spreadsheetId:fileId,
     ranges
   });
-  const parts=response.data.valueRanges||[];
-  const maps=parts.map(vr=>tableRows(vr.values||[]));
-  const max=Math.max(0,...maps.map(x=>x.length));
-  const all=[];
-  for(let i=0;i<max;i++){
-    const merged={__row:i+2};
-    for(const rows of maps){
-      const part=rows[i]||{};
-      for(const [key,value] of Object.entries(part))if(key!=="__row")merged[key]=value;
-    }
-    const id=String(merged[cfg.id]||"").trim();
-    if(id)all.push(merged);
-  }
-  const items=all.map(row=>{
-    const minLon=num(row.Min_Lon),minLat=num(row.Min_Lat),maxLon=num(row.Max_Lon),maxLat=num(row.Max_Lat);
-    return {
-      row:row.__row,
-      id:String(row[cfg.id]||"").trim(),
-      name:String(row[cfg.label]||"").trim(),
-      source:String(row.Fuente_nombre||row.Fuente_tipo||"").trim(),
-      sourceUrl:String(row.Fuente_URL||"").trim(),
-      year:String(row["Año_Vigencia"]||"").trim(),
-      minLon,minLat,maxLon,maxLat,
-      preferred:truthy(row.Preferida_Analisis),
-      quality:String(row.Estado_Calidad||"").trim()
-    };
-  }).filter(x=>x.id&&x.preferred&&stateOk(x.quality)&&[x.minLon,x.minLat,x.maxLon,x.maxLat].every(Number.isFinite));
-
-  const usableItems=kind==="estrato"?items.filter(item=>/^[1-6]$/.test(String(item.name||"").trim())):items;
-  const value={hasData:all.length>0,items:usableItems,cfg,fileId,kind};
+  const value=layerMetaFromRanges(fileId,kind,response.data.valueRanges||[]);
   cache.layerMeta.set(key,{expires:now+CACHE_MS,value});
   return value;
 }
@@ -339,8 +411,11 @@ async function resolveLayer(auth,meta,lon,lat){
     }
   }
 
-  const ranked=meta.items.map(item=>({item,min:bboxDistance(lon,lat,item)})).sort((a,b)=>a.min-b.min);
-  let best=null,bestDistance=Infinity,index=0;
+  const maxDistance=LAYER_NEARBY_MAX_M[meta.kind]??5000;
+  const ranked=meta.items.map(item=>({item,min:bboxDistance(lon,lat,item)}))
+    .filter(candidate=>candidate.min<=maxDistance)
+    .sort((a,b)=>a.min-b.min);
+  let best=null,bestDistance=maxDistance+0.01,index=0;
   while(index<ranked.length&&ranked[index].min<=bestDistance){
     const slice=ranked.slice(index,index+WKT_BATCH).filter(x=>x.min<=bestDistance);
     if(!slice.length)break;
@@ -351,7 +426,6 @@ async function resolveLayer(auth,meta,lon,lat){
     }
     index+=slice.length;
   }
-  const maxDistance=LAYER_NEARBY_MAX_M[meta.kind]??5000;
   return best&&bestDistance<=maxDistance?outside(best,bestDistance):empty("FUERA_COBERTURA");
 }
 
@@ -398,14 +472,16 @@ async function daneExactCity(items,lon,lat){
 async function resolveCityItems(items,lon,lat){
   if(!items.length)return {result:empty("SIN_CAPA"),catalog:null};
 
-  const daneItem=await daneExactCity(items,lon,lat);
-  if(daneItem)return {result:inside(daneItem),catalog:daneItem.catalog};
-
   const exact=items.filter(x=>lon>=x.minLon&&lon<=x.maxLon&&lat>=x.minLat&&lat<=x.maxLat&&inGeometry(lon,lat,x.polygons));
   if(exact.length){
     exact.sort((a,b)=>((a.maxLon-a.minLon)*(a.maxLat-a.minLat))-((b.maxLon-b.minLon)*(b.maxLat-b.minLat)));
     return {result:inside(exact[0]),catalog:exact[0].catalog};
   }
+  // The city workbook already contains the full official geometry. DANE is a
+  // fallback only, so the common exact-match path does not depend on a second
+  // network service.
+  const daneItem=await daneExactCity(items,lon,lat);
+  if(daneItem)return {result:inside(daneItem),catalog:daneItem.catalog};
   let best=null,bestDistance=Infinity;
   const ranked=items.map(item=>({item,min:bboxDistance(lon,lat,item)})).sort((a,b)=>a.min-b.min);
   for(const candidate of ranked){
@@ -418,12 +494,15 @@ async function resolveCityItems(items,lon,lat){
     :{result:empty("FUERA_COBERTURA"),catalog:null};
 }
 
-async function resolveTerritorial(auth,latValue,lonValue){
+async function resolveTerritorial(auth,latValue,lonValue,{cityHint=""}={}){
   const lat=num(latValue),lon=num(lonValue);
   if(!Number.isFinite(lat)||!Number.isFinite(lon)||lat<-90||lat>90||lon<-180||lon>180){
     const e=new Error("INVALID_COORDINATES");e.status=400;throw e;
   }
-  const cityItems=await loadCityItems(auth);
+  const catalog=await loadCatalog(auth);
+  const hintedCatalog=catalogForHint(catalog,cityHint);
+  const hintedBundle=hintedCatalog?await loadTerritorialBundle(auth,hintedCatalog):null;
+  const cityItems=hintedBundle?.cityItems||await loadCityItems(auth);
   const cityResolved=await resolveCityItems(cityItems,lon,lat);
   let selected=cityResolved.catalog;
 
@@ -432,27 +511,34 @@ async function resolveTerritorial(auth,latValue,lonValue){
   // choose the territorial catalog whose canonical layer footprint contains the
   // coordinate. This enables layer resolution without falsely changing cityStatus.
   if(!selected){
-    const catalog=await loadCatalog(auth);
-    const candidates=[];
-    for(const cat of catalog){
-      let score=0;
-      for(const kind of ["barrio","estrato","troncal"]){
-        const meta=await loadLayerMeta(auth,cat.fileId,kind).catch(()=>null);
-        if(meta?.items?.some(item=>lon>=item.minLon&&lon<=item.maxLon&&lat>=item.minLat&&lat<=item.maxLat))score++;
+    if(hintedBundle){
+      const matches=Object.values(hintedBundle.layers).some(meta=>
+        meta?.items?.some(item=>lon>=item.minLon&&lon<=item.maxLon&&lat>=item.minLat&&lat<=item.maxLat)
+      );
+      if(matches)selected=hintedCatalog;
+    }else{
+      const candidates=[];
+      for(const cat of catalog){
+        let score=0;
+        for(const kind of ["barrio","estrato","troncal"]){
+          const meta=await loadLayerMeta(auth,cat.fileId,kind).catch(()=>null);
+          if(meta?.items?.some(item=>lon>=item.minLon&&lon<=item.maxLon&&lat>=item.minLat&&lat<=item.maxLat))score++;
+        }
+        if(score)candidates.push({cat,score});
       }
-      if(score)candidates.push({cat,score});
+      candidates.sort((a,b)=>b.score-a.score);
+      if(candidates.length)selected=candidates[0].cat;
     }
-    candidates.sort((a,b)=>b.score-a.score);
-    if(candidates.length)selected=candidates[0].cat;
   }
 
   let barrio=empty("SIN_CAPA"),estrato=empty("SIN_CAPA"),troncal=empty("SIN_CAPA");
   if(selected){
-    const [bMeta,eMeta,tMeta]=await Promise.all([
-      loadLayerMeta(auth,selected.fileId,"barrio"),
-      loadLayerMeta(auth,selected.fileId,"estrato"),
-      loadLayerMeta(auth,selected.fileId,"troncal")
-    ]);
+    const selectedBundle=hintedBundle&&hintedBundle.entry.fileId===selected.fileId
+      ?hintedBundle
+      :await loadTerritorialBundle(auth,selected);
+    const bMeta=selectedBundle.layers.barrio;
+    const eMeta=selectedBundle.layers.estrato;
+    const tMeta=selectedBundle.layers.troncal;
     [barrio,estrato,troncal]=await Promise.all([
       resolveLayer(auth,bMeta,lon,lat),
       resolveLayer(auth,eMeta,lon,lat),
@@ -467,6 +553,7 @@ async function resolveTerritorial(auth,latValue,lonValue){
     catalogCity:selected?.city||"",
     territorialFileId:selected?.fileId||"",
     territorialFileUrl:selected?.url||"",
+    dataSource:"MAESTRO_TERRITORIAL_POR_CIUDAD",
     city:cityResolved.result,
     barrio,
     estrato,
@@ -614,5 +701,5 @@ module.exports={
   resolveTerritorial,
   searchTerritorial,
   flattenTerritorial,
-  _internals:{parseWkt,inGeometry,geometryDistance,bboxDistance,resolveCityItems}
+  _internals:{parseWkt,inGeometry,geometryDistance,bboxDistance,resolveCityItems,catalogForHint,layerMetaFromRanges}
 };
