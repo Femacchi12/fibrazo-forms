@@ -61,6 +61,7 @@ assert.ok(alignmentCss.includes("min-height:40px!important")&&alignmentCss.inclu
 assert.ok(types.includes("map-filter-eye-action")&&types.includes("_typeaheadOpen")&&types.includes('if(group.open)control._typeaheadOpen'),"Ciudades y Operadores comparten ojo, búsqueda y apertura completa");
 assert.ok(alignmentCss.includes("FO-CHG-045")&&alignmentCss.includes("min-height:31px!important")&&alignmentCss.includes("gap:0!important"),"Opciones internas compactas, sin separación excesiva");
 assert.ok(map.includes("resetTerritorialScopeForCity")&&map.includes('cities!==filterValues("mapCityFilter").join(",")'),"El cambio de ciudad cancela y descarta respuestas territoriales anteriores");
+assert.ok(map.includes('document.querySelectorAll("details.map-layer-disclosure")')&&map.includes("renderLayerControls();\n  }\n\n  async function authorizedFetch"),"El cambio de ciudad cierra capas abiertas y elimina listados territoriales obsoletos");
 assert.ok(map.includes("const incumbents=new Set")&&map.includes("hasOnlyIsps"),"Operadores disponibles dependen de los puntos de la ciudad seleccionada");
 assert.ok(read("api/map-polygons.js").includes("requestedCityCount===1?cfg.maxFeatures"),"Una sola ciudad usa el límite completo de geometrías de la capa");
 

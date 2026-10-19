@@ -1401,7 +1401,15 @@
         if(!state.polygonActive[layer]&&state.map.hasLayer(group))state.map.removeLayer(group);
       }
     }
+    // A disclosure can remain open while the selected city changes. Close it
+    // and render the cleared indexes immediately so labels from the previous
+    // city never remain visible. Opening it again activates and loads the new
+    // city's canonical index through the existing disclosure handler.
+    document.querySelectorAll("details.map-layer-disclosure").forEach(disclosure=>{
+      disclosure.open=false;
+    });
     updateLayerButtons();
+    renderLayerControls();
   }
 
   async function authorizedFetch(url,controller,{ttl=0}={}){

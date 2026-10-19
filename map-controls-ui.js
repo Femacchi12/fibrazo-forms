@@ -217,7 +217,7 @@
         if(cities.length!==1){notice.hidden=true;return;}
         const city=normCity(cities[0]);
         notice.hidden=city==="bucaramanga-amb";
-        if(qaEstratos.has(city))notice.textContent="Estratos disponibles en QA. Barrios y troncales de esta ciudad todavía están pendientes.";
+        if(qaEstratos.has(city))notice.textContent="Estratos y barrios disponibles en QA. Troncales sin capa cargada para esta ciudad.";
         else if(city==="cartagena")notice.textContent="ATENCIÓN: estratos históricos de 2022 disponibles únicamente como referencia visual QA. No utilizar para decisiones ni clasificación operativa.";
         else notice.textContent="Esta ciudad aún no tiene capas territoriales de estratos validadas para el mapa.";
       };
