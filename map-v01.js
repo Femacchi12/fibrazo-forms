@@ -384,16 +384,40 @@
   }
 
   async function copyCoordinates(lat,lng){
-    const value=Number(lat).toFixed(6)+", "+Number(lng).toFixed(6);
+    const value=Number(lat).toFixed(7)+", "+Number(lng).toFixed(7);
+    let copied=false;
     try{
+      if(!navigator.clipboard?.writeText)throw new Error("CLIPBOARD_UNAVAILABLE");
       await navigator.clipboard.writeText(value);
-      mapStatus("Coordenadas copiadas: "+value,"success");
+      copied=true;
     }catch(_){
       const area=document.createElement("textarea");
       area.value=value;area.style.position="fixed";area.style.opacity="0";
-      document.body.appendChild(area);area.select();document.execCommand("copy");area.remove();
-      mapStatus("Coordenadas copiadas: "+value,"success");
+      document.body.appendChild(area);
+      try{area.focus();area.select();copied=document.execCommand("copy")===true;}
+      finally{area.remove();}
     }
+    mapStatus(copied?"Coordenadas copiadas: "+value:"No se pudo copiar la coordenada. Podés seleccionarla manualmente.",copied?"success":"error");
+    return copied;
+  }
+
+  // FO-CHG-073: sheet click propagation is stopped, so handle copying locally.
+  function handleMapCoordinateCopy(event){
+    const button=event.target?.closest?.("[data-map-copy-point]");
+    if(!button)return false;
+    event.preventDefault();
+    copyCoordinates(Number(button.dataset.lat),Number(button.dataset.lng)).then(copied=>{
+      const owner=button.parentElement;
+      if(!owner)return;
+      owner.querySelector(".map-copy-feedback")?.remove();
+      const notice=document.createElement("span");
+      notice.className="map-copy-feedback";
+      notice.setAttribute("role","status");
+      notice.textContent=copied?"✓ Copiado":"No se pudo copiar";
+      owner.appendChild(notice);
+      setTimeout(()=>notice.remove(),1800);
+    });
+    return true;
   }
 
   function startFormAtCoordinate(formId,lat,lng){
@@ -465,13 +489,17 @@
     sheet.innerHTML='<div class="map-coordinate-handle"></div>'+
       '<div class="map-coordinate-head"><div><span>PUNTO SELECCIONADO</span><h3>Acciones con la coordenada</h3></div><button type="button" data-map-close aria-label="Cerrar">×</button></div>'+
       '<div class="map-coordinate-primary"><div class="map-coordinate-value">'+coordinateCopyButton(lat,lng)+'</div>'+
+        '<button type="button" class="map-coordinate-copy" data-map-copy-point data-lat="'+Number(lat)+'" data-lng="'+Number(lng)+'" aria-label="Copiar coordenadas">⧉ Copiar</button>'+
         '<button type="button" data-map-route title="Abrir en Google Maps">↗ Ir</button>'+
       '</div>'+
       '<div class="map-coordinate-territorial"><span>CONTEXTO TERRITORIAL</span><div data-map-territorial><div class="map-coordinate-territorial-loading">Consultando nuestra base…</div></div></div>'+
       '<div class="map-coordinate-forms"><span>COMPLETAR FORMULARIO</span><div data-map-form-list></div></div>';
     document.body.append(backdrop,sheet);
     installCoordinateSheetDrag(sheet);
-    sheet.addEventListener("click",event=>event.stopPropagation());
+    sheet.addEventListener("click",event=>{
+      handleMapCoordinateCopy(event);
+      event.stopPropagation();
+    });
     sheet.querySelector("[data-map-close]")?.addEventListener("click",closeCoordinateSheet);
     sheet.querySelector("[data-map-route]")?.addEventListener("click",()=>{
       window.open(googlePointUrl(lat,lng),"_blank","noopener");
@@ -2009,22 +2037,7 @@
   }
 
   function bind(){
-    document.addEventListener("click",event=>{
-      const button=event.target.closest("[data-map-copy-point]");
-      if(!button)return;
-      event.preventDefault();
-      copyCoordinates(Number(button.dataset.lat),Number(button.dataset.lng)).then(()=>{
-        const owner=button.parentElement;
-        if(!owner)return;
-        owner.querySelector(".map-copy-feedback")?.remove();
-        const notice=document.createElement("span");
-        notice.className="map-copy-feedback";
-        notice.setAttribute("role","status");
-        notice.textContent="✓ Copiado";
-        owner.appendChild(notice);
-        setTimeout(()=>notice.remove(),1800);
-      });
-    });
+    document.addEventListener("click",handleMapCoordinateCopy);
     ["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter","mapDateFrom","mapDateTo","mapPhotosFilter"].forEach(id=>$(id)?.addEventListener("change",()=>{
       updateFilterCount();
       if(id==="mapCityFilter"){

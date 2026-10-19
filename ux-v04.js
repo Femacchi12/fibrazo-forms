@@ -1928,11 +1928,21 @@
       }
       const estratoInfo=document.querySelector('[data-geo-info-for="estrato"]');
       if(estratoInfo){
+        // A nearest polygon beyond 25 m is context, never an assigned stratum.
+        const qaClosest=data.qaStratum?.canonical===false&&data.qaStratum?.status==="FUERA"
+          ?data.qaStratum.closest:null;
+        const closestDistance=distanceNumber(qaClosest?.distanceM);
+        const closestDetail=qaClosest&&/^[1-6]$/.test(String(qaClosest.estrato))&&closestDistance!==null
+          ?"Estrato "+qaClosest.estrato+" (polígono QA a "+closestDistance.toFixed(1).replace(".",",")+" m). Más de 25 m: no se sugiere automáticamente; referencia no canónica.":"";
         const detail=qaStratum
           ?"Estrato "+qaStratum.value+" · coincidencia geométrica referencial QA; no es capa canónica. Verificar en campo."
           :qaNearby.length
-            ?qaNearby.map(item=>"Estrato "+item.estrato+" (cercano: "+(Math.round(Number(item.distanceM)*10)/10).toString().replace(".",",")+" m)").join(" · ")+" · Solo referencia QA; sin asignación automática."
-            :geoLayerDetail(data.estratoStatus,data.estrato,data.estratoNearby,data.estratoDistanceM,data.estratoSource,"Estrato");
+            ?qaNearby.map(item=>"Estrato "+item.estrato+" (cercano: "+(Math.round(Number(item.distanceM)*10)/10).toString().replace(".",",")+" m)").join(" · ")+" · Solo referencia QA; sin asignación canónica."
+            :closestDetail||(
+              data.qaStratum?.canonical===false&&data.qaStratum.status==="FUERA"
+                ?"No se encontró polígono QA de estrato a menos de 5 km; sin asignación automática."
+                :geoLayerDetail(data.estratoStatus,data.estrato,data.estratoNearby,data.estratoDistanceM,data.estratoSource,"Estrato")
+            );
         estratoInfo.textContent=detail;estratoInfo.hidden=!detail;
         if(state.qaReference)state.qaReference.message=detail;
         estratoInfo.className="field-geo-info "+(qaStratum||qaNearby.length?"geo-outside":data.estratoStatus==="DENTRO"?"geo-inside":data.estratoStatus==="FUERA"?"geo-outside":"geo-missing");

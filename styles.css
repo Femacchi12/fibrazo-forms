@@ -2701,3 +2701,15 @@ input::placeholder,textarea::placeholder{color:#bfcfc6!important;opacity:1}
 .map-layer-eye-action,.map-dock-icon,.map-route-disclosure>summary{background-color:#172820!important;color:#43ffa5!important}
 .map-selective-option.active{background-color:#1d3929!important}
 .map-point-details table,table{font-family:Poppins,Montserrat,sans-serif}
+
+/* FO-CHG-073 · Compact Copy and Go actions for selected map points. */
+.map-coordinate-primary{grid-template-columns:minmax(0,1fr) auto auto;gap:6px}
+.map-coordinate-primary>.map-coordinate-copy{
+  min-height:42px;padding:7px 9px;font-size:10px;white-space:nowrap;
+}
+@media(max-width:380px){
+  .map-coordinate-primary{gap:4px}
+  .map-coordinate-primary>.map-coordinate-copy,
+  .map-coordinate-primary>[data-map-route]{padding:6px;font-size:9px}
+  .map-coordinate-value{padding:10px 7px;font-size:11px}
+}
