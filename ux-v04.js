@@ -806,8 +806,8 @@
     box.append(value,btn);
     const quick=document.createElement("div");quick.className="gps-quick-tools";
     const copyGps=document.createElement("button");copyGps.type="button";copyGps.textContent="⧉ Copiar";copyGps.addEventListener("click",async()=>{if(!state.gps)return;const v=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6);try{await navigator.clipboard.writeText(v);}catch(_){}});
-    const mapsGps=document.createElement("button");mapsGps.type="button";mapsGps.textContent="↗ Google Maps";mapsGps.addEventListener("click",()=>{if(!state.gps)return;window.open("https://www.google.com/maps?q="+state.gps.lat+","+state.gps.lng,"_blank","noopener");});
-    quick.append(copyGps,mapsGps);box.appendChild(quick);
+    const mapsGps=document.createElement("button");mapsGps.type="button";mapsGps.textContent="↗ Ir";mapsGps.setAttribute("aria-label","Ir a la coordenada en Google Maps");mapsGps.addEventListener("click",()=>{if(!state.gps)return;window.open("https://www.google.com/maps?q="+state.gps.lat+","+state.gps.lng,"_blank","noopener");});
+    quick.append(copyGps,mapsGps);const copyRow=document.createElement("div");copyRow.className="field-value-row gps-copy-row";value.before(copyRow);copyRow.append(value,quick);
     if(field.key==="coordenadas"&&state.form?.id==="EXPLORACION_PRESENCIAL"){
       const improve=document.createElement("button");improve.type="button";improve.className="secondary-button compact gps-improve-button";improve.textContent="◎ Mejorar precisión";
       improve.addEventListener("click",()=>captureGps(value,btn,field.key));
@@ -869,8 +869,8 @@
     stop.addEventListener("click",handleGeoAction);
     geo.append(txt,stop);
     const quick=document.createElement("div");quick.className="gps-quick-tools";
-    const copy=document.createElement("button");copy.type="button";copy.textContent="⧉ Copiar coordenada";copy.addEventListener("click",async()=>{if(state.gps)try{await navigator.clipboard.writeText(state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6));}catch(_){}});
-    const maps=document.createElement("button");maps.type="button";maps.textContent="↗ Google Maps";maps.addEventListener("click",()=>{if(state.gps)window.open("https://www.google.com/maps?q="+state.gps.lat+","+state.gps.lng,"_blank","noopener");});
+    const copy=document.createElement("button");copy.type="button";copy.textContent="⧉ Copiar";copy.setAttribute("aria-label","Copiar coordenada");copy.addEventListener("click",async()=>{if(state.gps)try{await navigator.clipboard.writeText(state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6));}catch(_){}});
+    const maps=document.createElement("button");maps.type="button";maps.textContent="↗ Ir";maps.setAttribute("aria-label","Ir a la coordenada en Google Maps");maps.addEventListener("click",()=>{if(state.gps)window.open("https://www.google.com/maps?q="+state.gps.lat+","+state.gps.lng,"_blank","noopener");});
     quick.append(copy,maps);box.append(input,quick,status,geo);return box;
   }
   function showPhotoPreview(src){
