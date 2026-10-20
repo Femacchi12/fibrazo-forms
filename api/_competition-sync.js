@@ -44,11 +44,12 @@ async function syncCompetition(auth,{sourceId,dryRun=false}={}){
   token=await acquire(sheets,COMPETITION_SHEET_ID);
   const [meta,sourceMeta]=await Promise.all([sheets.spreadsheets.get({spreadsheetId:COMPETITION_SHEET_ID,fields:'sheets(properties)'}),sheets.spreadsheets.get({spreadsheetId:sourceId,fields:'sheets(properties)'})]);
   const bound=(m,n,last)=>{const p=m.data.sheets.find(s=>s.properties.title===n)?.properties;if(!p)throw Error('COMPETITION_SCHEMA_MISSING_'+n);return n+'!A1:'+last+p.gridProperties.rowCount;};
+  const readNames=[...Object.keys(widths),'26_BUC_EQUIVALENCIAS'];
   const [source,target]=await Promise.all([
    sheets.spreadsheets.values.batchGet({spreadsheetId:sourceId,ranges:[bound(sourceMeta,'RESP_EXPLORACION','CE'),bound(sourceMeta,'RESP_INTELIGENCIA_OPERADOR','AF')],valueRenderOption:'UNFORMATTED_VALUE'}),
-   sheets.spreadsheets.values.batchGet({spreadsheetId:COMPETITION_SHEET_ID,ranges:Object.keys(widths).map(n=>bound(meta,n,({32:'AF',26:'Z',19:'S',15:'O',18:'R'})[widths[n]])),valueRenderOption:'UNFORMATTED_VALUE'}),
+   sheets.spreadsheets.values.batchGet({spreadsheetId:COMPETITION_SHEET_ID,ranges:readNames.map(n=>bound(meta,n,({32:'AF',26:'Z',19:'S',15:'O',18:'R'})[widths[n]]||'F')),valueRenderOption:'UNFORMATTED_VALUE'}),
   ]);
-  const base=Object.fromEntries(Object.keys(widths).map((n,i)=>[n,target.data.valueRanges[i].values||[]]));
+  const base=Object.fromEntries(readNames.map((n,i)=>[n,target.data.valueRanges[i].values||[]]));
   const plan=buildPlan({expl:source.data.valueRanges[0].values||[],intel:source.data.valueRanges[1].values||[],base,sourceId});plan.originalLengths=Object.fromEntries(Object.entries(base).map(([k,v])=>[k,v.length]));
   const requests=writeRequests(plan,meta.data);
   // Fail closed if the lease was replaced; never write using a stale table snapshot.
