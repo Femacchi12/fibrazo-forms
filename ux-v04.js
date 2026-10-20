@@ -137,8 +137,15 @@
         const companion=$("dynamicFields").querySelector('[data-key="'+photo+'"]');
         if(!main||!companion)continue;
         const group=document.createElement("div");group.className="operator-element-group";group.dataset.section="elementos";
-        main.before(group);group.append(main,companion);companion.dataset.photoCompanion="1";
+        main.before(group);group.append(main,companion);companion.dataset.photoCompanion="1";companion.classList.add("field-dependent");
       }
+    }
+    // Qualities belong to the corresponding ISP rather than another top-level question.
+    if(form.id==="EXPLORACION_PRESENCIAL"||form.id==="EXPLORACION"){
+      $("dynamicFields").querySelectorAll('.field[data-key^="isp_"]').forEach(field=>field.classList.remove("field-dependent"));
+      $("dynamicFields").querySelectorAll('.field[data-key*="calidad"]').forEach(field=>{
+        if(/isp[_ ]?[1-4]|tendido/i.test(field.dataset.key||""))field.classList.add("field-dependent");
+      });
     }
     $("formWorkspace").hidden=false;$("reviewWorkspace").hidden=true;$("successWorkspace").hidden=true;
     updateTerritorialProgress();
@@ -355,7 +362,10 @@
     const menu=document.createElement("div");menu.className="editable-options-menu";menu.setAttribute("role","listbox");menu.hidden=true;
     const storageKey="fibrazo:field-options:"+field.key;
     let custom=[];try{custom=JSON.parse(localStorage.getItem(storageKey)||"[]");if(!Array.isArray(custom))custom=[];}catch(_){}
+    const generalOption=value=>/^(sin (marquilla|isp|operador|informaci[oó]n|foto|dato|datos)|no aplica|ninguno|ninguna|sin servicio)$/i.test(String(value||"").trim());
     const options=[...new Set([...(field.options||[]),...custom])];
+    // FO-CHG-075: put the general shortcut first without changing stored values.
+    options.sort((a,b)=>Number(generalOption(b))-Number(generalOption(a)));
     const hide=()=>{menu.hidden=true;input.setAttribute("aria-expanded","false");holder.querySelector(".editable-options-arrow")?.setAttribute("aria-expanded","false");};
     const save=()=>{const value=input.value.trim();if(!value)return;clearError(field.key);if(!options.some(x=>x.toLowerCase()===value.toLowerCase())){options.push(value);custom.push(value);try{localStorage.setItem(storageKey,JSON.stringify([...new Set(custom)]));}catch(_){}}};
     const paint=()=>{
