@@ -11,11 +11,11 @@ body.form-mode #formWorkspace .form-qa-flag legend{
  font-size:var(--fz-field-label-size)!important;font-weight:650!important;
  line-height:1.35!important;margin-bottom:5px!important;
 }
-body.form-mode #formWorkspace .field :is(input[type="text"],input[type="number"],input[type="date"],input[type="email"],input[type="tel"],input[type="search"],select,textarea,.gps-value,.gps-exec-coordinate){
+body.form-mode #formWorkspace #dynamicForm .field :is(input[type="text"],input[type="number"],input[type="date"],input[type="email"],input[type="tel"],input[type="search"],select,textarea,.gps-value,.gps-exec-coordinate){
  font-size:var(--fz-field-value-size)!important;font-weight:450!important;
- min-height:var(--fz-field-height)!important;padding:5px 8px!important;line-height:1.3!important;
+ height:var(--fz-field-height)!important;min-height:var(--fz-field-height)!important;padding:5px 8px!important;line-height:1.3!important;
 }
-body.form-mode #formWorkspace .field textarea{min-height:64px!important}
+body.form-mode #formWorkspace #dynamicForm .field textarea{height:auto!important;min-height:64px!important}
 body.form-mode #formWorkspace .field :is(.field-help,.field-geo-info,.gps-city,.gps-exec-feedback){
  font-size:var(--fz-field-help-size)!important;line-height:1.4!important;
 }
