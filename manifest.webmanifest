@@ -10,13 +10,13 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "/icon-fbz-growth-form-v7-192.png",
+      "src": "/icon-fbz-growth-form-v8-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-fbz-growth-form-v7-512.png",
+      "src": "/icon-fbz-growth-form-v8-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
