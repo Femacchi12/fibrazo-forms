@@ -1899,7 +1899,7 @@
   // Never override manual filters, even when a delayed territorial request completes.
   async function selectTerritoryFromGps(position){
     const selector=$("mapCityFilter");
-    if(!selector||!state.viewActive||filterValues("mapCityFilter").length)return;
+    if(!selector||!state.viewActive)return;
     const startSelection=filterValues("mapCityFilter").join(",");
     try{
       const lat=position.coords.latitude,lng=position.coords.longitude;
@@ -2046,10 +2046,8 @@
     updateTrackingUi();
     loadCityCatalog();
     for(const layer of ["barrios","estratos","troncales"])if(state.polygonActive[layer])refreshPolygonLayer(layer,{silent:true});
-    if(!state.autoLocated){
-      state.autoLocated=true;
-      setTimeout(()=>locateMe({auto:true}),220);
-    }
+    // Recheck position on every map opening; do not retain a previous city when traveling.
+    setTimeout(()=>{if(state.viewActive)locateMe({auto:true});},220);
     startAutoRefresh();
   }
   function onMapClose(){
