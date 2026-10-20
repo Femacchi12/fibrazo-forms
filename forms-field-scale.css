@@ -1,7 +1,7 @@
-/* FO-CHG-078 · Shared form scale: labels lead, values stay compact. */
+/* FO-CHG-079 · Shared sober form scale, superseding FO-CHG-078 sizes. */
 body.form-mode #formWorkspace{
- --fz-field-label-size:17px;--fz-field-value-size:16px;
- --fz-field-help-size:12px;--fz-field-height:40px;
+ --fz-field-label-size:17px;--fz-field-value-size:14px;
+ --fz-field-help-size:11px;--fz-field-height:34px;
 }
 body.form-mode #formWorkspace .field label.field-label,
 body.form-mode #formWorkspace .form-grid>.field label.field-label,
@@ -11,17 +11,17 @@ body.form-mode #formWorkspace .form-qa-flag legend{
  font-size:var(--fz-field-label-size)!important;font-weight:650!important;
  line-height:1.35!important;margin-bottom:5px!important;
 }
-body.form-mode #formWorkspace .field :is(input[type="text"],input[type="number"],input[type="date"],select,textarea,.gps-value,.gps-exec-coordinate){
+body.form-mode #formWorkspace .field :is(input[type="text"],input[type="number"],input[type="date"],input[type="email"],input[type="tel"],input[type="search"],select,textarea,.gps-value,.gps-exec-coordinate){
  font-size:var(--fz-field-value-size)!important;font-weight:450!important;
- min-height:var(--fz-field-height)!important;padding:7px 10px!important;line-height:1.3!important;
+ min-height:var(--fz-field-height)!important;padding:5px 8px!important;line-height:1.3!important;
 }
-body.form-mode #formWorkspace .field textarea{min-height:76px!important}
+body.form-mode #formWorkspace .field textarea{min-height:64px!important}
 body.form-mode #formWorkspace .field :is(.field-help,.field-geo-info,.gps-city,.gps-exec-feedback){
  font-size:var(--fz-field-help-size)!important;line-height:1.4!important;
 }
 body.form-mode #formWorkspace .field-value-row{
  display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
- align-items:center!important;gap:8px!important;min-width:0!important;
+ align-items:center!important;gap:6px!important;min-width:0!important;
 }
 body.form-mode #formWorkspace .field-value-row>:first-child{min-width:0!important;width:100%!important}
 body.form-mode #formWorkspace .field-value-row .field-quick-tools{
@@ -29,8 +29,8 @@ body.form-mode #formWorkspace .field-value-row .field-quick-tools{
  width:auto!important;align-self:center!important;
 }
 body.form-mode #formWorkspace .field-value-row .field-quick-tools button{
- min-height:40px!important;height:40px!important;padding:6px 9px!important;
- font-size:12px!important;line-height:1.2!important;white-space:nowrap!important;width:auto!important;
+ min-height:30px!important;height:30px!important;padding:4px 7px!important;
+ font-size:11px!important;line-height:1.2!important;white-space:nowrap!important;width:auto!important;
 }
 body.form-mode #formWorkspace .gps-exec-top,
 body.form-mode #formWorkspace .coordinate-box{
@@ -45,16 +45,46 @@ body.form-mode #formWorkspace :is(.gps-exec-quick,.coordinate-box>.gps-quick-too
  display:flex!important;flex-wrap:nowrap!important;gap:4px!important;width:auto!important;margin:0!important;
 }
 body.form-mode #formWorkspace :is(.gps-exec-quick,.coordinate-box>.gps-quick-tools)>button{
- min-width:0!important;width:auto!important;padding:6px!important;font-size:12px!important;
+ min-width:0!important;width:auto!important;padding:6px!important;font-size:11px!important;
 }
 @media(pointer:coarse){
- body.form-mode #formWorkspace{--fz-field-height:44px}
- body.form-mode #formWorkspace .field-value-row .field-quick-tools button{height:44px!important;min-height:44px!important}
+ body.form-mode #formWorkspace{--fz-field-height:38px}
+ body.form-mode #formWorkspace .field-value-row .field-quick-tools button{height:32px!important;min-height:32px!important}
 }
 
 body.form-mode #formWorkspace .gps-copy-row>.gps-quick-tools{
  display:flex!important;flex-wrap:nowrap!important;gap:4px!important;width:auto!important;margin:0!important;
 }
 body.form-mode #formWorkspace .gps-copy-row>.gps-quick-tools>button{
- width:auto!important;min-width:0!important;padding:6px!important;font-size:12px!important;
+ width:auto!important;min-width:0!important;padding:6px!important;font-size:11px!important;
+}
+
+/* Answer choices and copy actions use the same reduced reference. */
+body.form-mode #formWorkspace .field :is(.segment-option,.binary-toggle-button,.choice,.editable-options-choice,.isp-suggestion-list button){
+ font-size:var(--fz-field-value-size)!important;line-height:1.3!important;
+}
+body.form-mode #formWorkspace .field .segment-option{
+ min-height:32px!important;padding:5px 8px!important;
+}
+body.form-mode #formWorkspace .field.operator-brand-field:not([hidden]){
+ min-height:38px!important;padding:2px 0!important;
+}
+body.form-mode #formWorkspace .operator-brand-field .binary-toggle-button{
+ width:48px!important;min-width:48px!important;max-width:48px!important;
+ height:30px!important;min-height:30px!important;padding:3px 7px!important;
+}
+body.form-mode #formWorkspace :is(.field-quick-tools,.gps-quick-tools)>button{
+ position:relative!important;min-height:30px!important;height:30px!important;
+ padding:4px 7px!important;font-size:11px!important;line-height:1.2!important;
+ white-space:nowrap!important;width:auto!important;
+}
+body.form-mode #formWorkspace :is(.field-quick-tools,.gps-quick-tools)>button::after{
+ content:"";position:absolute;inset:-7px -2px;
+}
+@media(pointer:coarse){
+ body.form-mode #formWorkspace :is(.field-quick-tools,.gps-quick-tools)>button,
+ body.form-mode #formWorkspace .operator-brand-field .binary-toggle-button{
+  height:32px!important;min-height:32px!important;
+ }
+ body.form-mode #formWorkspace :is(.field-quick-tools,.gps-quick-tools)>button::after{inset-block:-6px}
 }
