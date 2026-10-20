@@ -1920,6 +1920,7 @@
         clearPolygonLayer("estratos",{keepStatus:true});
         renderLayerControls();
       }
+      updateCurrentLocation(position,{center:true});
       toggleFilters(false);
       mapStatus("Ubicación detectada: "+cityLabel(key)+(hasStrata?" · estratos 1, 2 y 3 seleccionados.":" · sin capa de estratos confirmada."),"success");
     }catch(error){
