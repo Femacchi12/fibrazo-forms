@@ -23,7 +23,7 @@
       }else{
         allowedCount++;
         button.disabled=false;
-        button.textContent="Abrir formulario →";
+        button.textContent="Abrir →";
       }
     });
     const count=document.getElementById("activeFormsCount");

@@ -1530,22 +1530,22 @@ body.form-mode #formWorkspace .isp-suggestion-list{
 }
 
 /* FO-CHG-077: sober compact rows, retaining readable labels and touch targets. */
-#formsView #formCards.form-cards{grid-template-columns:minmax(0,1fr)!important;gap:5px!important}
-#formsView #formCards .form-card{
+#formCards.form-cards{grid-template-columns:minmax(0,1fr)!important;gap:5px!important}
+#formCards .form-card{
  display:grid!important;grid-template-columns:minmax(0,1fr) auto auto!important;
  align-items:center!important;gap:8px 12px!important;padding:7px 10px!important;
  min-height:44px!important;box-shadow:none!important;
 }
-#formsView #formCards .form-card .form-card-title{
+#formCards .form-card .form-card-title{
  margin:0!important;font-size:14px!important;line-height:1.3!important;min-width:0!important;
 }
-#formsView #formCards .form-card .form-open-button{
+#formCards .form-card .form-open-button{
  width:auto!important;min-width:70px!important;min-height:36px!important;height:36px!important;
  margin:0!important;padding:6px 11px!important;border-radius:6px!important;font-size:12px!important;
 }
-#formsView #formCards .form-card-details{margin:0!important;border:0!important}
-#formsView #formCards .form-card-details summary{min-height:36px!important;display:flex!important;align-items:center!important;padding:4px!important;color:#b9c8c1!important}
-#formsView #formCards .form-card-details[open]{grid-column:1/-1!important}
+#formCards .form-card-details{margin:0!important;border:0!important}
+#formCards .form-card-details summary{min-height:36px!important;display:flex!important;align-items:center!important;padding:4px!important;color:#b9c8c1!important}
+#formCards .form-card-details[open]{grid-column:1/-1!important}
 body.form-mode #formWorkspace .field.operator-brand-field:not([hidden]){
  display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
  align-items:center!important;gap:4px 12px!important;min-height:44px!important;
@@ -1568,12 +1568,12 @@ body.form-mode #formWorkspace .operator-brand-field .binary-toggle-button.is-yes
 }
 body.form-mode #formWorkspace .operator-brand-field .field-error{grid-column:1/-1!important}
 @media(max-width:480px){
- #formsView #formCards .form-card{gap:6px!important;padding:6px 8px!important}
- #formsView #formCards .form-card .form-card-title{font-size:13px!important}
- #formsView #formCards .form-card-details summary{font-size:10px!important}
- #formsView #formCards .form-card .form-open-button{min-width:62px!important;padding:5px 8px!important}
+ #formCards .form-card{gap:6px!important;padding:6px 8px!important}
+ #formCards .form-card .form-card-title{font-size:13px!important}
+ #formCards .form-card-details summary{font-size:10px!important}
+ #formCards .form-card .form-open-button{min-width:62px!important;padding:5px 8px!important}
 }
 @media(pointer:coarse){
- #formsView #formCards .form-card .form-open-button,
+ #formCards .form-card .form-open-button,
  body.form-mode #formWorkspace .operator-brand-field .binary-toggle-button{min-height:44px!important;height:44px!important}
 }
