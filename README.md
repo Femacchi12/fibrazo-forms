@@ -271,3 +271,15 @@ Impacto Social: rama independiente feat/brand-solid-contrast-20261015, sin modif
 - Formulario Inteligencia de operadores: seis fotos dependientes con flecha y sangría. Marquilla despliegue: Sin marquilla primera opción, menú ubicado debajo del input y selección comprobada. Exploración presencial: los cuatro campos isp_N_calidad renderizan la flecha secundaria.
 - El panel flotante completo inicia contraído y se contrae cada vez que recibe `fibrazo:view-change` hacia mapa. Sintaxis de map-controls-ui.js verificada.
 - La revisión en este navegador confirma la ubicación actual; otras ciudades y dispositivos se cubrieron parcialmente mediante simulaciones, sin afirmar pruebas físicas de todos los casos. La propuesta de sincronización territorial pendiente sigue pausada.
+
+### FO-CHG-076 · Exportación My Maps (19/10/2026)
+- Sheet corporativo de salida: https://docs.google.com/spreadsheets/d/1KQH2itLwl5Z5pBOwoZMt0NNDnKJBZ7nHfyRzus825Z8/edit . Pestañas MYMAPS_VILLAVICENCIO, MYMAPS_NEIVA, MYMAPS_IBAGUE y GUIA_MYMAPS.
+- Derivados WKT del mismo ZIP unificado de Forms; todas las partes y huecos conservados. Simplificación exclusiva para orientación visual My Maps: Neiva 1 m, Ibagué/Villavicencio 2 m; originales y fuentes operativas intactos. Un mapa por ciudad para no superar 50.000 vértices.
+- VVC: 36 filas / 44.314 vértices; NVA: 34 / 41.364; IBG: 23 / 42.446. Relectura completa idéntica a los derivados generados. El usuario confirmó que My Maps quedó bien; no atribuir esa prueba a ejecución automática, cuyo selector Drive quedó en blanco.
+### FO-CHG-077 · Formularios y operadores en filas compactas (19/10/2026)
+- Catálogo: nombre y botón pequeño Abrir en el mismo renglón, con Ver detalles conservado; detalles abiertos expanden el contenido bajo la fila.
+- Operadores TIGO HFC/FTTH, CLARO HFC/FTTH y Movistar: etiqueta y único botón Sí/No contiguos, sin barra ancha ni texto repetido Toca para cambiar. Estado verde discreto para Sí y neutro para No; lectura por texto y aria-pressed, sin depender solo del color.
+- Interacción nativa click para ratón, tacto y activación de teclado; valores exactos Sí/No y validaciones conservados. Pintado centralizado al abrir, editar, limpiar o reutilizar operadores para evitar valores visuales obsoletos.
+- CSS circunscrito al catálogo y operadores, filas sobrias y sin sombras nuevas. Controles táctiles de 44 px con pointer:coarse; nombres legibles y adaptables. Sin cambiar APIs, permisos, fotos, preguntas, respuestas ni geografía.
+- Caché PWA v0.8.131 y versiones de app/UX/CSS renovadas. Sintaxis JavaScript y casos de inicialización, alternancia, retorno, repintado y nombre accesible PASS antes de publicar. Publicación autorizada por Edu directamente a producción; READY y verificación visual se registrarán en Manual/Changelog centrales.
+- Fuentes documentales centrales: Manual https://docs.google.com/document/d/1aecxyjjAMQuZ-cGfnkFiZ3ECgB56vnnxY2Xh_pUog6M/edit ; Registro https://docs.google.com/spreadsheets/d/1InVJe0iR0-GAebf-SB5sa9fZRcNmm8N1ShU62Pu-YAc/edit . Mantener historia QA y agregar cierre real de producción; guardar con enriquecimiento pendiente sigue EN PAUSA.

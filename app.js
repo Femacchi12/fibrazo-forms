@@ -378,7 +378,7 @@
         :"";
       card.innerHTML =
         '<h3 class="form-card-title">' + escapeHtml(form.name) + '</h3>' +
-        '<button class="primary-button form-open-button" type="button">Abrir formulario →</button>' +
+        '<button class="primary-button form-open-button" type="button" aria-label="Abrir '+escapeHtml(form.name)+'">Abrir →</button>' +
         '<details class="form-card-details">' +
           '<summary>Ver detalles</summary>' +
           '<div class="form-card-details-body">' +

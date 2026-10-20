@@ -249,6 +249,7 @@
     if(node.type==="hidden"){
       if(node.closest(".segmented-control")){paintSegmentedValue(key,value);return;}
       node.value=value||"";const holder=node.closest(".segmented-control,.binary-toggle");
+      if(holder?.classList.contains("binary-toggle")){paintBinaryToggle(holder,node.value);return;}
       holder?.querySelectorAll(".segment-option").forEach(b=>{const on=normalizeCityName(b.textContent)===normalizeCityName(value);b.classList.toggle("selected",on);b.setAttribute("aria-pressed",String(on));});
       return;
     }
@@ -433,7 +434,7 @@
     try{const saved=JSON.parse(localStorage.getItem("fibrazo:custom-isps")||"[]");state.ispOptions=[...new Set([...(state.ispOptions||[]),...saved])].sort((a,b)=>a.localeCompare(b,"es"));}catch(_){}
   }
   function clearOperators(){
-    ["tigo_hfc","tigo_ftth","claro_hfc","claro_ftth","movistar"].forEach(key=>{const n=document.querySelector('[name="'+css(key)+'"]');if(n){n.value="No";n.closest(".binary-toggle,.segmented-control")?.querySelectorAll("button").forEach(b=>{const on=normalizeCityName(b.textContent)==="no";b.classList.toggle("selected",on);b.classList.toggle("is-yes",false);b.setAttribute("aria-pressed",String(on));});}});
+    ["tigo_hfc","tigo_ftth","claro_hfc","claro_ftth","movistar"].forEach(key=>setFieldValue(key,"No"));
     ["isp_1","isp_2","isp_3","isp_4"].forEach(key=>{const n=document.querySelector('[name="'+css(key)+'"]');if(n)n.value="Sin ISP";});
     for(let i=1;i<=4;i++)paintSegmentedValue("isp_"+i+"_calidad","");
     document.querySelectorAll(".isp-field-state").forEach(el=>{el.classList.add("isp-none");el.classList.remove("isp-known","isp-unknown");});
@@ -617,15 +618,25 @@
     });
     holder.prepend(hidden);shell.append(holder,detail);return shell;
   }
+  function paintBinaryToggle(holder,value){
+    const b=holder?.querySelector(".binary-toggle-button");
+    if(!b)return;
+    const yes=normalizeCityName(value)==="si";
+    b.classList.toggle("is-yes",yes);
+    b.setAttribute("aria-pressed",String(yes));
+    b.textContent=yes?"Sí":"No";
+    b.setAttribute("aria-label",(b.dataset.label||"Opción")+": "+(yes?"Sí":"No")+". Cambiar a "+(yes?"No":"Sí"));
+    b.title="Cambiar a "+(yes?"No":"Sí");
+  }
   function toggleInput(field){
     const holder=document.createElement("div");holder.className="binary-toggle";
     const brand=field.key.startsWith("tigo_")?"brand-tigo":field.key.startsWith("claro_")?"brand-claro":field.key==="movistar"?"brand-movistar":"";
     if(brand){holder.classList.add(brand);queueMicrotask(()=>holder.closest(".field")?.classList.add(brand,"operator-brand-field"));}
     const hidden=document.createElement("input");hidden.type="hidden";hidden.name=field.key;hidden.value=String(field.default??"No");
-    const b=document.createElement("button");b.type="button";b.className="binary-toggle-button";
-    const paint=()=>{const yes=hidden.value==="Sí";b.classList.toggle("is-yes",yes);b.setAttribute("aria-pressed",String(yes));b.innerHTML='<span class="toggle-state">'+(yes?"Sí":"No")+'</span><span class="toggle-hint">Toca para cambiar</span>';};
-    b.addEventListener("pointerup",e=>{e.preventDefault();e.stopPropagation();hidden.value=hidden.value==="Sí"?"No":"Sí";paint();clearError(field.key);updateVisibility();});
-    paint();holder.append(hidden,b);return holder;
+    const b=document.createElement("button");b.type="button";b.className="binary-toggle-button";b.dataset.label=field.label;
+    const paint=()=>paintBinaryToggle(holder,hidden.value);
+    b.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();hidden.value=hidden.value==="Sí"?"No":"Sí";paint();clearError(field.key);updateVisibility();});
+    holder.append(hidden,b);paint();return holder;
   }
   function choiceInput(field){
     const grid=document.createElement("div");grid.className="choice-grid";
@@ -1452,13 +1463,7 @@
         node.value=value;
         const holder=node.closest(".binary-toggle,.segmented-control");
         if(holder?.classList.contains("binary-toggle")){
-          const b=holder.querySelector(".binary-toggle-button");
-          if(b){
-            const yes=normalizeCityName(value)==="si";
-            b.classList.toggle("is-yes",yes);
-            b.setAttribute("aria-pressed",String(yes));
-            b.innerHTML='<span class="toggle-state">'+(yes?"Sí":"No")+'</span><span class="toggle-hint">Toca para cambiar</span>';
-          }
+          paintBinaryToggle(holder,value);
         }else{
           holder?.querySelectorAll(".segment-option").forEach(b=>{const on=normalizeCityName(b.textContent)===normalizeCityName(value);b.classList.toggle("selected",on);b.setAttribute("aria-pressed",String(on));});
         }
