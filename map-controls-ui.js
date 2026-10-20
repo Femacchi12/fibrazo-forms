@@ -398,7 +398,8 @@
     }
     minimize?.addEventListener("click",()=>setCollapsed(true));
     openButton.addEventListener("click",()=>setCollapsed(false));
-    setCollapsed(false);
+    setCollapsed(true);
+    window.addEventListener("fibrazo:view-change",event=>{if(event.detail?.view==="map")setCollapsed(true);});
     $("mapFiltersToggle")?.addEventListener("click",()=>show("filters"));
     $("mapLayersToggle")?.addEventListener("click",()=>show("layers"));
     // Panel de mapa anclado a la esquina superior izquierda: no se arrastra.
