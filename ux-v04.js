@@ -371,7 +371,7 @@
     const paint=()=>{
       menu.innerHTML="";
       const q=input.value.trim().toLocaleLowerCase("es");
-      const matching=options.filter(x=>!q||x.toLocaleLowerCase("es").includes(q));
+      const matching=options.filter(x=>generalOption(x)||!q||x.toLocaleLowerCase("es").includes(q));
       for(const name of matching){
         const option=document.createElement("button");option.type="button";option.className="editable-options-choice";option.setAttribute("role","option");option.textContent=name;
         option.addEventListener("pointerdown",e=>e.preventDefault());
