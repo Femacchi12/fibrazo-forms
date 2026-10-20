@@ -1895,6 +1895,39 @@
     updateTrackingUi();
   }
 
+  // FO-CHG-075: initial GPS selects the city and available 1-3 strata once.
+  // Never override manual filters, even when a delayed territorial request completes.
+  async function selectTerritoryFromGps(position){
+    const selector=$("mapCityFilter");
+    if(!selector||!state.viewActive)return;
+    const startSelection=filterValues("mapCityFilter").join(",");
+    try{
+      const lat=position.coords.latitude,lng=position.coords.longitude;
+      const result=await authorizedFetch("/api/exploration?lat="+encodeURIComponent(lat)+"&lng="+encodeURIComponent(lng));
+      if(!state.viewActive||filterValues("mapCityFilter").join(",")!==startSelection)return;
+      const city=result.cityStatus==="DENTRO"?result.city:(result.qaTerritorial?.city?.status==="DENTRO"?result.qaTerritorial.city.assigned?.name:"");
+      if(!city){mapStatus("Ubicación encontrada; seleccioná la ciudad manualmente.","warning");return;}
+      const key=scopeCity(city);
+      if(![...selector.options].some(option=>option.value===key)){
+        const option=document.createElement("option");option.value=key;option.textContent=cityLabel(key);selector.add(option);
+      }
+      selectFilterValues(selector,[key]);
+      selector.dispatchEvent(new Event("change",{bubbles:true}));
+      const hasStrata=["villavicencio","neiva","ibague","cartagena"].includes(key)||isAmbCity(key);
+      if(!hasStrata){
+        state.polygonActive.estratos=false;
+        state.polygonSelections.estratos.clear();
+        clearPolygonLayer("estratos",{keepStatus:true});
+        renderLayerControls();
+      }
+      updateCurrentLocation(position,{center:true});
+      toggleFilters(false);
+      mapStatus("Ubicación detectada: "+cityLabel(key)+(hasStrata?" · estratos 1, 2 y 3 seleccionados.":" · sin capa de estratos confirmada."),"success");
+    }catch(error){
+      mapStatus("GPS ubicado. No se pudo identificar la ciudad; ajustá los filtros manualmente.","warning");
+    }
+  }
+
   function locateMe({auto=false}={}){
     if(!navigator.geolocation){
       if(!auto)mapStatus("Este dispositivo no ofrece ubicación GPS.","error");
@@ -1904,7 +1937,8 @@
     navigator.geolocation.getCurrentPosition(
       position=>{
         updateCurrentLocation(position,{center:true});
-        mapStatus(auto?"Mapa centrado en tu ubicación actual.":"Ubicación actual encontrada.","success");
+        if(auto)selectTerritoryFromGps(position);
+        else mapStatus("Ubicación actual encontrada.","success");
       },
       error=>{
         const message=error.code===1?"Permiso de ubicación denegado. Actívalo para este sitio.":"No se pudo obtener tu ubicación.";
@@ -1994,6 +2028,7 @@
   }
   function onMapOpen(){
     state.viewActive=true;
+    toggleFilters(false);
     if(!ensureMap())return;
     setTimeout(()=>state.map.invalidateSize(),100);
     if(!state.loadedOnce){
@@ -2012,10 +2047,8 @@
     updateTrackingUi();
     loadCityCatalog();
     for(const layer of ["barrios","estratos","troncales"])if(state.polygonActive[layer])refreshPolygonLayer(layer,{silent:true});
-    if(!state.autoLocated){
-      state.autoLocated=true;
-      setTimeout(()=>locateMe({auto:true}),220);
-    }
+    // Recheck position on every map opening; do not retain a previous city when traveling.
+    setTimeout(()=>{if(state.viewActive)locateMe({auto:true});},220);
     startAutoRefresh();
   }
   function onMapClose(){

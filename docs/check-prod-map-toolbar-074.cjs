@@ -6,7 +6,7 @@ const css=fs.readFileSync(path.join(__dirname,"../styles.css"),"utf8");
 const sw=fs.readFileSync(path.join(__dirname,"../service-worker.js"),"utf8");
 assert.match(html,/<button id="mapQaOptimizeToolbar"[^>]*\shidden\b/);
 assert.match(css,/#mapQaOptimizeToolbar\[hidden\]\{display:none!important\}/);
-assert.match(sw,/v0\.8\.127-20261019-map-toolbar074/);
+assert.match(sw,/const CACHE="fibrazo-forms-v[\d.]+-[a-z0-9-]+";/i);
 assert.match(code,/button.hidden=!isBuc/);
 assert.match(code,/const fullKey=layer==="estratos"/);
 assert.match(code,/if\(fullKey&&!state.manualRefreshId/);
