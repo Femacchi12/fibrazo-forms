@@ -2716,3 +2716,10 @@ input::placeholder,textarea::placeholder{color:#bfcfc6!important;opacity:1}
 
 /* FO-CHG-074 · No redundant QA precomputed status badge above map. */
 #mapQaOptimizeToolbar[hidden]{display:none!important}
+
+
+/* FO-CHG-082: keep the synchronization panel above navigation stacking contexts. */
+.hero-header:has(#networkPopover:not([hidden])){z-index:200!important}
+#networkPopover,#pendingPopover{max-height:calc(100dvh - 120px);overflow-y:auto;overscroll-behavior:contain}
+
+.network-actions{flex-wrap:wrap}

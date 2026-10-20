@@ -1449,6 +1449,13 @@
       return;
     }
 
+    if(result?.competitionPending&&!result?.territorialPending){
+      workspace?.classList.add("status-pending");card?.classList.add("status-pending");
+      if(title)title.textContent="Encuesta recibida en Forms";
+      if(statusTitle)statusTitle.textContent="Competencia pendiente de consolidar";
+      if(statusDetail)statusDetail.textContent="La respuesta está guardada en el servidor. La consolidación se reintentará automáticamente desde Pendientes; ya puedes continuar.";
+      return;
+    }
     if(result?.territorialPending||(isExplorationForm()&&result?.masterSync&&!result.masterSync.ok)){
       workspace?.classList.add("status-pending");card?.classList.add("status-pending");
       if(icon)icon.textContent="!";

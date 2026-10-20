@@ -69,8 +69,8 @@
   async function completion(id){
     const r=await get(id);
     if(!r||r.userEmail!==currentEmail())return null;
-    if(r.status!=="sent"&&r.status!=="sent_master_pending")return null;
-    return {ok:true,id:r.serverId||r.clientSubmissionId,queued:false,masterSync:r.masterSync,territorialPending:r.status==="sent_master_pending"};
+    if(!["sent","sent_master_pending","sent_competition_pending"].includes(r.status))return null;
+    return {ok:true,id:r.serverId||r.clientSubmissionId,queued:false,masterSync:r.masterSync,territorialPending:r.status==="sent_master_pending",competitionPending:r.status==="sent_competition_pending",isTest:r.payload.isTest===true};
   }
 
   function notifyRecord(record,result=null){
@@ -228,8 +228,9 @@
           if(!serverResult?.ok||!serverResult.id)throw new Error("El servidor no confirmó la respuesta.");
           const territorialForm=window.FIBRAZO_BACKGROUND_TERRITORY?.FORMS.includes(record.formId);
           const masterPending=!!serverResult.territorialError||((record.formId==="EXPLORACION"||record.formId==="EXPLORACION_PRESENCIAL")&&serverResult?.masterSync?.ok!==true);
-          record={...record,payload:masterPending?record.payload:{...record.payload,photos:[]},status:masterPending?"sent_master_pending":"sent",masterSync:serverResult.masterSync||null,syncedAt:new Date().toISOString(),serverId:serverResult.id,nextAttemptAt:0,lastError:masterPending?"Respuesta recibida; falta conciliación territorial en servidor.":""};
-          await put(record);notifyRecord(record,{...serverResult,queued:false,territorialPending:masterPending});
+          const competitionPending=serverResult.competitionSync?.ok===false;
+          record={...record,payload:masterPending?record.payload:{...record.payload,photos:[]},status:masterPending?"sent_master_pending":competitionPending?"sent_competition_pending":"sent",masterSync:serverResult.masterSync||null,syncedAt:new Date().toISOString(),serverId:serverResult.id,nextAttemptAt:competitionPending?Date.now()+15000:0,lastError:masterPending?"Respuesta recibida; falta conciliación territorial en servidor.":competitionPending?"Forms recibido. La consolidación de competencia se reintentará automáticamente.":""};
+          await put(record);notifyRecord(record,{...serverResult,queued:false,territorialPending:masterPending,competitionPending,isTest:record.payload.isTest===true});
           if(!masterPending&&territorialForm)window.dispatchEvent(new CustomEvent("fibrazo:submission-saved",{detail:{formId:record.formId,id:serverResult.id}}));
           synced++;
         }catch(error){
@@ -298,7 +299,7 @@
     renderFormHistory(records);
   }
 
-  function statusLabel(status){return status==="sent_master_pending"?"Recibido · revisión territorial":status==="sent"?"Sincronizado":status==="syncing"?"Enviando":status==="enriching"?"Buscando barrio / estrato":status==="territorial_pending"?"Datos territoriales pendientes":status==="error"?"Error · reintentar":"Pendiente de envío";}
+  function statusLabel(status){return status==="sent_competition_pending"?"Recibido · competencia pendiente":status==="sent_master_pending"?"Recibido · revisión territorial":status==="sent"?"Sincronizado":status==="syncing"?"Enviando":status==="enriching"?"Buscando barrio / estrato":status==="territorial_pending"?"Datos territoriales pendientes":status==="error"?"Error · reintentar":"Pendiente de envío";}
   function renderFormHistory(records){
     const host=$("formHistoryList");if(!host)return;
     const formId=String(window.FIBRAZO_ACTIVE_FORM_ID||"");
@@ -317,7 +318,7 @@
     const show=typeof force==="boolean"?force:panel.hidden;
     panel.hidden=!show;
     btn.setAttribute("aria-expanded",String(show));
-    if(show) refreshUi();
+    if(show){window.dispatchEvent(new CustomEvent("fibrazo:popover-open",{detail:{id:"network"}}));refreshUi();}
   }
 
   function renderSyncing(active){
@@ -335,6 +336,12 @@
 
   $("networkToggle")?.addEventListener("click",e=>{e.stopPropagation();togglePanel();});
   $("networkClose")?.addEventListener("click",()=>togglePanel(false));
+  window.addEventListener("fibrazo:popover-open",event=>{if(event.detail?.id!=="network")togglePanel(false);});
+  document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!$("networkPopover")?.hidden){togglePanel(false);$("networkToggle")?.focus();}});
+  $("competitionSyncButton")?.addEventListener("click",async()=>{
+    const btn=$("competitionSyncButton"),message=$("competitionSyncMessage");btn.disabled=true;message.textContent="Conciliando Forms con Competencia…";
+    try{const user=window.firebase.auth().currentUser,token=await user.getIdToken();const r=await timedFetch("/api/competition-sync",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:"{}"},60000);const data=await r.json();if(!r.ok||!data.ok)throw Error(data.error||data.reason||"No se completó la conciliación");message.textContent="Conciliación completa: "+data.records+" registros revisados; "+data.changedRows+" filas actualizadas. GPS pendiente: "+data.pendingCoordinates+".";}catch(e){message.textContent="Forms se conserva. No se completó Competencia: "+e.message;}finally{btn.disabled=false;}
+  });
   $("syncNowButton")?.addEventListener("click",()=>syncAll({manual:true}));
   document.addEventListener("click",e=>{if(!e.target.closest(".network-hub"))togglePanel(false);});
 
@@ -362,6 +369,7 @@
   }
 
   window.firebase?.auth?.().onAuthStateChanged(user=>{
+    if($("competitionSyncButton"))$("competitionSyncButton").hidden=String(user?.email||"").toLowerCase()!=="eduardo@fibrazo.com";
     setTimeout(refreshUi,120);
     if(user&&navigator.onLine)setTimeout(()=>syncAll(),700);
   });

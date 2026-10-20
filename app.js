@@ -267,7 +267,8 @@
     if(hub)hub.hidden=false;
     if(toggle.dataset.pendingBound!=="1"){
       toggle.dataset.pendingBound="1";
-      const setOpen=open=>{popover.hidden=!open;toggle.setAttribute("aria-expanded",String(open));if(open)refreshPendingData();};
+      const setOpen=open=>{popover.hidden=!open;toggle.setAttribute("aria-expanded",String(open));if(open){window.dispatchEvent(new CustomEvent("fibrazo:popover-open",{detail:{id:"pending"}}));refreshPendingData();}};
+      window.addEventListener("fibrazo:popover-open",event=>{if(event.detail?.id!=="pending")setOpen(false);});
       toggle.addEventListener("click",()=>setOpen(popover.hidden));
       close.addEventListener("click",()=>setOpen(false));
       document.addEventListener("pointerdown",event=>{if(!popover.hidden&&!popover.contains(event.target)&&!toggle.contains(event.target))setOpen(false);});
@@ -971,3 +972,4 @@
     return String(value).replace(/["\\]/g, "\\$&");
   }
 })();
+

@@ -31,7 +31,7 @@
   ],
   "functions": {
     "api/submissions.js": {
-      "maxDuration": 30
+      "maxDuration": 60
     },
     "api/admin.js": {
       "maxDuration": 30
@@ -47,7 +47,11 @@
     },
     "api/exploration.js": {
       "maxDuration": 30
+    },
+    "api/competition-sync.js": {
+      "maxDuration": 60
     }
   },
   "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':(exclude)docs/**' ':(exclude)README.md' || exit 1"
 }
+

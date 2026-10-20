@@ -17,6 +17,7 @@ async function fixtureFetch(url,options){
   posts++;const p=JSON.parse(options.body);seen.push(p);if(!writes.has(p.clientSubmissionId))writes.set(p.clientSubmissionId,p);
   if(mode==='ack-loss'&&!failedOnce){failedOnce=true;throw Error('Response lost after write');}
   if(mode==='master-pending')return response({ok:true,id:p.clientSubmissionId,masterSync:{ok:false,reason:'FIXTURE_REVIEW'}});
+  if(mode==='competition-pending')return response({ok:true,id:p.clientSubmissionId,masterSync:{ok:true},competitionSync:{ok:false,reason:'COMPETITION_BUSY_RETRY'}});
   return response({ok:true,id:p.clientSubmissionId,duplicate:posts>writes.size,masterSync:{ok:true,scope:'GLOBAL_ONLY'}});
  }
  throw Error('Unexpected request '+url);
@@ -59,6 +60,11 @@ async function waitFor(fn){for(let i=0;i<100;i++){if(fn())return;await new Promi
  const partial=(await records(w)).find(r=>r.clientSubmissionId==='J'),postCount=posts;
  await w.FIBRAZO_OFFLINE.syncAll({manual:true});
  check(partial.status==='sent_master_pending'&&partial.payload.photos.length===1&&posts===postCount,'partial receipt remains visible, retains photos and does not repeat master creation');
+ online=false;await w.FIBRAZO_OFFLINE.submit(payload(w,'K'));mode='competition-pending';online=true;await w.FIBRAZO_OFFLINE.syncAll({manual:true});
+ const competition=(await records(w)).find(r=>r.clientSubmissionId==='K');
+ check(competition.status==='sent_competition_pending'&&competition.nextAttemptAt>Date.now()&&(await w.FIBRAZO_OFFLINE.completion('K')).competitionPending,'received Forms job keeps a durable retry until competition confirms');
+ mode='ok';await w.FIBRAZO_OFFLINE.syncAll({manual:true});
+ check((await records(w)).find(r=>r.clientSubmissionId==='K').status==='sent'&&[...writes.keys()].filter(id=>id==='K').length===1,'competition retry reuses received ID without repeating the original response');
  const html=fs.readFileSync(__dirname+'/../index.html','utf8'),sw=fs.readFileSync(__dirname+'/../service-worker.js','utf8');
  check(html.indexOf('src="/background-territory.js?')<html.indexOf('src="/offline-v04.js?')&&html.includes('src="/background-territory.js?')&&sw.includes('"/background-territory.js"'),'production module loaded before queue and precached');
  console.log(results.join('\n'));console.log('ALL '+results.length+' TESTS PASS · mocked endpoints · real fake-indexeddb transactions');online=false;

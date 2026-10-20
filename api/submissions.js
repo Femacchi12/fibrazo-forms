@@ -5,6 +5,8 @@ const {
   validatePublicGuards,validatePhotos,validateSubmission,httpError,SHEET_ID,DEFAULT_DOMAIN,EXCEPTION
 }=require("./_core");
 const {resolveTerritorial,TERRITORIAL_VERSION}=require("./_territorial");
+const {trySyncCompetition}=require("./_competition-sync");
+const {validPoint,coordinateNumber}=require("./_competition-plan");
 
 const LEGACY_PHOTO_FOLDER_ENV={
   CHURN:"DRIVE_CHURN_FOLDER_ID",
@@ -415,7 +417,7 @@ async function readRows(auth,forms,requested,limit,user,caps){
             ciudad:row[2],municipio:row[2],sector_barrio:row[3],
             tigo_hfc:row[7],tigo_ftth:row[8],claro_hfc:row[9],claro_ftth:row[10],movistar:row[11],
             isp_1:row[12],isp_2:row[13],isp_3:row[14],isp_4:row[15],tipo,
-            barrio:row[47]||row[3],estrato:row[53]||row[55]||row[71]||"",troncal:row[59]||row[61]||"",
+            barrio:row[47]||row[3],estrato:row[51]==="DENTRO"?(row[53]||"Sin información"):"Sin información",estrato_referencia:row[55]||"",estrato_registrado:row[71]||"",troncal:row[59]||row[61]||"",
             zona_empresarial:row[63]||"",estrato_observado:row[64]||"",nivel_seguridad:row[65]||"",tipo_terreno:row[72]||"",barrio_asentamiento_informal:row[73]||""
           },
           location:{lat:row[17],lng:row[18],accuracy:row[19]},
@@ -520,16 +522,21 @@ module.exports=async(req,res)=>{
         byKey.foto_marquilla_drop||String(payload.existingPhotoFields?.foto_marquilla_drop||old[26]||""),
         byKey.foto_tensor_acometida||String(payload.existingPhotoFields?.foto_tensor_acometida||old[28]||"")
       ];
+      // A photo/metadata edit must never erase the previously captured point.
+      if(!payload.location&&validPoint(coordinateNumber(old[9]),coordinateNumber(old[10])))payload.location={lat:coordinateNumber(old[9]),lng:coordinateNumber(old[10]),accuracy:coordinateNumber(old[11])};
+      if(payload.location&&!validPoint(coordinateNumber(payload.location.lat),coordinateNumber(payload.location.lng)))throw httpError("VALID_COORDINATE_REQUIRED",400);
       const row=buildRow(form,payload,editId,links,owner||email);
       // Preservar el indicador histórico en una edición autorizada.
       row[31]=old[31]|| (payload.isTest?"Sí":"No");
       row[0]=old[0]||row[0];
       await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!A${idx+2}:AF${idx+2}`,valueInputOption:"RAW",requestBody:{values:[row]}});
-      return res.status(200).json({ok:true,id:editId,updated:true,photos:links});
+      const competitionSync=await trySyncCompetition(auth,{sourceId:SHEET_ID});
+      return res.status(200).json({ok:true,id:editId,updated:true,photos:links,competitionSync});
     }
 
     const id=resolveSubmissionId(payload,formId);
     if(await submissionExists(auth,form,id)){
+      const competitionSync=usesTerritorialEngine(form.id)&&!isPublicRequest?await trySyncCompetition(auth,{sourceId:SHEET_ID}):{ok:true,skipped:true};
       if(isExploration(form.id)){
         const sheets=google.sheets({version:"v4",auth});
         const existing=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!B2:AF`});
@@ -544,15 +551,16 @@ module.exports=async(req,res)=>{
         const observedCity=String(row?.[1]||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
         const unresolvedAmb=syncState==="GLOBAL_ONLY"&&["bucaramanga","floridablanca","giron","piedecuesta"].includes(observedCity);
         const ok=syncState==="OK"||(syncState==="GLOBAL_ONLY"&&!unresolvedAmb);
-        return res.status(200).json({ok:true,id,duplicate:true,photos:[],masterSync:{ok,pointId,scope:syncState==="GLOBAL_ONLY"&&!unresolvedAmb?"GLOBAL_ONLY":"PROJECT",reason:unresolvedAmb?"TERRITORIAL_UNRESOLVED":ok?"":syncState||"PENDIENTE"}});
+        return res.status(200).json({ok:true,id,duplicate:true,photos:[],competitionSync,masterSync:{ok,pointId,scope:syncState==="GLOBAL_ONLY"&&!unresolvedAmb?"GLOBAL_ONLY":"PROJECT",reason:unresolvedAmb?"TERRITORIAL_UNRESOLVED":ok?"":syncState||"PENDIENTE"}});
       }
-      return res.status(200).json({ok:true,id,duplicate:true,photos:[]});
+      return res.status(200).json({ok:true,id,duplicate:true,photos:[],competitionSync});
     }
 
     const recordedEmail=form.collectEmail?String(user?.email||"").trim().toLowerCase():"ANONIMO";
     if(form.collectEmail&&!recordedEmail) throw httpError("EMAIL_REQUIRED",401);
     if(!payload.isTest&&await hasExistingResponseForEmail(auth,form,recordedEmail)) throw httpError("ALREADY_RESPONDED",409);
 
+    if(usesTerritorialEngine(formId)&&!validPoint(coordinateNumber(payload.location?.lat),coordinateNumber(payload.location?.lng)))throw httpError("VALID_COORDINATE_REQUIRED",400);
     const links=await uploadPhotos(auth,form,id,payload.photos||[]);
     if(formId==="INTELIGENCIA_OPERADOR"){
       const keyed=Object.fromEntries((payload.photos||[]).map((p,i)=>[String(p.fieldKey||""),links[i]||""]));
@@ -696,7 +704,8 @@ module.exports=async(req,res)=>{
       });
     }
 
-    return res.status(200).json({ok:true,id,photos:links,masterSync,territorial,territorialError});
+    const competitionSync=usesTerritorialEngine(form.id)&&!isPublicRequest?await trySyncCompetition(auth,{sourceId:SHEET_ID}):{ok:true,skipped:true};
+    return res.status(200).json({ok:true,id,photos:links,masterSync,territorial,territorialError,competitionSync});
   }catch(error){
     if(publicContext?.ipHash&&auth){
       try{
@@ -717,3 +726,4 @@ module.exports=async(req,res)=>{
     });
   }
 };
+
