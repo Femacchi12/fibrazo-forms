@@ -323,11 +323,6 @@
   function renderField(field){
     const wrap=document.createElement("div");wrap.className="field"+(field.full?" full":"");wrap.dataset.key=field.key;wrap.dataset.section=field.section||"default";
     const label=document.createElement("label");label.className="field-label";const simpleGps=field.key==="coordenadas"&&field.type==="gps"&&isExplorationForm();label.innerHTML=esc(simpleGps?"Coordenadas · ingresa manualmente o utiliza el GPS":field.label)+(field.required?'<span class="required">*</span>':"");wrap.appendChild(label);
-    if(["municipio","sector_barrio","estrato"].includes(field.key)){
-      const tools=document.createElement("div");tools.className="field-quick-tools";
-      const copy=document.createElement("button");copy.type="button";copy.textContent="⧉ Copiar";copy.addEventListener("click",async()=>{const v=fieldValue(field.key);if(v){try{await navigator.clipboard.writeText(String(v));copy.textContent="✓ Copiado";setTimeout(()=>copy.textContent="⧉ Copiar",1000);}catch(_){}}});
-      tools.appendChild(copy);wrap.appendChild(tools);
-    }
     if(field.help&&!simpleGps&&field.section!=="operadores"&&!(state.form?.id==="INTELIGENCIA_OPERADOR"&&["identificacion","elementos","calidad","validacion"].includes(field.section))){const h=document.createElement("span");h.className="field-help field-help-top";h.textContent=field.help;wrap.appendChild(h);}
 
     if(field.type==="text"){wrap.appendChild(textInput(field));}
@@ -344,6 +339,13 @@
     else if(field.type==="isp-autocomplete"){wrap.appendChild(ispAutocompleteInput(field));}
     else if(field.type==="photos"){wrap.appendChild(photoInput(field));}
     else if(field.type==="photo-single"){wrap.appendChild(singlePhotoInput(field));}
+
+    if(["municipio","sector_barrio","estrato"].includes(field.key)){
+      const tools=document.createElement("div");tools.className="field-quick-tools";
+      const copy=document.createElement("button");copy.type="button";copy.setAttribute("aria-label","Copiar "+field.label);copy.textContent="⧉ Copiar";copy.addEventListener("click",async()=>{const v=fieldValue(field.key);if(v){try{await navigator.clipboard.writeText(String(v));copy.textContent="✓ Copiado";setTimeout(()=>copy.textContent="⧉ Copiar",1000);}catch(_){}}});
+      const control=wrap.querySelector(":scope > input, :scope > select, :scope > .editable-options");
+      if(control){const row=document.createElement("div");row.className="field-value-row";control.before(row);row.append(control,tools);tools.appendChild(copy);}
+    }
 
     if(field.key==="sector_barrio"||field.key==="estrato"){
       const info=document.createElement("div");info.className="field-geo-info";info.dataset.geoInfoFor=field.key;info.hidden=true;wrap.appendChild(info);
