@@ -1,6 +1,10 @@
 (() => {
   const DB_NAME="fibrazoFormsOffline";
   const DB_VERSION=1;
+  const LEASE_STORE="queue";
+  const ownerId="worker-"+(crypto.randomUUID?.()||Math.random().toString(36).slice(2));
+  const LEASE_MS=90000;
+  let retryTimer=null;
   const STORE="queue";
   const $=id=>document.getElementById(id);
   let installPrompt=null;
@@ -18,7 +22,8 @@
           store.createIndex("status","status",{unique:false});
         }
       };
-      req.onsuccess=()=>resolve(req.result);
+      req.onsuccess=()=>{req.result.onversionchange=()=>req.result.close();resolve(req.result);};
+      req.onblocked=()=>reject(new Error("Cierra otras pestañas antiguas de Forms y vuelve a guardar."));
       req.onerror=()=>reject(req.error);
     });
   }
@@ -36,6 +41,70 @@
     });
   }
 
+  async function lease(acquire=true){
+    const db=await openDb();
+    return new Promise((resolve,reject)=>{
+      const transaction=db.transaction(LEASE_STORE,"readwrite"),store=transaction.objectStore(LEASE_STORE);
+      let granted=false;
+      const req=store.get("__FIBRAZO_QUEUE_LEASE__");
+      req.onsuccess=()=>{
+        const old=req.result,now=Date.now();
+        if(acquire&&(!old||old.owner===ownerId||old.expires<=now)){store.put({clientSubmissionId:"__FIBRAZO_QUEUE_LEASE__",kind:"lease",owner:ownerId,expires:now+LEASE_MS});granted=true;}
+        if(!acquire&&old?.owner===ownerId)store.delete("__FIBRAZO_QUEUE_LEASE__");
+      };
+      transaction.oncomplete=()=>{db.close();resolve(granted);};
+      transaction.onerror=transaction.onabort=()=>{db.close();reject(transaction.error||new Error("QUEUE_LOCK_FAILED"));};
+    });
+  }
+
+  async function get(id){
+    const db=await openDb();
+    return new Promise((resolve,reject)=>{
+      const t=db.transaction(STORE,"readonly"),req=t.objectStore(STORE).get(id);
+      req.onsuccess=()=>{db.close();resolve(req.result);};
+      req.onerror=()=>{db.close();reject(req.error);};
+    });
+  }
+
+  async function completion(id){
+    const r=await get(id);
+    if(!r||r.userEmail!==currentEmail())return null;
+    if(r.status!=="sent"&&r.status!=="sent_master_pending")return null;
+    return {ok:true,id:r.serverId||r.clientSubmissionId,queued:false,masterSync:r.masterSync,territorialPending:r.status==="sent_master_pending"};
+  }
+
+  function notifyRecord(record,result=null){
+    window.dispatchEvent(new CustomEvent("fibrazo:queue-change",{detail:{id:record.clientSubmissionId,status:record.status,lastError:record.lastError,result}}));
+  }
+
+  async function timedFetch(url,options,timeout=45000){
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);
+    try{return await fetch(url,{...options,signal:controller.signal});}
+    finally{clearTimeout(timer);}
+  }
+
+  async function enrichPayload(payload){
+    const policy=window.FIBRAZO_BACKGROUND_TERRITORY;
+    if(!policy?.needsLookup(payload))return payload;
+    const user=window.firebase?.auth?.().currentUser;
+    if(!user)throw new Error("AUTH_REQUIRED");
+    const token=await user.getIdToken(),point=payload.backgroundTerritory.point;
+    const hint=payload.backgroundTerritory.cityHint||payload.data?.municipio||payload.location?.cityDetected||"";
+    const response=await timedFetch("/api/exploration?lat="+encodeURIComponent(point.lat)+"&lng="+encodeURIComponent(point.lng)+"&city="+encodeURIComponent(hint),{headers:{Authorization:"Bearer "+token},cache:"no-store"},30000);
+    const data=await response.json();
+    if(!response.ok){const e=new Error(data.error||"No se completó la consulta territorial.");e.httpStatus=response.status;throw e;}
+    return policy.applyResult(payload,data,window.FIBRAZO_QA_STRATUM_POLICY);
+  }
+
+  async function scheduleRetry(){
+    clearTimeout(retryTimer);
+    if(!navigator.onLine||!currentEmail())return;
+    const pending=(await all()).filter(r=>r.userEmail===currentEmail()&&!["sent","sent_master_pending","error"].includes(r.status));
+    if(!pending.length)return;
+    const due=Math.min(...pending.map(r=>Number(r.nextAttemptAt)||0));
+    retryTimer=setTimeout(()=>syncAll(),Math.min(60000,Math.max(1500,due-Date.now())));
+  }
+
   async function put(record){
     return tx("readwrite",store=>store.put(record));
   }
@@ -47,7 +116,7 @@
     return new Promise((resolve,reject)=>{
       const t=db.transaction(STORE,"readonly");
       const req=t.objectStore(STORE).getAll();
-      req.onsuccess=()=>{db.close();resolve(req.result||[]);};
+      req.onsuccess=()=>{db.close();resolve((req.result||[]).filter(r=>r.kind!=="lease"));};
       req.onerror=()=>{db.close();reject(req.error);};
     });
   }
@@ -69,7 +138,7 @@
     const user=window.firebase?.auth?.().currentUser;
     if(!user) throw new Error("AUTH_REQUIRED");
     const token=await user.getIdToken();
-    const response=await fetch("/api/submissions",{
+    const response=await timedFetch("/api/submissions",{
       method:"POST",
       headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},
       body:JSON.stringify(payload)
@@ -103,6 +172,9 @@
   async function queuePayload(payload,lastError=""){
     const email=currentEmail();
     if(!email) throw new Error("No hay una sesión activa para asociar esta respuesta.");
+    payload=JSON.parse(JSON.stringify(payload));
+    const existing=await get(payload.clientSubmissionId);
+    if(existing){if(existing.userEmail!==email)throw new Error("QUEUE_OWNER_MISMATCH");return {ok:true,id:existing.clientSubmissionId,queued:existing.status!=="sent",territorialPending:window.FIBRAZO_BACKGROUND_TERRITORY?.needsLookup(existing.payload)};}
     await ensureSpace(payload);
     const record={
       clientSubmissionId:payload.clientSubmissionId,
@@ -110,13 +182,14 @@
       payload,
       userEmail:email,
       createdAt:new Date().toISOString(),
-      status:"pending",
+      status:window.FIBRAZO_BACKGROUND_TERRITORY?.needsLookup(payload)?"territorial_pending":"pending",
+      nextAttemptAt:0,
       attempts:0,
       lastError:String(lastError||"").slice(0,250)
     };
-    await put(record);
+    try{await tx("readwrite",store=>store.add(record));}catch(error){if(error?.name!=="ConstraintError")throw error;const old=await get(record.clientSubmissionId);if(!old||old.userEmail!==email)throw error;}
     await refreshUi();
-    return {ok:true,id:payload.clientSubmissionId,queued:true};
+    return {ok:true,id:payload.clientSubmissionId,queued:true,territorialPending:record.status==="territorial_pending"};
   }
 
   async function submit(payload){
@@ -127,36 +200,54 @@
   }
 
   async function syncAll({manual=false}={}){
-    if(syncing) return;
-    if(!navigator.onLine){await refreshUi();return;}
-    const user=window.firebase?.auth?.().currentUser;
-    if(!user){await refreshUi();return;}
+    if(syncing)return;
+    if(!navigator.onLine||!currentEmail()){await refreshUi();return;}
     syncing=true;
-    renderSyncing(true);
-    const email=currentEmail();
-    const records=(await all()).filter(item=>item.userEmail===email&&item.status!=="sent"&&item.status!=="sent_master_pending").sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
-    let synced=0,failed=0;
-    for(const record of records){
-      try{
-        await put({...record,status:"syncing",attempts:(record.attempts||0)+1,lastError:""});
-        const serverResult=await postPayload(record.payload);
-        const compactPayload={...record.payload,photos:[]};
-        const masterPending=(record.formId==="EXPLORACION"||record.formId==="EXPLORACION_PRESENCIAL")&&serverResult?.masterSync?.ok===false;
-        await put({...record,payload:compactPayload,status:masterPending?"sent_master_pending":"sent",masterSync:serverResult?.masterSync||null,syncedAt:new Date().toISOString(),serverId:serverResult?.id||record.clientSubmissionId,lastError:masterPending?"Respuesta recibida; sincronización territorial pendiente.":""});
-        synced++;
-      }catch(error){
-        const permanent=error.httpStatus && !isTemporaryHttp(error.httpStatus);
-        await put({...record,status:permanent?"error":"pending",attempts:(record.attempts||0)+1,lastError:String(error.message||"Error").slice(0,250)});
-        failed++;
-        if(!navigator.onLine) break;
+    let locked=false,heartbeat=null,synced=0,failed=0;
+    try{
+      locked=await lease();
+      if(!locked)return;
+      heartbeat=setInterval(()=>lease().catch(()=>{}),20000);
+      renderSyncing(true);
+      const email=currentEmail();
+      const records=(await all()).filter(r=>r.userEmail===email&&!["sent","sent_master_pending"].includes(r.status)&&(manual||r.status!=="error")&&(manual||!r.nextAttemptAt||r.nextAttemptAt<=Date.now())).sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
+      for(let record of records){
+        if(!navigator.onLine||currentEmail()!==email)break;
+        try{
+          record={...record,attempts:(record.attempts||0)+1,lastError:"",status:window.FIBRAZO_BACKGROUND_TERRITORY?.needsLookup(record.payload)?"enriching":"syncing"};
+          await put(record);notifyRecord(record);await refreshUi();
+          if(record.status==="enriching"){
+            const payload=await enrichPayload(record.payload);
+            if(currentEmail()!==email)throw new Error("AUTH_CHANGED");
+            record={...record,payload,status:"pending",lastError:""};
+            await put(record); // Durable enriched snapshot before any POST.
+          }
+          if(currentEmail()!==email)throw new Error("AUTH_CHANGED");
+          record={...record,status:"syncing"};await put(record);notifyRecord(record);
+          const serverResult=await postPayload(record.payload);
+          if(!serverResult?.ok||!serverResult.id)throw new Error("El servidor no confirmó la respuesta.");
+          const territorialForm=window.FIBRAZO_BACKGROUND_TERRITORY?.FORMS.includes(record.formId);
+          const masterPending=!!serverResult.territorialError||((record.formId==="EXPLORACION"||record.formId==="EXPLORACION_PRESENCIAL")&&serverResult?.masterSync?.ok!==true);
+          record={...record,payload:masterPending?record.payload:{...record.payload,photos:[]},status:masterPending?"sent_master_pending":"sent",masterSync:serverResult.masterSync||null,syncedAt:new Date().toISOString(),serverId:serverResult.id,nextAttemptAt:0,lastError:masterPending?"Respuesta recibida; falta conciliación territorial en servidor.":""};
+          await put(record);notifyRecord(record,{...serverResult,queued:false,territorialPending:masterPending});
+          if(!masterPending&&territorialForm)window.dispatchEvent(new CustomEvent("fibrazo:submission-saved",{detail:{formId:record.formId,id:serverResult.id}}));
+          synced++;
+        }catch(error){
+          const permanent=error.httpStatus&&error.httpStatus!==401&&!isTemporaryHttp(error.httpStatus);
+          record={...record,status:permanent?"error":window.FIBRAZO_BACKGROUND_TERRITORY?.needsLookup(record.payload)?"territorial_pending":"pending",nextAttemptAt:Date.now()+Math.min(60000,5000*2**Math.min(record.attempts||1,4)),lastError:String(error.message||"Error").slice(0,250)};
+          await put(record);notifyRecord(record);failed++;
+        }
       }
+    }catch(error){
+      console.error("OFFLINE_QUEUE_ERROR",error?.message||"QUEUE_FAILED");
+    }finally{
+      clearInterval(heartbeat);
+      if(locked)await lease(false).catch(()=>{});
+      syncing=false;renderSyncing(false);
+      await refreshUi().catch(()=>{});
+      await scheduleRetry().catch(()=>{});
     }
-    syncing=false;
-    renderSyncing(false);
-    await refreshUi();
-    if(manual){
-      showSyncMessage(synced ? "Sincronizadas: "+synced+(failed?" · con error: "+failed:"") : failed ? "No se pudo sincronizar. Revisa los pendientes." : "No hay respuestas pendientes.");
-    }
+    if(manual)showSyncMessage(synced?"Sincronizadas: "+synced+(failed?" · con error: "+failed:""):failed?"No se pudo sincronizar. Revisa los pendientes.":"No hay respuestas pendientes.");
   }
 
   function formReference(record){
@@ -197,7 +288,7 @@
       list.innerHTML=visible.length?visible.map(record=>
         '<article class="offline-item '+(record.status==="error"?"error":"")+'">'+
         '<div><strong>'+escapeHtml(record.formId)+'</strong><p>'+escapeHtml(formReference(record))+'</p><small>'+escapeHtml(formatTime(record.createdAt))+'</small></div>'+
-        '<span>'+escapeHtml(record.status==="sent_master_pending"?"Conciliación territorial":record.status==="error"?"Error":record.status==="syncing"?"Sincronizando":"Pendiente")+'</span>'+
+        '<span>'+escapeHtml(statusLabel(record.status))+'</span>'+
         (record.lastError?'<small class="offline-error">'+escapeHtml(record.lastError)+'</small>':"")+
         '</article>'
       ).join(""):'<div class="pending-empty">No hay respuestas pendientes.</div>';
@@ -207,7 +298,7 @@
     renderFormHistory(records);
   }
 
-  function statusLabel(status){return status==="sent_master_pending"?"Recibido · maestro pendiente":status==="sent"?"Enviado":status==="syncing"?"Enviando":status==="error"?"Error":"Pendiente";}
+  function statusLabel(status){return status==="sent_master_pending"?"Recibido · revisión territorial":status==="sent"?"Sincronizado":status==="syncing"?"Enviando":status==="enriching"?"Buscando barrio / estrato":status==="territorial_pending"?"Datos territoriales pendientes":status==="error"?"Error · reintentar":"Pendiente de envío";}
   function renderFormHistory(records){
     const host=$("formHistoryList");if(!host)return;
     const formId=String(window.FIBRAZO_ACTIVE_FORM_ID||"");
@@ -276,6 +367,7 @@
   });
 
   setTimeout(refreshUi,200);
+  setInterval(()=>{if(navigator.onLine&&document.visibilityState==="visible")syncAll();},60000);
 
-  window.FIBRAZO_OFFLINE={submit,syncAll,createSubmissionId,refreshUi,list:all,statusLabel};
+  window.FIBRAZO_OFFLINE={submit,syncAll,createSubmissionId,refreshUi,list:all,statusLabel,completion,territoryEnabled:!!window.FIBRAZO_BACKGROUND_TERRITORY};
 })();

@@ -9,7 +9,7 @@ assert.ok(map.includes("sheet.addEventListener(\"click\",event=>{\n      handleM
 assert.ok(map.includes('data-map-copy-point data-lat="'+String.fromCharCode(39)+'+Number(lat)+'));
 assert.ok(map.includes('document.addEventListener("click",handleMapCoordinateCopy)'));
 assert.ok(css.includes("FO-CHG-073 · Compact Copy and Go"));
-assert.ok(html.includes("/map-v01.js?v=20261019-map-copy073"));
+assert.match(html,/src="\/map-v01\.js\?v=[^"]+"/);
 assert.ok(form.includes("Más de 25 m: no se sugiere automáticamente; referencia no canónica."));
 assert.ok(form.includes("No se encontró polígono QA de estrato a menos de 5 km"));
 assert.ok(form.includes("const qaNearby=")); // 25m rule preserved

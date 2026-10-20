@@ -1,7 +1,7 @@
-const CACHE="fibrazo-forms-v0.8.137-20261020-icon080";
+const CACHE="fibrazo-forms-v0.8.138-20261020-background081";
 const APP_SHELL=[
   "/","/index.html","/public","/styles.css","/brand-alignment.css","/executive-density.css","/forms-config.js","/app.js","/access-v03.js",
-  "/qa-stratum-policy.js","/ux-v04.js","/offline-v04.js","/admin-v03.js","/public-v05.js","/map-v01.js","/map-controls-ui.js","/manifest.webmanifest","/icon-fbz-growth-form-v8-192.png","/icon-fbz-growth-form-v8-512.png","/forms-field-scale.css"
+  "/background-territory.js","/qa-stratum-policy.js","/ux-v04.js","/offline-v04.js","/admin-v03.js","/public-v05.js","/map-v01.js","/map-controls-ui.js","/manifest.webmanifest","/icon-fbz-growth-form-v8-192.png","/icon-fbz-growth-form-v8-512.png","/forms-field-scale.css"
 ];
 const REMOTE_SHELL=[
   "https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js",
@@ -81,3 +81,4 @@ self.addEventListener("fetch",event=>{
     }
   })());
 });
+

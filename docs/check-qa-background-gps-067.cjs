@@ -22,10 +22,10 @@ async function simulate(success){
   const elements={formWorkspace:{hidden:false},reviewWorkspace:{hidden:true},successWorkspace:{hidden:true}};
   let validations=0,reviewBuilt=0,shownErrors=0;
   const sections=[{id:"coordenada"},{id:"operadores"},{id:"infraestructura"},{id:"otros"},{id:"ubicacion"}];
-  const review=new Function("state","requireTestChoice","isExplorationForm","setStatus","validateAll",
+  const review=new Function("backgroundTerritoryEnabled","state","requireTestChoice","isExplorationForm","setStatus","validateAll",
     "activeSections","renderSection","showValidation","$","buildReview","window",
     "resolveExplorationMunicipality","currentSection",reviewBody+"return review;")(
-    state,()=>true,()=>true,()=>{},
+    ()=>false,state,()=>true,()=>true,()=>{},
     ()=>{validations++;return state.gps?[]:[{field:{section:"coordenada",key:"coordenadas"},message:"Sin GPS"}]},
     ()=>sections,()=>{},()=>{shownErrors++;},id=>elements[id],
     ()=>{reviewBuilt++;},{scrollTo(){}},async()=>{},()=>sections[state.sectionIndex]
@@ -52,3 +52,4 @@ async function simulate(success){
   await simulate(false);
   console.log("FO-CHG-067: capture pending, successful review, failed GPS review block and compact UI PASS");
 })().catch(error=>{console.error(error);process.exitCode=1;});
+

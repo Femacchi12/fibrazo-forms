@@ -10,6 +10,26 @@
   function css(v){return window.CSS&&CSS.escape?CSS.escape(v):String(v).replace(/["\\]/g,"\\$&");}
   function currentUser(){return window.FIBRAZO_PUBLIC_USER||window.firebase?.auth?.().currentUser||null;}
 
+  function backgroundTerritoryEnabled(){
+    return !publicMode&&!state.editId&&!!window.FIBRAZO_OFFLINE?.territoryEnabled&&window.FIBRAZO_BACKGROUND_TERRITORY?.FORMS.includes(state.form?.id);
+  }
+  function territorialCityHint(){
+    return String(fieldValue("municipio")||state.detectedCity||(state.gps&&(detectAmbMunicipalityOffline(state.gps.lat,state.gps.lng)||detectConfiguredCityOffline(state.gps.lat,state.gps.lng)))||"");
+  }
+  function pendingTerritory(){
+    return backgroundTerritoryEnabled()&&(!state.locationValidated||!!state.geoPromise||state.locationBusy);
+  }
+  window.addEventListener("fibrazo:queue-change",event=>{
+    const detail=event.detail||{};
+    if(detail.id!==state.queuedCompletionId||$("successWorkspace")?.hidden)return;
+    if(detail.result)paintCompletionStatus(detail.result);
+    else if($("successStatusDetail"))$("successStatusDetail").textContent=detail.status==="enriching"
+      ?"Buscando barrio y estrato en segundo plano. Ya puedes completar otra respuesta."
+      :detail.status==="syncing"?"Enviando la respuesta en segundo plano. Ya puedes continuar."
+      :detail.lastError?"La respuesta sigue guardada. Se reintentará la sincronización; revisa el estado En línea / Pendientes."
+      :"Respuesta guardada y pendiente. Ya puedes completar otra respuesta.";
+  });
+
   function mayIdentifyTest(){
     return !publicMode&&String(currentUser()?.email||"").trim().toLowerCase()==="eduardo@fibrazo.com";
   }
@@ -103,7 +123,7 @@
     if(!publicMode&&window.FIBRAZO_ACCESS&&window.FIBRAZO_ACCESS[id]===false)return;
     const policy=policyFor(id);
     state.cancelGpsCapture?.();state.cancelGpsCapture=null;
-    state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.isTest=null;state.qaReference=null;state.territorialProgress=null;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.gpsCapturePending=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
+    state.queuedCompletionId="";state.submissionQueued=false;state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.isTest=null;state.qaReference=null;state.territorialProgress=null;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.gpsCapturePending=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
     document.body.classList.add("form-mode");
     $("formTitle").textContent=form.name;
     $("formDescription").textContent=form.description||"";
@@ -1185,6 +1205,7 @@
     if(field.type==="photos"||field.type==="photo-single")return"";
     const v=fieldValue(field.key),empty=Array.isArray(v)?v.length===0:String(v||"").trim()==="";
     if(field.key.endsWith("_calidad")&&/^isp_[1-4]_calidad$/.test(field.key)&&isExplorationForm()){const isp=String(fieldValue(field.key.replace("_calidad",""))||"").trim();if(isp&&isp!=="Sin ISP"&&empty)return"Selecciona la calidad del tendido de este ISP.";}
+    if(field.key==="municipio"&&field.autoCity&&empty&&pendingTerritory()&&window.FIBRAZO_BACKGROUND_TERRITORY.validPoint(state.gps)&&territorialCityHint())return"";
     if(field.required&&empty)return"Este campo es obligatorio.";
     if(!empty&&(field.type==="numeric"||field.type==="currency")&&!/^\d+$/.test(String(v)))return"Ingresa únicamente números.";
     if(!empty&&field.max!==undefined&&Number(v)>Number(field.max))return"No puede ser mayor a "+field.max+".";
@@ -1227,6 +1248,12 @@
 
   async function review(){
     if(!requireTestChoice())return;
+    if(backgroundTerritoryEnabled()){
+      if(state.gpsCapturePending||!window.FIBRAZO_BACKGROUND_TERRITORY.validPoint(state.gps)){
+        setStatus("Primero captura la coordenada del punto o ingrésala manualmente. Barrio y estrato pueden quedar pendientes.","error");
+        return;
+      }
+    }else{
     if(isExplorationForm()&&state.gpsCapturePending){
       setStatus("Esperando la ubicación GPS antes de revisar las respuestas…","");
       try{await state.gpsCapturePromise;}catch(_){}
@@ -1236,6 +1263,7 @@
       try{await state.geoPromise;}catch(_){}
     }
     if(isExplorationForm()&&state.gps&&!state.locationValidated){setStatus("Validando datos territoriales antes del resumen…","");try{state.geoPromise=resolveExplorationMunicipality(state.gps.lat,state.gps.lng,"coordenadas");await state.geoPromise;}catch(_){}finally{state.geoPromise=null;}}
+    }
     const errors=validateAll();if(errors.length){const sections=activeSections(),idx=sections.findIndex(s=>s.id===errors[0].field.section);state.maxSectionReached=Math.max(state.maxSectionReached,sections.length-1);if(idx>=0&&idx!==state.sectionIndex){state.sectionIndex=idx;renderSection();}showValidation(errors.filter(x=>x.field.section===currentSection().id));return;}
     $("formWorkspace").hidden=true;$("reviewWorkspace").hidden=false;$("successWorkspace").hidden=true;buildReview();setStatus("","");window.scrollTo({top:0,behavior:"smooth"});
   }
@@ -1249,6 +1277,11 @@
         (state.isTest===true?"PRUEBA QA · excluida del análisis":"REAL · registro operativo")+
         '</h2></div>';
       host.appendChild(decision);
+    }
+    if(pendingTerritory()){
+      const notice=document.createElement("p");notice.className="review-territory-pending";
+      notice.textContent="Barrio y estrato se completarán en segundo plano desde esta coordenada. Al guardar puedes empezar otra respuesta.";
+      host.appendChild(notice);
     }
     activeSections().forEach(section=>{const visible=state.form.fields.filter(f=>f.section===section.id&&conditionMet(f));if(!visible.length)return;const card=document.createElement("section");card.className="review-section";const rows=visible.map(f=>'<div class="review-row"><span>'+esc(f.label)+'</span><strong>'+esc(reviewValue(f))+'</strong></div>').join("");card.innerHTML='<div class="review-section-head"><span>SECCIÓN</span><h2>'+esc(section.title)+"</h2></div>"+rows;host.appendChild(card);});
   }
@@ -1310,7 +1343,7 @@
     const payload={
       formId:state.form.id,
       data:collectData(),
-      location:state.gps,
+      location:state.gps?JSON.parse(JSON.stringify(state.gps)):null,
       photos:state.form.id==="INTELIGENCIA_OPERADOR"
         ?["foto_modelo_caja","foto_nomenclatura_caja","foto_marquilla","foto_tipo_tensor","foto_marquilla_drop","foto_tensor_acometida"].map(key=>state.photos.find(p=>p.fieldKey===key)||null).filter(Boolean)
         :state.photos,
@@ -1345,6 +1378,14 @@
       payload.location.barrioStatus=state.qaReference?.canonicalBarrioStatus||"SIN_CAPA";
       payload.location.barrioSource=state.qaReference?.canonicalBarrioSource||"";
     }
+    if(backgroundTerritoryEnabled()){
+      const manualFields={};
+      for(const key of ["municipio","sector_barrio","estrato"]){
+        const node=document.querySelector('[name="'+key+'"]');
+        manualFields[key]=node?.dataset.geoManual==="1"||(!!String(payload.data[key]||"").trim()&&node?.dataset.geoAuto!=="1"&&node?.dataset.qaAuto!=="1");
+      }
+      Object.assign(payload,window.FIBRAZO_BACKGROUND_TERRITORY.snapshot(payload,{pending:pendingTerritory(),manualFields,cityHint:territorialCityHint()}));
+    }
     try{
       let result;
       if(publicMode){
@@ -1369,10 +1410,13 @@
         if(!r.ok)throw new Error(result.error||"No se pudo guardar la respuesta.");
       }
 
+      state.queuedCompletionId=result?.queued?result.id:"";
+      if(result?.queued&&payload.backgroundTerritory){state.submissionQueued=true;state.geoLookupId++;state.geoLookupCancelled=true;state.geoController?.abort();state.geoPromise=null;}
       $("reviewWorkspace").hidden=true;$("formWorkspace").hidden=true;$("successWorkspace").hidden=false;
       const recordedWho=state.policy?.collectEmail===false?"Respuesta anónima":(u?.email||"—");
       $("successEmail").textContent=recordedWho;
       paintCompletionStatus(result);
+      if(result?.queued)window.FIBRAZO_OFFLINE?.completion?.(result.id).then(completed=>{if(completed&&state.queuedCompletionId===result.id&&!$("successWorkspace").hidden)paintCompletionStatus(completed);}).catch(()=>{});
       if(payload.isTest&&$("successMessage"))$("successMessage").textContent=result?.queued?"Prueba guardada en cola. No se analizará al sincronizarse.":"Prueba registrada para QA. Excluida de estadísticas y de la base maestra.";
       window.FIBRAZO_OFFLINE?.refreshUi?.();
       if(isExplorationForm()&&!result?.queued){
@@ -1400,18 +1444,18 @@
       if(icon)icon.textContent="!";
       if(title)title.textContent="Encuesta guardada en el dispositivo";
       if(message)message.textContent="La encuesta quedó segura localmente y todavía no llegó al servidor.";
-      if(statusTitle)statusTitle.textContent="Pendiente de sincronización";
-      if(statusDetail)statusDetail.textContent=navigator.onLine?"Se está enviando en segundo plano. Ya puedes completar otra respuesta.":"Se enviará automáticamente cuando vuelva la conexión. Ya puedes completar otra respuesta.";
+      if(statusTitle)statusTitle.textContent=result.territorialPending?"Datos territoriales pendientes":"Pendiente de sincronización";
+      if(statusDetail)statusDetail.textContent=result.territorialPending?"Se completarán barrio y estrato desde la coordenada guardada y luego se enviará. Ya puedes completar otra respuesta.":navigator.onLine?"Se está enviando en segundo plano. Ya puedes completar otra respuesta.":"Se enviará automáticamente cuando vuelva la conexión. Ya puedes completar otra respuesta.";
       return;
     }
 
-    if(isExplorationForm()&&result?.masterSync&&!result.masterSync.ok){
+    if(result?.territorialPending||(isExplorationForm()&&result?.masterSync&&!result.masterSync.ok)){
       workspace?.classList.add("status-pending");card?.classList.add("status-pending");
       if(icon)icon.textContent="!";
       if(title)title.textContent="Encuesta guardada";
       if(message)message.textContent="La respuesta quedó registrada correctamente en FIBRAZO Forms.";
-      if(statusTitle)statusTitle.textContent="Sincronización con el maestro pendiente";
-      if(statusDetail)statusDetail.textContent="El relevamiento está seguro, pero aún no pudo incorporarse a Bucaramanga_Exploracion. Motivo: "+friendlySyncReason(result.masterSync.reason);
+      if(statusTitle)statusTitle.textContent="Revisión territorial pendiente";
+      if(statusDetail)statusDetail.textContent="La respuesta fue recibida, pero falta completar la conciliación territorial. Revisa Pendientes. Motivo: "+friendlySyncReason(result.masterSync?.reason);
       return;
     }
 
@@ -1618,11 +1662,12 @@
         try{await territorialTask;}
         catch(error){
           console.error("GPS_TERRITORIAL_BACKGROUND_ERROR",error?.message||"LOOKUP_FAILED");
-          setStatus("Se obtuvo el GPS, pero la consulta territorial no terminó. Podés reintentarla en Validación territorial.","error");
+          if(state.form===captureForm&&state.startedAt===captureStartedAt&&!state.submissionQueued)setStatus("Se obtuvo el GPS, pero la consulta territorial no terminó. Podés reintentarla en Validación territorial.","error");
         }finally{
           if(state.geoPromise===territorialTask)state.geoPromise=null;
         }
       }
+      if(state.form!==captureForm||state.startedAt!==captureStartedAt||state.submissionQueued)return;
       btn.disabled=false;btn.textContent=btn.dataset.gpsOriginalLabel||"Actualizar ubicación";state.locationBusy=false;if(value._onGpsSettled)value._onGpsSettled();clearError(key);
     };
     const onPosition=p=>{
@@ -1864,6 +1909,8 @@
   }
 
   async function queryExplorationEnrichment(lat,lng,cityHint=""){
+    const lookupForm=state.form,lookupStarted=state.startedAt;
+    const ownsLookup=()=>state.form===lookupForm&&state.startedAt===lookupStarted&&!state.submissionQueued&&Number(state.gps?.lat)===Number(lat)&&Number(state.gps?.lng)===Number(lng);
     if(!navigator.onLine){
       geoStatus("Sin conexión · GPS guardado. La geografía canónica se resolverá al sincronizar; puedes completar los campos manualmente.",{busy:false,retry:true});
       return null;
@@ -1878,11 +1925,12 @@
       const user=currentUser();
       const token=user&&typeof user.getIdToken==="function"?await user.getIdToken():"";
       if(!token)throw new Error("AUTH_REQUIRED");
+      if(!ownsLookup())return null;
       const url="/api/exploration?lat="+encodeURIComponent(lat)+"&lng="+encodeURIComponent(lng)+"&city="+encodeURIComponent(cityHint||state.detectedCity||"");
       const response=await fetch(url,{headers:{Authorization:"Bearer "+token},signal:controller.signal,cache:"no-store"});
       const data=await response.json();
       if(!response.ok)throw new Error(data.error||"LOOKUP_ERROR");
-      if(lookupId!==state.geoLookupId||state.geoLookupCancelled)return null;
+      if(!ownsLookup()||lookupId!==state.geoLookupId||state.geoLookupCancelled)return null;
 
       if(data.cityStatus==="DENTRO"&&data.city)applyDetectedCity(data.city,"territorial");
       const barrioDisplay=data.barrioStatus==="DENTRO"?data.barrio:(data.barrioStatus==="FUERA"?data.barrioNearby:"");
@@ -1980,7 +2028,7 @@
       state.locationValidated=true;
       return data;
     }catch(error){
-      if(lookupId!==state.geoLookupId)return null;
+      if(!ownsLookup()||lookupId!==state.geoLookupId)return null;
       const stopped=state.geoLookupCancelled||error?.name==="AbortError";
       geoStatus(stopped?"Búsqueda detenida o sin respuesta. Puedes continuar manualmente o reintentar.":"No se pudo completar la búsqueda automática. Puedes continuar manualmente o reintentar.",{busy:false,retry:true});
       return null;
@@ -1992,7 +2040,8 @@
 
   async function resolveExplorationMunicipality(lat,lng,key="coordenadas"){
     const status=document.querySelector('[data-gps-city-for="'+css(key)+'"]');
-    const currentCoordinate=()=>!!state.gps&&Number(state.gps.lat)===Number(lat)&&Number(state.gps.lng)===Number(lng);
+    const ownerForm=state.form,ownerStarted=state.startedAt;
+    const currentCoordinate=()=>state.form===ownerForm&&state.startedAt===ownerStarted&&!state.submissionQueued&&!!state.gps&&Number(state.gps.lat)===Number(lat)&&Number(state.gps.lng)===Number(lng);
     if(!currentCoordinate())return"";
     setTerritorialProgress("territorial");
     try{
@@ -2116,3 +2165,4 @@
   function dmyToIso(v){const m=String(v||"").match(/^(\d{2})\/(\d{2})\/(\d{4})$/);if(!m)return"";const dd=m[1],mm=m[2],yyyy=m[3],date=new Date(yyyy+"-"+mm+"-"+dd+"T00:00:00");if(Number.isNaN(date.getTime())||date.getFullYear()!==Number(yyyy)||date.getMonth()+1!==Number(mm)||date.getDate()!==Number(dd))return"";return yyyy+"-"+mm+"-"+dd;}
   function isoToDmy(v){const m=String(v||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?m[3]+"/"+m[2]+"/"+m[1]:String(v||"");}
 })();
+

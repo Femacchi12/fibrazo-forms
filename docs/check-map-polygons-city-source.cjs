@@ -48,12 +48,12 @@ const sheets={spreadsheets:{values:{
 
 Module._load=function(request,parent,isMain){
   if(request==="googleapis")return {google:{sheets:()=>sheets}};
-  if(request==="./_core"&&parent?.filename?.endsWith("api/map-polygons.js"))return {
+  if(request==="./_core"&&parent?.filename?.replaceAll(String.fromCharCode(92),"/").endsWith("api/map-polygons.js"))return {
     gauth:()=>({}),verifyUser:async()=>({email:"qa@fibrazo.com"}),loadForms:async()=>[],
     userCapabilities:async()=>({adminActive:true}),canUseDashboard:()=>true,
     httpError:(message,status)=>Object.assign(new Error(message),{status})
   };
-  if(request==="./_territorial"&&parent?.filename?.endsWith("api/map-polygons.js"))return {
+  if(request==="./_territorial"&&parent?.filename?.replaceAll(String.fromCharCode(92),"/").endsWith("api/map-polygons.js"))return {
     TERRITORIAL_MASTER_SHEET_ID:"MASTER_TERRITORIAL",_internals:{parseWkt:()=>[[[
       [-75.4,2.8],[-73,2.8],[-73,4.8],[-75.4,4.8],[-75.4,2.8]
     ]]]}
@@ -92,3 +92,4 @@ function response(){
     call.ranges.some(range=>/^02_BARRIOS!O\d+:O\d+$/.test(range))));
   console.log("PASS: /api/map-polygons selecciona y dibuja desde las hojas de Neiva, Villavicencio e Ibagué.");
 })().catch(error=>{console.error(error);process.exitCode=1;});
+

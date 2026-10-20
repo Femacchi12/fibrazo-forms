@@ -32,5 +32,6 @@ assert.ok(map.includes("referenceStratumRow(data)"));
 assert.ok(map.includes('TERRITORIAL_CACHE_KEY="fibrazoTerritorialPointCacheV4"'));
 assert.ok(map.includes("QA referencial; no asignado"));
 assert.ok(api.includes('VERCEL_ENV==="preview"'));
-assert.ok(ux.includes("Solo referencia QA; sin asignación automática."));
+assert.ok(ux.includes("Solo referencia QA; sin asignación canónica."));
 console.log("FO-CHG-062 QA reference exact / nearby / competing / out-of-coverage checks passed");
+
