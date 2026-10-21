@@ -1279,7 +1279,7 @@
       host.appendChild(decision);
     }
     if(pendingTerritory()){
-      const notice=document.createElement("p");notice.className="review-territory-pending";
+      const notice=document.createElement("p");notice.className="review-territory-pending";notice.setAttribute("role","status");
       notice.textContent="Barrio y estrato se completarán en segundo plano desde esta coordenada. Al guardar puedes empezar otra respuesta.";
       host.appendChild(notice);
     }
@@ -1568,7 +1568,7 @@
     updateTerritorialProgress();
   }
 
-  function setStatus(m,t){if(!$("saveStatus"))return;$("saveStatus").textContent=m;$("saveStatus").className="save-status"+(t?" "+t:"");}
+  function setStatus(m,t){if(!$("saveStatus"))return;const warning=t!=="error"&&/segundo plano|pendiente|reintentar|sincronizando/i.test(m||"");$("saveStatus").textContent=m;$("saveStatus").className="save-status"+(t?" "+t:"")+(warning?" background-notice":"");$("saveStatus").setAttribute("role","status");}
 
   function captureChurnGpsAutomatically(){
     if(state.form?.id!=="CHURN"||state.gps)return;
@@ -1741,6 +1741,8 @@
     const stop=box?.querySelector("[data-geo-stop='1']");
     if(!box)return;
     box.hidden=hidden;
+    box.classList.toggle("background-notice",!hidden&&(busy||retry));
+    box.setAttribute("role","status");
     if(text)text.textContent=message||"";
     if(stop){
       stop.hidden=!(busy||retry);
