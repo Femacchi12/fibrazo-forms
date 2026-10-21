@@ -98,7 +98,7 @@ window.FIBRAZO_FORMS = {
       { id: "cierre", title: "Cierre", description: "Agrega evidencia y notas relevantes del punto." }
     ],
     fields: [
-      {key:"coordenadas",section:"coordenada",label:"Coordenadas",type:"coordinates",required:true,full:true,help:"Pega la coordenada en formato latitud, longitud. Ejemplo: 7.10485, -73.10280. El municipio se mostrará automáticamente."},
+      {key:"coordenadas",section:"ubicacion",label:"Coordenadas",type:"coordinates",required:true,full:true,help:"Pega la coordenada en formato latitud, longitud. Ejemplo: 7.10485, -73.10280. El municipio se mostrará automáticamente."},
       {key:"anio_imagen",section:"ubicacion",label:"Año de la imagen de Google Street View",type:"numeric",required:true,maxLength:4,max:FIBRAZO_CURRENT_YEAR,help:`Ingresa el año visible en la imagen de Street View. No puede ser posterior a ${FIBRAZO_CURRENT_YEAR}.`},
       {key:"sector_barrio",section:"ubicacion",label:"Barrio",type:"text",autoGeo:"barrio"},
       {key:"estrato",section:"ubicacion",label:"Estrato automático (Motor Territorial)",type:"select",options:["1","2","3","4","5","6","Sin información"],autoGeo:"estrato"},
@@ -175,3 +175,4 @@ window.FIBRAZO_FORMS = {
     ]
   }
 };
+

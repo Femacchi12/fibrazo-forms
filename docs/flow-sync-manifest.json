@@ -352,7 +352,7 @@
       "fields": [
         {
           "key": "coordenadas",
-          "section": "coordenada",
+          "section": "ubicacion",
           "label": "Coordenadas",
           "type": "coordinates",
           "required": true,
@@ -1585,7 +1585,7 @@
     "baseCommit": "fc369fa8182408d3254e95394146fe61b8310d27",
     "forms": 4,
     "declaredFields": 94,
-    "fieldsWithReachableSection": 93,
+    "fieldsWithReachableSection": 94,
     "counts": {
       "CHURN": {
         "sections": 5,
@@ -1608,14 +1608,7 @@
         "conditionalFields": 1
       }
     },
-    "issues": [
-      {
-        "formId": "EXPLORACION",
-        "fieldKey": "coordenadas",
-        "declaredSection": "coordenada",
-        "status": "Campo huérfano en configuración productiva; no corregido por esta sincronización."
-      }
-    ],
+    "issues": [],
     "note": "Documentación del código tal como está; inspección visual de diagrams.net y defecto de coordenadas requieren validación separada",
     "qaTestControl": {
       "ticket": "FO-PEN-011",

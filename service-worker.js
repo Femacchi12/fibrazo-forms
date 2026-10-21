@@ -1,4 +1,4 @@
-const CACHE="fibrazo-forms-v0.8.140-20261020-alerts083";
+const CACHE="fibrazo-forms-v0.8.141-20261020-virtual084";
 const APP_SHELL=[
   "/","/index.html","/public","/styles.css","/brand-alignment.css","/executive-density.css","/forms-config.js","/app.js","/access-v03.js",
   "/background-territory.js","/qa-stratum-policy.js","/ux-v04.js","/offline-v04.js","/admin-v03.js","/public-v05.js","/map-v01.js","/map-controls-ui.js","/manifest.webmanifest","/icon-fbz-growth-form-v8-192.png","/icon-fbz-growth-form-v8-512.png","/forms-field-scale.css"
