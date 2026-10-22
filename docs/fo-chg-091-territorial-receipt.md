@@ -1,0 +1,9 @@
+# FO-CHG-091 · Recibidos con revisión territorial · 2026-10-22
+
+Dos casos reales Neiva: Las Palmas 09:52 (fila331, ID termina3616F03B95) y San Bernardo11:37 (fila350, ID terminaF28F2BE72B). Ambos tenían GPS, fotos y recepción GLOBAL_ONLY / REGISTRADO_GLOBAL, pero auditoría ERROR_RESOLUCION en ciudad/barrio/estrato/troncal. No eran envíos perdidos.
+
+Reparación puntual: motor _territorial.js v3.4 ejecutado localmente con snapshots nativos actuales del catálogo territorial y libro Neiva, sin mocks de geometría. Se recalcularon exclusivamente columnas derivadas AG:BK. Mismo GPS original; ciudad DENTRO NEIVA; barrio DENTRO LAS PALMAS / SAN BERNARDO. Estrato y troncal SIN_CAPA; nunca se promovieron geometrías QA a canónicas. Lectura posterior verificada. No se modificaron IDs, fechas, observaciones, GPS, fotos ni estrato manual.
+
+Defecto: sent_master_pending estaba excluido de syncAll/scheduleRetry y el botón quedaba deshabilitado si solo quedaban esas respuestas. Ahora reintenta con ID original, conserva fotos hasta confirmación, y habilita el botón. Backend duplicate puede reparar auditoría de respuestas GLOBAL_ONLY del mismo propietario, usando exclusivamente GPS guardado. No reenvía fotos ni crea otra respuesta. QA, GPS ausente y propietario ajeno no se reparan. Ante fallo territorial no se confirma como resuelto. Reintento persistente a60s. No se implementa reproceso de proyecto AMB.
+
+Validación: suite test:forms + fixture helper (coordenadas originales, mismos datos, no-op segundo intento, bloqueo propietario/GPS/QA/fallo); fixture cola confirma mismo ID y sin fila adicional al reintentar un recibido. Correcciones087/089/090 conservadas, SW146. Pendiente lectura de confirmación desde teléfono. Rollback código al padre aa7dadefe2f1ec532e3f8405f3219295a35bfd0b y nueva caché; no borrar IndexedDB.

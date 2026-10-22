@@ -107,7 +107,7 @@
 
   function requestBackgroundSync(){
     if(backgroundMode||!navigator.serviceWorker||!currentEmail())return;
-    all().then(records=>{if(records.some(r=>r.userEmail===currentEmail()&&!["sent","sent_master_pending","error"].includes(r.status)))return navigator.serviceWorker.ready.then(reg=>reg.sync?.register("fibrazo-queue-v1"));}).catch(()=>{});
+    all().then(records=>{if(records.some(r=>r.userEmail===currentEmail()&&!["sent","error"].includes(r.status)))return navigator.serviceWorker.ready.then(reg=>reg.sync?.register("fibrazo-queue-v1"));}).catch(()=>{});
   }
 
   async function idToken(user){
@@ -120,7 +120,7 @@
     if(backgroundMode)return;
     clearTimeout(retryTimer);
     if(!navigator.onLine||!currentEmail())return;
-    const pending=(await all()).filter(r=>r.userEmail===currentEmail()&&!["sent","sent_master_pending","error"].includes(r.status));
+    const pending=(await all()).filter(r=>r.userEmail===currentEmail()&&!["sent","error"].includes(r.status));
     if(!pending.length)return;
     const due=Math.min(...pending.map(r=>Number(r.nextAttemptAt)||0));
     retryTimer=setTimeout(()=>syncAll(),Math.min(60000,Math.max(1500,due-Date.now())));
@@ -254,13 +254,13 @@
       heartbeat=setInterval(()=>lease().catch(()=>{}),20000);
       renderSyncing(true);
       const email=currentEmail();
-      const records=(await all()).filter(r=>r.userEmail===email&&!["sent","sent_master_pending"].includes(r.status)&&(manual||r.status!=="error")&&(manual||!r.nextAttemptAt||r.nextAttemptAt<=Date.now())).sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
+      const records=(await all()).filter(r=>r.userEmail===email&&!["sent"].includes(r.status)&&(manual||r.status!=="error")&&(manual||!r.nextAttemptAt||r.nextAttemptAt<=Date.now())).sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
       for(let record of records){
         if(background&&(processed>=3||Date.now()>=deadline))break;
         processed++;
         if(restartRequested||!navigator.onLine||currentEmail()!==email)break;
         try{
-          record={...record,attempts:(record.attempts||0)+1,lastError:"",status:scope.FIBRAZO_BACKGROUND_TERRITORY?.needsLookup(record.payload)?"enriching":"syncing"};
+          record={...record,attempts:(record.attempts||0)+1,lastError:"",status:record.status!=="sent_master_pending"&&scope.FIBRAZO_BACKGROUND_TERRITORY?.needsLookup(record.payload)?"enriching":"syncing"};
           await put(record);notifyRecord(record);await refreshUi();
           if(record.status==="enriching"){
             const payload=await enrichPayload(record.payload);
@@ -277,7 +277,7 @@
           const territorialForm=scope.FIBRAZO_BACKGROUND_TERRITORY?.FORMS.includes(record.formId);
           const masterPending=!!serverResult.territorialError||((record.formId==="EXPLORACION"||record.formId==="EXPLORACION_PRESENCIAL")&&serverResult?.masterSync?.ok!==true);
           const competitionPending=serverResult.competitionSync?.ok===false;
-          record={...record,payload:masterPending?record.payload:{...record.payload,photos:[]},status:masterPending?"sent_master_pending":competitionPending?"sent_competition_pending":"sent",masterSync:serverResult.masterSync||null,syncedAt:new Date().toISOString(),serverId:serverResult.id,nextAttemptAt:competitionPending?Date.now()+15000:0,lastError:masterPending?"Respuesta recibida; falta conciliación territorial en servidor.":competitionPending?"Forms recibido. La consolidación de competencia se reintentará automáticamente.":""};
+          record={...record,payload:masterPending?record.payload:{...record.payload,photos:[]},status:masterPending?"sent_master_pending":competitionPending?"sent_competition_pending":"sent",masterSync:serverResult.masterSync||null,syncedAt:new Date().toISOString(),serverId:serverResult.id,nextAttemptAt:masterPending?Date.now()+60000:competitionPending?Date.now()+15000:0,lastError:masterPending?"Respuesta recibida; falta conciliación territorial en servidor.":competitionPending?"Forms recibido. La consolidación de competencia se reintentará automáticamente.":""};
           await put(record);notifyRecord(record,{...serverResult,queued:false,territorialPending:masterPending,competitionPending,isTest:record.payload.isTest===true});
           if(!masterPending&&territorialForm)scope.dispatchEvent(new CustomEvent("fibrazo:submission-saved",{detail:{formId:record.formId,id:serverResult.id}}));
           synced++;
@@ -297,7 +297,7 @@
       await refreshUi().catch(()=>{});
       await scheduleRetry().catch(()=>{});
     }
-    const remaining=(await all()).filter(r=>r.userEmail===currentEmail()&&!["sent","sent_master_pending","error"].includes(r.status)).length;
+    const remaining=(await all()).filter(r=>r.userEmail===currentEmail()&&!["sent","error"].includes(r.status)).length;
     if(remaining)requestBackgroundSync();
     if(manual)showSyncMessage(synced?"Sincronizadas: "+synced+(failed?" · con error: "+failed:""):failed?"No se pudo sincronizar. Revisa los pendientes.":"No hay respuestas pendientes.");
     return {synced,failed,remaining};
@@ -350,7 +350,7 @@
       ).join(""):'<div class="pending-empty">No hay respuestas pendientes.</div>';
     }
     const syncBtn=$("syncNowButton");
-    if(syncBtn) syncBtn.disabled=!online||syncing||active.length===0;
+    if(syncBtn) syncBtn.disabled=!online||syncing||(active.length===0&&!records.some(r=>r.status==="sent_master_pending"));
     renderFormHistory(records);
   }
 

@@ -1,3 +1,4 @@
+const {repairTerritorialReceipt}=require("./_territorial-receipt");
 const {google}=require("googleapis");
 const {Readable}=require("stream");
 const {
@@ -555,7 +556,12 @@ module.exports=async(req,res)=>{
         const pointId=String(row?.[27]||"").trim();
         const observedCity=String(row?.[1]||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
         const unresolvedAmb=syncState==="GLOBAL_ONLY"&&["bucaramanga","floridablanca","giron","piedecuesta"].includes(observedCity);
-        const ok=syncState==="OK"||(syncState==="GLOBAL_ONLY"&&!unresolvedAmb);
+        let territorialReceipt={pending:false};
+        if(syncState==="GLOBAL_ONLY"){
+          try{territorialReceipt=await repairTerritorialReceipt({sheets,auth,spreadsheetId:SHEET_ID,form,id,email:user?.email,resolveTerritorial,auditRow:territorialAuditRow});}
+          catch(error){territorialReceipt={pending:true,reason:"TERRITORIAL_RESOLUTION_PENDING"};console.error("TERRITORIAL_RECEIPT_RETRY_FAILED",error?.message);}
+        }
+        const ok=!territorialReceipt.pending&&(syncState==="OK"||(syncState==="GLOBAL_ONLY"&&!unresolvedAmb));
         return res.status(200).json({ok:true,id,duplicate:true,photos:[],competitionSync,masterSync:{ok,pointId,scope:syncState==="GLOBAL_ONLY"&&!unresolvedAmb?"GLOBAL_ONLY":"PROJECT",reason:unresolvedAmb?"TERRITORIAL_UNRESOLVED":ok?"":syncState||"PENDIENTE"}});
       }
       return res.status(200).json({ok:true,id,duplicate:true,photos:[],competitionSync});

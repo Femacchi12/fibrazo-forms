@@ -57,9 +57,10 @@ async function waitFor(fn){for(let i=0;i<100;i++){if(fn())return;await new Promi
  let p=payload(w,'I');p.data.estrato='6';p.backgroundTerritory.manualFields.estrato=false;
  check(mod.applyResult(p,qaResult,w.FIBRAZO_QA_STRATUM_POLICY).data.estrato==='Sin información','real record cannot inherit noncanonical QA stratum');p.isTest=true;check(mod.applyResult(p,qaResult,w.FIBRAZO_QA_STRATUM_POLICY).data.estrato==='2','explicit QA record can use labelled provisional stratum');
  online=false;await w.FIBRAZO_OFFLINE.submit(payload(w,'J'));mode='master-pending';online=true;await w.FIBRAZO_OFFLINE.syncAll({manual:true});
- const partial=(await records(w)).find(r=>r.clientSubmissionId==='J'),postCount=posts;
+ const partial=(await records(w)).find(r=>r.clientSubmissionId==='J'),postCount=posts,writeCount=writes.size;
  await w.FIBRAZO_OFFLINE.syncAll({manual:true});
- check(partial.status==='sent_master_pending'&&partial.payload.photos.length===1&&posts===postCount,'partial receipt remains visible, retains photos and does not repeat master creation');
+ check(partial.status==='sent_master_pending'&&partial.payload.photos.length===1&&posts===postCount+1&&writes.size===writeCount,'partial receipt retains photos and retries original ID without adding a response');
+ mode='ok';await w.FIBRAZO_OFFLINE.syncAll({manual:true});check((await records(w)).find(r=>r.clientSubmissionId==='J').status==='sent'&&writes.size===writeCount,'confirmed territorial receipt clears local pending with no additional source record');
  online=false;await w.FIBRAZO_OFFLINE.submit(payload(w,'K'));mode='competition-pending';online=true;await w.FIBRAZO_OFFLINE.syncAll({manual:true});
  const competition=(await records(w)).find(r=>r.clientSubmissionId==='K');
  check(competition.status==='sent_competition_pending'&&competition.nextAttemptAt>Date.now()&&(await w.FIBRAZO_OFFLINE.completion('K')).competitionPending,'received Forms job keeps a durable retry until competition confirms');

@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict');const {repairTerritorialReceipt}=require('../api/_territorial-receipt');
+const original=Array(83).fill('');Object.assign(original,{1:'FIXTURE',2:'Neiva',3:'Observed barrio',17:2.95,18:-75.24,21:'https://example.test/photo',24:'fixture@example.test',29:'GLOBAL_ONLY',32:'Sin información',39:'ERROR_RESOLUCION',45:'ERROR_RESOLUCION',51:'ERROR_RESOLUCION',57:'ERROR_RESOLUCION',64:'4',82:'No'});
+let row=[...original],writes=0,lookups=0,throwLookup=false;const layer={status:'SIN_CAPA',distanceM:null};
+const opts={sheets:{spreadsheets:{values:{get:async a=>{assert.equal(a.valueRenderOption,'UNFORMATTED_VALUE');return {data:{values:[row]}};},update:async a=>{writes++;assert.equal(a.range,'RESP_EXPLORACION!AG2:BK2');row.splice(32,31,...a.requestBody.values[0]);}}}},auth:{},spreadsheetId:'fixture',form:{sheet:'RESP_EXPLORACION'},id:'FIXTURE',email:'fixture@example.test',resolveTerritorial:async(a,lat,lng,options)=>{lookups++;assert.equal(lat,original[17]);assert.equal(lng,original[18]);assert.equal(options.cityHint,'Neiva');if(throwLookup)throw Error('temporary');return {version:'3.4',catalogId:'NVA',territorialFileId:'fixture',city:{status:'DENTRO',assigned:{id:'41001',name:'NEIVA'},distanceM:0},barrio:{status:'DENTRO',assigned:{id:'B1',name:'Canonical barrio'},distanceM:0},estrato:layer,troncal:layer};},auditRow:t=>[t.version,t.catalogId,t.territorialFileId,...[t.city,t.barrio,t.estrato,t.troncal].flatMap(l=>[l.status,l.assigned?.id||'',l.assigned?.name||'','','',l.distanceM??''])]};
+(async()=>{
+ let r=await repairTerritorialReceipt(opts);assert.equal(r.repaired,true);for(const i of [1,2,3,17,18,21,24,29,64,82])assert.equal(row[i],original[i]);assert.equal(row[39],'DENTRO');assert.equal(row[51],'SIN_CAPA');
+ r=await repairTerritorialReceipt(opts);assert.equal(r.pending,false);assert.equal(writes,1);assert.equal(lookups,1);
+ row=[...original];r=await repairTerritorialReceipt({...opts,email:'other@example.test'});assert.equal(r.pending,true);assert.equal(writes,1);
+ row[17]=null;r=await repairTerritorialReceipt(opts);assert.equal(r.reason,'VALID_COORDINATE_REQUIRED');assert.equal(writes,1);
+ row=[...original];row[82]='Sí';r=await repairTerritorialReceipt(opts);assert.equal(r.pending,true);assert.equal(writes,1);
+ row=[...original];throwLookup=true;await assert.rejects(()=>repairTerritorialReceipt(opts));assert.equal(writes,1);
+ console.log('PASS territorial receipt uses stored GPS; preserves source/manual/photo fields; repeat is no-op; foreign owner, missing GPS, QA and lookup failure never write');
+})().catch(e=>{console.error(e);process.exitCode=1});
