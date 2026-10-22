@@ -1417,7 +1417,7 @@
       }else if(location.hostname.endsWith("github.io")){
         const id="PREVIEW-"+Date.now(),saved=JSON.parse(localStorage.getItem("fibrazoFormsPreview")||"[]");
         saved.unshift({id,...payload});localStorage.setItem("fibrazoFormsPreview",JSON.stringify(saved.slice(0,100)));result={id,queued:false};
-      }else if(window.FIBRAZO_OFFLINE&&!state.editId){
+      }else if(window.FIBRAZO_OFFLINE){
         payload.clientSubmissionId=window.FIBRAZO_OFFLINE.createSubmissionId(state.form.id);
         result=await window.FIBRAZO_OFFLINE.submit(payload);
       }else{
@@ -1441,7 +1441,7 @@
       }
       window.scrollTo({top:0,behavior:"smooth"});
     }catch(e){
-      const msg=["VALID_COORDINATE_REQUIRED","GPS_REQUIRED"].includes(e.message)?"Falta una coordenada válida. Vuelve a editar la ubicación original del punto y reintenta; tus respuestas siguen en pantalla.":e.message||"No se pudo guardar la respuesta.";
+      const msg=["VALID_COORDINATE_REQUIRED","GPS_REQUIRED"].includes(e.message)?"Falta una coordenada válida. Vuelve a editar la ubicación original del punto y reintenta; tus respuestas siguen en pantalla.":e.message==="Failed to fetch"?"No se pudo contactar al servidor. Tus respuestas siguen en esta pantalla; reintenta con conexión estable.":e.message||"No se pudo guardar la respuesta.";
       setStatus("🔴 "+msg+" La encuesta no se considera finalizada hasta que puedas reintentar.","error");
       const summary=$("validationSummary"),list=$("validationList");
       if(summary&&list){summary.hidden=false;list.innerHTML="<li>"+esc(msg)+"</li>";}
@@ -1459,8 +1459,8 @@
     if(result?.queued){
       workspace?.classList.add("status-pending");card?.classList.add("status-pending");
       if(icon)icon.textContent="!";
-      if(title)title.textContent="Encuesta guardada en el dispositivo";
-      if(message)message.textContent="La encuesta quedó segura localmente y todavía no llegó al servidor.";
+      if(title)title.textContent=state.editId?"Edición guardada en el dispositivo":"Encuesta guardada en el dispositivo";
+      if(message)message.textContent=state.editId?"Los cambios están guardados en este teléfono. El registro original se actualizará al sincronizar.":"La encuesta quedó segura localmente y todavía no llegó al servidor.";
       if(statusTitle)statusTitle.textContent=result.territorialPending?"Datos territoriales pendientes":"Pendiente de sincronización";
       if(statusDetail)statusDetail.textContent=result.territorialPending?"Se completarán barrio y estrato desde la coordenada guardada y luego se enviará. Ya puedes completar otra respuesta.":navigator.onLine?"Se está enviando en segundo plano. Ya puedes completar otra respuesta.":"Se enviará automáticamente cuando vuelva la conexión. Ya puedes completar otra respuesta.";
       return;

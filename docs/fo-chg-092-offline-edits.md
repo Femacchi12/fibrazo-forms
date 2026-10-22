@@ -1,0 +1,11 @@
+# FO-CHG-092 · Ediciones durables con mala señal · 2026-10-22
+
+Reporte: revisión final de Inteligencia de operadores, Neiva/ALFONSO LOPEZ PUMAREJO, Failed to fetch. Diagnóstico de código: edición (state.editId) estaba excluida de FIBRAZO_OFFLINE.submit y usaba fetch directo; altas nuevas ya tenían cola. La captura por sí sola no permite identificar una respuesta concreta ni confirmar si el servidor recibió ese intento. No se alteraron datos reales para probar.
+
+Cambio: altas y ediciones privadas usan la misma cola duradera IndexedDB, propietario, lease, token y reintento. Payload conserva editId, fotos nuevas y existingPhotoFields. Encolado transaccional rechaza otra edición del mismo registro mientras la primera no esté confirmada (incluye competencia pendiente), evita reordenamiento de ediciones. Envío actualiza la respuesta original; no inserta otra fila. La edición conserva ID, timestamp y QA de la fuente según backend vigente. Confirmación local distingue edición guardada en dispositivo de recepción por servidor.
+
+Fotos editadas usan nombre original + hash de clientSubmissionId de operación: reintentar una operación reutiliza sus fotos, una nueva edición no reutiliza accidentalmente foto antigua con el mismo índice. Archivos anteriores no se borran. Solicitudes antiguas sin operationID conservan comportamiento compatible. No se modifica política territorial canónica.
+
+Validación: fake-indexeddb real, edición offline inmutable, foto conservada en fallo, ACK perdido después de actualización, reintento sobre mismo ID, una sola respuesta fuente, edición posterior habilitada tras confirmación y bloqueo atómico de dos ediciones concurrentes. Handler real con Drive simulado: foto reusada en retry, foto distinta en nueva operación sobre misma fila; pruebas 089/090/091 conservadas. No se probó Android físico ni se leyó su IndexedDB.
+
+Limitación de transición: una pantalla ya abierta con el JS anterior no adquiere la cola nueva sin recarga; no indicar recargar antes de guardar o preservar cambios visibles. Debe reintentarse ese formulario en la pantalla actual con red estable; no afirmar que quedó guardado por publicar el cambio. SW147. Rollback archivos del padre310ebe68164ba73daa70defa1cbc3405b659c168 + nueva caché; nunca borrar IndexedDB.

@@ -192,6 +192,22 @@
     return bytes;
   }
 
+  async function addQueuedRecord(record){
+    const db=await openDb();
+    return new Promise((resolve,reject)=>{
+      const t=db.transaction(STORE,"readwrite"),store=t.objectStore(STORE);let conflict=null;
+      const req=store.getAll();
+      req.onsuccess=()=>{
+        if(record.payload?.editId&&(req.result||[]).some(old=>old.kind!=="lease"&&old.userEmail===record.userEmail&&old.payload?.editId===record.payload.editId&&old.status!=="sent")){
+          conflict=new Error("Ya hay una edición pendiente de este registro. Sincronízala antes de guardar otra edición.");t.abort();return;
+        }
+        store.add(record);
+      };
+      t.oncomplete=()=>{db.close();resolve();};
+      t.onerror=t.onabort=()=>{db.close();reject(conflict||t.error||new Error("QUEUE_WRITE_FAILED"));};
+    });
+  }
+
   async function queuePayload(payload,lastError=""){
     const email=currentEmail();
     if(!email) throw new Error("No hay una sesión activa para asociar esta respuesta.");
@@ -210,7 +226,7 @@
       attempts:0,
       lastError:String(lastError||"").slice(0,250)
     };
-    try{await tx("readwrite",store=>store.add(record));}catch(error){if(error?.name!=="ConstraintError")throw error;const old=await get(record.clientSubmissionId);if(!old||old.userEmail!==email)throw error;}
+    try{await addQueuedRecord(record);}catch(error){if(error?.name!=="ConstraintError")throw error;const old=await get(record.clientSubmissionId);if(!old||old.userEmail!==email)throw error;}
     requestBackgroundSync();
     await refreshUi();
     return {ok:true,id:payload.clientSubmissionId,queued:true,territorialPending:record.status==="territorial_pending"};
@@ -306,7 +322,7 @@
   function formReference(record){
     const d=record.payload?.data||{};
     if(record.formId==="CHURN") return (d.ciudad||"")+" · Cliente "+(d.cliente_id||"—");
-    return (d.municipio||d.ciudad||record.payload?.location?.cityDetected||"")+" · "+(d.sector_barrio||"Sin sector");
+    return (record.payload?.editId?"Edición · ":"")+(d.municipio||d.ciudad||record.payload?.location?.cityDetected||"")+" · "+(d.sector_barrio||"Sin sector");
   }
 
   function formatTime(value){

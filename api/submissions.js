@@ -521,7 +521,10 @@ module.exports=async(req,res)=>{
       if((!payload.location||legacyNullPoint)&&validPoint(coordinateNumber(old[9]),coordinateNumber(old[10])))payload.location={...payload.location,lat:coordinateNumber(old[9]),lng:coordinateNumber(old[10]),accuracy:coordinateNumber(old[11])};
       if(payload.location&&!validPoint(coordinateNumber(payload.location.lat),coordinateNumber(payload.location.lng)))throw httpError("VALID_COORDINATE_REQUIRED",400);
       validateSubmission(formId,payload);
-      const uploaded=await uploadPhotos(auth,form,editId,payload.photos||[]);
+      // A retry of one queued edit reuses its photo names; a later edit gets new names.
+      const operation=String(payload.clientSubmissionId||"");
+      const photoId=operation?editId+"_edit_"+require("crypto").createHash("sha256").update(operation).digest("hex").slice(0,20):editId;
+      const uploaded=await uploadPhotos(auth,form,photoId,payload.photos||[]);
       const byKey=Object.fromEntries((payload.photos||[]).map((p,i)=>[String(p.fieldKey||""),uploaded[i]||""]));
       const links=[
         byKey.foto_modelo_caja||String(payload.existingPhotoFields?.foto_modelo_caja||old[12]||""),
