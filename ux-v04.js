@@ -118,7 +118,15 @@
     }
     return out;
   }
+  function collapseFormHistory(){
+    document.querySelectorAll(".form-history").forEach(panel=>{panel.open=false;panel.classList.remove("intelligence-detail-open");});
+  }
+  document.addEventListener("click",event=>{if(!event.target.closest(".form-history"))collapseFormHistory();},true);
+  document.addEventListener("keydown",event=>{if(event.key==="Escape")collapseFormHistory();});
+  document.addEventListener("focusin",event=>{if(!event.target.closest(".form-history"))collapseFormHistory();});
+
   function openForm(id){
+    collapseFormHistory();
     const form=forms[id];if(!form)return;
     if(!publicMode&&window.FIBRAZO_ACCESS&&window.FIBRAZO_ACCESS[id]===false)return;
     const policy=policyFor(id);
@@ -332,6 +340,7 @@
   }
 
   function exitForm(){
+    collapseFormHistory();
     if(publicMode){location.reload();return;}
     if(/^\/form\//i.test(location.pathname))history.replaceState({},"","/");
     document.body.classList.remove("form-mode");
@@ -2174,4 +2183,3 @@
   function dmyToIso(v){const m=String(v||"").match(/^(\d{2})\/(\d{2})\/(\d{4})$/);if(!m)return"";const dd=m[1],mm=m[2],yyyy=m[3],date=new Date(yyyy+"-"+mm+"-"+dd+"T00:00:00");if(Number.isNaN(date.getTime())||date.getFullYear()!==Number(yyyy)||date.getMonth()+1!==Number(mm)||date.getDate()!==Number(dd))return"";return yyyy+"-"+mm+"-"+dd;}
   function isoToDmy(v){const m=String(v||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?m[3]+"/"+m[2]+"/"+m[1]:String(v||"");}
 })();
-

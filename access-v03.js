@@ -48,7 +48,7 @@
     try{
       const cached=JSON.parse(localStorage.getItem(ACCESS_CACHE_KEY)||"null");
       const email=String(current()?.email||"").toLowerCase();
-      if(!cached||cached.email!==email||!cached.access)return false;
+      if(!cached||cached.email!==email||!cached.access||!cached.updatedAt||Date.now()-cached.updatedAt>7*24*60*60*1000)return false;
       window.FIBRAZO_ACCESS=cached.access;
       window.FIBRAZO_FORM_POLICIES=cached.policies||{};
       window.FIBRAZO_ACCESS_META=cached.meta||window.FIBRAZO_ACCESS_META||{};

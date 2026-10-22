@@ -1,12 +1,5 @@
 (() => {
-  const firebaseConfig = {
-    apiKey: "AIzaSyDBmVNRqmjy_bt2UovRtmZVNpKrCTyNjLU",
-    authDomain: location.hostname==="fibrazo-forms.vercel.app" ? "fibrazo-forms.vercel.app" : "dashboards-fibrazo.firebaseapp.com",
-    projectId: "dashboards-fibrazo",
-    storageBucket: "dashboards-fibrazo.firebasestorage.app",
-    messagingSenderId: "926517595208",
-    appId: "1:926517595208:web:a9bbaacedd0ca1dfd51c7d"
-  };
+  const firebaseConfig = window.FIBRAZO_FIREBASE_CONFIG;
 
   const allowedException = "fernandoemacchi@gmail.com";
   const allowedDomain = "@fibrazo.com";
@@ -38,7 +31,8 @@
     const slug=directFormSlug();
     if(!slug)return "private";
     try{
-      const response=await fetch("/api/public?slug="+encodeURIComponent(slug),{cache:"no-store"});
+      if(!navigator.onLine)return "private";
+      const response=await fetch("/api/public?slug="+encodeURIComponent(slug),{cache:"no-store",signal:AbortSignal.timeout(3000)});
       if(response.ok){
         location.replace("/f/"+encodeURIComponent(slug));
         return "public";
@@ -155,11 +149,20 @@
     return cached;
   }
 
+  function restoreCachedAccess(user){
+    const email=String(user?.email||"").toLowerCase(),cached=usableCachedAccess(email);
+    if(!cached)return false;
+    window.FIBRAZO_ACCESS=cached.access;window.FIBRAZO_FORM_POLICIES=cached.policies||{};
+    window.FIBRAZO_ACCESS_META=cached.meta||{};window.FIBRAZO_ACCESS_BOOTSTRAPPED_EMAIL=email;
+    return true;
+  }
+
   async function authorizeDashboard(user){
     const email=String(user?.email||"").toLowerCase();
     try{
-      const token=await user.getIdToken();
-      const response=await fetch("/api/access",{headers:{Authorization:"Bearer "+token},cache:"no-store"});
+      if(!navigator.onLine)throw new Error("OFFLINE");
+      let timer;const token=await Promise.race([user.getIdToken(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error("AUTH_TIMEOUT")),6000);})]).finally(()=>clearTimeout(timer));
+      const response=await fetch("/api/access",{headers:{Authorization:"Bearer "+token},cache:"no-store",signal:AbortSignal.timeout(6000)});
       const result=await response.json();
       if(!response.ok)return {ok:false,denied:response.status===403};
       const items=result.forms||[];
@@ -169,7 +172,7 @@
       window.FIBRAZO_FORM_POLICIES=policies;
       window.FIBRAZO_ACCESS_META={admin:!!result.admin,baseAdmin:!!result.baseAdmin,canCreateForms:!!result.canCreateForms,canManageUsers:!!result.canManageUsers,email};
       window.FIBRAZO_ACCESS_BOOTSTRAPPED_EMAIL=email;
-      try{localStorage.setItem("fibrazoFormsAccessCache",JSON.stringify({email,access,policies,updatedAt:Date.now()}));}catch(_){}
+      try{localStorage.setItem("fibrazoFormsAccessCache",JSON.stringify({email,access,policies,meta:window.FIBRAZO_ACCESS_META,updatedAt:Date.now()}));}catch(_){}
       return {ok:true};
     }catch(_){
       const cached=usableCachedAccess(email);
@@ -346,7 +349,10 @@
       showGate("Esta cuenta no tiene acceso habilitado.", true);
       return;
     }
+    const restored=restoreCachedAccess(user);
+    if(restored)showDashboard(user);
     const authorization=await authorizeDashboard(user);
+    if(auth.currentUser?.uid!==user.uid)return;
     if(!authorization.ok){
       if(authorization.denied){
         await auth.signOut();
@@ -356,7 +362,8 @@
       }
       return;
     }
-    showDashboard(user);
+    if(!restored)showDashboard(user);
+    else if(!authorization.cached){renderCards();window.dispatchEvent(new CustomEvent("fibrazo:access-ready"));}
   });
 
   document.querySelectorAll("[data-view]").forEach((button) => {
@@ -972,4 +979,3 @@
     return String(value).replace(/["\\]/g, "\\$&");
   }
 })();
-

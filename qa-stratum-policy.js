@@ -4,7 +4,7 @@
   const api=factory();
   if(typeof module==="object"&&module.exports)module.exports=api;
   if(root)root.FIBRAZO_QA_STRATUM_POLICY=api;
-})(typeof window!=="undefined"?window:null,function(){
+})(typeof window!=="undefined"?window:typeof self!=="undefined"?self:null,function(){
   const valid=value=>/^[1-6]$/.test(String(value||"").trim());
   function suggest(reference){
     if(!reference||reference.canonical!==false)return null;

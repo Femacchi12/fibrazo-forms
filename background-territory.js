@@ -3,7 +3,7 @@
  const api=factory();
  if(typeof module==='object'&&module.exports)module.exports=api;
  if(root)root.FIBRAZO_BACKGROUND_TERRITORY=api;
-})(typeof window!=='undefined'?window:null,function(){
+})(typeof window!=='undefined'?window:typeof self!=='undefined'?self:null,function(){
  const FORMS=['EXPLORACION','EXPLORACION_PRESENCIAL','INTELIGENCIA_OPERADOR'];
  const clone=value=>JSON.parse(JSON.stringify(value));
  const finite=value=>value!==null&&value!==undefined&&String(value).trim()!==''&&Number.isFinite(Number(value));
