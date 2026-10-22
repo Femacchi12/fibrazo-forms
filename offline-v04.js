@@ -10,7 +10,8 @@
   const STORE="queue";
   const $=id=>backgroundMode?null:document.getElementById(id);
   let installPrompt=null;
-  let syncing=false;
+  let syncing=false,activeRun=null,restartRequested=false;
+  const requests=new Set();
 
   function openDb(){
     return new Promise((resolve,reject)=>{
@@ -82,8 +83,13 @@
 
   async function timedFetch(url,options,timeout=45000){
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);
-    try{return await fetch(url,{...options,signal:controller.signal});}
-    finally{clearTimeout(timer);}
+    requests.add(controller);
+    try{
+      const response=await fetch(url,{...options,signal:controller.signal});
+      // Keep the deadline through body download, not just response headers.
+      let body={};try{body=await response.json();}catch(error){if(controller.signal.aborted)throw error;}
+      return {ok:response.ok,status:response.status,json:async()=>body};
+    }finally{clearTimeout(timer);requests.delete(controller);}
   }
 
   async function enrichPayload(payload){
@@ -217,7 +223,26 @@
     return {...result,queued:true,background:true};
   }
 
-  async function syncAll({manual=false,background=false}={}){
+  function syncAll(options={}){
+    if(activeRun)return Promise.resolve({busy:true});
+    activeRun=runSyncAll(options).finally(()=>{activeRun=null;});
+    return activeRun;
+  }
+  async function restartSync(){
+    if(restartRequested)return {busy:true};
+    restartRequested=true;
+    const button=$("restartSyncButton");if(button)button.disabled=true;
+    clearTimeout(retryTimer);
+    showSyncMessage("Reiniciando el intento. Los registros y fotos se conservan…");
+    try{
+      for(const controller of requests)controller.abort();
+      if(activeRun)await activeRun;
+    }finally{restartRequested=false;if(button)button.disabled=false;}
+    const result=await syncAll({manual:true});
+    if(result?.busy)showSyncMessage("Otro proceso está enviando. Espera a que termine; no se borró ningún registro.");
+    return result;
+  }
+  async function runSyncAll({manual=false,background=false}={}){
     if(syncing)return {busy:true};
     if(!navigator.onLine||!currentEmail()){await refreshUi();return {authRequired:!currentEmail()};}
     syncing=true;
@@ -233,17 +258,19 @@
       for(let record of records){
         if(background&&(processed>=3||Date.now()>=deadline))break;
         processed++;
-        if(!navigator.onLine||currentEmail()!==email)break;
+        if(restartRequested||!navigator.onLine||currentEmail()!==email)break;
         try{
           record={...record,attempts:(record.attempts||0)+1,lastError:"",status:scope.FIBRAZO_BACKGROUND_TERRITORY?.needsLookup(record.payload)?"enriching":"syncing"};
           await put(record);notifyRecord(record);await refreshUi();
           if(record.status==="enriching"){
             const payload=await enrichPayload(record.payload);
             if(currentEmail()!==email)throw new Error("AUTH_CHANGED");
+            if(restartRequested)throw new Error("SYNC_RESTART_REQUESTED");
             record={...record,payload,status:"pending",lastError:""};
             await put(record); // Durable enriched snapshot before any POST.
           }
           if(currentEmail()!==email)throw new Error("AUTH_CHANGED");
+            if(restartRequested)throw new Error("SYNC_RESTART_REQUESTED");
           record={...record,status:"syncing"};await put(record);notifyRecord(record);
           const serverResult=await postPayload(record.payload);
           if(!serverResult?.ok||!serverResult.id)throw new Error("El servidor no confirmó la respuesta.");
@@ -256,7 +283,7 @@
           synced++;
         }catch(error){
           const permanent=error.httpStatus&&error.httpStatus!==401&&!isTemporaryHttp(error.httpStatus);
-          record={...record,status:permanent?"error":scope.FIBRAZO_BACKGROUND_TERRITORY?.needsLookup(record.payload)?"territorial_pending":"pending",nextAttemptAt:Date.now()+Math.min(60000,5000*2**Math.min(record.attempts||1,4)),lastError:String(error.message||"Error").slice(0,250)};
+          record={...record,status:permanent?"error":scope.FIBRAZO_BACKGROUND_TERRITORY?.needsLookup(record.payload)?"territorial_pending":"pending",nextAttemptAt:Date.now()+Math.min(60000,5000*2**Math.min(record.attempts||1,4)),lastError:String(restartRequested?"Intento reiniciado; respuesta conservada.":error.name==="AbortError"?"La conexión tardó demasiado. Se reintentará.":error.message||"Error").slice(0,250)};
           await put(record);notifyRecord(record);failed++;
         }
       }
@@ -362,7 +389,7 @@
     showSyncMessage.t=setTimeout(()=>{el.textContent="";},4500);
   }
 
-  scope.FIBRAZO_OFFLINE={submit,syncAll,createSubmissionId,refreshUi,list:all,statusLabel,completion,territoryEnabled:!!scope.FIBRAZO_BACKGROUND_TERRITORY};
+  scope.FIBRAZO_OFFLINE={submit,syncAll,restartSync,createSubmissionId,refreshUi,list:all,statusLabel,completion,territoryEnabled:!!scope.FIBRAZO_BACKGROUND_TERRITORY};
   if(backgroundMode)return;
 
   $("networkToggle")?.addEventListener("click",e=>{e.stopPropagation();togglePanel();});
@@ -373,6 +400,7 @@
     const btn=$("competitionSyncButton"),message=$("competitionSyncMessage");btn.disabled=true;message.textContent="Conciliando Forms con Competencia…";
     try{const user=scope.firebase.auth().currentUser,token=await idToken(user);const r=await timedFetch("/api/competition-sync",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:"{}"},60000);const data=await r.json();if(!r.ok||!data.ok)throw Error(data.error||data.reason||"No se completó la conciliación");message.textContent="Conciliación completa: "+data.records+" registros revisados; "+data.changedRows+" filas actualizadas. GPS pendiente: "+data.pendingCoordinates+".";}catch(e){message.textContent="Forms se conserva. No se completó Competencia: "+e.message;}finally{btn.disabled=false;}
   });
+  $("restartSyncButton")?.addEventListener("click",()=>restartSync().catch(()=>showSyncMessage("No se completó el reinicio. Tus respuestas se conservan.")));
   $("syncNowButton")?.addEventListener("click",()=>syncAll({manual:true}));
   document.addEventListener("click",e=>{if(!e.target.closest(".network-hub"))togglePanel(false);});
 
