@@ -261,11 +261,18 @@
     host.querySelector("[data-history-new]")?.addEventListener("click",()=>{const name=String(d.operador||"").trim();openForm("INTELIGENCIA_OPERADOR");setFieldValue("operador",name);rememberIspName(name);state.editId="";state.existingPhotoFields={};state.photos=[];const input=document.querySelector('[name="operador"]');if(input)input.dispatchEvent(new Event("change",{bubbles:true}));});
     host.querySelectorAll("[data-related-id]").forEach(button=>button.addEventListener("click",()=>showIntelligenceSummary(button.dataset.relatedId)));
   }
+  function historyCoordinate(value){
+    const text=String(value??"").trim();return text?Number(text.replace(",",".")):null;
+  }
   function editIntelligenceRecord(r){
+    state.cancelGpsCapture?.();state.cancelGpsCapture=null;state.gpsCapturePending=false;
+    state.geoController?.abort();state.geoController=null;state.geoLookupId++;
     state.editId=r.id;state.existingPhotoFields={...(r.photoFields||{})};
-    state.gps={lat:Number(r.location?.lat),lng:Number(r.location?.lng),accuracy:Number(r.location?.accuracy)||null,cityDetected:r.data?.municipio||"",citySource:"history"};
+    const point={lat:historyCoordinate(r.location?.lat),lng:historyCoordinate(r.location?.lng)};
+    state.gps=window.FIBRAZO_BACKGROUND_TERRITORY.validPoint(point)?{...point,accuracy:historyCoordinate(r.location?.accuracy),cityDetected:r.data?.municipio||"",citySource:"history"}:null;
     for(const [key,value] of Object.entries(r.data||{}))setFieldValue(key,value);
-    const gps=document.querySelector('[data-key="coordenadas"] .gps-value');if(gps&&Number.isFinite(state.gps.lat)&&Number.isFinite(state.gps.lng))gps.textContent=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+(state.gps.accuracy?" · ±"+Math.round(state.gps.accuracy)+" m":"");
+    const gps=document.querySelector('[data-key="coordenadas"] .gps-value');if(gps&&state.gps)gps.textContent=state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+(state.gps.accuracy?" · ±"+Math.round(state.gps.accuracy)+" m":"");
+    if(gps&&!state.gps)gps.textContent="Sin coordenada registrada · ingresa la ubicación original del punto.";
     state.sectionIndex=0;state.maxSectionReached=(state.form.sections||[]).length-1;updateVisibility();renderSection();
     document.querySelector(".form-history")?.removeAttribute("open");
     window.scrollTo({top:0,behavior:"smooth"});
@@ -1208,9 +1215,9 @@
     if(field.type==="gps"){
       if(field.key==="coordenadas"&&isExplorationForm()&&document.querySelector(".gps-exec-coordinate[data-coordinate-dirty='1']"))return "Ingresá una coordenada válida y presioná Continuar.";
       if(field.key==="coordenadas"&&isExplorationForm()&&state.gpsCapturePending&&currentSection()?.id==="coordenada")return "";
-      return field.required&&!state.gps?"Ingresa y busca una coordenada o utiliza el GPS.":"";
+      return field.required&&!window.FIBRAZO_BACKGROUND_TERRITORY.validPoint(state.gps)?"Ingresa una coordenada válida o utiliza el GPS.":"";
     }
-    if(field.type==="coordinates")return field.required&&!state.gps?"Pega una coordenada válida en formato latitud, longitud.":"";
+    if(field.type==="coordinates")return field.required&&!window.FIBRAZO_BACKGROUND_TERRITORY.validPoint(state.gps)?"Pega una coordenada válida en formato latitud, longitud.":"";
     if(field.type==="photos"||field.type==="photo-single")return"";
     const v=fieldValue(field.key),empty=Array.isArray(v)?v.length===0:String(v||"").trim()==="";
     if(field.key.endsWith("_calidad")&&/^isp_[1-4]_calidad$/.test(field.key)&&isExplorationForm()){const isp=String(fieldValue(field.key.replace("_calidad",""))||"").trim();if(isp&&isp!=="Sin ISP"&&empty)return"Selecciona la calidad del tendido de este ISP.";}
@@ -1338,9 +1345,10 @@
       return;
     }
     // Defense if the user returned to review while a fix is still pending.
-    if(isExplorationForm()&&(state.gpsCapturePending||!state.gps)){
+    if(state.form.fields.some(f=>(f.type==="gps"||f.type==="coordinates")&&f.required)&&(state.gpsCapturePending||!window.FIBRAZO_BACKGROUND_TERRITORY.validPoint(state.gps))){
       $("reviewWorkspace").hidden=true;$("formWorkspace").hidden=false;
-      const index=activeSections().findIndex(section=>section.id==="coordenada");
+      const coordinateSection=state.form.fields.find(f=>f.type==="gps"||f.type==="coordinates")?.section;
+      const index=activeSections().findIndex(section=>section.id===coordinateSection);
       if(index>=0)state.sectionIndex=index;
       renderSection();
       setStatus(state.gpsCapturePending?"El GPS sigue buscando: aguardá o ingresá una coordenada.":"No se obtuvo una coordenada. Reintentá GPS o ingresala manualmente.","error");
@@ -1433,7 +1441,7 @@
       }
       window.scrollTo({top:0,behavior:"smooth"});
     }catch(e){
-      const msg=e.message||"No se pudo guardar la respuesta.";
+      const msg=["VALID_COORDINATE_REQUIRED","GPS_REQUIRED"].includes(e.message)?"Falta una coordenada válida. Vuelve a editar la ubicación original del punto y reintenta; tus respuestas siguen en pantalla.":e.message||"No se pudo guardar la respuesta.";
       setStatus("🔴 "+msg+" La encuesta no se considera finalizada hasta que puedas reintentar.","error");
       const summary=$("validationSummary"),list=$("validationList");
       if(summary&&list){summary.hidden=false;list.innerHTML="<li>"+esc(msg)+"</li>";}

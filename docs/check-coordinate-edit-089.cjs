@@ -1,0 +1,34 @@
+// Local-only API/DOM fixtures. No production requests, records or credentials.
+const fs=require('fs'),vm=require('vm'),assert=require('assert/strict');
+const plan=require('../api/_competition-plan'),territory=require('../background-territory');
+const user={email:'fixture@fibrazo.test'},form={id:'INTELIGENCIA_OPERADOR',status:'Activo',sheet:'RESP_INTELIGENCIA_OPERADOR',collectEmail:true};
+const initial=Array(32).fill('');Object.assign(initial,{0:'2026-10-22T14:00:00Z',1:'EXISTING-FIXTURE',2:'Fixture ISP',9:2.9428962,10:-75.2438761,11:8.53,12:'https://example.test/existing-photo',16:'Neiva',17:'EL PEDREGAL',19:user.email,31:'No'});
+let stored=[...initial],writes=[],reads=[],driveCalls=0;
+const core={gauth:()=>({}),verifyUser:async()=>user,loadForms:async()=>[form],userCapabilities:async()=>({permissions:[],adminActive:true,base:{}}),permissionFor:()=>({}),canUseDashboard:()=>true,canAccess:()=>true,validateSubmission:()=>{},validatePhotos:()=>{},httpError:(m,status)=>Object.assign(Error(m),{status}),SHEET_ID:'fixture-sheet',DEFAULT_DOMAIN:'@fibrazo.test',EXCEPTION:'fixture@fibrazo.test',logSecurity:async()=>{}};
+const coreSource=fs.readFileSync(__dirname+'/../api/_core.js','utf8');
+core.validateSubmission=new Function('httpError',coreSource.slice(coreSource.indexOf('function validateSubmission('),coreSource.indexOf('function httpError('))+'return validateSubmission;')(core.httpError);
+const google={sheets:()=>({spreadsheets:{values:{get:async args=>{reads.push(args);const row=[...stored];if(args.valueRenderOption!=='UNFORMATTED_VALUE'){row[9]='2,9428962';row[10]='-75,2438761';row[11]='8,53';}return{data:{values:[row]}};},update:async args=>{writes.push(args);return{data:{}};}}}}),drive:()=>{driveCalls++;throw Error('Drive must not be invoked before coordinate validation');}};
+const context=vm.createContext({require:name=>name==='googleapis'?{google}:name==='./_core'?core:name==='./_competition-plan'?plan:name==='./_territorial'?{}:name==='./_competition-sync'?{trySyncCompetition:async()=>({ok:true})}:require(name),module:{exports:{}},exports:{},process:{env:{}},Buffer,console,Date,Map,Set,URL});
+vm.runInContext(fs.readFileSync(__dirname+'/../api/submissions.js','utf8'),context);
+async function call(body,method='POST'){let status,result;const res={setHeader(){},status(n){status=n;return this;},json(x){result=x;return this;}};await context.module.exports({method,headers:{authorization:'fixture'},query:{form:form.id},body},res);return{status,result};}
+const payload=location=>({formId:form.id,editId:initial[1],data:{operador:'Fixture ISP',municipio:'Neiva',sector_barrio:'EL PEDREGAL',calidad_tendido:'1'},location,photos:[],isTest:false});
+(async()=>{
+ let r=await call(null,'GET');assert.equal(r.status,200);assert.equal(r.result.rows[0].location.lat,initial[9]);assert.equal(r.result.rows[0].location.lng,initial[10]);assert(reads.every(r=>r.valueRenderOption==='UNFORMATTED_VALUE'));console.log('PASS history API returns numeric full-precision coordinates using raw Sheets values');
+ writes=[];r=await call(payload({lat:null,lng:null,cityDetected:'Neiva'}));assert.equal(r.status,200);assert.equal(r.result.id,initial[1]);assert.equal(writes.length,1);const saved=writes[0].requestBody.values[0];assert.equal(saved[9],initial[9]);assert.equal(saved[10],initial[10]);assert.equal(saved[12],initial[12]);assert.equal(saved[0],initial[0]);assert.equal(saved[31],'No');console.log('PASS already-open legacy editor retries same ID with original GPS, timestamp, photo and classification');
+ writes=[];r=await call(payload(null));assert.equal(r.status,200);assert.equal(writes[0].requestBody.values[0][9],initial[9]);console.log('PASS metadata edit with omitted point retains original recorded point');
+ writes=[];r=await call(payload({lat:2.95,lng:-75.25}));assert.equal(r.status,200);assert.equal(writes[0].requestBody.values[0][9],2.95);console.log('PASS explicit valid coordinate correction is preserved');
+ for(const point of [{lat:91,lng:1},{lat:null,lng:-75.25},{lat:0,lng:0}]){writes=[];const p=payload(point);p.photos=[{data:'data:image/jpeg;base64,eA=='}];r=await call(p);assert.equal(r.status,400);assert.equal(r.result.error,'VALID_COORDINATE_REQUIRED');assert.equal(writes.length,0);assert.equal(driveCalls,0);}console.log('PASS invalid explicit coordinates rejected before Drive upload or Sheet write');
+ stored=[...initial];stored[9]='';stored[10]='';writes=[];r=await call(payload({lat:null,lng:null}));assert.equal(r.status,400);assert.equal(writes.length,0);console.log('PASS missing historical GPS is not invented or replaced with another location');
+ const ui=fs.readFileSync(__dirname+'/../ux-v04.js','utf8'),src=ui.slice(ui.indexOf('  function historyCoordinate('),ui.indexOf('  function setFieldValue('));
+ const state={form:{sections:[{}]},geoLookupId:0},label={textContent:''};let cancelled=0;const document={querySelector:s=>s.includes('.gps-value')?label:s==='.form-history'?{removeAttribute(){}}:null};
+ const edit=new Function('state','window','document','setFieldValue','updateVisibility','renderSection',src+'return editIntelligenceRecord;')(state,{FIBRAZO_BACKGROUND_TERRITORY:territory,scrollTo(){}},document,()=>{},()=>{},()=>{});
+ state.cancelGpsCapture=()=>cancelled++;edit({id:'fixture',location:{lat:'2,9428962',lng:'-75,2438761',accuracy:'8,53'},data:{municipio:'Neiva'}});assert.equal(state.gps.lat,2.9428962);assert.equal(state.gps.lng,-75.2438761);assert.equal(state.gps.accuracy,8.53);assert.equal(cancelled,1);console.log('PASS client accepts cached decimal-comma history and cancels unrelated GPS capture');
+ edit({id:'empty',location:{lat:'',lng:''},data:{municipio:'Neiva'}});assert.equal(state.gps,null);assert(label.textContent.includes('ubicación original'));console.log('PASS empty history coordinate remains absent, never zero/zero');
+ const guardLine=ui.split('\n').find(line=>line.includes('if(state.form.fields.some(')&&line.includes('state.gpsCapturePending'));
+ const guard=new Function('state','window','return '+guardLine.trim().slice(3,-2));
+ const window={FIBRAZO_BACKGROUND_TERRITORY:territory};
+ for(const gps of [null,{lat:NaN,lng:NaN},{lat:null,lng:null},{lat:0,lng:0}])assert(guard({form:{fields:[{type:'gps',required:true}]},gps,gpsCapturePending:false},window));
+ assert.equal(guard({form:{fields:[{type:'gps',required:true}]},gps:{lat:2.94,lng:-75.24},gpsCapturePending:false},window),false);
+ console.log('PASS actual save guard blocks missing/NaN/null/zero points and permits valid GPS');
+ console.log('FO-CHG-089 coordinate editing regression PASS');
+})().catch(e=>{console.error(e);process.exitCode=1;});

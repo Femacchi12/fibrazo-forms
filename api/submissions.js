@@ -392,7 +392,8 @@ async function readRows(auth,forms,requested,limit,user,caps){
   for(const form of allowed){
     const r=await sheets.spreadsheets.values.get({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!A2:${isExploration(form.id)?"CE":form.id==="INTELIGENCIA_OPERADOR"?"AF":"AC"}`
+      range:`${form.sheet}!A2:${isExploration(form.id)?"CE":form.id==="INTELIGENCIA_OPERADOR"?"AF":"AC"}`,
+      valueRenderOption:"UNFORMATTED_VALUE"
     });
     for(const row of (r.data.values||[]).slice(-limit).reverse()){
       // Toda respuesta de prueba queda excluida de resultados y análisis.
@@ -420,7 +421,7 @@ async function readRows(auth,forms,requested,limit,user,caps){
             barrio:row[47]||row[3],estrato:row[51]==="DENTRO"?(row[53]||"Sin información"):"Sin información",estrato_referencia:row[55]||"",estrato_registrado:row[71]||"",troncal:row[59]||row[61]||"",
             zona_empresarial:row[63]||"",estrato_observado:row[64]||"",nivel_seguridad:row[65]||"",tipo_terreno:row[72]||"",barrio_asentamiento_informal:row[73]||""
           },
-          location:{lat:row[17],lng:row[18],accuracy:row[19]},
+          location:{lat:coordinateNumber(row[17]),lng:coordinateNumber(row[18]),accuracy:coordinateNumber(row[19])},
           photos:[row[21],row[22],row[23]].filter(Boolean),
           photoStatus:row[75]||photoStatus(form.id==="EXPLORACION"?[row[27],row[21],row[22],row[23]]:[row[21],row[22],row[23]]),
           user:row[24]||""
@@ -429,7 +430,7 @@ async function readRows(auth,forms,requested,limit,user,caps){
         out.push({
           formId:form.id,timestamp:row[0],id:row[1],
           data:{operador:row[2],modelo_caja:row[3],nomenclatura_caja:row[4],marquilla:row[5],tipo_tensor:row[6],calidad_tendido:row[7],observaciones:row[8],municipio:row[16]||"",sector_barrio:row[17]||"",estrato:row[18]||"",calidad_servicio_percibida:row[20]||"",precio_solo_internet:row[21]||"",precio_internet_tv:row[22]||"",incluye_tv:row[23]||"",grilla_tv:row[24]||"",marquilla_drop:row[25]||"",tensor_acometida:row[27]||"",estrato_observado:row[29]||"",estado_fotos:row[30]||photoStatus([row[12],row[13],row[14],row[15],row[26],row[28]])},
-          location:{lat:row[9],lng:row[10],accuracy:row[11]},
+          location:{lat:coordinateNumber(row[9]),lng:coordinateNumber(row[10]),accuracy:coordinateNumber(row[11])},
           photos:[row[12],row[13],row[14],row[15],row[26],row[28]].filter(Boolean),photoFields:{foto_modelo_caja:row[12]||"",foto_nomenclatura_caja:row[13]||"",foto_marquilla:row[14]||"",foto_tipo_tensor:row[15]||"",foto_marquilla_drop:row[26]||"",foto_tensor_acometida:row[28]||""},
           user:row[19]||""
         });
@@ -495,7 +496,7 @@ module.exports=async(req,res)=>{
     // El cliente no puede auto-otorgarse permisos de pruebas.
     if(payload.isTest===true&&String(user?.email||"").trim().toLowerCase()!=="eduardo@fibrazo.com")throw httpError("TEST_FLAG_FORBIDDEN",403);
     payload.isTest=payload.isTest===true&&String(user?.email||"").trim().toLowerCase()==="eduardo@fibrazo.com";
-    validateSubmission(formId,payload);
+    if(formId!=="INTELIGENCIA_OPERADOR"||!payload.editId)validateSubmission(formId,payload);
     validatePhotos(payload.photos||[],form);
 
     if(formId==="INTELIGENCIA_OPERADOR"&&payload.editId){
@@ -504,7 +505,7 @@ module.exports=async(req,res)=>{
       const permission=permissionFor(caps.permissions,String(user.email||"").toLowerCase(),form.id,caps.base);
       if(!canAccess(form,user,caps.base,permission)) throw httpError("FORM_ACCESS_DENIED",403);
       const sheets=google.sheets({version:"v4",auth});
-      const existing=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!A2:AF`});
+      const existing=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!A2:AF`,valueRenderOption:"UNFORMATTED_VALUE"});
       const rows=existing.data.values||[];
       const idx=rows.findIndex(row=>String(row[1]||"")===editId);
       if(idx<0) throw httpError("SUBMISSION_NOT_FOUND",404);
@@ -512,6 +513,13 @@ module.exports=async(req,res)=>{
       const email=String(user?.email||"").trim().toLowerCase();
       const owner=String(old[19]||"").trim().toLowerCase();
       if(!caps.adminActive&&owner!==email) throw httpError("FORM_ACCESS_DENIED",403);
+      // Recover only a missing location or the exact null/null signature sent
+      // by older history editors (Number(decimal-comma) -> NaN -> JSON null).
+      // The original row is trusted; never use the current device position.
+      const legacyNullPoint=payload.location?.lat===null&&payload.location?.lng===null;
+      if((!payload.location||legacyNullPoint)&&validPoint(coordinateNumber(old[9]),coordinateNumber(old[10])))payload.location={...payload.location,lat:coordinateNumber(old[9]),lng:coordinateNumber(old[10]),accuracy:coordinateNumber(old[11])};
+      if(payload.location&&!validPoint(coordinateNumber(payload.location.lat),coordinateNumber(payload.location.lng)))throw httpError("VALID_COORDINATE_REQUIRED",400);
+      validateSubmission(formId,payload);
       const uploaded=await uploadPhotos(auth,form,editId,payload.photos||[]);
       const byKey=Object.fromEntries((payload.photos||[]).map((p,i)=>[String(p.fieldKey||""),uploaded[i]||""]));
       const links=[
@@ -522,9 +530,6 @@ module.exports=async(req,res)=>{
         byKey.foto_marquilla_drop||String(payload.existingPhotoFields?.foto_marquilla_drop||old[26]||""),
         byKey.foto_tensor_acometida||String(payload.existingPhotoFields?.foto_tensor_acometida||old[28]||"")
       ];
-      // A photo/metadata edit must never erase the previously captured point.
-      if(!payload.location&&validPoint(coordinateNumber(old[9]),coordinateNumber(old[10])))payload.location={lat:coordinateNumber(old[9]),lng:coordinateNumber(old[10]),accuracy:coordinateNumber(old[11])};
-      if(payload.location&&!validPoint(coordinateNumber(payload.location.lat),coordinateNumber(payload.location.lng)))throw httpError("VALID_COORDINATE_REQUIRED",400);
       const row=buildRow(form,payload,editId,links,owner||email);
       // Preservar el indicador histórico en una edición autorizada.
       row[31]=old[31]|| (payload.isTest?"Sí":"No");

@@ -9,7 +9,7 @@ assert.ok(reviewBody.includes("await state.gpsCapturePromise"));
 assert.ok(ui.includes("state.cancelGpsCapture?.();"));
 assert.ok(ui.includes("if(state.form!==captureForm||state.startedAt!==captureStartedAt)"));
 assert.ok(ui.includes("if(summaryValue._onGpsCaptured)summaryValue._onGpsCaptured(state.gps)"));
-assert.ok(ui.includes("if(isExplorationForm()&&(state.gpsCapturePending||!state.gps))"));
+assert.ok(ui.includes("state.gpsCapturePending||!window.FIBRAZO_BACKGROUND_TERRITORY.validPoint(state.gps)"));
 assert.ok(css.includes("FO-CHG-067 · compact final coordinate controls"));
 assert.ok(css.includes("width:auto!important;max-width:100%!important;"));
 assert.ok(css.includes("font-size:11px!important;font-weight:650!important"));
