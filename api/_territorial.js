@@ -403,7 +403,7 @@ async function resolveLayer(auth,meta,lon,lat){
 
   const exactCandidates=meta.items
     .filter(x=>lon>=x.minLon&&lon<=x.maxLon&&lat>=x.minLat&&lat<=x.maxLat)
-    .sort((a,b)=>((a.maxLon-a.minLon)*(a.maxLat-a.minLat))-((b.maxLon-b.minLon)*(b.maxLat-b.minLat)));
+    .sort((a,b)=>Number(a.quality?.endsWith("_COMPLEMENTO"))-Number(b.quality?.endsWith("_COMPLEMENTO"))||((a.maxLon-a.minLon)*(a.maxLat-a.minLat))-((b.maxLon-b.minLon)*(b.maxLat-b.minLat)));
   if(exactCandidates.length){
     const geometries=await fetchGeometries(auth,meta,exactCandidates);
     for(const item of exactCandidates){
@@ -548,6 +548,9 @@ async function resolveTerritorial(auth,latValue,lonValue,{cityHint=""}={}){
 
   if(selected&&["NVA","VVC","IBG"].includes(selected.id)&&cityResolved.result.status==="DENTRO"){
     estrato=await require("./_strata-kmz-canonical").lookup(auth,lat,lon,selected.id);
+  }
+  if(selected?.id==="CTG"&&cityResolved.result.status==="DENTRO"){
+    estrato=await require("./_strata-loaded-canonical").lookupCartagena(auth,lat,lon);
   }
 
   return {
@@ -705,5 +708,5 @@ module.exports={
   resolveTerritorial,
   searchTerritorial,
   flattenTerritorial,
-  _internals:{parseWkt,inGeometry,geometryDistance,bboxDistance,resolveCityItems,catalogForHint,layerMetaFromRanges}
+  _internals:{resolveLayer,parseWkt,inGeometry,geometryDistance,bboxDistance,resolveCityItems,catalogForHint,layerMetaFromRanges}
 };

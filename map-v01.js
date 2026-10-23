@@ -1588,7 +1588,7 @@
         ?("HISTÓRICO 2022 · SOLO QA · "+features.length+" estratos · vigencia no validada · "+((performance.now()-loadStarted)/1000).toFixed(1)+" s (carga + dibujo)")
         :data.precomputed
         ?(data.delivery==="FULL_CITY_MULTIPOLYGON"
-          ?"QA multipolígono completo · "+features.length+" estratos · "+Number(data.totalVisible||0)+" superficies · "+((performance.now()-loadStarted)/1000).toFixed(1)+" s (carga + dibujo)"
+          ?"Estratos unificados · "+features.length+" estratos · "+Number(data.totalVisible||0)+" superficies · "+((performance.now()-loadStarted)/1000).toFixed(1)+" s (carga + dibujo)"
           :"QA precalculado · "+Number(data.totalVisible||0)+" componentes en vista → "+features.length+" grupos por estrato · detalle "+(data.detail||""))
         :completeBuc
         ?("AMB original · "+Number(data.totalVisible||0)+" polígonos sin muestreo → "+received+" geometrías · "+((performance.now()-loadStarted)/1000).toFixed(1)+" s (carga + dibujo)")

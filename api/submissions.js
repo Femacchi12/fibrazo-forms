@@ -530,7 +530,7 @@ module.exports=async(req,res)=>{
       if((!payload.location||legacyNullPoint)&&validPoint(coordinateNumber(old[9]),coordinateNumber(old[10])))payload.location={...payload.location,lat:coordinateNumber(old[9]),lng:coordinateNumber(old[10]),accuracy:coordinateNumber(old[11])};
       if(payload.location&&!validPoint(coordinateNumber(payload.location.lat),coordinateNumber(payload.location.lng)))throw httpError("VALID_COORDINATE_REQUIRED",400);
       validateSubmission(formId,payload);
-      if(["neiva","villavicencio","ibague"].includes(String(payload.data?.municipio||old[16]||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase())){
+      if(["neiva","villavicencio","ibague","cartagena","bucaramanga","floridablanca","giron","piedecuesta"].includes(String(payload.data?.municipio||old[16]||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase())){
         const t=await resolveTerritorial(auth,payload.location.lat,payload.location.lng,{cityHint:String(payload.data?.municipio||old[16]||"")});
         payload.data.estrato=t.estrato?.status==="DENTRO"?String(t.estrato.assigned.name):"Sin información";
       }
@@ -651,7 +651,7 @@ module.exports=async(req,res)=>{
           requestBody:{values:[[
             observedCity||exactCity,
             String(payload.data?.sector_barrio||exactBarrio||""),
-            String(["NVA","VVC","IBG"].includes(territorial?.catalogId)&&!payload.isTest?(exactEstrato||"Sin información"):(payload.data?.estrato||exactEstrato||"Sin información"))
+            String(["NVA","VVC","IBG","CTG","BUC_AMB"].includes(territorial?.catalogId)&&!payload.isTest?(exactEstrato||"Sin información"):(payload.data?.estrato||exactEstrato||"Sin información"))
           ]]}
         });
       }
@@ -684,7 +684,7 @@ module.exports=async(req,res)=>{
         });
 
         const exactEstrato=territorial?.estrato?.status==="DENTRO"?String(territorial.estrato.assigned?.name||""):"";
-        const estratoValue=["NVA","VVC","IBG"].includes(territorial?.catalogId)&&!payload.isTest?(exactEstrato||"Sin información"):String(payload.data?.estrato||exactEstrato||"");
+        const estratoValue=["NVA","VVC","IBG","CTG","BUC_AMB"].includes(territorial?.catalogId)&&!payload.isTest?(exactEstrato||"Sin información"):String(payload.data?.estrato||exactEstrato||"");
         const estratoStatus=String(territorial?.estrato?.status||"");
         const estratoDistance=Number.isFinite(Number(territorial?.estrato?.distanceM))
           ?Math.round(Number(territorial.estrato.distanceM))

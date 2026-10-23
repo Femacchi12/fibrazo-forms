@@ -1,11 +1,13 @@
+// FO-CHG-095: approved operational derivative; original source provenance retained.
 // FO-CHG-052 · QA-only, offline-precomputed AMB stratum geometries.
-// The original 03_ESTRATOS WKT remains the only authoritative territorial source.
+// Original 03_ESTRATOS WKT remains authoritative for point classification.
 // Display optimizations never change point-in-polygon classification.
 const {google}=require("googleapis");
 const AdmZip=require("adm-zip");
 const {gzipSync}=require("node:zlib");
 const ARCHIVE_ID="11T-x0QBB9W1GYUf0AaAvB9f5yvsLIGfJ";
-const VERSION="20261017-municipal-precalc01";
+const approval=require("./territorial-approval.json");
+const VERSION="20261022-approved095";
 const CITIES={
   bucaramanga:"Bucaramanga",
   floridablanca:"Floridablanca",
@@ -19,7 +21,6 @@ let archiveValue=null,archiveExpiry=0,archiveJob=null;
 const parsed=new Map(),inflight=new Map();
 function norm(x){return String(x||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();}
 function target(query){
-  if(String(query?.qaDissolve||"")!=="1")return null;
   const parts=String(query?.cities||"").split(",").map(norm).filter(Boolean);
   if(parts.length!==1)return null;
   const city=parts[0]==="bucaramanga + amb"?"bucaramanga-amb":parts[0];
@@ -31,7 +32,9 @@ async function archive(auth){
   const job=(async()=>{
     const drive=google.drive({version:"v3",auth});
     const rsp=await drive.files.get({fileId:ARCHIVE_ID,alt:"media",supportsAllDrives:true},{responseType:"arraybuffer"});
-    const zip=new AdmZip(Buffer.from(rsp.data));
+    const bytes=Buffer.from(rsp.data);
+    if(require("crypto").createHash("sha256").update(bytes).digest("hex")!==approval.archives.AMB.sha256)throw Error("AMB_APPROVED_ARCHIVE_CHANGED");
+    const zip=new AdmZip(bytes);
     if(!zip.getEntry("AMB/manifest.json"))throw Error("AMB_PRECOMPUTED_MANIFEST_MISSING");
     archiveValue=zip;archiveExpiry=Date.now()+TTL;
     return zip;
@@ -104,13 +107,14 @@ async function handle(auth,req,res,city,bbox,zoom){
     properties:{id:"AMB_"+city+"_E"+row.estrato,layer:"estratos",
       name:"Estrato "+row.estrato,estrato:row.estrato,
       municipio:CITIES[city],originalCount:row.originalCount,
-      source:"FIBRAZO_Territorial_Bucaramanga_AMB · offline dissolve · QA",
-      quality:"VALIDADO_DERIVADO_VISUAL",qaOptimized:true,
+      source:"FIBRAZO_Territorial_Bucaramanga_AMB · offline dissolve · FIBRAZO aprobado",
+      quality:"VALIDADO_FIBRAZO_095",canonical:true,approvalScope:approval.scope,sourceVersion:approval.version,qaOptimized:true,
       geometryVersion:VERSION,detail},
     geometry:{type:"MultiPolygon",coordinates:row.polygons}
   }));
   const payload={
     ok:true,mode:"geometry",layer:"estratos",scope:"AMB_"+city+"_PRECALCULATED",
+    canonical:true,approvalScope:approval.scope,sourceVersion:approval.version,
     delivery:"FULL_CITY_MULTIPOLYGON",viewportFiltered:false,
     requiresZoom:false,minZoom:11,displayMode:"PRECALCULADA",precomputed:true,
     qaOptimized:true,geometryVersion:VERSION,detail,truncated:false,pageCount:1,

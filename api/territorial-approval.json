@@ -1,0 +1,21 @@
+{
+  "version": "FO-CHG-095",
+  "approvedBy": "Edu",
+  "date": "2026-10-22",
+  "scope": "CANONICA_OPERATIVA_FIBRAZO",
+  "municipalCertification": false,
+  "approval": "All currently loaded barrio and estrato layers explicitly accepted; source years and provenance unchanged.",
+  "barrios": 3430,
+  "archives": {
+    "AMB": {
+      "id": "11T-x0QBB9W1GYUf0AaAvB9f5yvsLIGfJ",
+      "sha256": "7288b2cc7ca6ad7420a3bc124d27172e866003741a2abf2443e409c5aec4b5e7"
+    },
+    "CTG": {
+      "id": "1iM1ClOL205PTpPekbn3apTpGCiPTGJe5",
+      "sha256": "2506d0f5e3fb99288f81b51273d9fd77dfcfd0ac03e8d1688b3a9eb60bbfa487"
+    }
+  },
+  "cartagenaBarrioRule": "Previously accepted layer first; newly accepted complement fills its gaps. Same-tier overlaps retain existing smallest-bbox exact-containment rule.",
+  "unknownRule": "Sin informacion and No residencial retained; never converted into a numeric stratum."
+}

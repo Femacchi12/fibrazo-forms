@@ -413,7 +413,7 @@ module.exports=async(req,res)=>{
     }
 
     if(ctgHistoricCity){
-      // Historical 2022: clearly labelled visual QA; never classify surveyed points.
+      // FO-CHG-095: source year 2022 retained; operationally approved by Edu.
       return require("./_estratos-ctg-historic").handle(auth,req,res);
     }
 

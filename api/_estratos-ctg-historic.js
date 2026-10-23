@@ -1,9 +1,9 @@
-// FO-CHG-056: historical Cartagena 2022 strata for VISUAL QA only.
-// Historical source is marked Preferida_Analisis=FALSE; never use for
-// authoritative territorial point classification or production.
+// FO-CHG-095: Edu approved the loaded 2022 source for FIBRAZO operational use.
+// Source year/provenance stay historical; municipal certification is not asserted.
 const {google}=require("googleapis");
 const AdmZip=require("adm-zip");
 const {gzipSync}=require("node:zlib");
+const approval=require("./territorial-approval.json");
 const ARCHIVE="1iM1ClOL205PTpPekbn3apTpGCiPTGJe5";
 const SOURCE="CARTAGENA/CARTAGENA_estratos_unificados_historicos_2022.geojson";
 const TTL=10*60*1000;
@@ -18,13 +18,15 @@ async function source(auth){
   const job=(async()=>{
     const drive=google.drive({version:"v3",auth});
     const reply=await drive.files.get({fileId:ARCHIVE,alt:"media",supportsAllDrives:true},{responseType:"arraybuffer"});
-    const zip=new AdmZip(Buffer.from(reply.data));
+    const bytes=Buffer.from(reply.data);
+    if(require("crypto").createHash("sha256").update(bytes).digest("hex")!==approval.archives.CTG.sha256)throw Error("CTG_APPROVED_ARCHIVE_CHANGED");
+    const zip=new AdmZip(bytes);
     const entry=zip.getEntry(SOURCE);
     if(!entry)throw Error("CARTAGENA_HISTORICAL_QA_ASSET_MISSING");
     const geo=JSON.parse(zip.readAsText(entry));
     if(geo.type!=="FeatureCollection"||!Array.isArray(geo.features)||geo.features.length!==6)throw Error("CARTAGENA_HISTORICAL_QA_INVALID");
     if(geo.features.some(f=>f.properties?.quality!=="HISTORICO_2022_NO_VIGENTE"||f.geometry?.type!=="MultiPolygon"))throw Error("CARTAGENA_HISTORICAL_QA_PROVENANCE");
-    cache=geo.features;expires=Date.now()+TTL;return cache;
+    cache=geo.features.map(f=>({...f,properties:{...f.properties,quality:"VALIDADO_FIBRAZO_095",canonical:true,sourceVersion:approval.version,approvalScope:approval.scope,sourceYear:2022}}));expires=Date.now()+TTL;return cache;
   })();
   loading=job;
   try{return await job;}finally{loading=null;}
@@ -39,7 +41,7 @@ async function handle(auth,req,res){
     return res.status(200).json({
       ok:true,mode:"index",layer:"estratos",scope:"CARTAGENA_HISTORICAL_2022_QA",
       minZoom:11,requiresZoom:false,truncated:false,
-      qaHistorical:true,sourceYear:2022,canonical:false,
+      qaHistorical:false,sourceYear:2022,canonical:true,
       totalVisible:counts.reduce((n,r)=>n+r.count,0),items:counts
     });
   }
@@ -50,8 +52,8 @@ async function handle(auth,req,res){
     minZoom:11,requiresZoom:false,truncated:false,
     displayMode:"PRECALCULADA_HISTORICA",delivery:"FULL_CITY_MULTIPOLYGON",
     viewportFiltered:false,qaOptimized:true,precomputed:true,
-    qaHistorical:true,sourceYear:2022,canonical:false,
-    warning:"Estratos históricos de Cartagena (2022). Solo referencia visual QA; vigencia no validada.",
+    qaHistorical:false,sourceYear:2022,canonical:true,
+    sourceApproval:"Base 2022 aprobada por Edu para uso operativo FIBRAZO · FO-CHG-095",
     originalFeatureCount:features.reduce((n,f)=>n+Number(f.properties.originalCount||0),0),
     totalVisible:features.reduce((n,f)=>n+f.geometry.coordinates.length,0),
     optimizedFeatureCount:features.length,features
@@ -63,4 +65,4 @@ async function handle(auth,req,res){
   res.setHeader("X-Fibrazo-Layer-Mode","CARTAGENA_HISTORICAL_2022_QA");
   return res.status(200).send(gz);
 }
-module.exports={target,handle};
+module.exports={target,handle,source};
