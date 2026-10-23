@@ -15,6 +15,8 @@
   const BUCARAMANGA_BOUNDS=[[7.070607677,-73.172095278],[7.195892798,-73.093548025]];
   // QA city-specific extent from validated SHP bounds (EPSG:4326).
   const QA_CITY_BOUNDS={
+    sincelejo:[-75.42196712199996,9.250228634000052,-75.35159397199999,9.340458075000072],
+    monteria:[-75.91520421199994,8.712417732000063,-75.83588886099994,8.816131248000033],
     neiva:[[2.88679,-75.30872],[2.98355,-75.23607]],
     villavicencio:[[4.05402,-73.68193],[4.18333,-73.53185]],
     ibague:[[4.37573,-75.27256],[4.46508,-75.11995]],
@@ -987,12 +989,12 @@
   function updateQaToolbar(){
     const cities=filterValues("mapCityFilter");
     const city=cities.length===1?cities[0]:"";
-    const precomputed=["neiva","villavicencio","ibague","cartagena"].includes(city);
+    const precomputed=["neiva","villavicencio","ibague","cartagena","sincelejo","monteria"].includes(city);
     const isBuc=isAmbCity(city);
     const historic=city==="cartagena";
     const active=isBuc&&state.qaDissolveEstratos;
     const label=active?"✓ Estratos unidos (QA)":"Unificar estratos (QA)";
-    const title=historic
+    const title=["sincelejo","monteria"].includes(city)?"Estrato predominante por manzana · referencia Censo DANE2018":historic
       ?"Cartagena: datos históricos 2022 para prueba visual QA, sin validez operativa"
       :precomputed
       ?"Esta ciudad ya utiliza polígonos unidos y precalculados"
@@ -1006,7 +1008,7 @@
       button.disabled=!isBuc;
       button.classList.toggle("qa-active",active);
       button.setAttribute("aria-pressed",String(active));
-      button.textContent=historic?"Estratos 2022 · históricos QA":precomputed?"✓ Estratos precalculados (QA)":isBuc?label:"Estratos QA · elegí ciudad";
+      button.textContent=["sincelejo","monteria"].includes(city)?"Referencia censal2018":historic?"Estratos 2022 · históricos QA":precomputed?"✓ Estratos precalculados (QA)":isBuc?label:"Estratos QA · elegí ciudad";
       button.title=title;
     }
     // This is the actual toolbar visible inside the fullscreen map, unlike
@@ -1130,7 +1132,8 @@
       add("Categoría",p.categoria);
       add("Área",p.areaHa?p.areaHa+" ha":"");
     }
-    add("Calidad",p.quality);
+    add("Calidad",p.quality==="REFERENCIA_CENSAL_2018"?"Referencia censal":p.quality);
+    if(p.quality==="REFERENCIA_CENSAL_2018"){add("Tipo","Predominante por manzana");add("Año de fuente",p.sourceYear);}
     add("Fuente",p.source);
     add("Vigencia",p.year);
     if(p.observations)add("Observación",p.observations);
@@ -1388,18 +1391,18 @@
     if($("mapViewBucaramanga"))$("mapViewBucaramanga").textContent=QA_CITY_BOUNDS[city]?"◎ Ver "+cityName:"◎ Ver Bucaramanga + AMB";
     const qaToggle=$("mapEstratoOptimizePilot");
     if(qaToggle){
-      const isPrecomputed=["neiva","villavicencio","ibague","cartagena"].includes(city);
+      const isPrecomputed=["neiva","villavicencio","ibague","cartagena","sincelejo","monteria"].includes(city);
       qaToggle.disabled=isPrecomputed;
       qaToggle.checked=isPrecomputed||state.qaDissolveEstratos;
       const label=qaToggle.closest("label");
       if(label){
         const textNode=[...label.childNodes].find(node=>node.nodeType===3);
-        if(textNode)textNode.nodeValue=city==="cartagena"
+        if(textNode)textNode.nodeValue=["sincelejo","monteria"].includes(city)?" Referencia censal2018 · unificada":city==="cartagena"
           ?" Estratos históricos 2022 (QA, sin vigencia validada)"
           :isPrecomputed
           ?" Estratos precalculados y unificados (QA)"
           :" Prueba QA: unificar polígonos por estrato";
-        label.title=isPrecomputed
+        label.title=["sincelejo","monteria"].includes(city)?"Estrato predominante por manzana · fuente Censo DANE2018":isPrecomputed
           ?"Esta ciudad utiliza por defecto los polígonos unificados del paquete QA"
           :"Comparar capas originales y unificadas de Bucaramanga";
       }
@@ -1584,7 +1587,9 @@
       const drawn=drawPolygonLayer(layer,features);
       if(layer==="estratos")state.polygonFullKey=fullKey;
       const received=features.length;
-      state.polygonStatus[layer]=data.qaHistorical
+      state.polygonStatus[layer]=data.censusReference
+        ?("Referencia Censo DANE2018 · "+features.length+" grupos de estrato · "+Number(data.unclassifiedCount||0)+" manzanas sin estrato")
+        :data.qaHistorical
         ?("HISTÓRICO 2022 · SOLO QA · "+features.length+" estratos · vigencia no validada · "+((performance.now()-loadStarted)/1000).toFixed(1)+" s (carga + dibujo)")
         :data.precomputed
         ?(data.delivery==="FULL_CITY_MULTIPOLYGON"

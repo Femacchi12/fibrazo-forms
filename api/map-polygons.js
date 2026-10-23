@@ -387,7 +387,8 @@ module.exports=async(req,res)=>{
     const precalcCity=layer==="estratos"?require("./_estratos-precalc").target(req.query):null;
     const ambPrecalcCity=layer==="estratos"?require("./_estratos-amb-precalc").target(req.query):null;
     const ctgHistoricCity=layer==="estratos"&&require("./_estratos-ctg-historic").target(req.query);
-    const usesPrecalculated=!!(precalcCity||ambPrecalcCity||ctgHistoricCity);
+    const censusCity=layer==="estratos"?require("./_estratos-census-2018").target(req.query):null;
+    const usesPrecalculated=!!(precalcCity||ambPrecalcCity||ctgHistoricCity||censusCity);
     const [forms,caps,source]=await Promise.all([
       loadForms(auth),
       userCapabilities(auth,user.email),
@@ -412,6 +413,7 @@ module.exports=async(req,res)=>{
       return require("./_estratos-amb-precalc").handle(auth,req,res,ambPrecalcCity,[bbox.minLon,bbox.minLat,bbox.maxLon,bbox.maxLat],zoom);
     }
 
+    if(censusCity)return require("./_estratos-census-2018").handle(auth,req,res,censusCity);
     if(ctgHistoricCity){
       // FO-CHG-095: source year 2022 retained; operationally approved by Edu.
       return require("./_estratos-ctg-historic").handle(auth,req,res);

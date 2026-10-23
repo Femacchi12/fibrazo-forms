@@ -1,0 +1,131 @@
+{
+  "version": "FO-CHG-096",
+  "scope": "REFERENCIA_CENSAL_2018",
+  "approvedBy": "Edu",
+  "approval": "Explicit source choice Referencia DANE2018",
+  "source": "https://ags.esri.co/arcgis/rest/services/LivingAtlas/Estrato_predominante_por_manzana_2018/MapServer/0",
+  "sourceItem": "084bb9fdddf64efaa578a692d7387d19",
+  "sourceYear": 2018,
+  "canonical": false,
+  "reports": [
+    {
+      "city": "Sincelejo",
+      "originalCount": 3878,
+      "classified": 3295,
+      "unclassified": 583,
+      "groups": 6,
+      "stats": [
+        {
+          "estrato": "1",
+          "originals": 2061,
+          "components": 1930,
+          "areaOverlapRemoved": 9.094947017729282e-13
+        },
+        {
+          "estrato": "2",
+          "originals": 899,
+          "components": 887,
+          "areaOverlapRemoved": 2.2737367544323206e-13
+        },
+        {
+          "estrato": "3",
+          "originals": 201,
+          "components": 201,
+          "areaOverlapRemoved": 0
+        },
+        {
+          "estrato": "4",
+          "originals": 105,
+          "components": 102,
+          "areaOverlapRemoved": 0
+        },
+        {
+          "estrato": "5",
+          "originals": 16,
+          "components": 14,
+          "areaOverlapRemoved": 0
+        },
+        {
+          "estrato": "6",
+          "originals": 13,
+          "components": 13,
+          "areaOverlapRemoved": 0
+        }
+      ],
+      "source": "https://ags.esri.co/arcgis/rest/services/LivingAtlas/Estrato_predominante_por_manzana_2018/MapServer/0",
+      "sourceYear": 2018,
+      "canonical": false,
+      "originalSha256": "3949063b5b19528e7100707ce1c237d45baeea7a14b5dfe80925f067b3fde0fb",
+      "unifiedSha256": "92ae8b3f84a31ffb7f8e13a60337f62a58f976033a25a574a15ae5b900845ca4",
+      "kmzSha256": "2e8dc87bdd4eaed8afb226bc276590cdb8ea3aac3d2bace5915931ae7f522a7d",
+      "unifiedBytes": 3709506,
+      "bbox": [
+        -75.42196712199996,
+        9.250228634000052,
+        -75.35159397199999,
+        9.340458075000072
+      ]
+    },
+    {
+      "city": "Monteria",
+      "originalCount": 5091,
+      "classified": 4418,
+      "unclassified": 673,
+      "groups": 6,
+      "stats": [
+        {
+          "estrato": "1",
+          "originals": 2881,
+          "components": 2858,
+          "areaOverlapRemoved": 0
+        },
+        {
+          "estrato": "2",
+          "originals": 880,
+          "components": 878,
+          "areaOverlapRemoved": 0
+        },
+        {
+          "estrato": "3",
+          "originals": 429,
+          "components": 428,
+          "areaOverlapRemoved": 0
+        },
+        {
+          "estrato": "4",
+          "originals": 134,
+          "components": 134,
+          "areaOverlapRemoved": 0
+        },
+        {
+          "estrato": "5",
+          "originals": 54,
+          "components": 54,
+          "areaOverlapRemoved": 0
+        },
+        {
+          "estrato": "6",
+          "originals": 40,
+          "components": 40,
+          "areaOverlapRemoved": 0
+        }
+      ],
+      "source": "https://ags.esri.co/arcgis/rest/services/LivingAtlas/Estrato_predominante_por_manzana_2018/MapServer/0",
+      "sourceYear": 2018,
+      "canonical": false,
+      "originalSha256": "8927bc2be6b4c37c2f336ddac42b6231be8cc830568b4da1684ed69faba314e7",
+      "unifiedSha256": "29755096fb99bc8e7a770391efd11c7d47533b51b60e3f519dc7565816e48467",
+      "kmzSha256": "a70922c3e884690d9744da3191fd80e66570ed9036b57a44865f85eaf9852778",
+      "unifiedBytes": 7189096,
+      "bbox": [
+        -75.91520421199994,
+        8.712417732000063,
+        -75.83588886099994,
+        8.816131248000033
+      ]
+    }
+  ],
+  "archiveSha256": "597c9861a0f56143efbf8cce3043a79e5e9290705104cc4c16dd0bb905c79f0c",
+  "archiveBytes": 3013665,
+  "archiveId": "1hXhkBvXgCW3zXfsFz4fapWWdezpSyoD6"
+}
