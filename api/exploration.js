@@ -1,6 +1,6 @@
 const {google}=require("googleapis");
 const {gauth,verifyUser,httpError}=require("./_core");
-const {resolveTerritorial,TERRITORIAL_VERSION}=require("./_territorial");
+const {resolveTerritorial,resolveMapCity,TERRITORIAL_VERSION}=require("./_territorial");
 
 const COMPETENCIA_SHEET_ID=
   process.env.COMPETENCIA_SHEET_ID||
@@ -115,6 +115,11 @@ module.exports=async(req,res)=>{
     }
 
     const auth=gauth();
+    if(String(req.query.cityOnly||"")==="1"){
+      const resolved=await resolveMapCity(auth,lat,lng);
+      return res.status(200).json({ok:true,cityStatus:resolved.status,
+        city:resolved.status==="DENTRO"?canonicalCity(resolved.assigned?.name||""):""});
+    }
     const hint=canonicalCity(req.query.city||"");
     // FO-CHG-072: offer read-only, noncanonical strata references in Production
     // and Preview. Start the lookup alongside canonical enrichment so GPS does

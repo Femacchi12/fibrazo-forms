@@ -79,6 +79,9 @@
     lastRefresh:null,
     viewActive:false,
     pointsLoading:false,
+    pointsController:null,
+    gpsRequest:0,
+    cityFilterRevision:0,
     lastPointsAttempt:0,
     fullscreen:false,
     mapQaAuthorized:false
@@ -88,7 +91,7 @@
   const esc=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[ch]));
   const norm=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
   const cityLabel=value=>String(value||"")==="bucaramanga-amb"?"Bucaramanga + AMB":String(value||"").trim().toLocaleLowerCase("es-CO").replace(/(^|[\s-])([a-záéíóúüñ])/g,(_,space,letter)=>space+letter.toLocaleUpperCase("es-CO"));
-  const scopeCity=value=>["bucaramanga","floridablanca","giron","piedecuesta","bucaramanga + amb","bucaramanga-amb"].includes(norm(value))?"bucaramanga-amb":norm(value);
+  const scopeCity=value=>norm(value)==="cartagena de indias"?"cartagena":["bucaramanga","floridablanca","giron","piedecuesta","bucaramanga + amb","bucaramanga-amb"].includes(norm(value))?"bucaramanga-amb":norm(value);
   const hasStaticEstratos=city=>city==="bucaramanga-amb"||!!QA_CITY_BOUNDS[city];
   const matchesCitySelection=(selected,raw)=>selected.has(scopeCity(raw));
   const filterValues=id=>{
@@ -157,14 +160,15 @@
       return Array.isArray(raw)?raw.filter(p=>Number.isFinite(Number(p.lat))&&Number.isFinite(Number(p.lng))).slice(-5000):[];
     }catch(_){return[];}
   };
+  const pointScope=()=>filterValues("mapCityFilter").slice().sort().join(",");
   const cachePoints=points=>{
     try{
-      localStorage.setItem(userScopedKey(CACHE_KEY),JSON.stringify({ts:Date.now(),visibility:state.visibility,points}));
+      localStorage.setItem(userScopedKey(CACHE_KEY)+":"+pointScope(),JSON.stringify({ts:Date.now(),visibility:state.visibility,points}));
     }catch(_){}
   };
   const cachedPoints=()=>{
     try{
-      const raw=JSON.parse(localStorage.getItem(userScopedKey(CACHE_KEY))||"null");
+      const raw=JSON.parse(localStorage.getItem(userScopedKey(CACHE_KEY)+":"+pointScope())||"null");
       if(!Array.isArray(raw?.points))return[];
       const cacheVisibility=raw.visibility==="team"?"team":"own";
       if(cacheVisibility==="team"&&(!state.loadedOnce||state.visibility!=="team"))return[];
@@ -843,7 +847,7 @@
     const city=$("mapCityFilter"),user=$("mapUserFilter"),operator=$("mapOperatorFilter");
     if(city){
       const current=filterValues("mapCityFilter");
-      const cityMap=new Map();
+      const cityMap=new Map(current.map(key=>[key,cityLabel(key)]));
       for(const raw of state.cityCatalog){const key=scopeCity(raw);if(raw&&!cityMap.has(key))cityMap.set(key,cityLabel(key));}
       for(const point of state.points){
         const raw=String(point.city?.assigned||point.observedCity||"").trim();
@@ -1455,18 +1459,28 @@
     if(ttl>0&&cached&&cached.expires>Date.now())return cached.data;
     const user=firebase?.auth?.().currentUser;
     if(!user)throw new Error("Sesión no disponible.");
-    const token=await user.getIdToken();
-    const response=await fetch(url,{headers:{Authorization:"Bearer "+token},cache:"default",signal:controller?.signal});
-    const data=await response.json();
-    if(!response.ok)throw new Error(data.error||"No se pudo cargar la capa.");
-    if(ttl>0){
-      polygonResponseCache.set(url,{expires:Date.now()+ttl,data});
-      if(polygonResponseCache.size>80){
-        const oldest=polygonResponseCache.keys().next().value;
-        polygonResponseCache.delete(oldest);
-      }
-    }
-    return data;
+    controller=controller||new AbortController();
+    let timer,onAbort;
+    const timeout=new Promise((_,reject)=>{
+      onAbort=()=>reject(controller.signal.reason||new DOMException("Cancelado","AbortError"));
+      controller.signal.addEventListener("abort",onAbort,{once:true});
+      if(controller.signal.aborted)return onAbort();
+      timer=setTimeout(()=>controller.abort(new Error("La consulta tardó demasiado. Puedes reintentar.")),25000);
+    });
+    try{
+      return await Promise.race([(async()=>{
+        const token=await user.getIdToken();
+        if(controller.signal.aborted)throw new DOMException("Cancelado","AbortError");
+        const response=await fetch(url,{headers:{Authorization:"Bearer "+token},cache:"no-store",signal:controller.signal});
+        const data=await response.json();
+        if(!response.ok)throw new Error(data.error||"No se pudo cargar la capa.");
+        if(ttl>0){
+          polygonResponseCache.set(url,{expires:Date.now()+ttl,data});
+          if(polygonResponseCache.size>80)polygonResponseCache.delete(polygonResponseCache.keys().next().value);
+        }
+        return data;
+      })(),timeout]);
+    }finally{clearTimeout(timer);controller.signal.removeEventListener("abort",onAbort);}
   }
 
   async function loadLayerIndex(layer,{silent=false}={}){
@@ -1782,6 +1796,15 @@
   function selectMapSearchResult(item){
     if(!item||!ensureMap())return;
     hideMapSearchResults();
+    const city=item.type==="ciudad"?(item.city||item.name):item.city;
+    const selector=$("mapCityFilter"),key=scopeCity(city);
+    if(selector&&key){
+      if(![...selector.options].some(option=>option.value===key)){
+        const option=document.createElement("option");option.value=key;option.textContent=cityLabel(key);selector.add(option);
+      }
+      selectFilterValues(selector,[key]);
+      selector.dispatchEvent(new Event("change",{bubbles:true}));
+    }
     state.follow=false;
     if($("mapFollowToggle"))$("mapFollowToggle").checked=false;
     const bounds=Array.isArray(item.bounds)&&item.bounds.length===2?L.latLngBounds(item.bounds):null;
@@ -1801,17 +1824,24 @@
   }
 
   async function loadPoints({fit=false,silent=false}={}){
-    if(!firebase?.auth?.().currentUser||state.pointsLoading)return;
+    if(!firebase?.auth?.().currentUser)return;
+    const scope=pointScope();
+    state.pointsController?.abort();
+    const controller=new AbortController();
+    state.pointsController=controller;
+    if(!scope){
+      state.points=[];state.pointsLoading=false;renderMarkers();
+      mapStatus("Selecciona una ciudad o usa Mi ubicación para cargar sus puntos.","warning");
+      return;
+    }
     state.pointsLoading=true;
     state.lastPointsAttempt=Date.now();
     const busyToken=silent?null:beginMapBusy("Cargando puntos de exploración…");
     if(!silent)mapStatus("Actualizando puntos…","loading");
     try{
-      const token=await firebase.auth().currentUser.getIdToken();
       const includeTests=state.mapQaAuthorized&&$("mapShowTests")?.checked===true;
-      const response=await fetch("/api/map?limit=2000"+(includeTests?"&includeTests=1":""),{headers:{Authorization:"Bearer "+token},cache:"no-store"});
-      const data=await response.json();
-      if(!response.ok)throw new Error(data.error||"No se pudo cargar el mapa.");
+      const data=await authorizedFetch("/api/map?limit=2000&cities="+encodeURIComponent(scope)+(includeTests?"&includeTests=1":""),controller);
+      if(state.pointsController!==controller||pointScope()!==scope)return;
       state.points=Array.isArray(data.points)?data.points:[];
       state.visibility=data.visibility==="team"?"team":"own";
       state.mapQaAuthorized=data.canViewTests===true;
@@ -1819,15 +1849,16 @@
       state.lastRefresh=new Date();
       cachePoints(state.points);
       updateFilters();
-      renderMarkers({fit:fit||!state.loadedOnce});
+      renderMarkers({fit:fit||(!state.loadedOnce&&!state.lastLocation)});
       state.loadedOnce=true;
       mapStatus("Mapa actualizado · "+state.points.length+" puntos · "+state.lastRefresh.toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"}),"success");
     }catch(error){
+      if(state.pointsController!==controller||pointScope()!==scope)return;
       const cached=cachedPoints();
       if(cached.length){
         state.points=cached;
         updateFilters();
-        renderMarkers({fit:fit||!state.loadedOnce});
+        renderMarkers({fit:fit||(!state.loadedOnce&&!state.lastLocation)});
         state.loadedOnce=true;
         mapStatus("Sin conexión al servidor · mostrando "+cached.length+" puntos guardados en este dispositivo.","warning");
       }else{
@@ -1836,7 +1867,7 @@
       }
     }finally{
       endMapBusy(busyToken);
-      state.pointsLoading=false;
+      if(state.pointsController===controller){state.pointsLoading=false;state.pointsController=null;}
     }
   }
 
@@ -1909,14 +1940,14 @@
 
   // FO-CHG-075: initial GPS selects the city and available 1-3 strata once.
   // Never override manual filters, even when a delayed territorial request completes.
-  async function selectTerritoryFromGps(position){
+  async function selectTerritoryFromGps(position,request=state.gpsRequest,revision=state.cityFilterRevision){
     const selector=$("mapCityFilter");
     if(!selector||!state.viewActive)return;
     const startSelection=filterValues("mapCityFilter").join(",");
     try{
       const lat=position.coords.latitude,lng=position.coords.longitude;
-      const result=await authorizedFetch("/api/exploration?lat="+encodeURIComponent(lat)+"&lng="+encodeURIComponent(lng));
-      if(!state.viewActive||filterValues("mapCityFilter").join(",")!==startSelection)return;
+      const result=await authorizedFetch("/api/exploration?cityOnly=1&lat="+encodeURIComponent(lat)+"&lng="+encodeURIComponent(lng));
+      if(!state.viewActive||request!==state.gpsRequest||revision!==state.cityFilterRevision||filterValues("mapCityFilter").join(",")!==startSelection)return;
       const city=result.cityStatus==="DENTRO"?result.city:(result.qaTerritorial?.city?.status==="DENTRO"?result.qaTerritorial.city.assigned?.name:"");
       if(!city){mapStatus("Ubicación encontrada; seleccioná la ciudad manualmente.","warning");return;}
       const key=scopeCity(city);
@@ -1925,7 +1956,7 @@
       }
       selectFilterValues(selector,[key]);
       selector.dispatchEvent(new Event("change",{bubbles:true}));
-      const hasStrata=["villavicencio","neiva","ibague","cartagena"].includes(key)||isAmbCity(key);
+      const hasStrata=hasStaticEstratos(key);
       if(!hasStrata){
         state.polygonActive.estratos=false;
         state.polygonSelections.estratos.clear();
@@ -1936,11 +1967,13 @@
       toggleFilters(false);
       mapStatus("Ubicación detectada: "+cityLabel(key)+(hasStrata?" · estratos 1, 2 y 3 seleccionados.":" · sin capa de estratos confirmada."),"success");
     }catch(error){
+      if(!state.viewActive||request!==state.gpsRequest||revision!==state.cityFilterRevision)return;
       mapStatus("GPS ubicado. No se pudo identificar la ciudad; ajustá los filtros manualmente.","warning");
     }
   }
 
   function locateMe({auto=false}={}){
+    const request=++state.gpsRequest,revision=state.cityFilterRevision;
     if(!navigator.geolocation){
       if(!auto)mapStatus("Este dispositivo no ofrece ubicación GPS.","error");
       return;
@@ -1948,11 +1981,12 @@
     mapStatus(auto?"Buscando tu ubicación automáticamente…":"Buscando tu ubicación…","loading");
     navigator.geolocation.getCurrentPosition(
       position=>{
+        if(!state.viewActive||request!==state.gpsRequest||revision!==state.cityFilterRevision)return;
         updateCurrentLocation(position,{center:true});
-        if(auto)selectTerritoryFromGps(position);
-        else mapStatus("Ubicación actual encontrada.","success");
+        selectTerritoryFromGps(position,request,revision);
       },
       error=>{
+        if(!state.viewActive||request!==state.gpsRequest||revision!==state.cityFilterRevision)return;
         const message=error.code===1?"Permiso de ubicación denegado. Actívalo para este sitio.":"No se pudo obtener tu ubicación.";
         mapStatus(auto?"Ubicación automática no disponible · puedes usar Mi ubicación cuando quieras.":message,auto?"warning":"error");
       },
@@ -2065,6 +2099,8 @@
   }
   function onMapClose(){
     state.viewActive=false;
+    state.gpsRequest++;
+    state.pointsController?.abort();
     stopAutoRefresh();
   }
 
@@ -2089,11 +2125,14 @@
     ["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter","mapDateFrom","mapDateTo","mapPhotosFilter"].forEach(id=>$(id)?.addEventListener("change",()=>{
       updateFilterCount();
       if(id==="mapCityFilter"){
+        state.cityFilterRevision++;
+        state.points=[];
         updateFilters();
         resetTerritorialScopeForCity();
         renderMarkers({fit:filterValues("mapCityFilter").length>0});
         centerQaCityIfEmpty();
         schedulePolygonFilterRefresh();
+        loadPoints({fit:false});
       }else renderMarkers();
     }));
     $("mapShowTests")?.addEventListener("change",()=>{renderMarkers();updateFilterCount();loadPoints({silent:true});});
