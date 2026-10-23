@@ -291,3 +291,7 @@ Fallas transitorias de red ya no se interpretan como revocación de Administraci
 
 ### FO-CHG-101 · Rescate local de pendientes
 Ruta /api/public?rescue=1: respaldo JSON local por cuenta antes de reparar la aplicación antigua. No sube datos, no borra IndexedDB ni cambia registros. Ver docs/fo-chg-101-local-rescue.md. Requiere que Edu descargue y verifique el respaldo en el mismo Chrome que conserva sus pendientes.
+
+
+### FO-CHG-102 · Contención de lecturas Sheets durante campo
+Configuración de formularios/usuarios/permisos se consulta en un batch compartido con vigencia máxima15s por instancia; al expirar, fallo cerrado sin usar permisos vencidos. Escrituras deAdministración invalidan la copia local antes de releer. Cargas territoriales concurrentes comparten lecturas sin cambiar las cachés geográficas existentes ni las reglas de asignación. Backend únicamente: no cambia SW0.8.155, preguntas ni mapa visual. Ver docs/fo-chg-102-sheets-quota.md.

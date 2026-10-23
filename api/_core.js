@@ -35,10 +35,28 @@ async function verifyUser(req,{required=true}={}){
   }
 }
 
+// FO-CHG-102: one coalesced configuration read; never serve expired permissions on failure.
+let configuration=null,configurationFlight=null,configurationEpoch=0;
+function invalidateConfiguration(){configurationEpoch++;configuration=null;configurationFlight=null;}
+async function configurationRows(auth,index){
+  if(configuration&&configuration.expires>Date.now())return configuration.rows[index];
+  if(!configurationFlight){
+    const epoch=configurationEpoch;
+    const task=(async()=>{
+      const r=await google.sheets({version:"v4",auth}).spreadsheets.values.batchGet({spreadsheetId:SHEET_ID,ranges:["FORMULARIOS!A2:AB","USUARIOS!A2:H","PERMISOS_FORMULARIO!A2:H"]});
+      const rows=[0,1,2].map(i=>r.data.valueRanges?.[i]?.values||[]);
+      if(epoch===configurationEpoch)configuration={rows,expires:Date.now()+15000};
+      return rows;
+    })();
+    configurationFlight=task;
+    task.finally(()=>{if(configurationFlight===task)configurationFlight=null;}).catch(()=>{});
+  }
+  return (await configurationFlight)[index];
+}
+
 async function loadForms(auth){
-  const sheets=google.sheets({version:"v4",auth});
-  const r=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"FORMULARIOS!A2:AB"});
-  return (r.data.values||[]).filter(row=>row[0]).map((row,index)=>{
+  const rows=await configurationRows(auth,0);
+  return rows.filter(row=>row[0]).map((row,index)=>{
     const legacyAccess=String(row[8]||"PRIVADO").toUpperCase();
     const domains=splitDomains(row[10]||"");
     const boolAt=(idx,fallback)=>row[idx]===undefined||row[idx]===""?fallback:toBool(row[idx]);
@@ -58,9 +76,8 @@ async function loadForms(auth){
 }
 
 async function loadUsers(auth){
-  const sheets=google.sheets({version:"v4",auth});
-  const r=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"USUARIOS!A2:H"});
-  return (r.data.values||[]).filter(row=>row[0]).map((row,index)=>({
+  const rows=await configurationRows(auth,1);
+  return rows.filter(row=>row[0]).map((row,index)=>({
     row:index+2,
     email:String(row[0]||"").trim().toLowerCase(),
     role:String(row[1]||"").toUpperCase(),
@@ -74,9 +91,8 @@ async function loadUsers(auth){
 }
 
 async function loadFormPermissions(auth){
-  const sheets=google.sheets({version:"v4",auth});
-  const r=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"PERMISOS_FORMULARIO!A2:H"});
-  return (r.data.values||[]).filter(row=>row[0]&&row[1]).map((row,index)=>({
+  const rows=await configurationRows(auth,2);
+  return rows.filter(row=>row[0]&&row[1]).map((row,index)=>({
     row:index+2,
     email:String(row[0]||"").trim().toLowerCase(),
     formId:String(row[1]||"").trim().toUpperCase(),
@@ -321,4 +337,4 @@ function toBool(v){return v===true||String(v).toUpperCase()==="TRUE";}
 function clampInt(v,min,max,fallback){const n=parseInt(v,10);return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;}
 function clampNum(v,min,max,fallback){const n=Number(String(v??"").replace(",","."));return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;}
 
-module.exports={PROJECT,SHEET_ID,DEFAULT_DOMAIN,EXCEPTION,BASE_ADMINS,gauth,verifyUser,loadForms,loadUsers,loadFormPermissions,isBaseAdmin,permissionFor,userCapabilities,isAdmin,canUseDashboard,canAccess,runtimePolicy,sanitizeForm,hashIp,checkPublicRate,logSecurity,validatePublicGuards,validatePhotos,validateSubmission,httpError,splitEmails,splitDomains,clampInt,clampNum};
+module.exports={invalidateConfiguration,PROJECT,SHEET_ID,DEFAULT_DOMAIN,EXCEPTION,BASE_ADMINS,gauth,verifyUser,loadForms,loadUsers,loadFormPermissions,isBaseAdmin,permissionFor,userCapabilities,isAdmin,canUseDashboard,canAccess,runtimePolicy,sanitizeForm,hashIp,checkPublicRate,logSecurity,validatePublicGuards,validatePhotos,validateSubmission,httpError,splitEmails,splitDomains,clampInt,clampNum};

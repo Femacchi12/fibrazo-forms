@@ -1,6 +1,6 @@
 const {google}=require("googleapis");
 const {
-  gauth,verifyUser,loadForms,loadUsers,loadFormPermissions,userCapabilities,permissionFor,isBaseAdmin,
+  invalidateConfiguration,gauth,verifyUser,loadForms,loadUsers,loadFormPermissions,userCapabilities,permissionFor,isBaseAdmin,
   sanitizeForm,httpError,splitEmails,splitDomains,clampInt,clampNum,SHEET_ID
 }=require("./_core");
 
@@ -147,18 +147,21 @@ module.exports=async(req,res)=>{
     if(body.adminAction){
       if(!caps.canManageUsers)throw httpError("USER_ADMIN_REQUIRED",403);
       await mutateAdmin(auth,user.email,body);
+      invalidateConfiguration();
       const forms=await loadForms(auth);
       return res.status(200).json({ok:true,admins:await listAdminUsers(auth,forms)});
     }
     if(body.userSettingsAction){
       if(!caps.canManageUsers)throw httpError("USER_ADMIN_REQUIRED",403);
       await setUserSettings(auth,user.email,body);
+      invalidateConfiguration();
       const forms=await loadForms(auth);
       return res.status(200).json({ok:true,admins:await listAdminUsers(auth,forms)});
     }
     if(body.permissionAction){
       if(!caps.canManageUsers)throw httpError("USER_ADMIN_REQUIRED",403);
       await setFormPermission(auth,user.email,body);
+      invalidateConfiguration();
       const forms=await loadForms(auth);
       return res.status(200).json({ok:true,admins:await listAdminUsers(auth,forms)});
     }
@@ -219,6 +222,7 @@ module.exports=async(req,res)=>{
       spreadsheetId:SHEET_ID,requestBody:{valueInputOption:"RAW",data}
     });
 
+    invalidateConfiguration();
     const updated=(await loadForms(auth)).find(item=>item.id===formId);
     const updatedCaps=permissionFor((await loadFormPermissions(auth)),user.email,formId,caps.base);
     return res.status(200).json({ok:true,form:{...sanitizeForm(updated),...updatedCaps,databaseUrl:updatedCaps.canViewDatabase||updatedCaps.canManagePermissions?(updated.databaseUrl||""):""}});

@@ -190,7 +190,20 @@ function geometryDistance(lon,lat,polygons){
   return best;
 }
 
-async function loadCatalog(auth){
+// Existing ten-minute geographic caches are preserved; share concurrent cold reads.
+const territorialFlights=new Map();
+function territorialFlight(key,read){
+  if(territorialFlights.has(key))return territorialFlights.get(key);
+  const task=Promise.resolve().then(read);territorialFlights.set(key,task);
+  task.finally(()=>{if(territorialFlights.get(key)===task)territorialFlights.delete(key);}).catch(()=>{});
+  return task;
+}
+function loadCatalog(auth){return territorialFlight('catalog',()=>loadCatalogUncoalesced(auth));}
+function loadCityItems(auth){return territorialFlight('cities',()=>loadCityItemsUncoalesced(auth));}
+function loadTerritorialBundle(auth,entry){return territorialFlight('bundle:'+entry.fileId,()=>loadTerritorialBundleUncoalesced(auth,entry));}
+function loadLayerMeta(auth,fileId,kind){return territorialFlight('layer:'+fileId+':'+kind,()=>loadLayerMetaUncoalesced(auth,fileId,kind));}
+
+async function loadCatalogUncoalesced(auth){
   const now=Date.now();
   if(cache.catalog&&cache.catalogExpires>now)return cache.catalog;
   const sheets=google.sheets({version:"v4",auth});
@@ -282,7 +295,7 @@ function layerMetaFromRanges(fileId,kind,valueRanges){
 // One city workbook is the canonical unit of territorial data. Reading its
 // municipality and all layer indexes in one batch avoids independent requests
 // competing for the same Google Sheets per-user quota on a cold function.
-async function loadTerritorialBundle(auth,entry){
+async function loadTerritorialBundleUncoalesced(auth,entry){
   const now=Date.now(),hit=cache.bundle.get(entry.fileId);
   if(hit&&hit.expires>now)return hit.value;
   const sheets=google.sheets({version:"v4",auth});
@@ -324,7 +337,7 @@ async function loadTerritorialBundle(auth,entry){
   return value;
 }
 
-async function loadCityItems(auth){
+async function loadCityItemsUncoalesced(auth){
   const now=Date.now();
   if(cache.cityItems&&cache.cityExpires>now)return cache.cityItems;
   const sheets=google.sheets({version:"v4",auth});
@@ -351,7 +364,7 @@ async function loadCityItems(auth){
   return out;
 }
 
-async function loadLayerMeta(auth,fileId,kind){
+async function loadLayerMetaUncoalesced(auth,fileId,kind){
   const cfg=LAYER[kind];
   if(!cfg)throw new Error("UNKNOWN_TERRITORIAL_LAYER");
   const key=fileId+"|"+kind,now=Date.now();
