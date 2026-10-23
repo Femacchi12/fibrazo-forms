@@ -2,7 +2,8 @@
 const {google}=require("googleapis");
 const AdmZip=require("adm-zip");
 const {gzipSync}=require("node:zlib");
-const ARCHIVE="1iLbZP5F-xJB2DRbXTDM9Mu5IoxvvRmro";
+const approved=require("./strata-kmz-approved.json");
+const ARCHIVE=approved.archiveId;
 const CITIES={neiva:["NEIVA","Neiva"],villavicencio:["VILLAVICENCIO","Villavicencio"],ibague:["IBAGUE","Ibagué"]};
 const cache=new Map(),pending=new Map(),TTL=600000;
 let zipCached=null,zipUntil=0,zipPending=null;
@@ -12,7 +13,9 @@ async function archive(auth){
   const work=(async()=>{
     const drive=google.drive({version:"v3",auth});
     const response=await drive.files.get({fileId:ARCHIVE,alt:"media",supportsAllDrives:true},{responseType:"arraybuffer"});
-    zipCached=new AdmZip(Buffer.from(response.data));
+    const bytes=Buffer.from(response.data);
+    if(require("crypto").createHash("sha256").update(bytes).digest("hex")!==approved.archiveSha256)throw Error("STRATA_APPROVED_ARCHIVE_CHANGED");
+    zipCached=new AdmZip(bytes);
     zipUntil=Date.now()+TTL;
     return zipCached;
   })();
@@ -64,7 +67,7 @@ async function handle(auth,req,res,city,bbox,zoom){
     properties:{id:city[0]+"_QA_E"+row.estrato,layer:"estratos",
       name:"Estrato "+row.estrato,estrato:row.estrato,municipio:city[1],
       originalCount:row.originalCount,qaOptimized:true,
-      source:"KMZ original · SHP y GeoJSON precalculados · QA",quality:"QA_NO_CANONICO"},
+      source:"KMZ FIBRAZO aprobado · GeoJSON unificado · "+approved.version,quality:"VALIDADO_FIBRAZO_KMZ",canonical:true,sourceVersion:approved.version},
     geometry:{type:"MultiPolygon",coordinates:row.polygons}
   }));
   const payload={ok:true,mode:"geometry",layer:"estratos",
@@ -131,4 +134,4 @@ async function lookupReference(auth,latValue,lonValue,cityName=""){
     canonical:false
   };
 }
-module.exports={target,handle,lookupReference,_internals:{referenceResult}};
+module.exports={target,handle,lookupReference,load,_internals:{referenceResult}};

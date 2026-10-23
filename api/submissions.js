@@ -530,6 +530,10 @@ module.exports=async(req,res)=>{
       if((!payload.location||legacyNullPoint)&&validPoint(coordinateNumber(old[9]),coordinateNumber(old[10])))payload.location={...payload.location,lat:coordinateNumber(old[9]),lng:coordinateNumber(old[10]),accuracy:coordinateNumber(old[11])};
       if(payload.location&&!validPoint(coordinateNumber(payload.location.lat),coordinateNumber(payload.location.lng)))throw httpError("VALID_COORDINATE_REQUIRED",400);
       validateSubmission(formId,payload);
+      if(["neiva","villavicencio","ibague"].includes(String(payload.data?.municipio||old[16]||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase())){
+        const t=await resolveTerritorial(auth,payload.location.lat,payload.location.lng,{cityHint:String(payload.data?.municipio||old[16]||"")});
+        payload.data.estrato=t.estrato?.status==="DENTRO"?String(t.estrato.assigned.name):"Sin información";
+      }
       // A retry of one queued edit reuses its photo names; a later edit gets new names.
       const operation=String(payload.clientSubmissionId||"");
       const photoId=operation?editId+"_edit_"+require("crypto").createHash("sha256").update(operation).digest("hex").slice(0,20):editId;
@@ -647,7 +651,7 @@ module.exports=async(req,res)=>{
           requestBody:{values:[[
             observedCity||exactCity,
             String(payload.data?.sector_barrio||exactBarrio||""),
-            String(payload.data?.estrato||exactEstrato||"Sin información")
+            String(["NVA","VVC","IBG"].includes(territorial?.catalogId)&&!payload.isTest?(exactEstrato||"Sin información"):(payload.data?.estrato||exactEstrato||"Sin información"))
           ]]}
         });
       }
@@ -680,7 +684,7 @@ module.exports=async(req,res)=>{
         });
 
         const exactEstrato=territorial?.estrato?.status==="DENTRO"?String(territorial.estrato.assigned?.name||""):"";
-        const estratoValue=String(payload.data?.estrato||exactEstrato||"");
+        const estratoValue=["NVA","VVC","IBG"].includes(territorial?.catalogId)&&!payload.isTest?(exactEstrato||"Sin información"):String(payload.data?.estrato||exactEstrato||"");
         const estratoStatus=String(territorial?.estrato?.status||"");
         const estratoDistance=Number.isFinite(Number(territorial?.estrato?.distanceM))
           ?Math.round(Number(territorial.estrato.distanceM))
@@ -713,7 +717,7 @@ module.exports=async(req,res)=>{
             String(payload.data?.isp_2_calidad||""),
             String(payload.data?.isp_3_calidad||""),
             String(payload.data?.isp_4_calidad||""),
-            String(payload.data?.estrato||""),
+            estratoValue,
             String(payload.data?.tipo_terreno||""),
             String(payload.data?.barrio_asentamiento_informal||"")
           ]]}

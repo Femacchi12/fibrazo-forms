@@ -1,0 +1,44 @@
+{
+  "version": "FO-CHG-094",
+  "approvedBy": "Edu",
+  "approval": "Explicit user instruction 2026-10-22 Colombia",
+  "scope": "CANONICA_OPERATIVA_FIBRAZO",
+  "municipalCertification": false,
+  "sources": [
+    {
+      "city": "Neiva",
+      "id": "1tZWwcJCYiA3gCuhtdHgHvmBPCPVd_uFM",
+      "sha256": "bf5400b258f2b209728d22d592add02ef5a8abce73fdb344d6318f32165ba7ce"
+    },
+    {
+      "city": "Villavicencio",
+      "id": "1zLXOx9BhMoMeytNNAwqAXAe4LtY_jg1P",
+      "sha256": "433891b2b200a45a2c62119b84b93fabb9ced8e2f86e8eeb32a21d3d15a3b16e"
+    },
+    {
+      "city": "Ibague",
+      "id": "1xXn5YO_r2W9N47aeb9Rs57N-xz1hOqkE",
+      "sha256": "ae65172dec2fb5f9b939f50a8cccbf81120012fca998667ba3496fe07c3fea64"
+    }
+  ],
+  "reports": [
+    {
+      "city": "NEIVA",
+      "features": 3,
+      "originalCount": 4021
+    },
+    {
+      "city": "VILLAVICENCIO",
+      "features": 3,
+      "originalCount": 5066
+    },
+    {
+      "city": "IBAGUE",
+      "features": 3,
+      "originalCount": 4578
+    }
+  ],
+  "repair": "VVC source221965 contains two LinearRing children inside one innerBoundaryIs; both interpreted as holes; original preserved. Prior derivative omitted this polygon. Union now includes it.",
+  "archiveId": "1nONNr2pmxZgr5H-iK7cIPyvNOUOHak0p",
+  "archiveSha256": "423a9ffc4e7c859b74029d1c96f530a12c8bfaa729b190acbafca54ccdedf554"
+}

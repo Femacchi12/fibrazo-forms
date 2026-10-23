@@ -47,6 +47,7 @@ const values={
   }
 };
 Module._load=function(request,parent,isMain){
+  if(request==="./_strata-kmz-canonical")return {lookup:async()=>({status:"SIN_CAPA"})}; // isolate city/barrio routing; adopted strata covered by094
   if(request==="googleapis")return {google:{sheets:()=>({spreadsheets:{values}})}};
   return originalLoad.call(this,request,parent,isMain);
 };

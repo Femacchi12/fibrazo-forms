@@ -546,6 +546,10 @@ async function resolveTerritorial(auth,latValue,lonValue,{cityHint=""}={}){
     ]);
   }
 
+  if(selected&&["NVA","VVC","IBG"].includes(selected.id)&&cityResolved.result.status==="DENTRO"){
+    estrato=await require("./_strata-kmz-canonical").lookup(auth,lat,lon,selected.id);
+  }
+
   return {
     version:TERRITORIAL_VERSION,
     masterId:TERRITORIAL_MASTER_SHEET_ID,
