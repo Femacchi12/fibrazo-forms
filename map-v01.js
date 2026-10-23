@@ -1593,9 +1593,9 @@
       if(layer==="estratos")state.polygonFullKey=fullKey;
       const received=features.length;
       state.polygonStatus[layer]=data.municipalSource
-        ?("Fuente municipal · "+features.length+" grupos de estrato · "+Number(data.unclassifiedCount||0)+" registros sin estrato"+(data.missingGeometryCount?" · "+data.missingGeometryCount+" sin geometría":""))
+        ?("Fuente municipal · "+features.length+" grupos de estrato · "+Number(data.unclassifiedCount||0)+" registros sin estrato"+(data.operationalApproved?" · integrado a formularios":"")+(data.missingGeometryCount?" · "+data.missingGeometryCount+" sin geometría":""))
         :data.censusReference
-        ?("Referencia Censo DANE2018 · "+features.length+" grupos de estrato · "+Number(data.unclassifiedCount||0)+" manzanas sin estrato")
+        ?("Referencia Censo DANE2018 · "+features.length+" grupos de estrato · "+Number(data.unclassifiedCount||0)+" manzanas sin estrato"+(data.operationalApproved?" · integrado a formularios":""))
         :data.qaHistorical
         ?("HISTÓRICO 2022 · SOLO QA · "+features.length+" estratos · vigencia no validada · "+((performance.now()-loadStarted)/1000).toFixed(1)+" s (carga + dibujo)")
         :data.precomputed

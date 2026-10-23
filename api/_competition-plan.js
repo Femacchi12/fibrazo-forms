@@ -1,5 +1,6 @@
 // FO-CHG-082: deterministic, reversible materialization; raw Forms rows remain owned by Forms.
 const crypto=require('crypto');
+const territorialSources=require('./_territorial-sources');
 const clean=v=>String(v??'').trim();
 const fold=v=>clean(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const num=v=>clean(v)===''?null:Number(clean(v).replace(',','.'));
@@ -24,7 +25,7 @@ function sourceRecords(expl,intel,sourceId){
    const seen=new Set();for(const c of [12,13,14,15]){const name=clean(r[c]);if(!name||['sin isp','sin identificar'].includes(fold(name))||seen.has(fold(name)))continue;seen.add(fold(name));operators.push({name,tech:'Sin validar'});}
   }
   const fecha=date(r[0]);if(!fecha)continue;
-  out.push({id:clean(r[1]),row:i+1,sheet,fecha,period:fecha.slice(0,7),city,cityValid,barrio,observedBarrio:clean(r[isIntel?17:3]),gps,lat,lng,photos,operators,isIntel,virtual:!isIntel&&clean(r[26])==='Virtual',email:clean(r[isIntel?19:24]),manualStratum:clean(r[isIntel?29:64]),canonicalStratum:isIntel&&gps&&['neiva','villavicencio','ibague','cartagena','bucaramanga','floridablanca','giron','piedecuesta'].includes(fold(city))&&/^[1-6]$/.test(clean(r[18]))?clean(r[18]):!isIntel&&r[51]==='DENTRO'?clean(r[53]):'',stratumState:isIntel?'NO_CONFIRMADO':clean(r[51]||'SIN_CAPA'),url:`https://docs.google.com/spreadsheets/d/${sourceId}/edit#gid=${isIntel?2038295009:1004}&range=A${i+1}`,notes:clean(r[isIntel?8:16]),infra:isIntel?'Ficha técnica de operador':`Postería ${clean(r[5])}; ocupación ${clean(r[6])}; terreno ${clean(r[72])}`,security:isIntel?'Sin evaluar':clean(r[65]),point:clean(r[28])});
+  out.push({id:clean(r[1]),row:i+1,sheet,fecha,period:fecha.slice(0,7),city,cityValid,barrio,observedBarrio:clean(r[isIntel?17:3]),gps,lat,lng,photos,operators,isIntel,virtual:!isIntel&&clean(r[26])==='Virtual',email:clean(r[isIntel?19:24]),manualStratum:clean(r[isIntel?29:64]),canonicalStratum:isIntel&&gps&&territorialSources.isOperationalCity(city)&&(territorialSources.sourceForCity(city).approvalVersion!=='FO-CHG-098'||(r[33]==='DENTRO'&&r[35]==='FO-CHG-098'))&&/^[1-6]$/.test(clean(r[18]))?clean(r[18]):!isIntel&&r[51]==='DENTRO'?clean(r[53]):'',stratumState:isIntel?clean(r[33]||'NO_CONFIRMADO'):clean(r[51]||'SIN_CAPA'),stratumSource:clean(r[isIntel?34:35]),url:`https://docs.google.com/spreadsheets/d/${sourceId}/edit#gid=${isIntel?2038295009:1004}&range=A${i+1}`,notes:clean(r[isIntel?8:16]),infra:isIntel?'Ficha técnica de operador':`Postería ${clean(r[5])}; ocupación ${clean(r[6])}; terreno ${clean(r[72])}`,security:isIntel?'Sin evaluar':clean(r[65]),point:clean(r[28])});
  }
  // Duplicate IDs never count as two observations; retain last stored revision deterministically.
  return [...new Map(out.map(r=>[r.id,r])).values()];
@@ -33,7 +34,7 @@ function buildPlan({expl,intel,base,sourceId,now=new Date().toISOString()}){
  const records=sourceRecords(expl,intel,sourceId),operators=(base['01_OPERADORES']||[]).slice(1).filter(r=>clean(r[0]));
  const changes=new Map(),generated=new Map(),allOps=[...operators],quality=[],presence=new Map(),operatorQC=new Set();
  const add=(sheet,row)=>{if(!generated.has(sheet))generated.set(sheet,new Map());generated.get(sheet).set(row[0],row);};
- const department=city=>({villavicencio:'Meta',neiva:'Huila',ibague:'Tolima',bucaramanga:'Santander',floridablanca:'Santander',giron:'Santander',piedecuesta:'Santander'})[fold(city)]||'';
+ const department=city=>territorialSources.sourceForCity(city)?.department||'';
  function resolve(op,record){
   const national=['tigo','claro','movistar'].includes(fold(op.name));
   const amb=['bucaramanga','floridablanca','giron','piedecuesta'].includes(fold(record.city));
@@ -69,7 +70,7 @@ function buildPlan({expl,intel,base,sourceId,now=new Date().toISOString()}){
    const p=presence.get(id);p.ids.push(r.id);p.sources.push(source);if(r.fecha>p.last)p.last=r.fecha;
   }
   add('04_RELEVAMIENTOS',[explId,r.fecha,department(r.city),r.cityValid?r.city:'Por validar',r.barrio||'Ámbito municipal / por precisar',r.barrio||r.observedBarrio,r.email,'Observación de campo desde Forms',[...new Set(found)].join(' · '),[...new Set(r.operators.map(o=>o.tech))].join(' · '),r.infra,'Sin evaluar','Sin evaluar','Sin evaluar',source,r.notes||`${r.operators.length} operador(es) observado(s). Sin cotización de precios.`,!r.gps?'Completar GPS original':'Validar identidad de operadores y oferta cuando exista evidencia.',r.period,periodId]);
-  add('05_EVIDENCIAS',[source,r.fecha,r.virtual?'Documento interno':'Visita de campo',`${r.isIntel?'Ficha de operador':'Relevamiento'} · ${r.id}`,r.url,department(r.city),r.cityValid?r.city:'Por validar',[...new Set(found)].join(' · '),explId,r.gps?'Alto':'Por validar','Vigente / observación de campo',r.email,`Fotos: ${r.photos.join(' | ')||'Sin fotos (opcionales)'}. Estrato automático confirmado: ${r.canonicalStratum||'Sin información'}; manual observado: ${r.manualStratum||'No informado'}. ${r.gps?'GPS disponible.':'GPS pendiente.'}`,r.period,periodId]);
+  add('05_EVIDENCIAS',[source,r.fecha,r.virtual?'Documento interno':'Visita de campo',`${r.isIntel?'Ficha de operador':'Relevamiento'} · ${r.id}`,r.url,department(r.city),r.cityValid?r.city:'Por validar',[...new Set(found)].join(' · '),explId,r.gps?'Alto':'Por validar','Vigente / observación de campo',r.email,`Fotos: ${r.photos.join(' | ')||'Sin fotos (opcionales)'}. Estrato automático confirmado: ${r.canonicalStratum||'Sin información'}; manual observado: ${r.manualStratum||'No informado'}. Fuente de estrato: ${r.stratumSource||'Sin fuente documentada'}. ${r.gps?'GPS disponible.':'GPS pendiente.'}`,r.period,periodId]);
  }
  for(const [id,p] of presence){const r=p.r;add('03_PRESENCIA',[id,p.last,department(r.city),r.city,'',r.barrio,'','',p.mapped.id,p.mapped.name,p.op.tech,'Punto observado; no implica cobertura total',r.virtual?'Por validar':'Observado en campo',r.virtual?'Street View':'Visita de campo',p.sources[0],p.ids.length===1?r.lat:'',p.ids.length===1?r.lng:'',`${new Set(p.ids).size} observación(es) Forms: ${[...new Set(p.ids)].join(' | ')}. Precio no informado.`,r.period,'PER_'+r.period.replace('-','_'),'Presencia observada','Observación consolidada',p.sources.join(' | '),p.op.name,r.barrio?'Barrio DENTRO. Sin inferencia de troncal ni cobertura FIBRAZO.':'Ámbito municipal; barrio no confirmado por geometría. Coordenadas originales en Forms.',p.op.tech]);}
  for(const r of quality)add('08_CONTROL_CALIDAD',r);

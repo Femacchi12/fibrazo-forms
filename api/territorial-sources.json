@@ -1,0 +1,161 @@
+{
+  "version": "FO-CHG-098",
+  "approvedBy": "Edu",
+  "approvalDate": "2026-10-23",
+  "policy": "Same immutable sources for map and automatic assignment. Census2018 is operationally approved, never a municipal certification. Exact unique polygon match only; preserve manual observations.",
+  "entries": [
+    {
+      "catalogId": "BUC_AMB",
+      "city": "Bucaramanga / AMB",
+      "municipalities": [
+        "Bucaramanga",
+        "Floridablanca",
+        "Girón",
+        "Piedecuesta"
+      ],
+      "provider": "sheets",
+      "sourceYear": null,
+      "kind": "MUNICIPAL_APROBADA",
+      "approvalVersion": "FO-CHG-095",
+      "department": "Santander",
+      "enabled": true,
+      "approvalScope": "CANONICA_OPERATIVA_FIBRAZO",
+      "municipalCertification": false
+    },
+    {
+      "catalogId": "CTG",
+      "city": "Cartagena",
+      "municipalities": [
+        "Cartagena"
+      ],
+      "provider": "cartagena",
+      "sourceYear": 2022,
+      "kind": "MUNICIPAL_APROBADA",
+      "approvalVersion": "FO-CHG-095",
+      "department": "Bolívar",
+      "enabled": true,
+      "approvalScope": "CANONICA_OPERATIVA_FIBRAZO",
+      "municipalCertification": false
+    },
+    {
+      "catalogId": "NVA",
+      "city": "Neiva",
+      "municipalities": [
+        "Neiva"
+      ],
+      "provider": "kmz",
+      "sourceYear": null,
+      "kind": "KMZ_APROBADO",
+      "approvalVersion": "FO-CHG-094",
+      "department": "Huila",
+      "enabled": true,
+      "approvalScope": "CANONICA_OPERATIVA_FIBRAZO",
+      "municipalCertification": false
+    },
+    {
+      "catalogId": "VVC",
+      "city": "Villavicencio",
+      "municipalities": [
+        "Villavicencio"
+      ],
+      "provider": "kmz",
+      "sourceYear": null,
+      "kind": "KMZ_APROBADO",
+      "approvalVersion": "FO-CHG-094",
+      "department": "Meta",
+      "enabled": true,
+      "approvalScope": "CANONICA_OPERATIVA_FIBRAZO",
+      "municipalCertification": false
+    },
+    {
+      "catalogId": "IBG",
+      "city": "Ibagué",
+      "municipalities": [
+        "Ibagué"
+      ],
+      "provider": "kmz",
+      "sourceYear": null,
+      "kind": "KMZ_APROBADO",
+      "approvalVersion": "FO-CHG-094",
+      "department": "Tolima",
+      "enabled": true,
+      "approvalScope": "CANONICA_OPERATIVA_FIBRAZO",
+      "municipalCertification": false
+    },
+    {
+      "catalogId": "BAQ",
+      "city": "Barranquilla",
+      "municipalities": [
+        "Barranquilla"
+      ],
+      "provider": "caribe",
+      "sourceYear": null,
+      "kind": "FUENTE_MUNICIPAL",
+      "approvalVersion": "FO-CHG-098",
+      "department": "Atlántico",
+      "enabled": true,
+      "approvalScope": "CANONICA_OPERATIVA_FIBRAZO",
+      "municipalCertification": false
+    },
+    {
+      "catalogId": "SMR",
+      "city": "Santa Marta",
+      "municipalities": [
+        "Santa Marta"
+      ],
+      "provider": "caribe",
+      "sourceYear": 2018,
+      "kind": "REFERENCIA_CENSAL_2018",
+      "approvalVersion": "FO-CHG-098",
+      "department": "Magdalena",
+      "enabled": true,
+      "approvalScope": "CANONICA_OPERATIVA_FIBRAZO",
+      "municipalCertification": false
+    },
+    {
+      "catalogId": "TRB",
+      "city": "Turbaco",
+      "municipalities": [
+        "Turbaco"
+      ],
+      "provider": "caribe",
+      "sourceYear": null,
+      "kind": "FUENTE_MUNICIPAL",
+      "approvalVersion": "FO-CHG-098",
+      "department": "Bolívar",
+      "enabled": true,
+      "approvalScope": "CANONICA_OPERATIVA_FIBRAZO",
+      "municipalCertification": false
+    },
+    {
+      "catalogId": "MTR",
+      "city": "Montería",
+      "municipalities": [
+        "Montería"
+      ],
+      "provider": "census",
+      "sourceYear": 2018,
+      "kind": "REFERENCIA_CENSAL_2018",
+      "approvalVersion": "FO-CHG-098",
+      "department": "Córdoba",
+      "enabled": true,
+      "approvalScope": "CANONICA_OPERATIVA_FIBRAZO",
+      "municipalCertification": false
+    },
+    {
+      "catalogId": "SCL",
+      "city": "Sincelejo",
+      "municipalities": [
+        "Sincelejo"
+      ],
+      "provider": "census",
+      "sourceYear": 2018,
+      "kind": "REFERENCIA_CENSAL_2018",
+      "approvalVersion": "FO-CHG-098",
+      "department": "Sucre",
+      "enabled": true,
+      "approvalScope": "CANONICA_OPERATIVA_FIBRAZO",
+      "municipalCertification": false
+    }
+  ]
+}

@@ -55,7 +55,7 @@ Module._load=function(request,parent,isMain){
 (async()=>{
   const territorial=require("../api/_territorial");
   const result=await territorial.resolveTerritorial({},4.1412127,-73.614958,{cityHint:"villavicencio"});
-  assert.equal(result.version,"3.4");
+  assert.equal(result.version,"3.5");
   assert.equal(result.catalogId,"VVC");
   assert.equal(result.dataSource,"MAESTRO_TERRITORIAL_POR_CIUDAD");
   assert.equal(result.city.status,"DENTRO");

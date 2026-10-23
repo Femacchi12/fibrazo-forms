@@ -46,7 +46,7 @@ async function syncCompetition(auth,{sourceId,dryRun=false}={}){
   const bound=(m,n,last)=>{const p=m.data.sheets.find(s=>s.properties.title===n)?.properties;if(!p)throw Error('COMPETITION_SCHEMA_MISSING_'+n);return n+'!A1:'+last+p.gridProperties.rowCount;};
   const readNames=[...Object.keys(widths),'26_BUC_EQUIVALENCIAS'];
   const [source,target]=await Promise.all([
-   sheets.spreadsheets.values.batchGet({spreadsheetId:sourceId,ranges:[bound(sourceMeta,'RESP_EXPLORACION','CE'),bound(sourceMeta,'RESP_INTELIGENCIA_OPERADOR','AF')],valueRenderOption:'UNFORMATTED_VALUE'}),
+   sheets.spreadsheets.values.batchGet({spreadsheetId:sourceId,ranges:[bound(sourceMeta,'RESP_EXPLORACION','CE'),bound(sourceMeta,'RESP_INTELIGENCIA_OPERADOR','AJ')],valueRenderOption:'UNFORMATTED_VALUE'}),
    sheets.spreadsheets.values.batchGet({spreadsheetId:COMPETITION_SHEET_ID,ranges:readNames.map(n=>bound(meta,n,({32:'AF',26:'Z',19:'S',15:'O',18:'R'})[widths[n]]||'F')),valueRenderOption:'UNFORMATTED_VALUE'}),
   ]);
   const base=Object.fromEntries(readNames.map((n,i)=>[n,target.data.valueRanges[i].values||[]]));

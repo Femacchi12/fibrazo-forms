@@ -7,6 +7,7 @@ const {
   validatePublicGuards,validatePhotos,validateSubmission,httpError,SHEET_ID,DEFAULT_DOMAIN,EXCEPTION
 }=require("./_core");
 const {resolveTerritorial,TERRITORIAL_VERSION}=require("./_territorial");
+const territorialSources=require("./_territorial-sources");
 const {trySyncCompetition}=require("./_competition-sync");
 const {validPoint,coordinateNumber}=require("./_competition-plan");
 
@@ -515,7 +516,7 @@ module.exports=async(req,res)=>{
       const permission=permissionFor(caps.permissions,String(user.email||"").toLowerCase(),form.id,caps.base);
       if(!canAccess(form,user,caps.base,permission)) throw httpError("FORM_ACCESS_DENIED",403);
       const sheets=google.sheets({version:"v4",auth});
-      const existing=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!A2:AF`,valueRenderOption:"UNFORMATTED_VALUE"});
+      const existing=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!A2:AJ`,valueRenderOption:"UNFORMATTED_VALUE"});
       const rows=existing.data.values||[];
       const idx=rows.findIndex(row=>String(row[1]||"")===editId);
       if(idx<0) throw httpError("SUBMISSION_NOT_FOUND",404);
@@ -530,8 +531,9 @@ module.exports=async(req,res)=>{
       if((!payload.location||legacyNullPoint)&&validPoint(coordinateNumber(old[9]),coordinateNumber(old[10])))payload.location={...payload.location,lat:coordinateNumber(old[9]),lng:coordinateNumber(old[10]),accuracy:coordinateNumber(old[11])};
       if(payload.location&&!validPoint(coordinateNumber(payload.location.lat),coordinateNumber(payload.location.lng)))throw httpError("VALID_COORDINATE_REQUIRED",400);
       validateSubmission(formId,payload);
-      if(["neiva","villavicencio","ibague","cartagena","bucaramanga","floridablanca","giron","piedecuesta"].includes(String(payload.data?.municipio||old[16]||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase())){
-        const t=await resolveTerritorial(auth,payload.location.lat,payload.location.lng,{cityHint:String(payload.data?.municipio||old[16]||"")});
+      let editTerritorial=null;
+      if(territorialSources.isOperationalCity(payload.data?.municipio||old[16]||"")){
+        const t=editTerritorial=await resolveTerritorial(auth,payload.location.lat,payload.location.lng,{cityHint:String(payload.data?.municipio||old[16]||"")});
         payload.data.estrato=t.estrato?.status==="DENTRO"?String(t.estrato.assigned.name):"Sin información";
       }
       // A retry of one queued edit reuses its photo names; a later edit gets new names.
@@ -548,10 +550,11 @@ module.exports=async(req,res)=>{
         byKey.foto_tensor_acometida||String(payload.existingPhotoFields?.foto_tensor_acometida||old[28]||"")
       ];
       const row=buildRow(form,payload,editId,links,owner||email);
+      row.length=32;row.push(...(editTerritorial?territorialSources.intelAudit(editTerritorial):[old[32]||"",old[33]||"",old[34]||"",old[35]||""]));
       // Preservar el indicador histórico en una edición autorizada.
       row[31]=old[31]|| (payload.isTest?"Sí":"No");
       row[0]=old[0]||row[0];
-      await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!A${idx+2}:AF${idx+2}`,valueInputOption:"RAW",requestBody:{values:[row]}});
+      await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!A${idx+2}:AJ${idx+2}`,valueInputOption:"RAW",requestBody:{values:[row]}});
       const competitionSync=await trySyncCompetition(auth,{sourceId:SHEET_ID});
       return await reply({ok:true,id:editId,updated:true,photos:links,competitionSync});
     }
@@ -588,6 +591,11 @@ module.exports=async(req,res)=>{
     if(!payload.isTest&&await hasExistingResponseForEmail(auth,form,recordedEmail)) throw httpError("ALREADY_RESPONDED",409);
 
     if(usesTerritorialEngine(formId)&&!validPoint(coordinateNumber(payload.location?.lat),coordinateNumber(payload.location?.lng)))throw httpError("VALID_COORDINATE_REQUIRED",400);
+    let intelTerritorial=null;
+    if(formId==="INTELIGENCIA_OPERADOR"&&!payload.isTest){
+      intelTerritorial=await resolveTerritorial(auth,coordinateNumber(payload.location.lat),coordinateNumber(payload.location.lng),{cityHint:String(payload.data?.municipio||payload.location?.cityDetected||"")});
+      payload.data.estrato=intelTerritorial.estrato?.status==="DENTRO"?String(intelTerritorial.estrato.assigned.name):"Sin información";
+    }
     const links=await uploadPhotos(auth,form,id,payload.photos||[]);
     if(formId==="INTELIGENCIA_OPERADOR"){
       const keyed=Object.fromEntries((payload.photos||[]).map((p,i)=>[String(p.fieldKey||""),links[i]||""]));
@@ -596,7 +604,7 @@ module.exports=async(req,res)=>{
     const sheets=google.sheets({version:"v4",auth});
     const submissionRow=buildRow(form,payload,id,links,recordedEmail);
     if(form.id==="CHURN")submissionRow[28]=payload.isTest?"Sí":"No";         // AC
-    if(form.id==="INTELIGENCIA_OPERADOR")submissionRow[31]=payload.isTest?"Sí":"No"; // AF
+    if(form.id==="INTELIGENCIA_OPERADOR"){submissionRow[31]=payload.isTest?"Sí":"No";submissionRow.push(...territorialSources.intelAudit(intelTerritorial));} // AF
     if(isExploration(form.id)){
       const evidenceLinks=form.id==="EXPLORACION"?[payload.data?.link_evidencia,...links]:links;
       while(submissionRow.length<75)submissionRow.push("");
@@ -619,7 +627,7 @@ module.exports=async(req,res)=>{
     let territorialError="";
     if(usesTerritorialEngine(form.id)){
       try{
-        territorial=await resolveTerritorial(auth,payload.location?.lat,payload.location?.lng,{
+        territorial=intelTerritorial||await resolveTerritorial(auth,payload.location?.lat,payload.location?.lng,{
           cityHint:String(payload.data?.municipio||payload.location?.cityDetected||"").trim()
         });
       }catch(geoError){
@@ -651,7 +659,7 @@ module.exports=async(req,res)=>{
           requestBody:{values:[[
             observedCity||exactCity,
             String(payload.data?.sector_barrio||exactBarrio||""),
-            String(["NVA","VVC","IBG","CTG","BUC_AMB"].includes(territorial?.catalogId)&&!payload.isTest?(exactEstrato||"Sin información"):(payload.data?.estrato||exactEstrato||"Sin información"))
+            String(territorialSources.isOperationalCatalog(territorial?.catalogId)&&!payload.isTest?(exactEstrato||"Sin información"):(payload.data?.estrato||exactEstrato||"Sin información"))
           ]]}
         });
       }
@@ -684,7 +692,7 @@ module.exports=async(req,res)=>{
         });
 
         const exactEstrato=territorial?.estrato?.status==="DENTRO"?String(territorial.estrato.assigned?.name||""):"";
-        const estratoValue=["NVA","VVC","IBG","CTG","BUC_AMB"].includes(territorial?.catalogId)&&!payload.isTest?(exactEstrato||"Sin información"):String(payload.data?.estrato||exactEstrato||"");
+        const estratoValue=territorialSources.isOperationalCatalog(territorial?.catalogId)&&!payload.isTest?(exactEstrato||"Sin información"):String(payload.data?.estrato||exactEstrato||"");
         const estratoStatus=String(territorial?.estrato?.status||"");
         const estratoDistance=Number.isFinite(Number(territorial?.estrato?.distanceM))
           ?Math.round(Number(territorial.estrato.distanceM))

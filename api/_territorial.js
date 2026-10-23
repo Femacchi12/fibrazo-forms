@@ -3,7 +3,7 @@ const {google}=require("googleapis");
 const TERRITORIAL_MASTER_SHEET_ID =
   process.env.TERRITORIAL_MASTER_SHEET_ID ||
   "1cVAEv60ZdDTcQoPmmiSbJV_gfhAXKwywbzf0F0WDp_0";
-const TERRITORIAL_VERSION="3.4";
+const TERRITORIAL_VERSION="3.5";
 // FO-CHG-031 · No aceptar una ciudad a cientos de km como resultado territorial del punto.
 const CITY_NEARBY_MAX_M=20000;
 const LAYER_NEARBY_MAX_M={barrio:5000,estrato:5000,troncal:10000};
@@ -546,11 +546,10 @@ async function resolveTerritorial(auth,latValue,lonValue,{cityHint=""}={}){
     ]);
   }
 
-  if(selected&&["NVA","VVC","IBG"].includes(selected.id)&&cityResolved.result.status==="DENTRO"){
-    estrato=await require("./_strata-kmz-canonical").lookup(auth,lat,lon,selected.id);
-  }
-  if(selected?.id==="CTG"&&cityResolved.result.status==="DENTRO"){
-    estrato=await require("./_strata-loaded-canonical").lookupCartagena(auth,lat,lon);
+  // One approved source per catalog; never substitute a nearby municipality.
+  if(selected&&cityResolved.result.status==="DENTRO"){
+    const resolved=await require("./_territorial-sources").lookup(auth,lat,lon,selected.id);
+    if(resolved)estrato=resolved;
   }
 
   return {
