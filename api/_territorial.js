@@ -494,6 +494,16 @@ async function resolveCityItems(items,lon,lat){
     :{result:empty("FUERA_COBERTURA"),catalog:null};
 }
 
+// City lookup for map startup deliberately excludes strata, barrios and competition.
+async function resolveMapCity(auth,latValue,lonValue){
+  const lat=num(latValue),lon=num(lonValue);
+  if(!Number.isFinite(lat)||!Number.isFinite(lon)||lat<-90||lat>90||lon<-180||lon>180){
+    const e=new Error("INVALID_COORDINATES");e.status=400;throw e;
+  }
+  const resolved=await resolveCityItems(await loadCityItems(auth),lon,lat);
+  return resolved.result;
+}
+
 async function resolveTerritorial(auth,latValue,lonValue,{cityHint=""}={}){
   const lat=num(latValue),lon=num(lonValue);
   if(!Number.isFinite(lat)||!Number.isFinite(lon)||lat<-90||lat>90||lon<-180||lon>180){
@@ -705,6 +715,7 @@ module.exports={
   TERRITORIAL_MASTER_SHEET_ID,
   TERRITORIAL_VERSION,
   resolveTerritorial,
+  resolveMapCity,
   searchTerritorial,
   flattenTerritorial,
   _internals:{resolveLayer,parseWkt,inGeometry,geometryDistance,bboxDistance,resolveCityItems,catalogForHint,layerMetaFromRanges}

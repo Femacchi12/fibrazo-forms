@@ -50,8 +50,10 @@
     },
     "api/competition-sync.js": {
       "maxDuration": 60
+    },
+    "api/map.js": {
+      "maxDuration": 30
     }
   },
   "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':(exclude)docs/**' ':(exclude)README.md' || exit 1"
 }
-

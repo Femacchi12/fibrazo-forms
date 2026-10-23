@@ -9,6 +9,11 @@ const MAX_POINTS=2000;
 function norm(v){
   return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
 }
+function cityScope(value){
+  const key=norm(value);
+  if(["bucaramanga","floridablanca","giron","piedecuesta","bucaramanga + amb","bucaramanga-amb"].includes(key))return "bucaramanga-amb";
+  return key==="cartagena de indias"?"cartagena":key;
+}
 function num(v){
   if(v===null||v===undefined||String(v).trim()==="")return null;
   const n=Number(String(v).replace(",","."));
@@ -85,8 +90,10 @@ module.exports=async(req,res)=>{
     const includeTests=canViewTests&&String(req.query.includeTests||"")==="1";
     const all=response.data.values||[];
     const points=[];
+    const cities=new Set(String(req.query.cities||"").split(",").map(cityScope).filter(Boolean));
+    const matchesCity=value=>!cities.size||cities.has(cityScope(value));
 
-    for(const row of all.slice(-MAX_POINTS)){
+    for(const row of all){
       const type=rowType(row);
       if(isVirtual(row)&&!access.virtual)continue;
       if(isPresential(row)&&!access.presential)continue;
@@ -103,6 +110,7 @@ module.exports=async(req,res)=>{
       const cityAssigned=String(row[41]||"").trim();
       const cityNearby=String(row[43]||"").trim();
       const observedCity=String(row[2]||"").trim();
+      if(!matchesCity(cityAssigned||observedCity))continue;
       const barrioStatus=String(row[45]||"").trim();
       const barrioAssigned=String(row[47]||"").trim();
       const barrioNearby=String(row[49]||"").trim();
@@ -158,7 +166,7 @@ module.exports=async(req,res)=>{
 
     // Inteligencia de operadores: fuente autorizada separada y con columnas
     // estables. No se reutilizan índices de RESP_EXPLORACION.
-    for(const row of (intelResponse.data.values||[]).slice(-MAX_POINTS)){
+    for(const row of (intelResponse.data.values||[])){
       const rowEmail=String(row[19]||"").trim().toLowerCase();
       if(!admin&&rowEmail!==email)continue;
       const isTest=String(row[31]||"").trim().toLowerCase()==="sí";
@@ -167,6 +175,7 @@ module.exports=async(req,res)=>{
       if(lat===null||lng===null||lat<-90||lat>90||lng<-180||lng>180)continue;
       const operator=String(row[2]||"").trim();
       const observedCity=String(row[16]||"").trim();
+      if(!matchesCity(observedCity))continue;
       const barrio=String(row[17]||"").trim();
       const estrato=String(row[18]||row[29]||"").trim();
       points.push({
@@ -194,7 +203,8 @@ module.exports=async(req,res)=>{
       visibility:admin?"team":"own",
       canViewTests,
       access,
-      points:uniquePoints
+      cities:[...cities],
+      points:uniquePoints.slice(-Math.min(MAX_POINTS,Math.max(1,Number(req.query.limit)||MAX_POINTS)))
     });
   }catch(error){
     const status=error.status||500;
