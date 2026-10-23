@@ -15,6 +15,9 @@
   const BUCARAMANGA_BOUNDS=[[7.070607677,-73.172095278],[7.195892798,-73.093548025]];
   // QA city-specific extent from validated SHP bounds (EPSG:4326).
   const QA_CITY_BOUNDS={
+    barranquilla:[-74.89689807029,10.9211863720069,-74.7615451361887,11.0464187175134],
+    "santa marta":[-74.241796694,11.075355957,-74.14002307,11.259237783],
+    turbaco:[-75.477317505,10.271505205,-75.278024750,10.420742186],
     sincelejo:[-75.42196712199996,9.250228634000052,-75.35159397199999,9.340458075000072],
     monteria:[-75.91520421199994,8.712417732000063,-75.83588886099994,8.816131248000033],
     neiva:[[2.88679,-75.30872],[2.98355,-75.23607]],
@@ -989,12 +992,12 @@
   function updateQaToolbar(){
     const cities=filterValues("mapCityFilter");
     const city=cities.length===1?cities[0]:"";
-    const precomputed=["neiva","villavicencio","ibague","cartagena","sincelejo","monteria"].includes(city);
+    const precomputed=["neiva","villavicencio","ibague","cartagena","sincelejo","monteria","barranquilla","santa marta","turbaco"].includes(city);
     const isBuc=isAmbCity(city);
     const historic=city==="cartagena";
     const active=isBuc&&state.qaDissolveEstratos;
     const label=active?"✓ Estratos unidos (QA)":"Unificar estratos (QA)";
-    const title=["sincelejo","monteria"].includes(city)?"Estrato predominante por manzana · referencia Censo DANE2018":historic
+    const title=["barranquilla","turbaco"].includes(city)?"Estratos de fuente municipal · polígonos unificados": ["sincelejo","monteria","santa marta"].includes(city)?"Estrato predominante por manzana · referencia Censo DANE2018":historic
       ?"Cartagena: datos históricos 2022 para prueba visual QA, sin validez operativa"
       :precomputed
       ?"Esta ciudad ya utiliza polígonos unidos y precalculados"
@@ -1008,7 +1011,7 @@
       button.disabled=!isBuc;
       button.classList.toggle("qa-active",active);
       button.setAttribute("aria-pressed",String(active));
-      button.textContent=["sincelejo","monteria"].includes(city)?"Referencia censal2018":historic?"Estratos 2022 · históricos QA":precomputed?"✓ Estratos precalculados (QA)":isBuc?label:"Estratos QA · elegí ciudad";
+      button.textContent=["barranquilla","turbaco"].includes(city)?"Estratos municipales unidos":["sincelejo","monteria","santa marta"].includes(city)?"Referencia censal2018":historic?"Estratos 2022 · históricos QA":precomputed?"✓ Estratos precalculados (QA)":isBuc?label:"Estratos QA · elegí ciudad";
       button.title=title;
     }
     // This is the actual toolbar visible inside the fullscreen map, unlike
@@ -1132,7 +1135,8 @@
       add("Categoría",p.categoria);
       add("Área",p.areaHa?p.areaHa+" ha":"");
     }
-    add("Calidad",p.quality==="REFERENCIA_CENSAL_2018"?"Referencia censal":p.quality);
+    add("Calidad",p.quality==="REFERENCIA_CENSAL_2018"?"Referencia censal":p.quality==="FUENTE_MUNICIPAL"?"Fuente municipal":p.quality);
+    if(p.quality==="FUENTE_MUNICIPAL")add("Vigencia","No declarada en la fuente");
     if(p.quality==="REFERENCIA_CENSAL_2018"){add("Tipo","Predominante por manzana");add("Año de fuente",p.sourceYear);}
     add("Fuente",p.source);
     add("Vigencia",p.year);
@@ -1391,18 +1395,18 @@
     if($("mapViewBucaramanga"))$("mapViewBucaramanga").textContent=QA_CITY_BOUNDS[city]?"◎ Ver "+cityName:"◎ Ver Bucaramanga + AMB";
     const qaToggle=$("mapEstratoOptimizePilot");
     if(qaToggle){
-      const isPrecomputed=["neiva","villavicencio","ibague","cartagena","sincelejo","monteria"].includes(city);
+      const isPrecomputed=["neiva","villavicencio","ibague","cartagena","sincelejo","monteria","barranquilla","santa marta","turbaco"].includes(city);
       qaToggle.disabled=isPrecomputed;
       qaToggle.checked=isPrecomputed||state.qaDissolveEstratos;
       const label=qaToggle.closest("label");
       if(label){
         const textNode=[...label.childNodes].find(node=>node.nodeType===3);
-        if(textNode)textNode.nodeValue=["sincelejo","monteria"].includes(city)?" Referencia censal2018 · unificada":city==="cartagena"
+        if(textNode)textNode.nodeValue=["barranquilla","turbaco"].includes(city)?" Estratos municipales · unificados":["sincelejo","monteria","santa marta"].includes(city)?" Referencia censal2018 · unificada":city==="cartagena"
           ?" Estratos históricos 2022 (QA, sin vigencia validada)"
           :isPrecomputed
           ?" Estratos precalculados y unificados (QA)"
           :" Prueba QA: unificar polígonos por estrato";
-        label.title=["sincelejo","monteria"].includes(city)?"Estrato predominante por manzana · fuente Censo DANE2018":isPrecomputed
+        label.title=["barranquilla","turbaco"].includes(city)?"Fuente municipal; vigencia no declarada en metadatos":["sincelejo","monteria","santa marta"].includes(city)?"Estrato predominante por manzana · fuente Censo DANE2018":isPrecomputed
           ?"Esta ciudad utiliza por defecto los polígonos unificados del paquete QA"
           :"Comparar capas originales y unificadas de Bucaramanga";
       }
@@ -1571,7 +1575,7 @@
         return;
       }
       let features=Array.isArray(data.features)?[...data.features]:[];
-      const pages=completeBuc?Math.max(1,Math.min(40,Number(data.pageCount)||1)):1;
+      const pages=(completeBuc||data.transportPaged)?Math.max(1,Math.min(40,Number(data.pageCount)||1)):1;
       // Transport all selected original AMB polygons from all four municipalities without spatial sampling.
       // Three parallel requests at a time avoids overloading the Sheets adapter.
       for(let next=1;next<pages;next+=3){
@@ -1580,14 +1584,17 @@
           authorizedFetch(baseUrl+"&page="+page,controller,{ttl:reload?0:90000})
         ));
         if(controller.signal.aborted||cities!==filterValues("mapCityFilter").join(","))return;
-        for(const part of replies)if(Array.isArray(part.features))features.push(...part.features);
+        for(let i=0;i<replies.length;i++){const part=replies[i];if(data.transportPaged&&(part.page!==indexes[i]||part.pageCount!==pages||part.sourceVersion!==data.sourceVersion||!Array.isArray(part.features)))throw Error("Respuesta incompleta de polígonos; reintentá la carga");if(Array.isArray(part.features))features.push(...part.features); }
         state.polygonStatus[layer]="cargando cobertura completa · "+Math.min(pages,next+indexes.length)+"/"+pages+" partes";
         updatePolygonStatus();
       }
+      if(data.transportPaged&&(features.length!==Number(data.optimizedFeatureCount)||new Set(features.map(f=>f.id)).size!==features.length))throw Error("Cobertura de polígonos incompleta; reintentá la carga");
       const drawn=drawPolygonLayer(layer,features);
       if(layer==="estratos")state.polygonFullKey=fullKey;
       const received=features.length;
-      state.polygonStatus[layer]=data.censusReference
+      state.polygonStatus[layer]=data.municipalSource
+        ?("Fuente municipal · "+features.length+" grupos de estrato · "+Number(data.unclassifiedCount||0)+" registros sin estrato"+(data.missingGeometryCount?" · "+data.missingGeometryCount+" sin geometría":""))
+        :data.censusReference
         ?("Referencia Censo DANE2018 · "+features.length+" grupos de estrato · "+Number(data.unclassifiedCount||0)+" manzanas sin estrato")
         :data.qaHistorical
         ?("HISTÓRICO 2022 · SOLO QA · "+features.length+" estratos · vigencia no validada · "+((performance.now()-loadStarted)/1000).toFixed(1)+" s (carga + dibujo)")

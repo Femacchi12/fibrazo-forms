@@ -1,0 +1,214 @@
+{
+  "version": "FO-CHG-097",
+  "approvedBy": "Edu",
+  "approval": "Continue same workflow; municipal sources preferred, CNPV2018 fallback; map display only",
+  "canonical": false,
+  "reports": [
+    {
+      "city": "SantaMarta",
+      "label": "Santa Marta",
+      "code": "47001",
+      "kind": "REFERENCIA_CENSAL_2018",
+      "source": "https://ags.esri.co/arcgis/rest/services/LivingAtlas/Estrato_predominante_por_manzana_2018/MapServer/0",
+      "sourceYear": 2018,
+      "sourceFiles": [
+        "SantaMarta-original.geojson"
+      ],
+      "originalCount": 5310,
+      "classified": 4549,
+      "unclassified": 761,
+      "unclassifiedValues": {
+        "Sin Estrato": 761
+      },
+      "groups": 6,
+      "stats": [
+        {
+          "estrato": "1",
+          "originals": 1717,
+          "components": 1554,
+          "overlapAreaRemoved": 1.5353083387958932e-13
+        },
+        {
+          "estrato": "2",
+          "originals": 845,
+          "components": 827,
+          "overlapAreaRemoved": 5.421010862427522e-19
+        },
+        {
+          "estrato": "3",
+          "originals": 1506,
+          "components": 1488,
+          "overlapAreaRemoved": 1.3902290776912629e-14
+        },
+        {
+          "estrato": "4",
+          "originals": 295,
+          "components": 292,
+          "overlapAreaRemoved": 0
+        },
+        {
+          "estrato": "5",
+          "originals": 65,
+          "components": 64,
+          "overlapAreaRemoved": 1.3552527156068805e-20
+        },
+        {
+          "estrato": "6",
+          "originals": 121,
+          "components": 119,
+          "overlapAreaRemoved": 3.2526065174565133e-19
+        }
+      ],
+      "bbox": [
+        -74.24179669399996,
+        11.075355957000056,
+        -74.14002306999998,
+        11.25923778300006
+      ],
+      "unifiedSha256": "5a203efbfb8b003900959410791ddb5517ef7d8915fe4d56a8ea37287fc68e2f",
+      "kmzSha256": "e29547d17930918218e7e932299d36f1e9f3bb0ab9657f693368f813054d2386",
+      "unifiedBytes": 5996475,
+      "gzipBytes": 1662649
+    },
+    {
+      "city": "Turbaco",
+      "label": "Turbaco",
+      "code": "13836",
+      "kind": "FUENTE_MUNICIPAL",
+      "source": "https://services.arcgis.com/tZIysM5FuHwCeO8Y/arcgis/rest/services/ESTRATO_SOCIOECONOMICO_WFL1/FeatureServer/",
+      "sourceYear": null,
+      "sourceFiles": [
+        "Turbaco-strata2-original.geojson",
+        "Turbaco-strata3-original.geojson",
+        "Turbaco-strata4-original.geojson"
+      ],
+      "originalCount": 32235,
+      "classified": 25546,
+      "unclassified": 6689,
+      "unclassifiedValues": {
+        "N/A": 38,
+        "SIN ASIGNA": 6651
+      },
+      "groups": 4,
+      "stats": [
+        {
+          "estrato": "1",
+          "originals": 7792,
+          "components": 560,
+          "overlapAreaRemoved": 2.669613472503548e-9
+        },
+        {
+          "estrato": "2",
+          "originals": 13617,
+          "components": 806,
+          "overlapAreaRemoved": 0.000019161310060983143
+        },
+        {
+          "estrato": "3",
+          "originals": 2899,
+          "components": 209,
+          "overlapAreaRemoved": 0.000006313023832150424
+        },
+        {
+          "estrato": "4",
+          "originals": 1238,
+          "components": 79,
+          "overlapAreaRemoved": 2.1923255040783712e-13
+        }
+      ],
+      "bbox": [
+        -75.4773175040343,
+        10.2715052050989,
+        -75.2780247506924,
+        10.420742185221
+      ],
+      "unifiedSha256": "456f0571a381d0d117961f1bae50964769867a83b1746b4169fb700aea9bdd84",
+      "kmzSha256": "5f831ec5e8e1168f5c5091a6b1e7cfaf767b0ae85e1112d53c3a9a05bf083f7e",
+      "unifiedBytes": 2273992,
+      "gzipBytes": 780648
+    },
+    {
+      "city": "Barranquilla",
+      "label": "Barranquilla",
+      "code": "08001",
+      "kind": "FUENTE_MUNICIPAL",
+      "source": "https://services3.arcgis.com/oGYAc07w6wsvgUYr/ArcGIS/rest/services/PANORAMA_URBANO_AGOL_WFL1/FeatureServer/0",
+      "sourceYear": null,
+      "sourceFiles": [
+        "Barranquilla-original.geojson"
+      ],
+      "originalCount": 151224,
+      "missingGeometryCount": 1,
+      "missingGeometry": [
+        {
+          "id": 128922,
+          "estrato": 0
+        }
+      ],
+      "classified": 142304,
+      "unclassified": 8919,
+      "unclassifiedValues": {
+        "0": 8919
+      },
+      "groups": 6,
+      "stats": [
+        {
+          "estrato": "1",
+          "originals": 60574,
+          "components": 4362,
+          "overlapAreaRemoved": 9.924281148179087e-9,
+          "repairs": []
+        },
+        {
+          "estrato": "2",
+          "originals": 35762,
+          "components": 2415,
+          "overlapAreaRemoved": 2.2792056957585995e-9,
+          "repairs": []
+        },
+        {
+          "estrato": "3",
+          "originals": 33371,
+          "components": 2802,
+          "overlapAreaRemoved": 2.640930723890253e-9,
+          "repairs": []
+        },
+        {
+          "estrato": "4",
+          "originals": 9307,
+          "components": 1431,
+          "overlapAreaRemoved": 1.3569542082862707e-12,
+          "repairs": []
+        },
+        {
+          "estrato": "5",
+          "originals": 2405,
+          "components": 655,
+          "overlapAreaRemoved": 5.23537512170727e-14,
+          "repairs": []
+        },
+        {
+          "estrato": "6",
+          "originals": 885,
+          "components": 240,
+          "overlapAreaRemoved": 1.476803976416946e-14,
+          "repairs": []
+        }
+      ],
+      "bbox": [
+        -74.89689807029,
+        10.9211863720069,
+        -74.7615451361887,
+        11.0464187175134
+      ],
+      "unifiedSha256": "9c46d50570435d22383fcaf5a8b16b39d7564a2d0c6e1857b4119f6f0893b0d6",
+      "kmzSha256": "5c0dda1234698e65df075de9d4de12e74b1c49e7cd4efade11da92980f0dc28e",
+      "unifiedBytes": 23192654,
+      "gzipBytes": 7777407,
+      "transport": "one selected stratum per page; all pages assembled before drawing"
+    }
+  ],
+  "archiveSha256": "626a81f74fac0d2bdc12d09e06da7924043ff10c7eebe2517971d68d6412a571",
+  "archiveBytes": 10168625,
+  "archiveId": "1q15PTwABcq-stXsPZrsM6B3EVlPg-X-r"
+}
