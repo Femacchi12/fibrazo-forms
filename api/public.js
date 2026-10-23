@@ -1,6 +1,7 @@
 const {gauth,loadForms,runtimePolicy,httpError}=require("./_core");
 
 module.exports=async(req,res)=>{
+  if(req.method==="GET"&&req.query?.rescue==="1")return require("./_recovery")(req,res);
   res.setHeader("Cache-Control","no-store");
   try{
     if(req.method!=="GET") return res.status(405).json({error:"Method not allowed"});

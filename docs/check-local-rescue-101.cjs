@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 const {IDBFactory}=require('fake-indexeddb');
-let html,headers={};require('../api/recovery')({method:'GET'},{setHeader:(k,v)=>headers[k]=v,status:n=>{assert.equal(n,200);return{send:s=>html=s};}});
+let html,headers={};require('../api/_recovery')({method:'GET'},{setHeader:(k,v)=>headers[k]=v,status:n=>{assert.equal(n,200);return{send:s=>html=s};}});
 assert.match(headers['Content-Security-Policy'],/connect-src 'none'/);assert.match(headers['Cache-Control'],/no-store/);
 const script=html.match(/<script nonce="[^"]+">([\s\S]*?)<\/script>/)[1];
 async function fixture(seed){

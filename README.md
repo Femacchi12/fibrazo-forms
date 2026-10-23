@@ -290,4 +290,4 @@ Fallas transitorias de red ya no se interpretan como revocación de Administraci
 
 
 ### FO-CHG-101 · Rescate local de pendientes
-Ruta /api/recovery: respaldo JSON local por cuenta antes de reparar la aplicación antigua. No sube datos, no borra IndexedDB ni cambia registros. Ver docs/fo-chg-101-local-rescue.md. Requiere que Edu descargue y verifique el respaldo en el mismo Chrome que conserva sus pendientes.
+Ruta /api/public?rescue=1: respaldo JSON local por cuenta antes de reparar la aplicación antigua. No sube datos, no borra IndexedDB ni cambia registros. Ver docs/fo-chg-101-local-rescue.md. Requiere que Edu descargue y verifique el respaldo en el mismo Chrome que conserva sus pendientes.
