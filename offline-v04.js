@@ -10,7 +10,7 @@
   const STORE="queue";
   const $=id=>backgroundMode?null:document.getElementById(id);
   let installPrompt=null;
-  let syncing=false,activeRun=null,restartRequested=false;
+  let syncing=false,activeRun=null,restartRequested=false,syncProgress="";
   const requests=new Set();
 
   function openDb(){
@@ -235,12 +235,13 @@
   async function submit(payload){
     if(!payload.clientSubmissionId) payload.clientSubmissionId=createSubmissionId(payload.formId);
     const result=await queuePayload(payload,navigator.onLine?"En cola de envío":"Sin conexión");
+    if(result.queued===false)return result;
     if(navigator.onLine)setTimeout(()=>syncAll(),0);
     return {...result,queued:true,background:true};
   }
 
   function syncAll(options={}){
-    if(activeRun)return Promise.resolve({busy:true});
+    if(activeRun){if(options.manual)showSyncMessage("Ya hay un envío en curso. Puedes seguir su estado en la lista.");return Promise.resolve({busy:true});}
     activeRun=runSyncAll(options).finally(()=>{activeRun=null;});
     return activeRun;
   }
@@ -266,14 +267,14 @@
     const deadline=Date.now()+25000;let processed=0;
     try{
       locked=await lease();
-      if(!locked)return {busy:true};
-      heartbeat=setInterval(()=>lease().catch(()=>{}),20000);
+      if(!locked){if(manual)showSyncMessage("Otro proceso está enviando. Se reintentará automáticamente; tus datos se conservan.");return {busy:true};}
+      heartbeat=setInterval(()=>lease().then(held=>{if(!held)for(const controller of requests)controller.abort();}).catch(()=>{for(const controller of requests)controller.abort();}),20000);
       renderSyncing(true);
       const email=currentEmail();
       const records=(await all()).filter(r=>r.userEmail===email&&!["sent"].includes(r.status)&&(manual||r.status!=="error")&&(manual||!r.nextAttemptAt||r.nextAttemptAt<=Date.now())).sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
       for(let record of records){
         if(background&&(processed>=3||Date.now()>=deadline))break;
-        processed++;
+        processed++;syncProgress=processed+" / "+records.length;renderSyncing(true);
         if(restartRequested||!navigator.onLine||currentEmail()!==email)break;
         try{
           record={...record,attempts:(record.attempts||0)+1,lastError:"",status:record.status!=="sent_master_pending"&&scope.FIBRAZO_BACKGROUND_TERRITORY?.needsLookup(record.payload)?"enriching":"syncing"};
@@ -288,6 +289,7 @@
           if(currentEmail()!==email)throw new Error("AUTH_CHANGED");
             if(restartRequested)throw new Error("SYNC_RESTART_REQUESTED");
           record={...record,status:"syncing"};await put(record);notifyRecord(record);
+          if(!await lease())throw new Error("QUEUE_LEASE_LOST");
           const serverResult=await postPayload(record.payload);
           if(!serverResult?.ok||!serverResult.id)throw new Error("El servidor no confirmó la respuesta.");
           const territorialForm=scope.FIBRAZO_BACKGROUND_TERRITORY?.FORMS.includes(record.formId);
@@ -309,7 +311,7 @@
     }finally{
       clearInterval(heartbeat);
       if(locked)await lease(false).catch(()=>{});
-      syncing=false;renderSyncing(false);
+      syncing=false;syncProgress="";renderSyncing(false);
       await refreshUi().catch(()=>{});
       await scheduleRetry().catch(()=>{});
     }
@@ -394,7 +396,7 @@
 
   function renderSyncing(active){
     const btn=$("syncNowButton");
-    if(btn) btn.textContent=active?"Sincronizando…":"Sincronizar ahora";
+    if(btn) btn.textContent=active?"Sincronizando…"+(syncProgress?" "+syncProgress:""):"Sincronizar ahora";
   }
 
   function showSyncMessage(message){
@@ -422,7 +424,7 @@
 
   scope.addEventListener("online",()=>{requestBackgroundSync();refreshUi();setTimeout(()=>syncAll(),350);});
   scope.addEventListener("offline",refreshUi);
-  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){refreshUi();if(navigator.onLine)syncAll();}});
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){requestBackgroundSync();refreshUi();if(navigator.onLine)syncAll();}});
 
   scope.addEventListener("beforeinstallprompt",event=>{
     event.preventDefault();
@@ -455,7 +457,7 @@
     if(user&&navigator.onLine)setTimeout(()=>syncAll(),700);
   });
 
-  scope.addEventListener("focus",()=>{if(navigator.onLine)syncAll();});
+  scope.addEventListener("focus",()=>{requestBackgroundSync();if(navigator.onLine)syncAll();});
   setTimeout(refreshUi,200);
   setInterval(()=>{if(navigator.onLine&&document.visibilityState==="visible")syncAll();},60000);
 

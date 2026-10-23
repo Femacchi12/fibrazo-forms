@@ -1,3 +1,4 @@
+const submissionLease=require("./_submission-lease");
 const {repairTerritorialReceipt}=require("./_territorial-receipt");
 const {google}=require("googleapis");
 const {Readable}=require("stream");
@@ -438,7 +439,7 @@ async function readRows(auth,forms,requested,limit,user,caps){
       }
     }
   }
-  return out.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).slice(0,limit);
+  return [...new Map(out.map(row=>[row.id,row])).values()].sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).slice(0,limit);
 }
 
 function classifyMasterSyncError(error){
@@ -454,7 +455,13 @@ function classifyMasterSyncError(error){
 module.exports=async(req,res)=>{
   res.setHeader("Cache-Control","no-store");
   let auth;
-  let publicContext=null;
+  let publicContext=null,receiptLease=null;
+  async function unlock(){
+    if(!receiptLease)return;
+    const current=receiptLease;receiptLease=null;
+    await submissionLease.release(google.sheets({version:"v4",auth}),SHEET_ID,current).catch(error=>console.error("SUBMISSION_UNLOCK_PENDING",error?.code||"ERROR"));
+  }
+  async function reply(body){await unlock();return res.status(200).json(body);}
   try{
     auth=gauth();
 
@@ -464,7 +471,7 @@ module.exports=async(req,res)=>{
       if(!canUseDashboard(user,caps.adminActive,forms)) throw httpError("DASHBOARD_ACCESS_DENIED",403);
       const requested=String(req.query.form||"all").toUpperCase();
       const limit=Math.min(Number(req.query.limit)||100,250);
-      return res.status(200).json({
+      return await reply({
         rows:await readRows(auth,forms,requested==="ALL"?"all":requested,limit,user,caps)
       });
     }
@@ -499,6 +506,8 @@ module.exports=async(req,res)=>{
     payload.isTest=payload.isTest===true&&String(user?.email||"").trim().toLowerCase()==="eduardo@fibrazo.com";
     if(formId!=="INTELIGENCIA_OPERADOR"||!payload.editId)validateSubmission(formId,payload);
     validatePhotos(payload.photos||[],form);
+    const submissionId=formId==="INTELIGENCIA_OPERADOR"&&payload.editId?String(payload.editId).trim():resolveSubmissionId(payload,formId);
+    receiptLease=await submissionLease.acquire(google.sheets({version:"v4",auth}),SHEET_ID,formId+":"+submissionId);
 
     if(formId==="INTELIGENCIA_OPERADOR"&&payload.editId){
       const editId=String(payload.editId||"").trim();
@@ -540,10 +549,10 @@ module.exports=async(req,res)=>{
       row[0]=old[0]||row[0];
       await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!A${idx+2}:AF${idx+2}`,valueInputOption:"RAW",requestBody:{values:[row]}});
       const competitionSync=await trySyncCompetition(auth,{sourceId:SHEET_ID});
-      return res.status(200).json({ok:true,id:editId,updated:true,photos:links,competitionSync});
+      return await reply({ok:true,id:editId,updated:true,photos:links,competitionSync});
     }
 
-    const id=resolveSubmissionId(payload,formId);
+    const id=submissionId;
     if(await submissionExists(auth,form,id)){
       const competitionSync=usesTerritorialEngine(form.id)&&!isPublicRequest?await trySyncCompetition(auth,{sourceId:SHEET_ID}):{ok:true,skipped:true};
       if(isExploration(form.id)){
@@ -553,7 +562,7 @@ module.exports=async(req,res)=>{
         if(!row){
           const legacy=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!BX2:CC`});
           row=(legacy.data.values||[]).find(values=>String(values[1]||"")===id);
-          if(row)return res.status(200).json({ok:true,id,duplicate:true,photos:[],masterSync:{ok:false,scope:"PROJECT",reason:"LEGACY_MISALIGNED_REVIEW_REQUIRED"}});
+          if(row)return await reply({ok:true,id,duplicate:true,photos:[],masterSync:{ok:false,scope:"PROJECT",reason:"LEGACY_MISALIGNED_REVIEW_REQUIRED"}});
         }
         const syncState=String(row?.[28]||"").trim();
         const pointId=String(row?.[27]||"").trim();
@@ -565,9 +574,9 @@ module.exports=async(req,res)=>{
           catch(error){territorialReceipt={pending:true,reason:"TERRITORIAL_RESOLUTION_PENDING"};console.error("TERRITORIAL_RECEIPT_RETRY_FAILED",error?.message);}
         }
         const ok=!territorialReceipt.pending&&(syncState==="OK"||(syncState==="GLOBAL_ONLY"&&!unresolvedAmb));
-        return res.status(200).json({ok:true,id,duplicate:true,photos:[],competitionSync,masterSync:{ok,pointId,scope:syncState==="GLOBAL_ONLY"&&!unresolvedAmb?"GLOBAL_ONLY":"PROJECT",reason:unresolvedAmb?"TERRITORIAL_UNRESOLVED":ok?"":syncState||"PENDIENTE"}});
+        return await reply({ok:true,id,duplicate:true,photos:[],competitionSync,masterSync:{ok,pointId,scope:syncState==="GLOBAL_ONLY"&&!unresolvedAmb?"GLOBAL_ONLY":"PROJECT",reason:unresolvedAmb?"TERRITORIAL_UNRESOLVED":ok?"":syncState||"PENDIENTE"}});
       }
-      return res.status(200).json({ok:true,id,duplicate:true,photos:[],competitionSync});
+      return await reply({ok:true,id,duplicate:true,photos:[],competitionSync});
     }
 
     const recordedEmail=form.collectEmail?String(user?.email||"").trim().toLowerCase():"ANONIMO";
@@ -719,7 +728,7 @@ module.exports=async(req,res)=>{
     }
 
     const competitionSync=usesTerritorialEngine(form.id)&&!isPublicRequest?await trySyncCompetition(auth,{sourceId:SHEET_ID}):{ok:true,skipped:true};
-    return res.status(200).json({ok:true,id,photos:links,masterSync,territorial,territorialError,competitionSync});
+    return await reply({ok:true,id,photos:links,masterSync,territorial,territorialError,competitionSync});
   }catch(error){
     if(publicContext?.ipHash&&auth){
       try{
@@ -733,6 +742,7 @@ module.exports=async(req,res)=>{
     const rawMessage=String(error?.message||"");
     const driveQuota=/Service Accounts do not have storage quota|storage quota|shared drives|OAuth delegation/i.test(rawMessage);
     const status=driveQuota?503:(error.status||500);
+    await unlock();
     return res.status(status).json({
       error:driveQuota
         ?"PHOTO_STORAGE_TEMPORARILY_UNAVAILABLE"

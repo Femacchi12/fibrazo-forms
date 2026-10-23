@@ -73,10 +73,10 @@ module.exports=async(req,res)=>{
     const sheets=google.sheets({version:"v4",auth});
     const [response,intelResponse]=await Promise.all([
       (access.virtual||access.presential)
-        ?sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"RESP_EXPLORACION!A2:CE"})
+        ?sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"RESP_EXPLORACION!A2:CE",valueRenderOption:"UNFORMATTED_VALUE"})
         :Promise.resolve({data:{values:[]}}),
       access.intelligence
-        ?sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"RESP_INTELIGENCIA_OPERADOR!A2:AF"})
+        ?sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"RESP_INTELIGENCIA_OPERADOR!A2:AF",valueRenderOption:"UNFORMATTED_VALUE"})
         :Promise.resolve({data:{values:[]}})
     ]);
     const email=String(user.email||"").trim().toLowerCase();
@@ -186,14 +186,15 @@ module.exports=async(req,res)=>{
         troncal:{status:"",assigned:"",nearby:"",distanceM:null}
       });
     }
-    points.sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp));
+    const uniquePoints=[...new Map(points.map(point=>[point.id,point])).values()];
+    uniquePoints.sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp));
     return res.status(200).json({
       ok:true,
       generatedAt:new Date().toISOString(),
       visibility:admin?"team":"own",
       canViewTests,
       access,
-      points
+      points:uniquePoints
     });
   }catch(error){
     const status=error.status||500;
