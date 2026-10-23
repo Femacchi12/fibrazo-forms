@@ -287,3 +287,7 @@ Impacto Social: rama independiente feat/brand-solid-contrast-20261015, sin modif
 
 ### FO-CHG-100 · Recuperación de ciudades y Administración (23/10/2026)
 Fallas transitorias de red ya no se interpretan como revocación de Administración. Consultas con límite de tiempo y recuperación al volver conexión/foco, con reintentos acotados cada 30 segundos mientras la página está visible. Catálogo de ciudades conserva copia por cuenta durante hasta siete días y vuelve a consultar; un rechazo 401/403 elimina la copia. Actualizar también reintenta catálogo y GPS si falta ciudad; las respuestas de otra cuenta se descartan. Permisos y endpoints siguen validados en servidor. No modifica capturas, colas, fotos ni reglas territoriales. Build visible y SW 0.8.155 / 20261023-recovery100. Ver docs/fo-chg-100-network-recovery.md.
+
+
+### FO-CHG-101 · Rescate local de pendientes
+Ruta /api/recovery: respaldo JSON local por cuenta antes de reparar la aplicación antigua. No sube datos, no borra IndexedDB ni cambia registros. Ver docs/fo-chg-101-local-rescue.md. Requiere que Edu descargue y verifique el respaldo en el mismo Chrome que conserva sus pendientes.
