@@ -2,6 +2,7 @@
   const $=id=>document.getElementById(id);
   const nav=$("adminNavButton"),view=$("adminView"),host=$("adminForms"),globalHost=$("adminGlobal"),status=$("adminStatus");
   let items=[],admins=[],openId=null,adminMeta={baseAdmin:false,canCreateForms:false,canManageUsers:false};
+  let loadInFlight=false,loadOwner="",retryNeeded=true,lastAttempt=0;
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
   const current=()=>window.firebase?.auth?.().currentUser||null;
   async function tok(){const u=current();if(!u)throw new Error("AUTH_REQUIRED");return u.getIdToken();}
@@ -10,18 +11,39 @@
   function validEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v||"").trim());}
 
   function forceForms(){
+    const wasOpen=!view.hidden;
     nav.hidden=true;view.hidden=true;host.innerHTML="";if(globalHost)globalHost.innerHTML="";
     items=[];admins=[];openId=null;adminMeta={baseAdmin:false,canCreateForms:false,canManageUsers:false};
-    if(window.FIBRAZO_SET_VIEW)window.FIBRAZO_SET_VIEW("forms");
+    if(wasOpen&&window.FIBRAZO_SET_VIEW)window.FIBRAZO_SET_VIEW("forms");
   }
 
   async function load(){
+    const user=current();if(!user||loadInFlight)return;
+    if(!navigator.onLine){restoreAdminNavigation();return;}
+    const owner=user.uid||user.email;
+    loadInFlight=true;loadOwner=owner;lastAttempt=Date.now();
+    let timer;
     try{
-      const r=await fetch("/api/admin",{headers:{Authorization:"Bearer "+await tok()},cache:"no-store"});
-      if(r.status===403){forceForms();return;}
-      const j=await r.json();if(!r.ok)throw new Error(j.error||"No se pudo cargar administración.");
+      const controller=new AbortController();
+      const deadline=new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(new Error("ADMIN_TIMEOUT"));},12000);});
+      const {r,j}=await Promise.race([(async()=>{
+        const token=await user.getIdToken();
+        if(controller.signal.aborted)throw new Error("ADMIN_TIMEOUT");
+        const r=await fetch("/api/admin",{headers:{Authorization:"Bearer "+token},cache:"no-store",signal:controller.signal});
+        const j=await r.json();return {r,j};
+      })(),deadline]);
+      if((current()?.uid||current()?.email)!==owner)return;
+      if(r.status===403){retryNeeded=false;forceForms();return;}
+      if(!r.ok)throw new Error(j.error||"No se pudo cargar administración.");
+      retryNeeded=false;
       nav.hidden=false;items=j.forms||[];admins=j.admins||[];adminMeta={baseAdmin:!!j.baseAdmin,canCreateForms:!!j.canCreateForms,canManageUsers:!!j.canManageUsers};renderGlobal();renderForms();
-    }catch(_){forceForms();}
+    }catch(_){
+      if((current()?.uid||current()?.email)!==owner)return;
+      retryNeeded=true;
+      const meta=window.FIBRAZO_ACCESS_META;
+      nav.hidden=!(meta?.email===String(user.email||"").toLowerCase()&&meta.admin);
+      msg("No se pudo actualizar Administración por conexión. Se reintentará automáticamente.","warning");
+    }finally{clearTimeout(timer);if(loadOwner===owner)loadInFlight=false;}
   }
 
   /* VIS-019: Help text is informational, never a substitute for security warnings. */
@@ -413,5 +435,15 @@
   }
 
   nav.addEventListener("click",()=>load());
-  window.firebase?.auth?.().onAuthStateChanged(u=>{if(u)setTimeout(load,150);else forceForms();});
+  function recover(){if(retryNeeded&&document.visibilityState!=="hidden"&&Date.now()-lastAttempt>=30000)load();}
+  function restoreAdminNavigation(){
+    const meta=window.FIBRAZO_ACCESS_META,user=current();
+    if(user&&meta?.email===String(user.email||"").toLowerCase())nav.hidden=!meta.admin;
+  }
+  window.addEventListener("online",()=>{lastAttempt=0;recover();});
+  window.addEventListener("focus",recover);
+  document.addEventListener("visibilitychange",recover);
+  window.addEventListener("fibrazo:access-ready",()=>{restoreAdminNavigation();retryNeeded=true;recover();});
+  setInterval(recover,30000);
+  window.firebase?.auth?.().onAuthStateChanged(u=>{retryNeeded=true;lastAttempt=0;if(u)setTimeout(load,150);else forceForms();});
 })();

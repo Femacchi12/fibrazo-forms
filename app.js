@@ -179,6 +179,7 @@
       if(cached){
         window.FIBRAZO_ACCESS=cached.access;
         window.FIBRAZO_FORM_POLICIES=cached.policies||{};
+        window.FIBRAZO_ACCESS_META=cached.meta||{};
         window.FIBRAZO_ACCESS_BOOTSTRAPPED_EMAIL=email;
         return {ok:true,offline:!navigator.onLine,cached:true};
       }

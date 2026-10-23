@@ -904,15 +904,49 @@
     updateVisibilityBadge();
   }
 
+  let catalogRequest=null,catalogLastAttempt=0,catalogNeedsRetry=true;
+  function restoreCityCatalog(){
+    try{
+      const saved=JSON.parse(localStorage.getItem(userScopedKey("fibrazoMapCityCatalogV1"))||"null");
+      if(saved&&Array.isArray(saved.cities)&&Date.now()-saved.updatedAt<7*24*60*60*1000){
+        state.cityCatalog=saved.cities;updateFilters();
+      }
+    }catch(_){}
+  }
   async function loadCityCatalog(){
+    if(catalogRequest)return catalogRequest;
+    const owner=userScopedKey("fibrazoMapCityCatalogV1");
+    if(!state.cityCatalog.length)restoreCityCatalog();
+    if(!navigator.onLine)return;
+    catalogLastAttempt=Date.now();
+    const task=(async()=>{
     try{
       const data=await authorizedFetch("/api/map-city-catalog");
-      if(Array.isArray(data.cities)){
+      if(owner!==userScopedKey("fibrazoMapCityCatalogV1"))return;
+      if(Array.isArray(data.cities)&&data.cities.length){
         state.cityCatalog=data.cities;
+        catalogNeedsRetry=false;
+        try{localStorage.setItem(owner,JSON.stringify({cities:data.cities,updatedAt:Date.now()}));}catch(_){}
         updateFilters();
-      }
+      }else throw new Error("Catálogo vacío");
     }catch(error){
+      if(owner!==userScopedKey("fibrazoMapCityCatalogV1"))return;
+      catalogNeedsRetry=true;
+      if(error?.status===401||error?.status===403){
+        state.cityCatalog=[];try{localStorage.removeItem(owner);}catch(_){}updateFilters();
+      }
       console.warn("CITY_CATALOG_UNAVAILABLE",error?.message||error);
+      if(state.viewActive&&!state.cityCatalog.length)mapStatus("No se pudieron cargar las ciudades. Se reintentará automáticamente al recuperar conexión; también puedes pulsar Actualizar.","warning");
+    }finally{if(catalogRequest===task)catalogRequest=null;}
+    })();
+    catalogRequest=task;
+    return task;
+  }
+  function recoverMapConnection(){
+    if(!state.viewActive||document.visibilityState==="hidden"||!navigator.onLine)return;
+    if(catalogNeedsRetry&&Date.now()-catalogLastAttempt>=30000)loadCityCatalog();
+    if(!pointScope()&&Date.now()-(state.lastCityRetry||0)>=30000){
+      state.lastCityRetry=Date.now();locateMe({auto:true});
     }
   }
 
@@ -984,7 +1018,8 @@
     }
     updatePolygonStatus();
     try{
-      await Promise.allSettled([loadPoints({fit:false}),...layers.map(layer=>refreshPolygonLayer(layer,{silent:false}))]);
+      await Promise.allSettled([loadCityCatalog(),loadPoints({fit:false}),...layers.map(layer=>refreshPolygonLayer(layer,{silent:false}))]);
+      if(!pointScope())locateMe({auto:true});
       if(!layers.length)mapStatus("Puntos actualizados. Seleccioná una ciudad para cargar estratos.","success");
     }finally{
       state.manualRefreshId=null;
@@ -1473,7 +1508,7 @@
         if(controller.signal.aborted)throw new DOMException("Cancelado","AbortError");
         const response=await fetch(url,{headers:{Authorization:"Bearer "+token},cache:"no-store",signal:controller.signal});
         const data=await response.json();
-        if(!response.ok)throw new Error(data.error||"No se pudo cargar la capa.");
+        if(!response.ok)throw Object.assign(new Error(data.error||"No se pudo cargar la capa."),{status:response.status});
         if(ttl>0){
           polygonResponseCache.set(url,{expires:Date.now()+ttl,data});
           if(polygonResponseCache.size>80)polygonResponseCache.delete(polygonResponseCache.keys().next().value);
@@ -2062,6 +2097,7 @@
     if(state.refreshTimer)return;
     const tick=()=>{
       if(!state.viewActive||document.visibilityState!=="visible"||!navigator.onLine)return;
+      recoverMapConnection();
       const connection=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
       const slow=connection?.saveData||["slow-2g","2g"].includes(connection?.effectiveType);
       const wait=slow?REFRESH_SLOW_MS:REFRESH_MS;
@@ -2121,6 +2157,10 @@
   }
 
   function bind(){
+    window.addEventListener("online",()=>{catalogLastAttempt=0;recoverMapConnection();});
+    window.addEventListener("focus",recoverMapConnection);
+    document.addEventListener("visibilitychange",recoverMapConnection);
+    window.addEventListener("fibrazo:access-ready",recoverMapConnection);
     document.addEventListener("click",handleMapCoordinateCopy);
     ["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter","mapDateFrom","mapDateTo","mapPhotosFilter"].forEach(id=>$(id)?.addEventListener("change",()=>{
       updateFilterCount();
@@ -2226,6 +2266,7 @@
     window.addEventListener("fibrazo:submission-saved",()=>{if(state.viewActive)loadPoints({silent:true});});
     if(window.firebase?.auth){
       firebase.auth().onAuthStateChanged(user=>{
+        state.cityCatalog=[];catalogRequest=null;catalogNeedsRetry=true;catalogLastAttempt=0;
         stopTracking(false);
         state.points=[];
         state.filtered=[];
