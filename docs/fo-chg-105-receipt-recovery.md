@@ -1,0 +1,7 @@
+# FO-CHG-105 · Recover lost submission acknowledgements
+
+A field record could already be stored with photos, while a mobile client retained a pending state after losing the HTTP response. Version 0.8.158 adds an authenticated receipt query in the existing submissions function. It checks form access, finds the original ID, verifies the exact row/owner, and returns a small status without photos or field contents. No new serverless function or storage service.
+
+Before retrying a new submission, and after a transient POST failure, the queue checks receipt. A confirmed complete record moves to the existing competition phase without another POST/photo upload. A partial territorial receipt keeps originals locally and retries repair without retransmitting photographs. Uncertain checks never discard local photos. Edits bypass existence-based recovery because an existing ID does not prove an edit was applied. Restart and account-switch guards remain active. The old English fetch message now explains the confirmation uncertainty.
+
+Validation: complete test:forms and test105 cover owner restriction, form permission before querying, row consistency, ambiguous/partial receipt, lost acknowledgement, preserved originals, repair without photo retransmission, queued edits and restart regression. Real phone queue is not remotely modified. Runtime logs were unavailable due connector403; source receipt was verified directly in the operational sheet. This does not promise delivery with no connectivity or unlimited Android background execution.

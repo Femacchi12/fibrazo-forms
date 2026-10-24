@@ -180,6 +180,33 @@
     return body;
   }
 
+  async function checkReceipt(payload,email){
+    const user=scope.firebase?.auth?.().currentUser;
+    if(!user||currentEmail()!==email)throw new Error("AUTH_CHANGED");
+    const token=await idToken(user);
+    if(currentEmail()!==email||restartRequested)throw new Error("AUTH_CHANGED");
+    const response=await timedFetch("/api/submissions?form="+encodeURIComponent(payload.formId)+"&receipt="+encodeURIComponent(payload.clientSubmissionId),{headers:{Authorization:"Bearer "+token},cache:"no-store"},8000);
+    const body=await response.json();
+    if(currentEmail()!==email||restartRequested)throw new Error("AUTH_CHANGED");
+    if(!response.ok)throw Object.assign(new Error(body.error||"RECEIPT_CHECK_FAILED"),{httpStatus:response.status});
+    if(body.found===true&&body.ok===true&&body.id===payload.clientSubmissionId)return body;
+    return null;
+  }
+  async function sendOrRecover(payload,checkFirst=false){
+    // An edit targets an existing ID; its existence does not prove that this
+    // particular edit was applied. Keep the existing edit idempotency flow.
+    if(payload.editId)return postPayload(payload);
+    const email=currentEmail();let receipt=null;
+    if(checkFirst){try{receipt=await checkReceipt(payload,email);}catch(error){if(error.httpStatus===401||error.httpStatus===403||currentEmail()!==email||restartRequested)throw error;}}
+    if(receipt&&receipt.masterSync?.ok!==false)return receipt;
+    try{return await postPayload(receipt?{...payload,photos:[]}:payload,email);}
+    catch(error){
+      if(restartRequested||currentEmail()!==email||!navigator.onLine||(error.httpStatus&&!isTemporaryHttp(error.httpStatus)))throw error;
+      try{const recovered=await checkReceipt(payload,email);if(recovered)return recovered;}catch(checkError){if(checkError.httpStatus===401||checkError.httpStatus===403)throw checkError;}
+      throw error;
+    }
+  }
+
   async function ensureSpace(payload){
     const bytes=new Blob([JSON.stringify(payload)]).size;
     if(bytes>12*1024*1024) throw new Error("La respuesta es demasiado grande para guardarse sin conexión.");
@@ -297,7 +324,8 @@
             if(restartRequested)throw new Error("SYNC_RESTART_REQUESTED");
           record={...record,status:"syncing"};await put(record);notifyRecord(record);
           if(!await lease())throw new Error("QUEUE_LEASE_LOST");
-          const serverResult=await postPayload(record.payload);
+          const serverResult=await sendOrRecover(record.payload,record.attempts>1);
+          if(currentEmail()!==email||restartRequested)throw new Error("SYNC_RESTART_REQUESTED");
           if(!serverResult?.ok||!serverResult.id)throw new Error("El servidor no confirmó la respuesta.");
           const territorialForm=scope.FIBRAZO_BACKGROUND_TERRITORY?.FORMS.includes(record.formId);
           const masterPending=!!serverResult.territorialError||((record.formId==="EXPLORACION"||record.formId==="EXPLORACION_PRESENCIAL")&&serverResult?.masterSync?.ok!==true);
@@ -308,7 +336,7 @@
           synced++;receivedIds.add(record.clientSubmissionId);
         }catch(error){
           const permanent=error.httpStatus&&error.httpStatus!==401&&!isTemporaryHttp(error.httpStatus);
-          record={...record,status:permanent?"error":scope.FIBRAZO_BACKGROUND_TERRITORY?.needsLookup(record.payload)?"territorial_pending":"pending",nextAttemptAt:Date.now()+Math.min(60000,5000*2**Math.min(record.attempts||1,4)),lastError:String(restartRequested?"Intento reiniciado; respuesta conservada.":error.name==="AbortError"?"La conexión tardó demasiado. Se reintentará.":error.message||"Error").slice(0,250)};
+          record={...record,status:permanent?"error":scope.FIBRAZO_BACKGROUND_TERRITORY?.needsLookup(record.payload)?"territorial_pending":"pending",nextAttemptAt:Date.now()+Math.min(60000,5000*2**Math.min(record.attempts||1,4)),lastError:String(restartRequested?"Intento reiniciado; respuesta conservada.":error.name==="AbortError"?"La conexión tardó demasiado. Se reintentará.":error.message==="Failed to fetch"?"No se recibió confirmación del servidor. Se comprobará antes de reenviar; respuesta y fotos conservadas.":error.message||"Error").slice(0,250)};
           await put(record);notifyRecord(record);failed++;
         }
       }

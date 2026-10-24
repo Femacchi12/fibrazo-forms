@@ -471,6 +471,14 @@ module.exports=async(req,res)=>{
       const [forms,caps]=await Promise.all([loadForms(auth),userCapabilities(auth,user.email)]);
       if(!canUseDashboard(user,caps.adminActive,forms)) throw httpError("DASHBOARD_ACCESS_DENIED",403);
       const requested=String(req.query.form||"all").toUpperCase();
+      if(req.query.receipt){
+        const form=forms.find(item=>item.id===requested);
+        if(!form)throw httpError("INVALID_FORM",400);
+        const permission=permissionFor(caps.permissions,user.email,form.id,caps.base);
+        if(!canAccess(form,user,caps.base,permission))throw httpError("FORM_ACCESS_DENIED",403);
+        const result=await require("./_submission-receipt").readReceipt({sheets:google.sheets({version:"v4",auth}),spreadsheetId:SHEET_ID,form,id:String(req.query.receipt),email:user.email});
+        return await reply(result);
+      }
       const limit=Math.min(Number(req.query.limit)||100,250);
       return await reply({
         rows:await readRows(auth,forms,requested==="ALL"?"all":requested,limit,user,caps)

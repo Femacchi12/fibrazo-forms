@@ -299,3 +299,5 @@ Configuración de formularios/usuarios/permisos se consulta en un batch comparti
 FO-CHG-103 (0.8.156): [field synchronization and closure references](docs/fo-chg-103-fieldwork.md). Optional lookup no longer blocks receipt on transient failure, competition consolidates by received batch, and autocomplete remembers confirmed names. Neiva closure references retain method/distance and observed-stratum priority separately from exact geometry.
 
 FO-CHG-104 (0.8.157): [full operator catalogue preload](docs/fo-chg-104-operator-preload.md). Restore the same-account catalogue before rendering, refresh independently of GPS, and repaint an open suggestion list without changing the field value.
+
+FO-CHG-105 (0.8.158): [recover lost acknowledgements](docs/fo-chg-105-receipt-recovery.md). Confirm original receipt before retrying mobile uploads; retain originals when uncertain and keep edit recovery separate.

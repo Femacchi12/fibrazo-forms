@@ -3,6 +3,7 @@ const {IDBFactory}=require('fake-indexeddb');
 let online=false,hang=true,posts=0,started=false;
 const window=new EventTarget();window.firebase={auth:()=>({currentUser:{email:'fixture@example.test',getIdToken:async()=> 'fixture'},onAuthStateChanged(){}})};
 const context=vm.createContext({window,document:{getElementById:()=>null,addEventListener(){}},navigator:{get onLine(){return online}},indexedDB:new IDBFactory(),crypto:require('node:crypto').webcrypto,Blob,AbortController,CustomEvent,Event,console,location:{protocol:'http:'},setTimeout:(f,n)=>{const t=setTimeout(f,n);t.unref();return t;},clearTimeout,setInterval:(f,n)=>{const t=setInterval(f,n);t.unref();return t;},clearInterval,fetch:async(url,options)=>{
+ if(url.startsWith('/api/submissions?'))return {ok:true,status:200,json:async()=>({ok:true,found:false})};
  posts++;started=true;
  // Headers arrive but body stalls: cancellation must cover both.
  return {ok:true,status:200,json:()=>hang?new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>reject(Object.assign(Error('aborted'),{name:'AbortError'})))):Promise.resolve({ok:true,id:JSON.parse(options.body).clientSubmissionId})};
