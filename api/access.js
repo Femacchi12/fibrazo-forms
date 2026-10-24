@@ -1,6 +1,7 @@
 const {gauth,verifyUser,loadForms,userCapabilities,permissionFor,canUseDashboard,canAccess,runtimePolicy,httpError}=require("./_core");
 
 module.exports=async(req,res)=>{
+  if(req.query?.chat==='1')return require('./_chat')(req,res);
   res.setHeader("Cache-Control","no-store");
   try{
     if(req.method!=="GET") return res.status(405).json({error:"Method not allowed"});
