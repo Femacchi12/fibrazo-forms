@@ -16,6 +16,13 @@
   return p;
  }
  function needsLookup(p){return FORMS.includes(p?.formId)&&p.backgroundTerritory?.version===1&&p.backgroundTerritory.status!=='complete';}
+ // Operational field value; the geometry status and distance remain separate.
+ function stratumValue(result){
+  const value=String(result?.estratoStatus==='DENTRO'?result.estrato:result?.estratoStatus==='FUERA'?result.estratoNearby:'').trim();
+  if(!/^[1-6]$/.test(value))return '';
+  if(result.estratoStatus==='FUERA'&&(!finite(result.estratoDistanceM)||Number(result.estratoDistanceM)<0||Number(result.estratoDistanceM)>5000))return '';
+  return value;
+ }
  function applyResult(input,result,qaPolicy){
   const p=clone(input),job=p.backgroundTerritory;
   if(!job||!validPoint(p.location)||Number(p.location.lat)!==job.point.lat||Number(p.location.lng)!==job.point.lng)throw new Error('TERRITORIAL_COORDINATE_MISMATCH');
@@ -26,7 +33,7 @@
   const city=exact('city');
   set('municipio',city||d.municipio||job.cityHint||l.cityDetected||'');
   set('sector_barrio',exact('barrio'));
-  set('estrato',exact('estrato')||'Sin información');
+  set('estrato',stratumValue(result)||'Sin información');
   l.cityDetected=manual.municipio?String(d.municipio||''):(city||String(d.municipio||''));
   l.citySource=manual.municipio?'manual':city?'territorial':'aproximado';
   l.territorialVersion=result.territorialVersion||'';l.territorialCatalogId=result.catalogId||'';l.territorialFileId=result.territorialFileId||'';
@@ -43,5 +50,5 @@
   job.status='complete';job.completedAt=new Date().toISOString();
   return p;
  }
- return {FORMS,validPoint,snapshot,needsLookup,applyResult};
+ return {FORMS,validPoint,snapshot,needsLookup,applyResult,stratumValue};
 });

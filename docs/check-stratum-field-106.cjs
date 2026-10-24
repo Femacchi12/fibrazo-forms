@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict'),policy=require('../background-territory'),op=require('../api/_operational-reference'),{sourceRecords,buildPlan}=require('../api/_competition-plan');
+const flat={ok:true,territorial:{version:'fixture'},cityStatus:'DENTRO',city:'Neiva',estratoStatus:'FUERA',estratoNearby:'2',estratoDistanceM:6,barrioStatus:'DENTRO',barrio:'LA LIBERTAD'};
+assert.equal(policy.stratumValue(flat),'2');assert.equal(policy.stratumValue({...flat,estratoStatus:'DENTRO',estrato:'3'}),'3');
+for(const distance of [null,undefined,'',-1,5001])assert.equal(policy.stratumValue({...flat,estratoDistanceM:distance}),'');
+assert.equal(policy.stratumValue({...flat,estratoStatus:'AMBIGUO'}),'');assert.equal(policy.stratumValue({...flat,estratoNearby:'No residencial'}),'');
+const payload=policy.snapshot({formId:'EXPLORACION_PRESENCIAL',data:{estrato_observado:'3'},location:{lat:2.9,lng:-75.2},photos:[{data:'original'}]},{cityHint:'Neiva'});
+const enriched=policy.applyResult(payload,flat);assert.equal(enriched.data.estrato,'2');assert.equal(enriched.data.estrato_observado,'3');assert.equal(enriched.location.estratoStatus,'FUERA');assert.equal(enriched.location.estratoDistanceM,6);assert.equal(enriched.photos[0].data,'original');
+const t={barrio:{status:'DENTRO',assigned:{name:'LA LIBERTAD'},distanceM:0},estrato:{status:'FUERA',nearby:{name:'2'},distanceM:6}};
+const noManual={...payload,data:{}};const values=op.valuesFor(t,noManual);assert.deepEqual(values.slice(3,6),['2','CERCANO',6]);
+const raw=Array(83).fill('');Object.assign(raw,{0:'2026-10-24',1:'fixture106',2:'Neiva',12:'Fixture ISP',17:2.9,18:-75.2,26:'Presencial',45:'DENTRO',47:'LA LIBERTAD',51:'FUERA',55:'2',56:6});const row=op.attach([raw],[values],163)[0];const point=op.applyPoint({},row);assert.equal(point.estrato.nearby,'2');assert.equal(point.estrato.status,'FUERA');assert.equal(point.estrato.distanceM,6);
+const rec=sourceRecords([[],row],[[]],'fixture')[0];assert.equal(rec.canonicalStratum,'');assert.equal(rec.operational.estrato.value,'2');const p=buildPlan({expl:[[],row],intel:[[]],base:{},sourceId:'fixture'});assert.equal(p.changes['20_CARGA_PROYECTOS_CIUDAD'][0].values[6],'2');assert(p.changes['20_CARGA_PROYECTOS_CIUDAD'][0].values[17].includes('CERCANO a 6 m'));
+const manualValues=op.valuesFor(t,payload);const manualRow=op.attach([raw],[manualValues],163)[0];manualRow[64]='3';assert.equal(op.reference(manualRow).estrato.value,'3');assert.equal(op.reference(manualRow).estrato.method,'OBSERVADO');
+console.log('PASS106: field/enrichment select2 at6m, FUERA retained; unknown/ambiguous/invalid values unassigned; sidecar/map/competition preserve nearby provenance; manual priority and original evidence retained');

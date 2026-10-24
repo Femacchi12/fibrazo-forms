@@ -398,7 +398,14 @@ async function readRows(auth,forms,requested,limit,user,caps){
       range:`${form.sheet}!A2:${isExploration(form.id)?"CE":form.id==="INTELIGENCIA_OPERADOR"?"AF":"AC"}`,
       valueRenderOption:"UNFORMATTED_VALUE"
     });
-    for(const row of (r.data.values||[]).slice(-limit).reverse()){
+    let sourceRows=r.data.values||[];
+    if(usesTerritorialEngine(form.id)){
+      const intel=form.id==="INTELIGENCIA_OPERADOR",columns=intel?"AK2:AS":"FH2:FP";
+      const extra=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:form.sheet+"!"+columns,valueRenderOption:"UNFORMATTED_VALUE"});
+      sourceRows=require("./_operational-reference").attach(sourceRows,extra.data.values||[],intel?36:163);
+    }
+    for(const row of sourceRows.slice(-limit).reverse()){
+      const operational=require("./_operational-reference").reference(row,form.id==="INTELIGENCIA_OPERADOR");
       // Toda respuesta de prueba queda excluida de resultados y análisis.
       const testIndex=form.id==="CHURN"?28:form.id==="INTELIGENCIA_OPERADOR"?31:82;
       if(String(row[testIndex]||"").trim().toLowerCase()==="sí")continue;
@@ -421,7 +428,7 @@ async function readRows(auth,forms,requested,limit,user,caps){
             ciudad:row[2],municipio:row[2],sector_barrio:row[3],
             tigo_hfc:row[7],tigo_ftth:row[8],claro_hfc:row[9],claro_ftth:row[10],movistar:row[11],
             isp_1:row[12],isp_2:row[13],isp_3:row[14],isp_4:row[15],tipo,
-            barrio:row[47]||row[3],estrato:row[51]==="DENTRO"?(row[53]||"Sin información"):"Sin información",estrato_referencia:row[55]||"",estrato_registrado:row[71]||"",troncal:row[59]||row[61]||"",
+            barrio:row[47]||row[3],estrato:row[51]==="DENTRO"?(row[53]||"Sin información"):row[51]==="FUERA"?(row[55]||"Sin información"):"Sin información",estrato_referencia:row[55]||"",estrato_registrado:row[71]||"",troncal:row[59]||row[61]||"",
             zona_empresarial:row[63]||"",estrato_observado:row[64]||"",nivel_seguridad:row[65]||"",tipo_terreno:row[72]||"",barrio_asentamiento_informal:row[73]||""
           },
           location:{lat:coordinateNumber(row[17]),lng:coordinateNumber(row[18]),accuracy:coordinateNumber(row[19])},
@@ -432,7 +439,7 @@ async function readRows(auth,forms,requested,limit,user,caps){
       }else if(form.id==="INTELIGENCIA_OPERADOR"){
         out.push({
           formId:form.id,timestamp:row[0],id:row[1],
-          data:{operador:row[2],modelo_caja:row[3],nomenclatura_caja:row[4],marquilla:row[5],tipo_tensor:row[6],calidad_tendido:row[7],observaciones:row[8],municipio:row[16]||"",sector_barrio:row[17]||"",estrato:row[18]||"",calidad_servicio_percibida:row[20]||"",precio_solo_internet:row[21]||"",precio_internet_tv:row[22]||"",incluye_tv:row[23]||"",grilla_tv:row[24]||"",marquilla_drop:row[25]||"",tensor_acometida:row[27]||"",estrato_observado:row[29]||"",estado_fotos:row[30]||photoStatus([row[12],row[13],row[14],row[15],row[26],row[28]])},
+          data:{operador:row[2],modelo_caja:row[3],nomenclatura_caja:row[4],marquilla:row[5],tipo_tensor:row[6],calidad_tendido:row[7],observaciones:row[8],municipio:row[16]||"",sector_barrio:row[17]||"",estrato:(operational?.estrato.method!=="OBSERVADO"?operational?.estrato.value:"")||row[18]||"",calidad_servicio_percibida:row[20]||"",precio_solo_internet:row[21]||"",precio_internet_tv:row[22]||"",incluye_tv:row[23]||"",grilla_tv:row[24]||"",marquilla_drop:row[25]||"",tensor_acometida:row[27]||"",estrato_observado:row[29]||"",estado_fotos:row[30]||photoStatus([row[12],row[13],row[14],row[15],row[26],row[28]])},
           location:{lat:coordinateNumber(row[9]),lng:coordinateNumber(row[10]),accuracy:coordinateNumber(row[11])},
           photos:[row[12],row[13],row[14],row[15],row[26],row[28]].filter(Boolean),photoFields:{foto_modelo_caja:row[12]||"",foto_nomenclatura_caja:row[13]||"",foto_marquilla:row[14]||"",foto_tipo_tensor:row[15]||"",foto_marquilla_drop:row[26]||"",foto_tensor_acometida:row[28]||""},
           user:row[19]||""
@@ -563,6 +570,7 @@ module.exports=async(req,res)=>{
       row[31]=old[31]|| (payload.isTest?"Sí":"No");
       row[0]=old[0]||row[0];
       await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!A${idx+2}:AJ${idx+2}`,valueInputOption:"RAW",requestBody:{values:[row]}});
+      if(editTerritorial&&!payload.isTest)try{await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!AK${idx+2}:AS${idx+2}`,valueInputOption:"RAW",requestBody:{values:[require("./_operational-reference").valuesFor(editTerritorial,payload)]}});}catch(error){console.error("REFERENCE_SAVE_PENDING",error.message);}
       const competitionSync=payload.deferCompetition===true?{ok:false,reason:"COMPETITION_BATCH_PENDING",retryable:true}:await trySyncCompetition(auth,{sourceId:SHEET_ID});
       return await reply({ok:true,id:editId,updated:true,photos:links,competitionSync});
     }
@@ -733,13 +741,18 @@ module.exports=async(req,res)=>{
             String(payload.data?.isp_2_calidad||""),
             String(payload.data?.isp_3_calidad||""),
             String(payload.data?.isp_4_calidad||""),
-            estratoValue,
+            require("./_operational-reference").fieldStratum(territorial)||"Sin información",
             String(payload.data?.tipo_terreno||""),
             String(payload.data?.barrio_asentamiento_informal||"")
           ]]}
         });
       }
     }
+
+    if(rawRow&&territorial&&!payload.isTest)try{
+      const columns=form.id==="INTELIGENCIA_OPERADOR"?["AK","AS"]:["FH","FP"];
+      await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!${columns[0]}${rawRow}:${columns[1]}${rawRow}`,valueInputOption:"RAW",requestBody:{values:[require("./_operational-reference").valuesFor(territorial,payload)]}});
+    }catch(error){console.error("REFERENCE_SAVE_PENDING",error.message);}
 
     if(publicContext){
       await logSecurity(auth,{

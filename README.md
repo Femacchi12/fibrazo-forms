@@ -301,3 +301,5 @@ FO-CHG-103 (0.8.156): [field synchronization and closure references](docs/fo-chg
 FO-CHG-104 (0.8.157): [full operator catalogue preload](docs/fo-chg-104-operator-preload.md). Restore the same-account catalogue before rendering, refresh independently of GPS, and repaint an open suggestion list without changing the field value.
 
 FO-CHG-105 (0.8.158): [recover lost acknowledgements](docs/fo-chg-105-receipt-recovery.md). Confirm original receipt before retrying mobile uploads; retain originals when uncertain and keep edit recovery separate.
+
+FO-CHG-106 (0.8.159): [numeric operational stratum with status/distance](docs/fo-chg-106-stratum-field.md). Display and retain the nearest valid stratum in the field, preserve FUERA and distance separately, and respect observed-stratum priority in analysis.

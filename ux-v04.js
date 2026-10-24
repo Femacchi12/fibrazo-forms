@@ -1356,7 +1356,7 @@
           if(prefix==="estrato"&&baseNorm==="sin informacion")return base+" · dentro de un polígono cuyo estrato no está informado";
           return base+" · coincidencia exacta";
         }
-        if(geoState==="FUERA")return base+" · sin asignación"+(near?" · más cercano: "+near:"")+(distance!==null?" · distancia: "+Math.round(distance)+" m":"");
+        if(geoState==="FUERA")return base+" · fuera del polígono"+(near?" · más cercano: "+near:"")+(distance!==null?" · distancia: "+Math.round(distance)+" m":"");
         if(geoState==="SIN_CAPA_CANONICA")return base+" · sin capa canónica disponible";
         if(geoState==="SIN_CAPA")return base+" · sin capa disponible";
       }
@@ -1994,7 +1994,7 @@
       const qaStratum=data.qaStratum?.status==="DENTRO"&&data.qaStratum?.canonical===false?data.qaStratum:null;
       const qaNearby=data.qaStratum?.status==="FUERA"&&data.qaStratum?.canonical===false&&Array.isArray(data.qaStratum.nearby)
         ?data.qaStratum.nearby.filter(item=>/^[1-6]$/.test(String(item.estrato))):[];
-      const estratoDisplay=data.estratoStatus==="DENTRO"?data.estrato:""; // Reference QA and nearby strata are advisory, never assigned.
+      const estratoDisplay=window.FIBRAZO_BACKGROUND_TERRITORY?.stratumValue(data)||""; // Numeric operational reference; FUERA and distance remain explicit.
       setGeoField("sector_barrio",barrioDisplay||"","");
       const estratoControl=document.querySelector('[name="estrato"]');
       const previousReference=state.qaReference;
