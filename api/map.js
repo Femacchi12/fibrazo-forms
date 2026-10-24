@@ -1,3 +1,4 @@
+const operationalReference=require('./_operational-reference');
 const {google}=require("googleapis");
 const {
   SHEET_ID,gauth,verifyUser,loadForms,userCapabilities,canUseDashboard,
@@ -76,14 +77,13 @@ module.exports=async(req,res)=>{
     if(!access.virtual&&!access.presential&&!access.intelligence)throw httpError("MAP_ACCESS_DENIED",403);
 
     const sheets=google.sheets({version:"v4",auth});
-    const [response,intelResponse]=await Promise.all([
-      (access.virtual||access.presential)
-        ?sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"RESP_EXPLORACION!A2:CE",valueRenderOption:"UNFORMATTED_VALUE"})
-        :Promise.resolve({data:{values:[]}}),
-      access.intelligence
-        ?sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"RESP_INTELIGENCIA_OPERADOR!A2:AF",valueRenderOption:"UNFORMATTED_VALUE"})
-        :Promise.resolve({data:{values:[]}})
-    ]);
+    const ranges=[];
+    if(access.virtual||access.presential)ranges.push("RESP_EXPLORACION!A2:CE","RESP_EXPLORACION!FH2:FP");
+    if(access.intelligence)ranges.push("RESP_INTELIGENCIA_OPERADOR!A2:AJ","RESP_INTELIGENCIA_OPERADOR!AK2:AS");
+    const batch=await sheets.spreadsheets.values.batchGet({spreadsheetId:SHEET_ID,ranges,valueRenderOption:"UNFORMATTED_VALUE"});
+    const values=Object.fromEntries(ranges.map((r,i)=>[r,batch.data.valueRanges?.[i]?.values||[]]));
+    const response={data:{values:operationalReference.attach(values["RESP_EXPLORACION!A2:CE"]||[],values["RESP_EXPLORACION!FH2:FP"],163)}};
+    const intelResponse={data:{values:operationalReference.attach(values["RESP_INTELIGENCIA_OPERADOR!A2:AJ"]||[],values["RESP_INTELIGENCIA_OPERADOR!AK2:AS"],36)}};
     const email=String(user.email||"").trim().toLowerCase();
     const admin=!!(caps.base||String(caps.user?.role||"").toUpperCase()==="ADMIN");
     const canViewTests=email==="eduardo@fibrazo.com";
@@ -121,7 +121,7 @@ module.exports=async(req,res)=>{
       const troncalAssigned=String(row[59]||"").trim();
       const troncalNearby=String(row[61]||"").trim();
 
-      points.push({
+      points.push(operationalReference.applyPoint({
         id:String(row[1]||""),
         timestamp:String(row[0]||""),
         type,
@@ -161,7 +161,7 @@ module.exports=async(req,res)=>{
           nearby:troncalNearby,
           distanceM:distance(row[62])
         }
-      });
+      },row));
     }
 
     // Inteligencia de operadores: fuente autorizada separada y con columnas
@@ -178,7 +178,7 @@ module.exports=async(req,res)=>{
       if(!matchesCity(observedCity))continue;
       const barrio=String(row[17]||"").trim();
       const estrato=String(row[18]||row[29]||"").trim();
-      points.push({
+      points.push(operationalReference.applyPoint({
         id:String(row[1]||""),
         timestamp:String(row[0]||""),
         type:"INTELIGENCIA_OPERADOR",
@@ -193,7 +193,7 @@ module.exports=async(req,res)=>{
         barrio:{status:barrio?"registro":"pendiente",assigned:barrio,nearby:"",distanceM:null},
         estrato:{status:estrato?"registro":"pendiente",assigned:estrato,nearby:"",distanceM:null},
         troncal:{status:"",assigned:"",nearby:"",distanceM:null}
-      });
+      },row,true));
     }
     const uniquePoints=[...new Map(points.map(point=>[point.id,point])).values()];
     uniquePoints.sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp));

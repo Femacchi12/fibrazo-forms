@@ -131,6 +131,7 @@
     const assigned=name(layer?.assigned),nearby=name(layer?.nearby);
     const isValidStratum=value=>/^([1-6])(?:[.,]0+)?$/.test(value);
     const readable=value=>kind==="estrato"&&isValidStratum(value)?"Estrato "+value[0]:value;
+    if(status==="OBSERVADO")return readable(assigned)+" (observado en campo)";
     if(status==="DENTRO")return kind==="estrato"&&!isValidStratum(assigned)
       ?"Sin estrato clasificado":readable(assigned)||"Coincidencia exacta";
     if(status==="FUERA"){

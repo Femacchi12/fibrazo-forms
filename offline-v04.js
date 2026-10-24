@@ -99,7 +99,7 @@
     if(!user)throw new Error("AUTH_REQUIRED");
     const token=await idToken(user),point=payload.backgroundTerritory.point;
     const hint=payload.backgroundTerritory.cityHint||payload.data?.municipio||payload.location?.cityDetected||"";
-    const response=await timedFetch("/api/exploration?lat="+encodeURIComponent(point.lat)+"&lng="+encodeURIComponent(point.lng)+"&city="+encodeURIComponent(hint),{headers:{Authorization:"Bearer "+token},cache:"no-store"},30000);
+    const response=await timedFetch("/api/exploration?lat="+encodeURIComponent(point.lat)+"&lng="+encodeURIComponent(point.lng)+"&city="+encodeURIComponent(hint),{headers:{Authorization:"Bearer "+token},cache:"no-store"},5000);
     const data=await response.json();
     if(!response.ok){const e=new Error(data.error||"No se completó la consulta territorial.");e.httpStatus=response.status;throw e;}
     return policy.applyResult(payload,data,scope.FIBRAZO_QA_STRATUM_POLICY);
@@ -164,7 +164,7 @@
     const response=await timedFetch("/api/submissions",{
       method:"POST",
       headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},
-      body:JSON.stringify(payload)
+      body:JSON.stringify({...payload,deferCompetition:true})
     });
     let body={};
     try{body=await response.json();}catch(_){}
@@ -264,7 +264,7 @@
     if(!navigator.onLine||!currentEmail()){await refreshUi();return {authRequired:!currentEmail()};}
     syncing=true;
     let locked=false,heartbeat=null,synced=0,failed=0;
-    const deadline=Date.now()+25000;let processed=0;
+    const deadline=Date.now()+25000,receivedIds=new Set();let processed=0;
     try{
       locked=await lease();
       if(!locked){if(manual)showSyncMessage("Otro proceso está enviando. Se reintentará automáticamente; tus datos se conservan.");return {busy:true};}
@@ -274,13 +274,20 @@
       const records=(await all()).filter(r=>r.userEmail===email&&!["sent"].includes(r.status)&&(manual||r.status!=="error")&&(manual||!r.nextAttemptAt||r.nextAttemptAt<=Date.now())).sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
       for(let record of records){
         if(background&&(processed>=3||Date.now()>=deadline))break;
+        if(record.status==="sent_competition_pending")continue;
         processed++;syncProgress=processed+" / "+records.length;renderSyncing(true);
         if(restartRequested||!navigator.onLine||currentEmail()!==email)break;
         try{
           record={...record,attempts:(record.attempts||0)+1,lastError:"",status:record.status!=="sent_master_pending"&&scope.FIBRAZO_BACKGROUND_TERRITORY?.needsLookup(record.payload)?"enriching":"syncing"};
           await put(record);notifyRecord(record);await refreshUi();
           if(record.status==="enriching"){
-            const payload=await enrichPayload(record.payload);
+            let payload=record.payload;
+            try{payload=await enrichPayload(record.payload);}catch(error){
+              // The authenticated submission endpoint resolves the original GPS
+              // again. A failed optional lookup must not block raw receipt.
+              if(error.httpStatus===401||error.httpStatus===403)throw error;
+              if(currentEmail()!==email||restartRequested||!navigator.onLine)throw error;
+            }
             if(currentEmail()!==email)throw new Error("AUTH_CHANGED");
             if(restartRequested)throw new Error("SYNC_RESTART_REQUESTED");
             record={...record,payload,status:"pending",lastError:""};
@@ -295,14 +302,31 @@
           const territorialForm=scope.FIBRAZO_BACKGROUND_TERRITORY?.FORMS.includes(record.formId);
           const masterPending=!!serverResult.territorialError||((record.formId==="EXPLORACION"||record.formId==="EXPLORACION_PRESENCIAL")&&serverResult?.masterSync?.ok!==true);
           const competitionPending=serverResult.competitionSync?.ok===false;
-          record={...record,payload:masterPending?record.payload:{...record.payload,photos:[]},status:masterPending?"sent_master_pending":competitionPending?"sent_competition_pending":"sent",masterSync:serverResult.masterSync||null,syncedAt:new Date().toISOString(),serverId:serverResult.id,nextAttemptAt:masterPending?Date.now()+60000:competitionPending?Date.now()+15000:0,lastError:masterPending?"Respuesta recibida; falta conciliación territorial en servidor.":competitionPending?"Forms recibido. La consolidación de competencia se reintentará automáticamente.":""};
+          record={...record,payload:masterPending?record.payload:{...record.payload,photos:[]},status:masterPending?"sent_master_pending":competitionPending?"sent_competition_pending":"sent",masterSync:serverResult.masterSync||null,syncedAt:new Date().toISOString(),serverId:serverResult.id,nextAttemptAt:masterPending?Date.now()+60000:competitionPending?Date.now():0,lastError:masterPending?"Respuesta recibida; falta conciliación territorial en servidor.":competitionPending?"Forms recibido. La consolidación de competencia se reintentará automáticamente.":""};
           await put(record);notifyRecord(record,{...serverResult,queued:false,territorialPending:masterPending,competitionPending,isTest:record.payload.isTest===true});
           if(!masterPending&&territorialForm)scope.dispatchEvent(new CustomEvent("fibrazo:submission-saved",{detail:{formId:record.formId,id:serverResult.id}}));
-          synced++;
+          synced++;receivedIds.add(record.clientSubmissionId);
         }catch(error){
           const permanent=error.httpStatus&&error.httpStatus!==401&&!isTemporaryHttp(error.httpStatus);
           record={...record,status:permanent?"error":scope.FIBRAZO_BACKGROUND_TERRITORY?.needsLookup(record.payload)?"territorial_pending":"pending",nextAttemptAt:Date.now()+Math.min(60000,5000*2**Math.min(record.attempts||1,4)),lastError:String(restartRequested?"Intento reiniciado; respuesta conservada.":error.name==="AbortError"?"La conexión tardó demasiado. Se reintentará.":error.message||"Error").slice(0,250)};
           await put(record);notifyRecord(record);failed++;
+        }
+      }
+      // One consolidation for the received batch, not one full spreadsheet
+      // materialization per photographed point. This phase is durable in IDB.
+      const pending=(await all()).filter(r=>r.userEmail===email&&r.status==="sent_competition_pending"&&(manual||!r.nextAttemptAt||r.nextAttemptAt<=Date.now()));
+      if(pending.length&&!restartRequested&&navigator.onLine&&currentEmail()===email&&(!background||Date.now()<deadline)){
+        try{
+          const token=await idToken(scope.firebase.auth().currentUser);
+          if(currentEmail()!==email)throw new Error("AUTH_CHANGED");
+          const response=await timedFetch("/api/competition-sync",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({receivedBatch:true})});
+          const body=await response.json();
+          if(!response.ok||body.ok!==true)throw new Error(body.error||body.reason||"COMPETITION_SYNC_PENDING");
+          if(currentEmail()!==email||restartRequested||!await lease())throw new Error("QUEUE_LEASE_LOST");
+          for(const original of pending){const current=await get(original.clientSubmissionId);if(current?.status!=="sent_competition_pending"||current.userEmail!==email)continue;const done={...current,status:"sent",nextAttemptAt:0,lastError:""};await put(done);notifyRecord(done);if(!receivedIds.has(done.clientSubmissionId))synced++;}
+        }catch(error){
+          failed++;
+          for(const original of pending){const current=await get(original.clientSubmissionId);if(current?.status!=="sent_competition_pending"||current.userEmail!==email)continue;await put({...current,nextAttemptAt:Date.now()+60000,lastError:"Forms recibido. Consolidación pendiente; se reintentará automáticamente."});}
         }
       }
     }catch(error){

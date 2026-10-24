@@ -295,3 +295,5 @@ Ruta /api/public?rescue=1: respaldo JSON local por cuenta antes de reparar la ap
 
 ### FO-CHG-102 · Contención de lecturas Sheets durante campo
 Configuración de formularios/usuarios/permisos se consulta en un batch compartido con vigencia máxima15s por instancia; al expirar, fallo cerrado sin usar permisos vencidos. Escrituras deAdministración invalidan la copia local antes de releer. Cargas territoriales concurrentes comparten lecturas sin cambiar las cachés geográficas existentes ni las reglas de asignación. Backend únicamente: no cambia SW0.8.155, preguntas ni mapa visual. Ver docs/fo-chg-102-sheets-quota.md.
+
+FO-CHG-103 (0.8.156): [field synchronization and closure references](docs/fo-chg-103-fieldwork.md). Optional lookup no longer blocks receipt on transient failure, competition consolidates by received batch, and autocomplete remembers confirmed names. Neiva closure references retain method/distance and observed-stratum priority separately from exact geometry.

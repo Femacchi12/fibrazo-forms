@@ -555,13 +555,13 @@ module.exports=async(req,res)=>{
       row[31]=old[31]|| (payload.isTest?"Sí":"No");
       row[0]=old[0]||row[0];
       await sheets.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:`${form.sheet}!A${idx+2}:AJ${idx+2}`,valueInputOption:"RAW",requestBody:{values:[row]}});
-      const competitionSync=await trySyncCompetition(auth,{sourceId:SHEET_ID});
+      const competitionSync=payload.deferCompetition===true?{ok:false,reason:"COMPETITION_BATCH_PENDING",retryable:true}:await trySyncCompetition(auth,{sourceId:SHEET_ID});
       return await reply({ok:true,id:editId,updated:true,photos:links,competitionSync});
     }
 
     const id=submissionId;
     if(await submissionExists(auth,form,id)){
-      const competitionSync=usesTerritorialEngine(form.id)&&!isPublicRequest?await trySyncCompetition(auth,{sourceId:SHEET_ID}):{ok:true,skipped:true};
+      const competitionSync=usesTerritorialEngine(form.id)&&!isPublicRequest?(payload.deferCompetition===true?{ok:false,reason:"COMPETITION_BATCH_PENDING",retryable:true}:await trySyncCompetition(auth,{sourceId:SHEET_ID})):{ok:true,skipped:true};
       if(isExploration(form.id)){
         const sheets=google.sheets({version:"v4",auth});
         const existing=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:`${form.sheet}!B2:AF`});
@@ -739,7 +739,7 @@ module.exports=async(req,res)=>{
       });
     }
 
-    const competitionSync=usesTerritorialEngine(form.id)&&!isPublicRequest?await trySyncCompetition(auth,{sourceId:SHEET_ID}):{ok:true,skipped:true};
+    const competitionSync=usesTerritorialEngine(form.id)&&!isPublicRequest?(payload.deferCompetition===true?{ok:false,reason:"COMPETITION_BATCH_PENDING",retryable:true}:await trySyncCompetition(auth,{sourceId:SHEET_ID})):{ok:true,skipped:true};
     return await reply({ok:true,id,photos:links,masterSync,territorial,territorialError,competitionSync});
   }catch(error){
     if(publicContext?.ipHash&&auth){
