@@ -450,27 +450,54 @@
     if(!(state.ispOptions||[]).some(x=>normalizeCityName(x)===normalizeCityName(v)))state.ispOptions=[...(state.ispOptions||[]),v].sort((a,b)=>a.localeCompare(b,"es"));
     try{const saved=JSON.parse(localStorage.getItem("fibrazo:confirmed-isps-v103")||"[]");const next=[...new Set([...saved,v])];localStorage.setItem("fibrazo:confirmed-isps-v103",JSON.stringify(next));}catch(_){}
   }
-  async function loadSharedIsps(){
-    if(publicMode)return;
-    try{
-      const token=await currentUser()?.getIdToken?.();
-      if(!token)return;
-      const response=await fetch("/api/isps",{headers:{Authorization:"Bearer "+token},cache:"no-store"});
-      if(!response.ok)return;
-      const result=await response.json();
-      const names=Array.isArray(result.isps)?result.isps:[];
-      const normalized=new Map();
-      for(const name of [...names,...(state.ispOptions||[])]){
-        const value=String(name||"").trim();
-        if(value&&!["Sin ISP","Sin Identificar"].includes(value))normalized.set(normalizeCityName(value),value);
-      }
-      state.ispOptions=[...normalized.values()].sort((a,b)=>a.localeCompare(b,"es"));
-      refreshIspSuggestions();
-    }catch(_){}
+  // FO-CHG-104: global catalogue is independent of GPS and survives form resets.
+  const ispCatalogFlights=new Map();
+  const ispCatalogFresh=new Map();
+  const ispEmail=()=>String(currentUser()?.email||"").trim().toLowerCase();
+  const ispCatalogKey=email=>"fibrazo:shared-isps-v104:"+email;
+  function mergeIspOptions(names){
+    const normalized=new Map();
+    for(const name of [...(Array.isArray(names)?names:[]),...(state.ispOptions||[])]){
+      const value=String(name||"").trim();
+      if(value&&!["Sin ISP","Sin Identificar"].includes(value))normalized.set(normalizeCityName(value),value);
+    }
+    state.ispOptions=[...normalized.values()].sort((a,b)=>a.localeCompare(b,"es"));
   }
   function loadLocalIsps(){
-    try{const saved=JSON.parse(localStorage.getItem("fibrazo:confirmed-isps-v103")||"[]");state.ispOptions=[...new Set([...(state.ispOptions||[]),...saved])].sort((a,b)=>a.localeCompare(b,"es"));}catch(_){}
+    const email=ispEmail();if(publicMode||!email)return;
+    if(state.ispOptionsEmail!==email){state.ispOptions=[];state.ispOptionsEmail=email;}
+    try{const cached=JSON.parse(localStorage.getItem(ispCatalogKey(email))||"null");if(cached?.email===email)mergeIspOptions(cached.names);}catch(_){}
+    try{const saved=JSON.parse(localStorage.getItem("fibrazo:confirmed-isps-v103")||"[]");mergeIspOptions(saved);}catch(_){}
   }
+  function loadSharedIsps(){
+    if(publicMode)return Promise.resolve();
+    const user=currentUser(),email=ispEmail();if(!user||!email)return Promise.resolve();
+    loadLocalIsps();refreshIspSuggestions();
+    if((ispCatalogFresh.get(email)||0)>Date.now())return Promise.resolve();
+    if(ispCatalogFlights.has(email))return ispCatalogFlights.get(email);
+    const controller=new AbortController();let timer;
+    const work=(async()=>{
+      const token=await user.getIdToken();
+      if(controller.signal.aborted||ispEmail()!==email)return;
+      const response=await fetch("/api/isps",{headers:{Authorization:"Bearer "+token},cache:"no-store",signal:controller.signal});
+      if(ispEmail()!==email||controller.signal.aborted)return;
+      if(!response.ok){
+        if(response.status===401||response.status===403){try{localStorage.removeItem(ispCatalogKey(email));}catch(_){}state.ispOptions=[];refreshIspSuggestions();}
+        return;
+      }
+      const result=await response.json();
+      if(ispEmail()!==email||controller.signal.aborted||!Array.isArray(result.isps))return;
+      mergeIspOptions(result.isps);
+      try{localStorage.setItem(ispCatalogKey(email),JSON.stringify({email,names:result.isps,updatedAt:Date.now()}));}catch(_){}
+      ispCatalogFresh.set(email,Date.now()+60000);
+      refreshIspSuggestions();
+    })();
+    const task=Promise.race([work,new Promise(resolve=>{timer=setTimeout(()=>{controller.abort();resolve();},10000);})]).catch(()=>{}).finally(()=>{clearTimeout(timer);if(ispCatalogFlights.get(email)===task)ispCatalogFlights.delete(email);});
+    ispCatalogFlights.set(email,task);return task;
+  }
+  window.addEventListener("fibrazo:access-ready",()=>{loadLocalIsps();loadSharedIsps();});
+  window.addEventListener("online",()=>loadSharedIsps());
+  queueMicrotask(()=>loadSharedIsps());
   function clearOperators(){
     ["tigo_hfc","tigo_ftth","claro_hfc","claro_ftth","movistar"].forEach(key=>setFieldValue(key,"No"));
     ["isp_1","isp_2","isp_3","isp_4"].forEach(key=>{const n=document.querySelector('[name="'+css(key)+'"]');if(n)n.value="Sin ISP";});
@@ -578,6 +605,7 @@
     const clear=document.createElement("button");clear.type="button";clear.className="isp-clear-button";clear.textContent="×";clear.title="Borrar selección";clear.setAttribute("aria-label","Borrar selección de ISP");
     clear.addEventListener("pointerdown",e=>e.preventDefault());
     clear.addEventListener("click",e=>{e.preventDefault();const position=Number(field.key.match(/^isp_([1-4])$/)?.[1]);if(position&&isExplorationForm()){removeExplorationIsp(position);list.hidden=true;return;}input.value="";clearQualityIfChanged();updateIspState();input.focus();paint();clearError(field.key);updateVisibility();});
+    input.refreshIspOptions=()=>{if(!list.hidden)paint();};
     shell.append(input,clear,list);return shell;
   }
 
@@ -597,6 +625,7 @@
   }
   function refreshIspSuggestions(){
     document.querySelectorAll(".isp-autocomplete input").forEach(input=>{
+      input.refreshIspOptions?.();
       if(input.value==="Sin ISP"||!String(input.value||"").trim())input.placeholder=(state.ispOptions||[]).length?"Busca o escribe un ISP":"Escribe un ISP";
     });
   }
