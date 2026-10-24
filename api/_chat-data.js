@@ -69,7 +69,7 @@ function analyze(q,snapshot,access){
  }else{
   for(const city of scope){
    if(access.competition&&q.intent!=='strata'&&!q.stratum){
-    let c=(snapshot.coverage||[]).slice(1).map((r,i)=>({r,row:i+2})).filter(x=>key(x.r[3])===key(city)&&shown(x.r[8])&&!/no presta servicio|sin presencia|inactivo/.test(fold(x.r[12]))&&(!q.operator||canonical(x.r[9])===q.operator));
+    let c=(snapshot.coverage||[]).slice(1).map((r,i)=>({r,row:i+2})).filter(x=>key(x.r[3])===key(city)&&shown(x.r[8])&&!/no presta servicio|sin presencia|inactivo/.test(fold(x.r[20]))&&(!q.operator||canonical(x.r[9])===q.operator));
     const periods=c.map(x=>clean(x.r[18])).filter(x=>/^20\d{2}-\d{2}$/.test(x)).sort();const period=q.period||periods.at(-1)||'';
     c=c.filter(x=>period&&x.r[18]===period);
     const ops=[...new Set(c.map(x=>canonical(x.r[9])).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));

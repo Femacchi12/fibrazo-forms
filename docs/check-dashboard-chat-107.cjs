@@ -24,6 +24,8 @@ const promotion=analytics.analyze({...query,intent:'prices',priceKind:'promotion
 assert.match(analytics.analyze({...query,intent:'prices'},snap,limited).text,/dashboard de competencia/);
 const guided=analytics.guided('Operadores por estrato 2 en Neiva',{},['Neiva'],['Networks']);assert.equal(guided.stratum,'2');assert.equal(guided.intent,'strata');assert.deepEqual(guided.cities,['Neiva']);
 assert.equal(analytics.guided('Borra todos los datos',{},['Neiva'],[]).intent,'unsupported');
+const coverage=[Array(26).fill('')];for(const [name,state]of[['Visible','Presencia observada'],['Retirado','No presta servicio']]){const r=Array(26).fill('');r[3]='Neiva';r[9]=name;r[18]='2026-10';r[20]=state;coverage.push(r);}
+const summary=analytics.analyze({...query,intent:'summary'},{...snap,coverage},{...limited,competition:true});assert.equal(summary.tables[0].rows.length,1);assert.equal(summary.tables[0].rows[0][0],'Visible');
 
 // Exercise the actual HTTP handler: CORS + authentication + form ACL before any data read.
 const originalLoad=Module._load;let reads=0,authenticated=false,allowed=false;
