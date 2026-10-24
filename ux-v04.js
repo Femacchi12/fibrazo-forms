@@ -448,7 +448,7 @@
   function rememberIspName(name){
     const v=String(name||"").trim();if(!v||v==="Sin ISP"||v==="Sin Identificar")return;
     if(!(state.ispOptions||[]).some(x=>normalizeCityName(x)===normalizeCityName(v)))state.ispOptions=[...(state.ispOptions||[]),v].sort((a,b)=>a.localeCompare(b,"es"));
-    try{const saved=JSON.parse(localStorage.getItem("fibrazo:custom-isps")||"[]");const next=[...new Set([...saved,v])];localStorage.setItem("fibrazo:custom-isps",JSON.stringify(next));}catch(_){}
+    try{const saved=JSON.parse(localStorage.getItem("fibrazo:confirmed-isps-v103")||"[]");const next=[...new Set([...saved,v])];localStorage.setItem("fibrazo:confirmed-isps-v103",JSON.stringify(next));}catch(_){}
   }
   async function loadSharedIsps(){
     if(publicMode)return;
@@ -469,7 +469,7 @@
     }catch(_){}
   }
   function loadLocalIsps(){
-    try{const saved=JSON.parse(localStorage.getItem("fibrazo:custom-isps")||"[]");state.ispOptions=[...new Set([...(state.ispOptions||[]),...saved])].sort((a,b)=>a.localeCompare(b,"es"));}catch(_){}
+    try{const saved=JSON.parse(localStorage.getItem("fibrazo:confirmed-isps-v103")||"[]");state.ispOptions=[...new Set([...(state.ispOptions||[]),...saved])].sort((a,b)=>a.localeCompare(b,"es"));}catch(_){}
   }
   function clearOperators(){
     ["tigo_hfc","tigo_ftth","claro_hfc","claro_ftth","movistar"].forEach(key=>setFieldValue(key,"No"));
@@ -572,8 +572,9 @@
     };
     input.addEventListener("focus",()=>{if(input.value==="Sin ISP")input.select();paint();});
     input.addEventListener("input",()=>{clearQualityIfChanged();paint();updateIspState();clearError(field.key);updateVisibility();});
-    input.addEventListener("change",()=>{rememberIspName(input.value);refreshIspSuggestions();});
-    input.addEventListener("blur",()=>setTimeout(()=>{rememberIspName(input.value);list.hidden=true;},220));
+    // Remember explicit choices or submitted names, never intermediate typing.
+    input.addEventListener("change",refreshIspSuggestions);
+    input.addEventListener("blur",()=>setTimeout(()=>{list.hidden=true;},220));
     const clear=document.createElement("button");clear.type="button";clear.className="isp-clear-button";clear.textContent="×";clear.title="Borrar selección";clear.setAttribute("aria-label","Borrar selección de ISP");
     clear.addEventListener("pointerdown",e=>e.preventDefault());
     clear.addEventListener("click",e=>{e.preventDefault();const position=Number(field.key.match(/^isp_([1-4])$/)?.[1]);if(position&&isExplorationForm()){removeExplorationIsp(position);list.hidden=true;return;}input.value="";clearQualityIfChanged();updateIspState();input.focus();paint();clearError(field.key);updateVisibility();});
@@ -1427,6 +1428,7 @@
         if(!r.ok)throw new Error(result.error||"No se pudo guardar la respuesta.");
       }
 
+      for(const key of ["operador","isp_1","isp_2","isp_3","isp_4"])rememberIspName(payload.data?.[key]);
       state.queuedCompletionId=result?.queued?result.id:"";
       if(result?.queued&&payload.backgroundTerritory){state.submissionQueued=true;state.geoLookupId++;state.geoLookupCancelled=true;state.geoController?.abort();state.geoPromise=null;}
       $("reviewWorkspace").hidden=true;$("formWorkspace").hidden=true;$("successWorkspace").hidden=false;

@@ -13,6 +13,7 @@ async function fixtureFetch(url,options){
   const lat=Number(new URL(url,'http://localhost').searchParams.get('lat'));
   return response({ok:true,territorial:{version:'fixture'},territorialVersion:'fixture',cityStatus:'DENTRO',city:'City '+lat,barrioStatus:'DENTRO',barrio:'Barrio '+lat,estratoStatus:'DENTRO',estrato:'3',catalogId:'TEST'});
  }
+ if(url==='/api/competition-sync')return mode==='competition-pending'?response({ok:false},503):response({ok:true});
  if(url==='/api/submissions'){
   posts++;const p=JSON.parse(options.body);seen.push(p);if(!writes.has(p.clientSubmissionId))writes.set(p.clientSubmissionId,p);
   if(mode==='ack-loss'&&!failedOnce){failedOnce=true;throw Error('Response lost after write');}
@@ -43,11 +44,11 @@ async function waitFor(fn){for(let i=0;i<100;i++){if(fn())return;await new Promi
  check(seen[0].location.lat===4&&seen[1].location.lat===5&&seen[1].data.municipio==='City 5','isolated record points and enrichment');
  check(seen[0].data.sector_barrio==='Manual barrio'&&seen[0].data.estrato==='3'&&seen[0].data.estrato_observado==='5','manual fields preserved and canonical auto fields enriched');
  online=false;await w.FIBRAZO_OFFLINE.submit(payload(w,'C'));await w.FIBRAZO_OFFLINE.submit(payload(w,'D',6));mode='lookup-fail';failedOnce=false;online=true;await w.FIBRAZO_OFFLINE.syncAll({manual:true});
- rows=await records(w);check(rows.find(r=>r.clientSubmissionId==='C').status==='territorial_pending'&&rows.find(r=>r.clientSubmissionId==='C').nextAttemptAt>Date.now()&&rows.find(r=>r.clientSubmissionId==='D').status==='sent','weak signal schedules retry without blocking next record');
+ rows=await records(w);check(rows.find(r=>r.clientSubmissionId==='C').status==='sent'&&rows.find(r=>r.clientSubmissionId==='D').status==='sent','failed optional lookup reaches authenticated receipt without blocking next record');
  mode='ok';await w.FIBRAZO_OFFLINE.syncAll({manual:true});check((await records(w)).find(r=>r.clientSubmissionId==='C').status==='sent','retry completes pending record');
  online=false;await w.FIBRAZO_OFFLINE.submit(payload(w,'E'));mode='ack-loss';failedOnce=false;online=true;await w.FIBRAZO_OFFLINE.syncAll({manual:true});
  check((await records(w)).find(r=>r.clientSubmissionId==='E').payload.photos.length===1,'lost acknowledgement retains photo evidence');mode='ok';await w.FIBRAZO_OFFLINE.syncAll({manual:true});check([...writes.keys()].filter(x=>x==='E').length===1&&(await records(w)).find(r=>r.clientSubmissionId==='E').status==='sent','same submission ID reused after acknowledgement loss');
- online=false;await w.FIBRAZO_OFFLINE.submit(payload(w,'F'));mode='incomplete';online=true;const before=posts;await w.FIBRAZO_OFFLINE.syncAll({manual:true});check(posts===before&&(await records(w)).find(r=>r.clientSubmissionId==='F').status==='territorial_pending','incomplete territorial response never posts or reports completion');mode='ok';await w.FIBRAZO_OFFLINE.syncAll({manual:true});
+ online=false;await w.FIBRAZO_OFFLINE.submit(payload(w,'F'));mode='incomplete';online=true;const before=posts;await w.FIBRAZO_OFFLINE.syncAll({manual:true});check(posts===before+1&&(await records(w)).find(r=>r.clientSubmissionId==='F').status==='sent','incomplete optional lookup posts original GPS for server resolution');mode='ok';await w.FIBRAZO_OFFLINE.syncAll({manual:true});
  online=false;await w.FIBRAZO_OFFLINE.submit(payload(w,'G'));mode='hold';online=true;const task=w.FIBRAZO_OFFLINE.syncAll({manual:true});await waitFor(()=>gate);email='other@fibrazo.test';const count=posts;gate();await task;check(posts===count&&(await records(w)).find(r=>r.clientSubmissionId==='G').status==='territorial_pending','account switch cannot post previous owner data');email='fixture@fibrazo.test';mode='ok';await w.FIBRAZO_OFFLINE.syncAll({manual:true});
  await w.FIBRAZO_OFFLINE.submit(payload(w,'A',8));check((await records(w)).find(r=>r.clientSubmissionId==='A').payload.location.lat===4,'existing submission ID cannot overwrite persisted record');
  const mod=w.FIBRAZO_BACKGROUND_TERRITORY;

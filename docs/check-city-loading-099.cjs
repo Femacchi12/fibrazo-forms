@@ -7,7 +7,7 @@ async function server(){
  const old=make('OLD-NEIVA','Neiva'),rows=[old,...Array.from({length:2100},(_,i)=>make('OTHER'+i,'Ibagué')),make('PRIVATE','Neiva','other@test'),make('ACCENT','Montería'),make('AMB','Girón')];
  const intel=Array(32).fill('');Object.assign(intel,{0:'2026-10-23',1:'INTEL',2:'ISP',9:2.94,10:-75.28,16:'Neiva',19:'owner@test'});
  const core={SHEET_ID:'fixture',gauth:()=>({}),verifyUser:async()=>({email:'owner@test'}),loadForms:async()=>[{id:'EXPLORACION_PRESENCIAL'},{id:'INTELIGENCIA_OPERADOR'}],userCapabilities:async()=>({base:false,permissions:[]}),canUseDashboard:()=>true,permissionFor:()=>({}),canAccess:()=>true,httpError:(m,status)=>Object.assign(Error(m),{status})};
- const context={module:{exports:{}},console,require:name=>name==='./_core'?core:name==='googleapis'?{google:{sheets:()=>({spreadsheets:{values:{get:async arg=>({data:{values:arg.range.startsWith('RESP_EXPLORACION')?rows:[intel]}})}}})}}:require(name)};
+ const context={module:{exports:{}},console,require:name=>name==='./_operational-reference'?require('../api/_operational-reference'):name==='./_core'?core:name==='googleapis'?{google:{sheets:()=>({spreadsheets:{values:{batchGet:async arg=>({data:{valueRanges:arg.ranges.map(range=>({values:range.includes('FH2:')||range.includes('AK2:')?[]:range.startsWith('RESP_EXPLORACION')?rows:[intel]}))}})}}})}}:require(name)};
  vm.runInNewContext(fs.readFileSync(root+'api/map.js','utf8'),context);
  async function get(cities){let result;await context.module.exports({method:'GET',query:{cities}},{setHeader(){},status(n){assert.equal(n,200);return this;},json(x){result=x;}});return result.points.map(p=>p.id);}
  assert.deepEqual(Array.from(await get('neiva')),['OLD-NEIVA','INTEL']);
