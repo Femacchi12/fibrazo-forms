@@ -23,6 +23,10 @@ Metadatos en Forms: `2082107 / FIBRAZO_CHAT_LEASE_107` temporal, `2082108 / FIBR
 
 ## Validación
 
-Pruebas de prioridad manual, deduplicación, exclusión de QA, permisos por usuario/formulario, origen CORS, comparación de precio regular/promocional, corte más reciente, exclusión de ofertas vencidas/diarias, concurrencia y límites persistentes. Prueba visual del componente en escritorio y móvil con respuestas controladas. Flujo de login y petición real a Gateway debe distinguirse de pruebas con sesión simulada.
+Pruebas de prioridad manual, deduplicación, exclusión de QA, permisos por usuario/formulario, origen CORS, comparación de precio regular/promocional, corte más reciente, exclusión de ofertas vencidas/diarias, concurrencia y límites persistentes. La comprobación visual no pudo completarse: el navegador de pruebas rechazó la URL del escenario controlado. No se intentó sortear esa restricción. Las pruebas automatizadas de lógica y permisos pasaron; la interacción visual con sesión real y una llamada autenticada a Gateway quedan pendientes de comprobar con el usuario. Los archivos públicos y la protección HTTP de la API se verificaron contra producción.
 
 Reversión: quitar los dos tags de `dashboard-chat.js` de los índices; el resto del relevamiento funciona de manera independiente. No borrar IndexedDB, pendientes ni almacenamiento del teléfono.
+
+## Publicación
+
+Commit de aplicación `82fe977722262751a57f63073013d347cddde13e`, despliegue `dpl_DYPz9uPho7dgbunqS3bE3RTxXG8e`, READY en el alias oficial. Competencia: commit `95559d56505e31f0b25e82251eb8ff5833027961`. La consulta de logs de compilación en Vercel fue denegada con 403 por alcance de la conexión; no se afirma una revisión de logs ni éxito del proveedor de IA.
