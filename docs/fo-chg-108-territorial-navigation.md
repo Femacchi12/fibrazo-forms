@@ -32,3 +32,16 @@ Reversión: restaurar commits anteriores de ambos repositorios y release PWA. No
 ## Estado real de entrega (26/10/2026)
 
 Implementación en ramas QA de ambos repositorios. Suite Forms completa y pruebas específicas 108 aprobadas, incluidos permisos del catálogo y alternativa de portapapeles. Preview Forms: `dpl_HQ2CFpW6gJrR7bHG8m6ifUypZumg`, commit de código `623e44b56462df277e507e1abd6e467456539f60`. Competencia commit `b5c8b0ddbaa7d1a2a152224c2566d4959e107e8c`. Vercel responde 403 al solicitar acceso al Preview con el equipo correcto; no hay CLI ni credencial configurada para la alternativa autorizada. No se cambió la protección ni se intentó eludirla. La revisión visual con el escenario sintético y una sesión real sigue pendiente. Producción no se modifica por esta entrega hasta superar ese control. Los tres manuales y los registros de cambios quedan actualizados a EN QA / acceso bloqueado.
+
+
+## Continuación QA — autorización resuelta
+
+26/10/2026: Edu completó la autorización del equipo Vercel; get_access_to_vercel_url responde success=true. El 403 anterior ya no bloquea. Preview final READY dpl_3oB2NmqsH55cUNq4HxGjcViBP3KR, commit bb07a949acd55c99d2fb96ea689bfb813925c1da.
+
+Revisión visual de escritorio del escenario sintético en 9bf96c4: dos puntos visibles, detalle con metadatos conservados y filas Incumbente 1 / ISP 1–3, links canónicos y tecnología, vista Solo mapa ocupa exactamente 1363×936 del viewport, retorno restaura vista normal, compartir muestra confirmación. No equivale a prueba con datos ni sesión reales.
+
+Detectado en navegador: la inicialización de acceso eliminaba view/map de un enlace sin sesión. Corregido en 73ea811 y cubierto por prueba ejecutando onMapClose antes de abrir el mapa. Ajuste adicional bb07a94 encuadra los puntos de ciudad del enlace al abrir por primera vez, sin GPS automático. Suite Forms completa aprobada tras auth-fix; check108 también pasa tras ajuste de encuadre. Consumer Competencia check108 PASS.
+
+El escenario de QA debió copiarse a qa-territorial-map-108.html en raíz para su despliegue; ambas copias son exclusivamente de Preview y DEBEN eliminarse antes de producción.
+
+Pendiente: revisión visual del último commit, móvil y flujo real con sesión autenticada. El navegador cloud agotó 300 s al navegar al nuevo Preview y volvió a agotar 300 s al consultar diagnóstico; se detuvo la interacción por fallo de herramienta, sin atribuirlo a un fallo del dashboard. Producción y main permanecen sin cambios. No se publica hasta completar estas verificaciones.
