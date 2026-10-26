@@ -29,7 +29,7 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 .executive-map-view #explorationMap{height:100%!important;min-height:0!important}
 /* Only the existing street tiles are transformed. Semantic point/polygon colours stay intact. */
 .fibrazo-base-street{filter:invert(1) grayscale(.85) brightness(1.1) contrast(.85)}
-#mapCanvasWrap .map-point-shape:not(.shape-test){border:0!important;box-shadow:none!important;filter:none!important}
+#mapCanvasWrap .map-point-shape:not(.shape-test){border:1.5px solid #fff!important;box-shadow:0 1px 3px #0008!important;filter:none!important}
 #mapCanvasWrap #mapFullscreen{display:none!important}
 #mapCanvasWrap .map-quick-actions{top:12px!important;right:58px!important;gap:8px;max-width:calc(100% - 126px);flex-wrap:wrap;justify-content:flex-end}
 #mapCanvasWrap .map-quick-actions button{min-height:42px;border:1px solid #58595B;border-radius:9px;background:#181c1a;box-shadow:none;font:600 12px Montserrat,system-ui,sans-serif}
@@ -78,3 +78,45 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 .executive-map-view #mapCanvasWrap.map-fullscreen{height:100dvh!important;min-height:0!important;width:100vw!important;max-height:none!important}
 #mapCanvasWrap .territorial-point-popup .leaflet-popup-content{max-height:min(58dvh,calc(100dvh - 340px),560px)!important}
 #mapCanvasWrap .territorial-point-popup .leaflet-popup-close-button{width:44px;height:44px;line-height:44px;top:4px;right:4px;font-size:24px;color:#BBC1BE!important;background:#242424;border-radius:8px;z-index:2}
+
+/* MAP-110: restrained surfaces; keep control boundaries and permission states. */
+.executive-shell .hero-copy h1{display:block;margin:3px 0 0;padding:0;border:0;font:500 12px Montserrat,system-ui,sans-serif;color:#BBC1BE}
+@media(min-width:900px){.executive-shell .hero-header{min-height:74px!important}.executive-shell .app-nav{top:15px}.executive-map-view #mapCanvasWrap{height:calc(100dvh - 94px)!important}}
+.user-menu-card{box-sizing:border-box;padding:16px;gap:12px;width:min(310px,calc(100vw - 24px))}
+.user-menu-card>strong{font-size:14px;line-height:1.4}
+.user-menu-card .update-cards{gap:16px;padding:10px 0;border-block:1px solid #ffffff15}
+.user-menu-card .update-cards article{padding:0!important;min-height:0!important;background:transparent!important;text-align:left!important;border:0!important;box-shadow:none!important}
+.user-menu-card .update-cards span{font-size:11px!important;line-height:1.5}
+.user-menu-card .update-cards b{font-size:13px!important;margin-top:4px}
+.user-menu-card .auth-session:not([hidden]){width:100%;gap:10px!important;justify-content:space-between!important}
+.user-menu-card #signedInEmail{font-size:12px;line-height:1.5}
+.user-menu-card #networkToggle,.user-menu-card #signOutButton{min-height:38px;padding:8px 10px;font-size:11px;border-radius:6px}
+.user-menu-card .pending-toggle{border:0;border-top:1px solid #ffffff15;border-radius:0;padding:10px 0 0;font-size:11px;min-height:38px;background:transparent!important}
+#mapCanvasWrap .map-point-shape.shape-triangle{border:0!important;box-shadow:none!important;filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff)!important}
+.executive-shell #resultsView>.panel,.executive-shell #adminView>.panel{border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;padding:20px 0!important;margin:0!important;border-bottom:1px solid #ffffff15!important}
+.executive-shell #resultsView .kpi{border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;border-left:2px solid #43FFA5!important;padding:8px 16px!important}
+.executive-shell #resultsView .kpis{gap:24px;padding:16px 0}
+.executive-shell #adminView :is(.admin-form-card,.admin-system-card,.admin-compact-section,.permission-row,.admin-person-row,.admin-access-note,.permission-extra),
+.executive-shell #resultsView :is(.operator-library-card,.competition-operator-picker,.competition-evidence,.results-disclosure,.empty-state){border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important}
+.executive-shell #adminView :is(.admin-form-card,.admin-system-card){border-bottom:1px solid #ffffff18!important;margin:0!important}
+.executive-shell #adminView .admin-forms{gap:0}
+.executive-shell #adminView .admin-accordion-head{padding:16px 0!important}
+.executive-shell #adminView :is(.admin-summary-chips span,.public-link-state){border:0!important;background:transparent!important;padding-left:0!important}
+.executive-shell #adminView :is(.admin-accordion-body,.admin-system-body){border:0!important;padding:8px 0 20px!important}
+.executive-shell #adminView .admin-compact-section>summary{padding:12px 0!important}
+.executive-shell #adminView :is(.permission-row,.admin-person-row){padding:10px 0!important;gap:16px}
+.executive-shell #resultsView .competition-filters{gap:12px}
+.executive-shell #resultsView :is(.competition-operator-picker,.operator-library-card){border-bottom:1px solid #ffffff18!important}
+.executive-shell #resultsView .table-wrap{border:0!important;border-radius:0!important}
+/* A fixed three-column header and a full-width second row: toggling never relocates summary. */
+.executive-shell #formCards .form-card{grid-template-rows:auto auto!important;align-items:start!important;border:0!important;border-radius:0!important;background:transparent!important;border-bottom:1px solid #ffffff18!important;padding:14px 0!important;transform:none!important}
+.executive-shell #formCards .form-card-title{grid-column:1;grid-row:1;align-self:center}
+.executive-shell #formCards .form-open-button{grid-column:2;grid-row:1}
+.executive-shell #formCards .form-card-details,.executive-shell #formCards .form-card-details[open]{display:contents!important}
+.executive-shell #formCards .form-card-details summary{grid-column:3;grid-row:1;box-sizing:border-box;justify-content:center;gap:8px;width:124px;min-height:36px!important;padding:6px 10px!important;border:1px solid #58595B;border-radius:6px;background:#181c1a;font:600 12px Montserrat,system-ui,sans-serif!important;white-space:nowrap}
+.executive-shell #formCards .form-card-details:not([open])>.form-card-details-body{display:none!important}
+.executive-shell #formCards .form-card-details[open]>.form-card-details-body{display:grid!important;grid-column:1/-1;grid-row:2;padding:14px 0!important;min-width:0}
+@media(max-width:480px){.executive-shell #formCards .form-card{column-gap:6px!important}.executive-shell #formCards .form-card-details summary{width:104px;padding:6px!important;font-size:10px!important}.executive-shell #formCards .form-card-title{font-size:12px!important}}
+
+.executive-shell #formsView>.intro-panel{border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;padding:20px 0!important;margin:0!important}
+.executive-shell #formCards summary:focus-visible,.executive-shell .user-menu>summary:focus-visible{outline:2px solid #43FFA5;outline-offset:3px}
