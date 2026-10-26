@@ -822,7 +822,7 @@
       try{
         const marker=L.marker([point.lat,point.lng],{icon:markerIcon(point),pane:"markerPane",keyboard:true});
         marker._fibrazoPoint=point;
-        marker.bindPopup(pointPopupHtml(point),{maxWidth:480,className:'territorial-point-popup'});
+        marker.bindPopup(pointPopupHtml(point),{maxWidth:480,className:'territorial-point-popup',autoPanPaddingTopLeft:[16,120],autoPanPaddingBottomRight:[16,20]});
         marker.addTo(state.surveyLayer);
         bounds.push([point.lat,point.lng]);
       }catch(error){

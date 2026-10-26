@@ -8,6 +8,7 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 .executive-shell .app-nav .section-title>div:first-child{display:none}
 .executive-shell .view-switch{display:flex;flex-wrap:wrap;gap:6px;width:auto}
 .executive-shell .view-switch button,.executive-shell .view-switch a{width:auto;min-height:44px;padding:12px 17px;border:0;border-radius:0;background:transparent;box-shadow:none;text-decoration:none;color:var(--brand-muted,#BBC1BE);font:600 13px Montserrat,system-ui,sans-serif}
+.executive-shell .view-switch button,.executive-shell .view-switch a{flex:0 0 auto!important;white-space:nowrap;word-break:normal}
 .executive-shell .view-switch button.active{color:var(--brand-primary,#43FFA5);border-bottom:2px solid var(--brand-primary,#43FFA5);background:rgba(67,255,165,.06)}
 .user-menu{position:relative;z-index:1100;font-family:Montserrat,system-ui,sans-serif}
 .user-menu>summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;min-height:44px;color:#BBC1BE}
@@ -19,6 +20,8 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 .user-menu-card .auth-session:not([hidden]){position:static!important;display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:0}
 .user-menu-card #signedInEmail{flex-basis:100%;overflow-wrap:anywhere;font-size:13px}
 .user-menu-card .pending-hub{margin:0}
+.user-menu-card .pending-toggle{display:flex!important;align-items:center;justify-content:flex-start;gap:10px;width:100%;min-height:44px;padding:10px;border:1px solid #58595B;border-radius:8px;font:600 12px Montserrat,system-ui,sans-serif;letter-spacing:0}
+.user-menu-card .pending-count,.user-menu-card .pending-emoji,.user-menu-card .pending-label{position:static!important;display:block!important;transform:none!important;margin:0;white-space:nowrap}
 .executive-map-view #mapView>.map-kpis,.executive-map-view #mapView>.map-summary{display:none}
 .executive-map-view #mapView>section,.executive-map-view .exploration-map-panel{padding:0!important;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important}
 .executive-map-view .exploration-map-panel>.section-title{display:none!important}
@@ -26,7 +29,7 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 .executive-map-view #explorationMap{height:100%!important;min-height:0!important}
 /* Only the existing street tiles are transformed. Semantic point/polygon colours stay intact. */
 .fibrazo-base-street{filter:invert(1) grayscale(.85) brightness(1.1) contrast(.85)}
-#mapCanvasWrap .map-point-shape:not(.shape-test){border:0!important;box-shadow:none!important}
+#mapCanvasWrap .map-point-shape:not(.shape-test){border:0!important;box-shadow:none!important;filter:none!important}
 #mapCanvasWrap #mapFullscreen{display:none!important}
 #mapCanvasWrap .map-quick-actions{top:12px!important;right:58px!important;gap:8px;max-width:calc(100% - 126px);flex-wrap:wrap;justify-content:flex-end}
 #mapCanvasWrap .map-quick-actions button{min-height:42px;border:1px solid #58595B;border-radius:9px;background:#181c1a;box-shadow:none;font:600 12px Montserrat,system-ui,sans-serif}
@@ -63,7 +66,7 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 @media(max-width:600px){
  body.executive-shell main{padding:0 10px 10px!important}
  .executive-shell .hero-brand{font-size:20px}
- .executive-shell .view-switch{gap:0}
+ .executive-shell .view-switch{gap:0;flex-wrap:nowrap;overflow-x:auto;max-width:100%}
  .executive-shell .view-switch button,.executive-shell .view-switch a{padding:10px;font-size:11px}
  .executive-map-view #mapCanvasWrap{height:calc(100dvh - 140px)!important;min-height:400px!important}
  #mapCanvasWrap .map-quick-actions{top:12px!important;right:10px!important;gap:5px;max-width:calc(100% - 128px)}
@@ -72,3 +75,4 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
  #mapCanvasWrap .map-detail-heading strong{font-size:15px}
 }
 .executive-map-view #mapCanvasWrap.map-fullscreen{height:100dvh!important;min-height:0!important;width:100vw!important;max-height:none!important}
+#mapCanvasWrap .territorial-point-popup .leaflet-popup-content{max-height:min(58dvh,calc(100dvh - 340px),560px)!important}
