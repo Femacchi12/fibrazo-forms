@@ -45,3 +45,8 @@ Detectado en navegador: la inicialización de acceso eliminaba view/map de un en
 El escenario de QA debió copiarse a qa-territorial-map-108.html en raíz para su despliegue; ambas copias son exclusivamente de Preview y DEBEN eliminarse antes de producción.
 
 Pendiente: revisión visual del último commit, móvil y flujo real con sesión autenticada. El navegador cloud agotó 300 s al navegar al nuevo Preview y volvió a agotar 300 s al consultar diagnóstico; se detuvo la interacción por fallo de herramienta, sin atribuirlo a un fallo del dashboard. Producción y main permanecen sin cambios. No se publica hasta completar estas verificaciones.
+
+
+## Candidato de publicación autorizado
+
+Edu solicita publicar para realizar sus pruebas (26/10/2026). Navegador recuperado; verificación visual del último runtime bb07a94: apertura directa Solo mapa, encuadre Neiva correcto, dos puntos, detalle Incumbente 1 / ISP 1–3, viewport 1363×936 completo. Se retiran ambos escenarios sintéticos antes de producción. Prueba móvil física y recorrido completo con cuenta real pendientes de validación de Edu; no se presentan como aprobados. Sin migraciones ni cambios de datos o automatizaciones. Reversión Forms main anterior 0ed691e081e5021f7df0277ed5fe91c464dbbddd / producción dpl_DYPz9uPho7dgbunqS3bE3RTxXG8e; Competencia main anterior 95559d56505e31f0b25e82251eb8ff5833027961.
