@@ -47,6 +47,7 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 #mapCanvasWrap .map-detail-heading>span{color:#43FFA5!important}
 #mapCanvasWrap .territorial-point-popup .leaflet-popup-content{width:min(420px,calc(100vw - 66px))!important;font-size:13px}
 #mapCanvasWrap .map-popup .map-popup-row b{font-size:12px}
+#mapCanvasWrap .map-popup .map-popup-row>span{font-size:13px!important;line-height:1.5!important}
 #mapCanvasWrap .map-detail-heading strong{display:block;font:700 17px Montserrat,system-ui,sans-serif;color:#f7faf8}
 #mapCanvasWrap .map-detail-heading small{display:block;font-size:11px;color:#BBC1BE;margin-top:4px}
 #mapCanvasWrap .map-popup-head{padding-bottom:10px;margin-bottom:8px}
@@ -76,3 +77,4 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 }
 .executive-map-view #mapCanvasWrap.map-fullscreen{height:100dvh!important;min-height:0!important;width:100vw!important;max-height:none!important}
 #mapCanvasWrap .territorial-point-popup .leaflet-popup-content{max-height:min(58dvh,calc(100dvh - 340px),560px)!important}
+#mapCanvasWrap .territorial-point-popup .leaflet-popup-close-button{width:44px;height:44px;line-height:44px;top:4px;right:4px;font-size:24px;color:#BBC1BE!important;background:#242424;border-radius:8px;z-index:2}
