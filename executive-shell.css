@@ -117,3 +117,6 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 .executive-shell #formCards .form-card-details:not([open])>.form-card-details-body{display:none!important}
 .executive-shell #formCards .form-card-details[open]>.form-card-details-body{display:grid!important;grid-column:1/-1;grid-row:2;padding:14px 0!important;min-width:0}
 @media(max-width:480px){.executive-shell #formCards .form-card{column-gap:6px!important}.executive-shell #formCards .form-card-details summary{width:104px;padding:6px!important;font-size:10px!important}.executive-shell #formCards .form-card-title{font-size:12px!important}}
+
+.executive-shell #formsView>.intro-panel{border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;padding:20px 0!important;margin:0!important}
+.executive-shell #formCards summary:focus-visible,.executive-shell .user-menu>summary:focus-visible{outline:2px solid #43FFA5;outline-offset:3px}

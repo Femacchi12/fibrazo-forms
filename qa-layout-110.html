@@ -108,7 +108,7 @@
           <button class="active" data-view="forms">Formularios</button>
           <button data-view="results">Resultados</button>
           <button data-view="map">Mapa</button>
-          <button id="adminNavButton" data-view="admin" hidden>Administrar</button>
+          <button id="adminNavButton" data-view="admin">Administrar</button>
         </div>
         <div class="pending-hub">
           <button id="pendingToggle" class="pending-toggle" type="button" aria-expanded="false" aria-label="Ver pendientes de desarrollo" title="Pendientes de desarrollo">
@@ -552,7 +552,7 @@
   
   
 <script src="/executive-shell.js"></script><script>
-document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{['forms','results','map','admin'].forEach(v=>{const e=document.getElementById(v+'View');if(e)e.hidden=v!==b.dataset.view;});});
+document.querySelector('[data-view=admin]').hidden=false;document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{['forms','results','map','admin'].forEach(v=>{const e=document.getElementById(v+'View');if(e)e.hidden=v!==b.dataset.view;});});
 if(new URLSearchParams(location.search).has('mobile')){document.body.innerHTML='<iframe title="QA móvil" src="/qa-layout-110" style="width:390px;height:844px;border:0"></iframe>';}
 </script></body>
 </html>
