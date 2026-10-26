@@ -1,4 +1,8 @@
 (() => {
+  const navigation=window.FIBRAZO_OPERATOR_NAV;
+  const requestedMap=navigation?.mapRequest(location.href)||{only:false,view:false,cities:[],operators:[]};
+  let sharedCitiesApplied=false,sharedOperatorsApplied=false,operatorCatalog=null,operatorCatalogFlight=null;
+  let catalogOwner='',catalogGeneration=0;
   const CACHE_KEY="fibrazoExplorationMapPointsV2";
   const ROUTE_KEY="fibrazoExplorationRouteV1";
 
@@ -668,12 +672,37 @@
     return label+": sin información";
   }
 
+  async function loadOperatorCatalog(){
+    const user=window.firebase?.auth?.().currentUser;if(!user||operatorCatalog||operatorCatalogFlight)return;
+    const owner=user.email,run=catalogGeneration;catalogOwner=owner;
+    operatorCatalogFlight=(async()=>{
+      try{const result=await authorizedFetch('/api/isps?competition=1',new AbortController());
+        if(run!==catalogGeneration||window.firebase?.auth?.().currentUser?.email!==owner)return;
+        operatorCatalog=result;
+        state.surveyLayer?.eachLayer(marker=>{if(marker.getPopup?.()?.isOpen())marker.getPopup().setContent(pointPopupHtml(marker._fibrazoPoint));});
+      }catch(_){if(run===catalogGeneration){operatorCatalog={operators:[],aliases:[],unavailable:true};state.surveyLayer?.eachLayer(marker=>{if(marker.getPopup?.()?.isOpen())marker.getPopup().setContent(pointPopupHtml(marker._fibrazoPoint));});}}
+    })().finally(()=>{if(run===catalogGeneration)operatorCatalogFlight=null;});
+  }
+  function operatorRowsHtml(point){
+    const city=point.city?.assigned||point.observedCity||'';
+    return (navigation?.entries(point.operators)||[]).map(item=>{
+      const found=operatorCatalog?navigation.resolve(operatorCatalog,item.name,city):null;
+      const url=found?navigation.link(found,item.name,city):'';
+      const value=url?'<a class="map-operator-link" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(item.name)+' <span aria-hidden="true">↗</span></a>':'<span class="map-operator-name">'+esc(item.name)+'</span>';
+      const message=url?'':!found?'Consultando ficha…':operatorCatalog.unavailable?'No se pudo consultar Competencia. Reintenta al abrir el mapa.':found.message;
+      return '<li class="map-operator-row"><span class="map-operator-category">'+esc(item.label)+'</span><div>'+value+(message?'<small class="map-operator-note">'+esc(message)+'</small>':'')+'</div></li>';
+    }).join('');
+  }
+  function pointPopupHtml(point){
+    const html=popupHtml(point),profile=operatorProfile(point);
+    return html.replace('<div class="map-popup-row"><b>Fecha</b>','<div class="map-popup-row"><b>Clasificación</b><span>'+esc(profile.category.label)+'</span></div><div class="map-popup-row"><b>Fecha</b>');
+  }
   function popupHtml(point){
     const links=[];
     links.push('<a href="'+esc(googlePointUrl(point.lat,point.lng))+'" target="_blank" rel="noopener">↗ Ir a Google Maps</a>');
     if(point.evidence)links.push('<a href="'+esc(point.evidence)+'" target="_blank" rel="noopener">↗ Evidencia</a>');
     (point.photos||[]).forEach((url,index)=>links.push('<a href="'+esc(url)+'" target="_blank" rel="noopener">↗ Foto '+(index+1)+'</a>'));
-    const operators=(point.operators||[]).length?'<div class="map-popup-row"><b>Operadores</b><span>'+esc(point.operators.join(", "))+'</span></div>':"";
+    const operators=(point.operators||[]).length?'<section class="map-operators"><h3>Operadores</h3><ul>'+operatorRowsHtml(point)+'</ul></section>':"";
     const note=point.note?'<div class="map-popup-note">'+esc(point.note)+'</div>':"";
     return '<div class="map-popup">'+
       '<div class="map-popup-head"><span>'+esc(formType(point.type))+'</span><strong>'+esc(point.city?.assigned||point.observedCity||"Punto de exploración")+'</strong></div>'+
@@ -790,12 +819,8 @@
     for(const point of filtered){
       try{
         const marker=L.marker([point.lat,point.lng],{icon:markerIcon(point),pane:"markerPane",keyboard:true});
-        const profile=operatorProfile(point);
-        const html=popupHtml(point).replace(
-          '<div class="map-popup-row"><b>Fecha</b>',
-          '<div class="map-popup-row"><b>Clasificación</b><span>'+esc(profile.category.label)+'</span></div><div class="map-popup-row"><b>Fecha</b>'
-        );
-        marker.bindPopup(html,{maxWidth:320});
+        marker._fibrazoPoint=point;
+        marker.bindPopup(pointPopupHtml(point),{maxWidth:480,className:'territorial-point-popup'});
         marker.addTo(state.surveyLayer);
         bounds.push([point.lat,point.lng]);
       }catch(error){
@@ -889,6 +914,7 @@
       ].filter(([value])=>incumbents.has(value));
       if(hasOnlyIsps)bases.push(["isps","Solo ISPs · sin incumbentes"]);
       operator.innerHTML='<option value="all">Todos los operadores</option>'+bases.map(([value,label])=>'<option value="'+value+'">'+label+'</option>').join("")+isps.map(([key,label])=>'<option value="isp:'+esc(key)+'">ISP · '+esc(label)+'</option>').join("");
+      for(const value of current)if(requestedMap.operators.includes(value)&&![...operator.options].some(o=>o.value===value))operator.add(new Option('Operador no disponible: '+value,value));
       operator.dataset.cityScope=cityReady?"ready":"locked";
       operator.disabled=!cityReady;
       selectFilterValues(operator,current);
@@ -1885,6 +1911,7 @@
       state.lastRefresh=new Date();
       cachePoints(state.points);
       updateFilters();
+      applySharedOperators();
       renderMarkers({fit:fit||(!state.loadedOnce&&!state.lastLocation)});
       state.loadedOnce=true;
       mapStatus("Mapa actualizado · "+state.points.length+" puntos · "+state.lastRefresh.toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"}),"success");
@@ -2109,10 +2136,32 @@
   function stopAutoRefresh(){
     if(state.refreshTimer){clearInterval(state.refreshTimer);state.refreshTimer=null;}
   }
+  function applySharedCities(){
+    if(sharedCitiesApplied)return;sharedCitiesApplied=true;
+    const selector=$('mapCityFilter');if(!selector)return;
+    for(const name of requestedMap.cities){const value=scopeCity(name);if(![...selector.options].some(o=>o.value===value))selector.add(new Option(cityLabel(name),value));}
+    if(requestedMap.cities.length)selectFilterValues(selector,requestedMap.cities.map(scopeCity));
+  }
+  function applySharedOperators(){
+    if(sharedOperatorsApplied||!requestedMap.operators.length||filterValues('mapCityFilter').length!==1)return;
+    sharedOperatorsApplied=true;const selector=$('mapOperatorFilter');
+    for(const value of requestedMap.operators)if(![...selector.options].some(o=>o.value===value))selector.add(new Option('Operador no disponible: '+value,value));
+    selectFilterValues(selector,requestedMap.operators);
+    selector.dispatchEvent(new Event('change',{bubbles:true}));
+  }
+  async function shareMap(){
+    const url=navigation.mapLink(location.origin,filterValues('mapCityFilter'),filterValues('mapOperatorFilter'));
+    try{await navigator.clipboard.writeText(url);$('mapShareStatus').textContent='Enlace copiado. Se mantienen los permisos de cada usuario.';}
+    catch(_){const input=$('mapShareUrl');input.hidden=false;input.value=url;input.focus();input.select();$('mapShareStatus').textContent='Copia este enlace. Quien lo abra deberá iniciar sesión.';}
+  }
   function onMapOpen(){
     state.viewActive=true;
+    applySharedCities();
+    if(operatorCatalog?.unavailable)operatorCatalog=null;
+    if(!operatorCatalog)loadOperatorCatalog();
     toggleFilters(false);
     if(!ensureMap())return;
+    if(requestedMap.only)setMapFullscreen(true);
     setTimeout(()=>state.map.invalidateSize(),100);
     if(!state.loadedOnce){
       const cached=cachedPoints();
@@ -2131,11 +2180,13 @@
     loadCityCatalog();
     for(const layer of ["barrios","estratos","troncales"])if(state.polygonActive[layer])refreshPolygonLayer(layer,{silent:true});
     // Recheck position on every map opening; do not retain a previous city when traveling.
-    setTimeout(()=>{if(state.viewActive)locateMe({auto:true});},220);
+    setTimeout(()=>{if(state.viewActive&&!requestedMap.cities.length)locateMe({auto:true});},220);
     startAutoRefresh();
   }
   function onMapClose(){
+    if(state.fullscreen)setMapFullscreen(false);
     state.viewActive=false;
+    const url=new URL(location.href);url.searchParams.delete('view');url.searchParams.delete('map');history.replaceState(null,'',url.href);
     state.gpsRequest++;
     state.pointsController?.abort();
     stopAutoRefresh();
@@ -2146,6 +2197,13 @@
     if(!wrap||!ensureMap())return;
     const next=typeof force==="boolean"?force:!state.fullscreen;
     state.fullscreen=next;
+    requestedMap.only=next;
+    const url=new URL(location.href);if(next){url.searchParams.set('view','map');url.searchParams.set('map','only');}else url.searchParams.delete('map');
+    history.replaceState(null,'',url.href);
+    const action=$('mapOnlyView');if(action){action.textContent=next?'↙ Volver al dashboard':'⛶ Solo mapa';action.setAttribute('aria-pressed',String(next));}
+    document.body.classList.toggle('territorial-only-view',next);
+    const status=$('mapStatus');if(status){if(next){if(!status._mapHome){status._mapHome=document.createComment('map status home');status.before(status._mapHome);}wrap.append(status);status.classList.add('map-only-status');}else if(status._mapHome){status._mapHome.after(status);status.classList.remove('map-only-status');}}
+
     wrap.classList.toggle("map-fullscreen",next);
     document.body.classList.toggle("map-fullscreen-open",next);
     const button=$("mapFullscreen");
@@ -2158,6 +2216,9 @@
   }
 
   function bind(){
+    $('mapOnlyView')?.addEventListener('click',()=>setMapFullscreen());
+    $('mapShareOnly')?.addEventListener('click',shareMap);
+    document.addEventListener('keydown',event=>{if(event.key==='Escape'&&state.fullscreen)setMapFullscreen(false);});
     window.addEventListener("online",()=>{catalogLastAttempt=0;recoverMapConnection();});
     window.addEventListener("focus",recoverMapConnection);
     document.addEventListener("visibilitychange",recoverMapConnection);
@@ -2267,6 +2328,9 @@
     window.addEventListener("fibrazo:submission-saved",()=>{if(state.viewActive)loadPoints({silent:true});});
     if(window.firebase?.auth){
       firebase.auth().onAuthStateChanged(user=>{
+        catalogGeneration++;operatorCatalog=null;operatorCatalogFlight=null;catalogOwner='';
+        sharedCitiesApplied=false;sharedOperatorsApplied=false;
+        if(!user&&state.fullscreen)setMapFullscreen(false);
         state.cityCatalog=[];catalogRequest=null;catalogNeedsRetry=true;catalogLastAttempt=0;
         stopTracking(false);
         state.points=[];

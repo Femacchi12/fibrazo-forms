@@ -2,6 +2,7 @@ const {google}=require("googleapis");
 const {gauth,verifyUser,loadForms,userCapabilities,canUseDashboard,SHEET_ID}=require("./_core");
 const clean=value=>String(value||"").trim().replace(/\s+/g," ");
 module.exports=async(req,res)=>{
+  if(req.query?.competition==='1')return require('./_operator-catalog')(req,res);
   res.setHeader("Cache-Control","no-store");
   if(req.method!=="GET")return res.status(405).json({error:"Method not allowed"});
   try{

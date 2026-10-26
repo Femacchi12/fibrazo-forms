@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="FIBRAZO Forms">
-  <link rel="manifest" href="/manifest.webmanifest?v=20261024-chat107">
+  <link rel="manifest" href="/manifest.webmanifest?v=20261026-map108">
   <link rel="icon" href="/icon-fbz-growth-form-v8-192.png" type="image/png">
   <title>FIBRAZO · Forms</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.css">
-  <link rel="stylesheet" href="/styles.css?v=20261024-chat107">
+  <link rel="stylesheet" href="/styles.css?v=20261026-map108">
   <link rel="stylesheet" href="/brand-alignment.css?v=2026.10.18.gps-layout-02">
 
 <style id="map-layer-qa-compact">
@@ -42,6 +42,7 @@
 </style>
   <link rel="stylesheet" href="/executive-density.css?v=20261020-compact077b">
   <link rel="stylesheet" href="/forms-field-scale.css?v=20261020-compact079b">
+  <link rel="stylesheet" href="/territorial-map.css?v=108">
 </head>
 <body class="auth-pending">
   <section id="authGate" class="auth-gate" aria-live="polite">
@@ -63,7 +64,7 @@
         <p>Formularios, relevamientos y resultados en un único espacio.</p>
       </div>
       <div class="update-cards">
-        <article><span>Versión</span><b title="Inteligencia operador · Flujo de campo · Motor territorial v3.5">0.8.160</b></article>
+        <article><span>Versión</span><b title="Inteligencia operador · Flujo de campo · Motor territorial v3.5">0.8.161</b></article>
         <article><span>Formularios activos</span><b id="activeFormsCount">2</b></article>
       </div>
       <div id="authSession" class="auth-session" hidden>
@@ -463,6 +464,12 @@
         </div>
 
         <div id="mapCanvasWrap" class="map-canvas-wrap">
+          <div class="map-view-actions" aria-label="Vista y enlace del mapa">
+            <button id="mapOnlyView" type="button" aria-pressed="false">⛶ Solo mapa</button>
+            <button id="mapShareOnly" type="button">↗ Compartir solo mapa</button>
+            <span id="mapShareStatus" role="status" aria-live="polite"></span>
+            <input id="mapShareUrl" type="text" readonly hidden aria-label="Enlace de solo mapa para copiar">
+          </div>
           <div id="mapLoadingOverlay" class="map-loading-overlay" hidden aria-live="polite">
             <div class="map-loading-track"><span></span></div>
             <div class="map-loading-label"><i></i><span id="mapLoadingText">Cargando mapa…</span></div>
@@ -523,22 +530,23 @@
     </section>
   </main>
 
-  <footer>FIBRAZO · Growth <span>Forms v0.8.160 · Filtros múltiples · Capas optimizadas · Motor territorial v3.5 · 2026</span></footer>
+  <footer>FIBRAZO · Growth <span>Forms v0.8.161 · Filtros múltiples · Capas optimizadas · Motor territorial v3.5 · 2026</span></footer>
 
   <script src="/vendor/firebase-app-compat-12.19.0.js"></script>
   <script src="/vendor/firebase-auth-compat-12.19.0.js"></script>
-  <script src="/firebase-config.js?v=20261024-chat107"></script>
+  <script src="/firebase-config.js?v=20261026-map108"></script>
   <script src="/forms-config.js?v=2026.10.08.68"></script>
-  <script src="/app.js?v=20261024-chat107"></script>
-  <script src="/access-v03.js?v=20261024-chat107"></script>
-  <script src="/background-territory.js?v=20261024-chat107"></script>
-  <script src="/offline-v04.js?v=20261024-chat107"></script>
+  <script src="/operator-navigation.js?v=108"></script>
+  <script src="/app.js?v=20261026-map108"></script>
+  <script src="/access-v03.js?v=20261026-map108"></script>
+  <script src="/background-territory.js?v=20261026-map108"></script>
+  <script src="/offline-v04.js?v=20261026-map108"></script>
   <script src="/qa-stratum-policy.js?v=2026.10.18.qa-autofill063"></script>
-  <script src="/ux-v04.js?v=20261024-chat107"></script>
+  <script src="/ux-v04.js?v=20261026-map108"></script>
   <script src="/admin-v03.js?v=2026.10.11.16"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.umd.min.js"></script>
-  <script src="/map-v01.js?v=20261024-chat107"></script>
+  <script src="/map-v01.js?v=20261026-map108"></script>
   <script src="/map-controls-ui.js?v=20261020-collapse075"></script>
   <script src="/dashboard-chat.js?v=107" data-scope="exploration"></script>
 </body>

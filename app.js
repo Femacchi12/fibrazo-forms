@@ -192,6 +192,7 @@
     return "fibrazoFormsLastView:"+email;
   }
   function savedView(){
+    if(window.FIBRAZO_OPERATOR_NAV?.mapRequest(location.href).view)return "map";
     try{
       const value=localStorage.getItem(viewStorageKey())||"forms";
       if(!["forms","results","map","admin"].includes(value))return"forms";
