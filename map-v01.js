@@ -2184,9 +2184,12 @@
     startAutoRefresh();
   }
   function onMapClose(){
+    // Initial auth renders the forms view before sign-in. Preserve a shared
+    // map URL until the map has actually opened; otherwise login loses it.
+    const wasActive=state.viewActive||state.fullscreen;
     if(state.fullscreen)setMapFullscreen(false);
     state.viewActive=false;
-    const url=new URL(location.href);url.searchParams.delete('view');url.searchParams.delete('map');history.replaceState(null,'',url.href);
+    if(wasActive){const url=new URL(location.href);url.searchParams.delete('view');url.searchParams.delete('map');history.replaceState(null,'',url.href);}
     state.gpsRequest++;
     state.pointsController?.abort();
     stopAutoRefresh();
