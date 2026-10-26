@@ -71,3 +71,4 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
  #mapCanvasWrap .map-popup .map-operator-link{min-height:44px}
  #mapCanvasWrap .map-detail-heading strong{font-size:15px}
 }
+.executive-map-view #mapCanvasWrap.map-fullscreen{height:100dvh!important;min-height:0!important;width:100vw!important;max-height:none!important}
