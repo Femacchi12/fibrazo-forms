@@ -50,3 +50,10 @@ Pendiente: revisión visual del último commit, móvil y flujo real con sesión 
 ## Candidato de publicación autorizado
 
 Edu solicita publicar para realizar sus pruebas (26/10/2026). Navegador recuperado; verificación visual del último runtime bb07a94: apertura directa Solo mapa, encuadre Neiva correcto, dos puntos, detalle Incumbente 1 / ISP 1–3, viewport 1363×936 completo. Se retiran ambos escenarios sintéticos antes de producción. Prueba móvil física y recorrido completo con cuenta real pendientes de validación de Edu; no se presentan como aprobados. Sin migraciones ni cambios de datos o automatizaciones. Reversión Forms main anterior 0ed691e081e5021f7df0277ed5fe91c464dbbddd / producción dpl_DYPz9uPho7dgbunqS3bE3RTxXG8e; Competencia main anterior 95559d56505e31f0b25e82251eb8ff5833027961.
+
+
+## Publicación verificada — 26/10/2026
+
+Forms 0.8.161 publicado: commit fa008f1382707747f3aa8f9a2571e7c5301b8f35, Vercel dpl_43HJMQuEqQeQDcwqBdR8orJ5r3M1, target production READY, alias https://fibrazo-forms.vercel.app/ . Competencia e4942e33f7010da63b31e90b386f88fbd7a31c84 servido en GitHub Pages. Verificación HTTP: versión 0.8.161; bytes map-v01.js, operator-navigation.js, territorial-map.css, service-worker.js y ambos módulos de Competencia coinciden con código probado; dos fixtures sintéticos 404; catálogo anónimo 401. Enlace https://fibrazo-forms.vercel.app/?view=map&map=only&city=Neiva conserva parámetros y muestra inicio de sesión en navegador sin autenticar. Registro inicial de errores/fatal del despliegue sin grupos encontrados; ventana corta, sin garantía de ausencia futura de errores.
+
+Suite Forms completa y tres checks Competencia PASS. QA visual sintético del último runtime: encuadre Neiva, detalles, operadores separados, viewport completo. Validación real móvil y sesión de usuario pendientes de Edu, quien solicitó la publicación para probar. Tres manuales y registros de cambios actualizados a PUBLICADO / validación de usuario pendiente. Sin cambios de datos, sincronización ni automatizaciones. Reversión a versiones previas documentadas; sin migración.
