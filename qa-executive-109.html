@@ -8,7 +8,7 @@
  source.head.querySelectorAll('link[rel=stylesheet],style').forEach(n=>document.head.append(n.cloneNode(true)));
  document.body.innerHTML=source.body.innerHTML;
  document.querySelectorAll('footer,#formsView,#resultsView,#adminView,#authGate').forEach(n=>n.hidden=true);
- document.getElementById('authSession').hidden=false;document.getElementById('signedInEmail').textContent='qa@example.invalid';document.getElementById('mapView').hidden=false;document.body.classList.remove('auth-pending');
+ document.getElementById('authSession').hidden=false;document.getElementById('signedInEmail').textContent='qa@example.invalid';document.getElementById('mapView').hidden=false;document.querySelectorAll('[data-view]').forEach(n=>n.classList.toggle('active',n.dataset.view==='map')); document.body.classList.remove('auth-pending');
  const user={email:'qa@example.invalid',uid:'qa-map108',getIdToken:async()=>'QA-SYNTHETIC-NOT-A-REAL-TOKEN'};
  window.firebase={auth:()=>({currentUser:user,onAuthStateChanged:fn=>queueMicrotask(()=>fn(user))})};
  const points=[{id:'QA108-1',type:'Presencial',timestamp:'2026-10-26T12:00:00Z',user:'qa@example.invalid',lat:2.95,lng:-75.28,operators:['Claro HFC','Alpavision','Asonet','Networks'],city:{status:'DENTRO',assigned:'Neiva'},barrio:{status:'DENTRO',assigned:'BARRIO DE PRUEBA'},estrato:{status:'FUERA',nearby:'2',distanceM:6},note:'Escenario sintético. No corresponde a un relevamiento real.',photos:[]},{id:'QA108-2',type:'Presencial',timestamp:'2026-10-26T12:00:00Z',user:'qa@example.invalid',lat:2.952,lng:-75.283,operators:['Sin Identificar'],city:{status:'DENTRO',assigned:'Neiva'},barrio:{status:'SIN_CAPA'},estrato:{status:'SIN_CAPA'},photos:[]}];

@@ -19,6 +19,7 @@
     document.addEventListener('click',event=>{if(!menu.contains(event.target))menu.open=false;});
     document.addEventListener('keydown',event=>{if(event.key==='Escape'&&menu.open){menu.open=false;summary.focus();}});
     const nav=document.querySelector('.view-switch');
+    const reports=nav?.querySelector('[data-view="results"]');if(reports){reports.textContent='Reportes';reports.setAttribute('aria-label','Resultados y reportes');}
     if(nav){const link=document.createElement('a');link.href='https://femacchi12.github.io/dashboard-competencia-fibrazo/';link.target='_blank';link.rel='noopener noreferrer';link.textContent='Competencia ↗';nav.append(link);}
     const quick=document.querySelector('.map-quick-actions');
     if(quick){const only=$('mapOnlyView'),share=$('mapShareOnly');if(only)quick.prepend(only);if(share)quick.append(share);}

@@ -410,7 +410,7 @@
     const locate=$("mapLocateMe"),route=document.querySelector(".map-location-toolbar");
     if(canvas&&search){
       const dock=document.createElement("div");dock.className="map-search-dock";
-      const toggle=document.createElement("button");toggle.type="button";toggle.className="map-dock-icon";toggle.textContent="⌕";toggle.setAttribute("aria-label","Buscar ubicación");
+      const toggle=document.createElement("button");toggle.type="button";toggle.className="map-dock-icon";toggle.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>';toggle.setAttribute("aria-label","Buscar ubicación");
       search.hidden=true;dock.append(toggle,search);canvas.appendChild(dock);
       toggle.addEventListener("click",()=>{search.hidden=!search.hidden;toggle.setAttribute("aria-expanded",String(!search.hidden));if(!search.hidden)$("mapSearchInput")?.focus();});
     }
