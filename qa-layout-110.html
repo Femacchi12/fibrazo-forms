@@ -525,7 +525,7 @@
           <span>Acceso global: administradores</span>
           <button type="button" class="fz-help-button" data-admin-help="Solo los administradores tienen acceso global. Para cada formulario puedes autorizar dominios, correos específicos y/o un enlace público. Verifica el alcance antes de guardar permisos." aria-label="Ayuda: regla de acceso" aria-expanded="false" title="Ayuda: regla de acceso">?</button>
         </div>
-        <div id="adminForms" class="admin-forms"></div>
+        <div id="adminForms" class="admin-forms"><article class="admin-form-card accordion compact open"><button class="admin-accordion-head"><div><span>EXPLORACIÓN</span><h3>Exploración presencial · QA</h3><div class="admin-summary-chips"><span>ACTIVO</span><span>Acceso restringido</span></div></div><span>⌄</span></button><div class="admin-accordion-body"><details class="admin-compact-section" open><summary><strong>Permisos del formulario</strong></summary><div class="permission-row"><div><strong>Usuarios autorizados</strong><small>Datos sintéticos, sin cambios reales.</small></div><label class="switch"><input type="checkbox" checked><i></i></label></div><button class="primary-button">Guardar permisos · QA</button></details></div></article></div>
         <div id="adminStatus" class="save-status"></div>
       </section>
     </section>
@@ -551,5 +551,8 @@
   
   
   
-<script src="/executive-shell.js"></script></body>
+<script src="/executive-shell.js"></script><script>
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{['forms','results','map','admin'].forEach(v=>{const e=document.getElementById(v+'View');if(e)e.hidden=v!==b.dataset.view;});});
+if(new URLSearchParams(location.search).has('mobile')){document.body.innerHTML='<iframe title="QA móvil" src="/qa-layout-110" style="width:390px;height:844px;border:0"></iframe>';}
+</script></body>
 </html>
