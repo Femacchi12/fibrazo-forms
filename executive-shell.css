@@ -1,9 +1,9 @@
 /* MAP-109 — institutional green, neutral surfaces, Montserrat / Poppins unchanged. */
-body.executive-shell main{max-width:none;margin:0;padding:0 24px 20px}
-.executive-shell .hero-header{display:flex;align-items:center;justify-content:space-between;min-height:64px;padding:10px 0;margin:0;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none}
+body.executive-shell main{max-width:none;width:100%;box-sizing:border-box;margin:0;padding:0 24px 20px}
+.executive-shell .hero-header{display:flex;align-items:center;justify-content:space-between;min-height:64px!important;padding:10px 0!important;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;overflow:visible!important}
 .executive-shell .hero-copy h1,.executive-shell .hero-copy>p{display:none}
 .executive-shell .hero-brand{margin:0;font-size:25px}
-.executive-shell .app-nav{padding:0;margin:0 0 14px;border:0;border-bottom:1px solid #58595B;border-radius:0;box-shadow:none;background:transparent;backdrop-filter:none}
+.executive-shell .app-nav{padding:0!important;margin:0 0 14px;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;backdrop-filter:none!important}
 .executive-shell .app-nav .section-title{display:flex;margin:0;gap:0}
 .executive-shell .app-nav .section-title>div:first-child{display:none}
 .executive-shell .view-switch{display:flex;flex-wrap:wrap;gap:6px;width:auto}
@@ -14,9 +14,9 @@ body.executive-shell main{max-width:none;margin:0;padding:0 24px 20px}
 .user-menu>summary::-webkit-details-marker{display:none}
 .user-avatar{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:#202923;color:#43FFA5;border:1px solid #58595B;font-weight:700}
 .user-menu-card{position:absolute;right:0;top:52px;width:min(340px,calc(100vw - 24px));padding:20px;display:grid;gap:16px;background:#151515;border:1px solid #58595B;border-radius:14px;box-shadow:0 16px 40px #0009}
-.user-menu-card .update-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0}
+.user-menu-card .update-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0;width:100%}
 .user-menu-card .update-cards article{padding:10px;border:0;border-radius:6px;min-width:0}
-.user-menu-card .auth-session:not([hidden]){display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:0}
+.user-menu-card .auth-session:not([hidden]){position:static!important;display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:0}
 .user-menu-card #signedInEmail{flex-basis:100%;overflow-wrap:anywhere;font-size:13px}
 .user-menu-card .pending-hub{margin:0}
 .executive-map-view #mapView>.map-kpis,.executive-map-view #mapView>.map-summary{display:none}
@@ -32,7 +32,7 @@ body.executive-shell main{max-width:none;margin:0;padding:0 24px 20px}
 #mapCanvasWrap .map-quick-actions button{min-height:42px;border:1px solid #58595B;border-radius:9px;background:#181c1a;box-shadow:none;font:600 12px Montserrat,system-ui,sans-serif}
 #mapCanvasWrap #mapOnlyView,#mapCanvasWrap #mapShareOnly{color:#43FFA5;border-color:#58595B}
 #mapCanvasWrap .map-floating-handle{display:flex;align-items:center;gap:10px;padding:10px!important;min-height:48px}
-#mapCanvasWrap #mapFloatingOpen{order:-1;min-width:42px;min-height:42px;border:0;box-shadow:none;background:transparent;color:#43FFA5;font-size:24px}
+#mapCanvasWrap #mapFloatingOpen{order:-1;width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;border:0;box-shadow:none;background:transparent;color:#43FFA5;font-size:24px}
 #mapCanvasWrap .map-floating-tools{left:0!important;top:0!important;border:1px solid #58595B!important;box-shadow:none!important;background:#151918!important;border-radius:10px!important}
 #mapCanvasWrap .map-floating-tools.is-collapsed{border:0!important;background:transparent!important}
 #mapCanvasWrap .map-search-dock{top:12px!important;left:76px!important}
