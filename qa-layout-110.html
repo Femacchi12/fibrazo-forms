@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FIBRAZO Forms">
+  <link rel="manifest" href="/manifest.webmanifest?v=20261026-map110">
+  <link rel="icon" href="/icon-fbz-growth-form-v8-192.png" type="image/png">
+  <title>FIBRAZO · Forms</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.css">
+  <link rel="stylesheet" href="/styles.css?v=20261026-map110">
+  <link rel="stylesheet" href="/brand-alignment.css?v=2026.10.18.gps-layout-02">
+
+<style id="map-layer-qa-compact">
+#mapLayerBarrios .map-layer-chevron,#mapLayerEstratos .map-layer-chevron{margin-left:auto;font-size:21px;font-weight:800;line-height:1;transition:transform .18s ease;color:#43ffa5}
+#mapLayerBarrios[aria-pressed="true"] .map-layer-chevron,#mapLayerEstratos[aria-pressed="true"] .map-layer-chevron{transform:rotate(180deg)}
+#mapEstratoOptions .map-selective-option{min-height:45px;padding:8px 11px;gap:10px}
+#mapEstratoOptions .map-selective-option b{font-size:14px;line-height:1.2}
+#mapEstratoOptions .map-selective-option small{display:none}
+#mapBarrioControls .map-selective-layer-head{padding-bottom:5px}
+#mapBarrioControls .map-barrio-search{margin-top:5px}
+#mapBarrioControls .map-barrio-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#mapBarrioControls .map-barrio-actions button{min-width:0;padding:8px 5px;min-height:38px;font-size:12px}
+#mapBarrioOptions .map-selective-option{min-height:47px;padding:7px 10px}
+
+/* FO-CHG-030 · Panel Capas QA: indicadores y buscador siempre visibles */
+#mapLayerBarrios,#mapLayerEstratos{position:relative;padding-right:34px!important}
+#mapLayerBarrios .map-layer-chevron,#mapLayerEstratos .map-layer-chevron{position:absolute;right:13px;top:50%;transform:translateY(-50%);display:block!important;visibility:visible!important;font-size:0!important;width:12px;height:12px;border-right:2px solid #43ffa5;border-bottom:2px solid #43ffa5;rotate:45deg;margin-top:-3px}
+#mapLayerBarrios[aria-pressed="true"] .map-layer-chevron,#mapLayerEstratos[aria-pressed="true"] .map-layer-chevron{rotate:225deg;margin-top:3px}
+#mapBarrioControls .map-barrio-search{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:8px!important;padding:8px 10px!important;align-items:stretch!important}
+#mapBarrioControls #mapBarrioSearch{display:block!important;visibility:visible!important;position:static!important;grid-column:1/-1!important;width:100%!important;min-width:0!important;box-sizing:border-box!important;height:39px!important;font-size:13px!important;margin:0!important}
+#mapBarrioControls .map-barrio-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important;width:100%!important;justify-content:stretch!important;align-items:stretch!important;margin:0!important}
+#mapBarrioControls .map-barrio-actions button{display:flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important;width:100%!important;height:40px!important;min-height:40px!important;margin:0!important;padding:6px 4px!important;font-size:12px!important;white-space:nowrap!important}
+</style>
+  <link rel="stylesheet" href="/executive-density.css?v=20261020-compact077b">
+  <link rel="stylesheet" href="/forms-field-scale.css?v=20261020-compact079b">
+  <link rel="stylesheet" href="/territorial-map.css?v=108">
+  <link rel="stylesheet" href="/executive-shell.css?v=110">
+</head>
+<body class="">
+  <section style="display:none" id="authGate" class="auth-gate" aria-live="polite">
+    <div class="auth-card">
+      <div class="auth-brand">FIBRAZO · Growth</div>
+      <h1>FIBRAZO Forms</h1>
+      <p id="authMessage">Inicia sesión con tu cuenta de Google para continuar.</p>
+      <button id="googleSignIn" class="primary-button" type="button">Continuar con Google</button>
+      <button id="changeAccount" class="secondary-button" type="button" hidden>Cambiar de cuenta</button>
+      <p id="authError" class="auth-error"></p>
+    </div>
+  </section>
+
+  <main>
+    <header class="hero-header">
+      <div class="hero-copy">
+        <div class="hero-brand"><span>fibrazo</span><i></i><b>GROWTH</b></div>
+        <h1>Formularios</h1>
+        <p>Formularios, relevamientos y resultados en un único espacio.</p>
+      </div>
+      <div class="update-cards">
+        <article><span>Versión</span><b title="Inteligencia operador · Flujo de campo · Motor territorial v3.5">0.8.163</b></article>
+        <article><span>Formularios activos</span><b id="activeFormsCount">2</b></article>
+      </div>
+      <div id="authSession" class="auth-session">
+        <span id="signedInEmail">qa@example.invalid</span>
+        <div class="network-hub">
+          <button id="networkToggle" class="network-toggle" type="button" aria-expanded="false" title="Estado de sincronización">
+            <span class="network-dot"></span>
+            <span id="networkLabel">En línea</span>
+            <span id="networkCount" class="network-count" hidden>0</span>
+          </button>
+          <div id="networkPopover" class="network-popover" hidden>
+            <div class="pending-popover-head">
+              <div><span>SINCRONIZACIÓN</span><h3>Trabajo sin conexión</h3></div>
+              <button id="networkClose" type="button" aria-label="Cerrar">×</button>
+            </div>
+            <div class="network-summary">
+              <span>Estado</span>
+              <strong id="syncState">Con conexión</strong>
+            </div>
+            <div id="offlineQueueList" class="offline-queue-list"></div>
+            <p id="backgroundSyncNotice" class="save-status background-notice" role="status" hidden></p>
+            <p id="competitionSyncMessage" class="sync-message" aria-live="polite"></p>
+            <div id="syncMessage" class="sync-message"></div>
+            <div class="network-actions">
+              <button id="restartSyncButton" class="secondary-button" type="button">↻ Reiniciar sincronización</button>
+              <button id="syncNowButton" class="primary-button" type="button">Sincronizar ahora</button>
+              <button id="competitionSyncButton" class="secondary-button" type="button" hidden>Conciliar competencia</button>
+                <button id="installAppButton" class="secondary-button" type="button" hidden>Instalar app</button>
+            </div>
+          </div>
+        </div>
+        <button id="signOutButton" type="button">Cerrar sesión</button>
+      </div>
+    </header>
+
+    <section class="panel app-nav">
+      <div class="section-title">
+        <div><span>NAVEGACIÓN</span><h2>Centro de formularios</h2></div>
+        <div class="view-switch" role="tablist">
+          <button class="active" data-view="forms">Formularios</button>
+          <button data-view="results">Resultados</button>
+          <button data-view="map">Mapa</button>
+          <button id="adminNavButton" data-view="admin" hidden>Administrar</button>
+        </div>
+        <div class="pending-hub">
+          <button id="pendingToggle" class="pending-toggle" type="button" aria-expanded="false" aria-label="Ver pendientes de desarrollo" title="Pendientes de desarrollo">
+            <span class="pending-emoji" aria-hidden="true">⚠️</span>
+            <span class="pending-label">Pendientes</span>
+            <span id="pendingCount" class="pending-count" aria-label="Sincronizando pendientes">…</span>
+          </button>
+          <div id="pendingPopover" class="pending-popover" hidden>
+            <div class="pending-popover-head">
+              <div><span>SEGUIMIENTO</span><h3>Pendientes</h3></div>
+              <button id="pendingClose" type="button" aria-label="Cerrar">×</button>
+            </div>
+            <div id="pendingList" class="pending-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="formsView">
+      <section class="panel intro-panel">
+        <div class="section-title form-picker-title">
+          <div><span>Selecciona un formulario</span></div>
+          <div id="previewBadge" class="status-badge" hidden>Vista previa GitHub</div>
+        </div>
+        <div id="formCards" class="form-cards"><article class="form-card"><h3 class="form-card-title">Exploración presencial · QA</h3><button class="primary-button form-open-button">Abrir →</button><details class="form-card-details"><summary>Ver detalles</summary><div class="form-card-details-body"><p>Datos sintéticos. Descripción del formulario y acceso privado.</p></div></details></article></div>
+      </section>
+
+      <section id="formWorkspace" class="panel form-workspace" hidden>
+        <div class="workspace-topbar">
+          <button id="closeForm" class="secondary-button compact" type="button">← Formularios</button>
+          <a id="formDatabaseLink" class="secondary-button compact" href="#" target="_blank" rel="noopener" hidden>↗ Base de datos</a>
+          <div class="workspace-status">
+            <span id="formIdentityBadge" class="form-identity-badge"></span>
+            <span id="formNetworkStatus" class="form-network-status">🟢 En línea</span>
+            <span id="formStepCounter" class="step-counter"></span>
+          </div>
+        </div>
+
+        <div class="workspace-hero">
+          <div>
+            <span id="formEyebrow">FORMULARIO</span>
+            <h1 id="formTitle"></h1>
+            <details id="formDescriptionDetails" class="fbz-description-disclosure" hidden>
+              <summary>Descripción del formulario</summary>
+              <p id="formDescription"></p>
+              <div id="formIntroMessage" class="form-intro-message" hidden></div>
+            </details>
+          </div>
+          <div class="form-user-card">
+            <span>COMPLETANDO COMO</span>
+            <strong id="formUserEmail"></strong>
+          </div>
+        </div>
+        <details class="form-history">
+          <summary>Historial de este formulario <span>ver estados</span></summary>
+          <div id="formHistoryList" class="form-history-list"><div class="pending-empty">Cargando historial…</div></div>
+        </details>
+
+        <div id="sectionStepper" class="section-stepper"></div>
+
+        <form id="dynamicForm" novalidate>
+          <div class="section-heading">
+            <span id="sectionEyebrow">SECCIÓN</span>
+            <h2 id="sectionTitle"></h2>
+            <details id="sectionDescriptionDetails" class="fbz-description-disclosure fbz-section-help" hidden>
+              <summary>Descripción de la sección</summary>
+              <p id="sectionDescription"></p>
+            </details>
+          </div>
+
+          <div id="territorialProgress" class="territorial-progress" role="status" aria-live="polite" aria-atomic="true" hidden>
+            <span class="territorial-progress-icon" aria-hidden="true"></span>
+            <span class="territorial-progress-content">
+              <strong id="territorialProgressTitle"></strong>
+              <small id="territorialProgressDetail"></small>
+            </span>
+          </div>
+
+          <div id="dynamicFields" class="form-grid"></div>
+
+          <fieldset id="formTestFlag" class="form-qa-flag field full" hidden>
+            <legend>¿Este registro es una prueba o un registro real? <span class="required">*</span></legend>
+            <div class="review-test-choices">
+              <label><input type="radio" name="qaTestEntry" value="No"> No · Registro real</label>
+              <label><input type="radio" name="qaTestEntry" value="Sí"> Sí · Prueba (QA)</label>
+            </div>
+            <small>Selección obligatoria antes de guardar. Solo tu cuenta puede registrar pruebas QA. Las pruebas quedan fuera de análisis y bases maestras.</small>
+              <small id="formTestChoiceError" class="form-test-choice-error" role="alert" hidden>Seleccioná si este formulario es una prueba (QA) o un registro real.</small>
+          </fieldset>
+
+          <div id="validationSummary" class="validation-summary" hidden>
+            <strong>Revisa los siguientes campos:</strong>
+            <ul id="validationList"></ul>
+          </div>
+
+          <div class="form-actions">
+            <button id="prevSection" class="secondary-button" type="button">← Anterior</button>
+            <div class="action-spacer"></div>
+            <button id="nextSection" class="primary-button" type="button">Continuar →</button>
+            <button id="reviewForm" class="primary-button" type="button" hidden>Revisar respuestas →</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="reviewWorkspace" class="panel review-workspace" hidden>
+        <div class="workspace-topbar">
+          <button id="editForm" class="secondary-button compact" type="button">← Editar respuestas</button>
+          <span class="step-counter">Revisión final</span>
+        </div>
+
+        <div class="workspace-hero review-hero">
+          <div>
+            <span>REVISIÓN</span>
+            <h1>Confirma la información</h1>
+            <p>Revisa todo antes de guardar. La respuesta se enviará únicamente cuando presiones confirmar.</p>
+          </div>
+          <div class="form-user-card">
+            <span>USUARIO</span>
+            <strong id="reviewUserEmail"></strong>
+          </div>
+        </div>
+
+        <div id="reviewContent" class="review-content"></div>
+        <div id="saveStatus" class="save-status"></div>
+
+        <div class="form-actions review-actions">
+          <button id="editFormBottom" class="secondary-button" type="button">← Volver a editar</button>
+          <div class="action-spacer"></div>
+          <button id="confirmSubmit" class="primary-button" type="button">Confirmar y guardar</button>
+        </div>
+      </section>
+
+      <section id="successWorkspace" class="panel success-workspace" hidden>
+        <div id="successIcon" class="success-icon">✓</div>
+        <span>ESTADO DE LA ENCUESTA</span>
+        <h1 id="successTitle">Encuesta finalizada</h1>
+        <p id="successMessage">La información fue guardada correctamente.</p>
+
+        <div id="successStatusCard" class="success-status-card status-ok">
+          <span id="successStatusDot" class="success-status-dot">●</span>
+          <div>
+            <strong id="successStatusTitle">Todo correcto</strong>
+            <p id="successStatusDetail">La respuesta quedó guardada y sincronizada.</p>
+          </div>
+        </div>
+
+        <div class="success-meta">
+          <div id="successPointWrap" hidden><span>Punto maestro</span><strong id="successPoint"></strong></div>
+          <div><span>Completado por</span><strong id="successEmail"></strong></div>
+        </div>
+        <div class="success-actions">
+          <button id="newResponse" class="primary-button" type="button">Completar otra respuesta</button>
+          <button id="backToForms" class="secondary-button" type="button">Volver a formularios</button>
+        </div>
+      </section>
+    </section>
+
+    <section id="resultsView" hidden>
+      <section class="kpis">
+        <article class="kpi"><span>RESPUESTAS CHURN</span><strong id="churnCount">0</strong><small>registros</small></article>
+        <article class="kpi"><span>RESPUESTAS EXPLORACIÓN</span><strong id="explorationCount">0</strong><small>registros</small></article>
+        <article class="kpi"><span>TOTAL</span><strong id="totalCount">0</strong><small>respuestas</small></article>
+        <article class="kpi"><span>ESTADO</span><strong class="status-value" id="backendState">LISTO</strong><small id="backendDetail">sincronización</small></article>
+      </section>
+
+      <section class="panel operator-library">
+        <details id="operatorLibraryDisclosure" class="operator-library-disclosure">
+          <summary class="operator-library-disclosure-trigger">
+            <span class="operator-library-disclosure-copy"><small>BIBLIOTECA DE IDENTIFICACIÓN</small><strong>Inteligencia de operadores</strong></span>
+            <span class="operator-library-disclosure-action"><span class="library-show-label">Ver fichas</span><span class="library-hide-label">Ocultar fichas</span><span class="library-arrow" aria-hidden="true">▾</span></span>
+          </summary>
+          <div class="operator-library-disclosure-content">
+            <p class="operator-library-intro">Consulta fichas técnicas y visuales para reconocer ISPs durante el trabajo de campo.</p>
+            <div class="operator-library-tools"><input id="operatorLibrarySearch" type="search" aria-label="Buscar fichas de inteligencia de operadores" placeholder="Buscar operador, caja, marquilla, tensor…" autocomplete="off"></div>
+            <div id="operatorLibraryCards" class="operator-library-cards"><div class="empty-state">Todavía no hay fichas de operadores registradas.</div></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="panel competition-analysis">
+        <div class="section-title"><div><span>LECTURA DE COMPETENCIA</span><h2>Operadores por territorio</h2><p>Filtra territorio y abre un operador para revisar los puntos y sus evidencias.</p></div></div>
+        <div class="competition-filters">
+          <select id="compCity"><option value="all">Todas las ciudades</option></select>
+          <select id="compBarrio"><option value="all">Todos los barrios</option></select>
+          <select id="compEstrato"><option value="all">Todos los estratos</option></select>
+          <select id="compTroncal"><option value="all">Todas las troncales</option></select>
+        </div>
+        <details id="competitionOperatorPicker" class="competition-operator-picker">
+          <summary><strong id="competitionOperatorSummary">Seleccionar operador</strong><span id="competitionOperatorCount">0 operadores disponibles</span><i aria-hidden="true">▾</i></summary>
+          <div id="competitionOperators" class="competition-operators" role="listbox" aria-label="Operadores disponibles"></div>
+        </details>
+        <div id="competitionEvidence" class="competition-evidence"><div class="empty-state">Selecciona un operador para ver puntos y fotografías.</div></div>
+      </section>
+
+      <section class="panel records">
+        <details id="resultsDisclosure" class="results-disclosure">
+          <summary class="results-disclosure-summary">
+            <span><small>BASE DETALLADA</small><strong>Últimas respuestas</strong></span>
+            <span class="results-disclosure-count" id="resultsDisclosureCount">0 registros</span>
+            <span aria-hidden="true" class="results-disclosure-chevron">▾</span>
+          </summary>
+          <div class="results-disclosure-body">
+            <div class="result-controls">
+              <select id="resultFormFilter">
+                <option value="all">Todos los formularios</option>
+                <option value="CHURN">Churn</option>
+                <option value="EXPLORACION">Exploración virtual</option>
+                <option value="EXPLORACION_PRESENCIAL">Exploración presencial</option>
+                <option value="INTELIGENCIA_OPERADOR">Inteligencia de operadores</option>
+              </select>
+              <select id="resultUserFilter" data-admin-filter hidden><option value="all">Todos los usuarios</option></select>
+              <select id="resultCityFilter"><option value="all">Todas las ciudades</option></select>
+              <select id="resultStatusFilter">
+                <option value="all">Todos los estados</option><option value="sent">Enviado</option><option value="pending">Pendiente</option><option value="syncing">Enviando</option><option value="error">Error</option>
+              </select>
+              <input id="resultDateFrom" type="date" aria-label="Fecha desde" title="Fecha desde">
+              <input id="resultDateTo" type="date" aria-label="Fecha hasta" title="Fecha hasta">
+              <button id="refreshResults" class="secondary-button compact" type="button">↻ Actualizar</button>
+            </div>
+            <div id="resultsScroll" class="table-wrap results-scroll" role="region" tabindex="0" aria-label="Listado de últimas respuestas">
+              <table>
+                <thead><tr><th>Fecha</th><th>Formulario</th><th>Ciudad</th><th>Estado</th><th>Usuario</th></tr></thead>
+                <tbody id="resultsBody"></tbody>
+              </table>
+            </div>
+            <div id="resultsEmpty" class="empty-state">Todavía no hay respuestas registradas.</div>
+            <button id="resultsShowMore" class="secondary-button compact results-more" type="button" aria-controls="resultsScroll" aria-expanded="false" hidden>Ver más registros</button>
+          </div>
+        </details>
+      </section>
+    </section>
+  
+    <section id="mapView" hidden>
+      <section class="kpis map-kpis">
+        <article class="kpi"><span>PUNTOS VISIBLES</span><strong id="mapPointCount">0</strong><small>registros geolocalizados</small></article>
+        <article class="kpi"><span>VIRTUAL</span><strong id="mapVirtualCount">0</strong><small>puntos</small></article>
+        <article class="kpi"><span>PRESENCIAL</span><strong id="mapPresentialCount">0</strong><small>puntos</small></article>
+        <article class="kpi"><span>CIUDADES</span><strong id="mapCityCount">0</strong><small>en filtro</small></article>
+      </section>
+
+      <section class="panel exploration-map-panel">
+        <div class="section-title map-head">
+          <div>
+            <span>EXPLORACIÓN TERRITORIAL</span>
+            <h2>Mapa de puntos y recorrido</h2>
+            <p>Visualiza los relevamientos, tu ubicación actual y el recorrido de campo en una sola vista.</p>
+          </div>
+          <div class="map-head-actions">
+            <button id="mapRefresh" class="secondary-button compact" type="button" title="Reconsultar puntos y todas las geometrías de las capas visibles">↻ Actualizar</button>
+            <button id="mapQaOptimizeToolbar" class="secondary-button compact" type="button" disabled hidden title="Seleccioná una ciudad para comparar estratos">Estratos QA · elegí ciudad</button>
+            <button id="mapFitPoints" class="secondary-button compact" type="button" title="Encuadra todos los puntos visibles según los filtros">⌗ Ver todos los puntos</button>
+          </div>
+        </div>
+
+        <div class="map-search-shell">
+          <div class="map-search-box">
+            <span>⌕</span>
+            <input id="mapSearchInput" type="search" placeholder="Ciudad, barrio o coordenada…" autocomplete="off" aria-label="Buscar en el mapa">
+            <button id="mapSearchButton" class="secondary-button compact" type="button">Buscar</button>
+          </div>
+          <div id="mapSearchResults" class="map-search-results" hidden></div>
+        </div>
+
+        <div id="mapFiltersPanel" class="map-filters-panel" hidden>
+          <div class="map-filters">
+            <select id="mapCityFilter" aria-label="Filtrar ciudad" multiple><option value="all">Todas las ciudades</option></select>
+            <select id="mapTypeFilter" aria-label="Filtrar tipo de formulario" multiple>
+              <option value="all">Todos los formularios con puntos</option>
+              <option value="Virtual">Exploración virtual · ■</option>
+              <option value="Presencial" selected>Exploración presencial · ●</option>
+              <option value="Inteligencia de operadores">Inteligencia de operadores · ▲</option>
+            </select>
+            <select id="mapOperatorFilter" aria-label="Filtrar operador" data-city-scope="locked" multiple disabled>
+              <option value="all">Todos los operadores</option>
+              <option value="tigo">Tigo · esté solo o acompañado</option>
+              <option value="claro">Claro · esté solo o acompañado</option>
+              <option value="movistar">Movistar · esté solo o acompañado</option>
+              <option value="isps">Solo ISPs · sin incumbentes</option>
+            </select>
+            <select id="mapUserFilter" aria-label="Filtrar usuario" multiple><option value="all">Todos los usuarios</option></select>
+            <label class="map-photos-filter"><input id="mapPhotosFilter" type="checkbox"> Solo puntos con fotos</label>
+            <label class="map-photos-filter" id="mapTestControl" hidden><input id="mapShowTests" type="checkbox"> Mostrar pruebas (QA)</label>
+            <input id="mapDateFrom" type="date" aria-label="Fecha desde" title="Fecha desde">
+            <input id="mapDateTo" type="date" aria-label="Fecha hasta" title="Fecha hasta">
+          </div>
+        </div>
+
+        <div id="mapLayersPanel" class="map-layers-panel" hidden>
+          <div class="map-layers-head">
+            <div>
+              <span>CAPAS TERRITORIALES</span>
+              <strong>Bucaramanga / Área Metropolitana</strong>
+            </div>
+            <div class="map-layers-head-actions">
+              <small>Se cargan solo los polígonos visibles para mantener el mapa ágil.</small>
+              <button id="mapViewBucaramanga" class="secondary-button compact" type="button">◎ Ver Bucaramanga</button>
+            </div>
+          </div>
+          <div class="map-layer-switches">
+            <button id="mapLayerBarrios" class="map-layer-chip" type="button" aria-pressed="false">
+              <i class="map-layer-solid-icon barrios">B</i>
+              <span><b>Barrios</b><small>Selecciona los barrios que quieres mostrar</small></span><span class="map-layer-chevron" aria-hidden="true">⌄</span>
+            </button>
+            <button id="mapLayerEstratos" class="map-layer-chip" type="button" aria-pressed="false">
+              <i class="map-layer-solid-icon estratos">E</i>
+              <span><b>Estratos</b><small>Activa únicamente los estratos que quieras ver</small></span><span class="map-layer-chevron" aria-hidden="true">⌄</span>
+            </button>
+            <button id="mapLayerTroncales" class="map-layer-chip" type="button" aria-pressed="false">
+              <span><b>Troncales</b></span>
+            </button>
+          </div>
+          <div id="mapLayerStatus" class="map-layer-status">Capas apagadas.</div>
+          <label class="map-estrato-pilot-toggle"><input type="checkbox" id="mapEstratoOptimizePilot"> Prueba QA: unificar polígonos por estrato</label>
+
+          <section id="mapEstratoControls" class="map-selective-layer" hidden>
+            <div class="map-selective-layer-head">
+              <div><span>ESTRATOS</span><strong>Selecciona qué estratos mostrar</strong></div>
+              <button id="mapClearEstratos" class="secondary-button compact" type="button">Apagar todos</button>
+            </div>
+            <input id="mapEstratoSearch" type="search" class="map-estrato-search" autocomplete="off" placeholder="Escribe para buscar estrato…" aria-label="Buscar estratos">
+            <div id="mapEstratoOptions" class="map-estrato-options"></div>
+            <small id="mapEstratoHint" class="map-selective-hint">Estratos 1, 2 y 3 preseleccionados.</small>
+            
+          </section>
+
+          <section id="mapBarrioControls" class="map-selective-layer" hidden>
+            <div class="map-selective-layer-head">
+              <div><span>BARRIOS</span><strong id="mapBarrioListTitle">Barrios visibles en esta vista</strong></div>
+              
+            </div>
+            
+            <div class="map-barrio-search">
+              <input id="mapBarrioSearch" type="search" placeholder="Escribe para buscar barrio…" autocomplete="off" aria-label="Buscar barrios">
+              <div class="map-barrio-actions">
+                <button id="mapSelectAllBarrios" class="secondary-button compact" type="button">Seleccionar todos</button>
+                
+              </div>
+            </div>
+            <div id="mapBarrioOptions" class="map-barrio-options"></div>
+            <small id="mapBarrioHint" class="map-selective-hint">Mueve o acerca el mapa para actualizar este listado.</small>
+          </section>
+          <section id="mapTroncalControls" class="map-selective-layer" hidden>
+            <div class="map-selective-layer-head"><button id="mapToggleAllTroncales" class="secondary-button compact" type="button" aria-label="Mostrar todo">👁</button></div>
+            <input id="mapTroncalSearch" type="search" class="map-estrato-search" autocomplete="off" placeholder="Buscar troncal…" aria-label="Buscar troncales">
+            <div id="mapTroncalOptions" class="map-estrato-options"></div>
+          </section>
+        </div>
+
+        <div class="map-location-toolbar">
+          <button id="mapLocateMe" class="primary-button compact" type="button">◎ Mi ubicación</button>
+          <button id="mapStartTracking" class="primary-button compact" type="button">▶ Iniciar recorrido</button>
+          <button id="mapClearRoute" class="secondary-button compact" type="button">Limpiar recorrido</button>
+          <label class="map-follow-toggle"><input id="mapFollowToggle" type="checkbox" checked><span>Seguir mi ubicación</span></label>
+        </div>
+
+        <div id="mapCanvasWrap" class="map-canvas-wrap">
+          <div class="map-view-actions" aria-label="Vista y enlace del mapa">
+            <button id="mapOnlyView" type="button" aria-pressed="false">⛶ Solo mapa</button>
+            <button id="mapShareOnly" type="button">↗ Compartir solo mapa</button>
+            <span id="mapShareStatus" role="status" aria-live="polite"></span>
+            <input id="mapShareUrl" type="text" readonly hidden aria-label="Enlace de solo mapa para copiar">
+          </div>
+          <div id="mapLoadingOverlay" class="map-loading-overlay" hidden aria-live="polite">
+            <div class="map-loading-track"><span></span></div>
+            <div class="map-loading-label"><i></i><span id="mapLoadingText">Cargando mapa…</span></div>
+          </div>
+          <div id="explorationMap" class="exploration-map" aria-label="Mapa de exploración FIBRAZO"></div>
+          <section id="mapFloatingTools" class="map-floating-tools" aria-label="Panel flotante de controles">
+            <div id="mapFloatingHandle" class="map-floating-handle"><span>Capas y filtros</span><button id="mapFloatingMinimize" type="button" aria-expanded="true" aria-label="Contraer panel">−</button></div>
+            <div id="mapFloatingContent" class="map-floating-content">
+              <div class="map-floating-tabs">
+                <button type="button" data-floating-tab="filters" class="active">Filtros</button>
+                <button type="button" data-floating-tab="layers">Capas</button>
+                <button type="button" data-floating-tab="legend">Referencia</button>
+                <button id="mapClearFilters" class="map-panel-reset" type="button" title="Limpiar todos los filtros" aria-label="Limpiar todos los filtros">↺ <span>Limpiar</span></button>
+              </div>
+              <div id="mapFloatingHost" class="map-floating-host"></div>
+            </div>
+          </section><div class="map-quick-actions"><button id="mapFullscreen" type="button" title="Ver mapa en pantalla completa" aria-pressed="false">⛶ <span>Pantalla completa</span></button><button id="mapBaseToggle" type="button" title="Cambiar a vista satelital" aria-label="Cambiar a vista satelital">▧ <span>Satélite</span></button><button id="mapQuickEstratoUnion" type="button" hidden aria-pressed="false" title="Comparar polígonos originales y unificados de Bucaramanga">Unificar estratos (QA)</button><button id="mapQuickRefresh" type="button" title="Actualizar puntos y capas">↻ <span>Actualizar</span></button></div>
+        </div>
+        <div id="mapStatus" class="map-status">Abre el mapa para cargar los puntos.</div>
+
+        <div class="map-point-legend-card">
+          <button id="mapPointLegendToggle" class="map-point-legend-toggle" type="button" aria-expanded="false">
+            <span><i></i><b>Índice de puntos de exploración</b></span>
+            <small id="mapPointLegendSummary">Colores por presencia de operadores</small>
+            <strong>⌄</strong>
+          </button>
+          <div id="mapPointLegendPanel" class="map-point-legend-panel" hidden></div>
+        </div>
+
+        <div class="map-route-strip">
+          <div><span>GPS</span><strong id="mapGpsAccuracy">—</strong></div>
+          <div><span>Recorrido</span><strong id="mapRouteDistance">0 m</strong></div>
+          <div><span>Puntos GPS</span><strong id="mapRoutePoints">0</strong></div>
+          <div><span>Estado</span><strong id="mapTrackingState">Seguimiento detenido</strong></div>
+        </div>
+
+      </section>
+    </section>
+
+    <section id="adminView" hidden>
+      <section class="panel admin-panel">
+        <div class="section-title admin-head">
+          <div>
+            <span>ADMINISTRACIÓN</span>
+            <div class="fz-title-with-help"><h2>Formularios y permisos</h2><button type="button" class="fz-help-button" data-admin-help="Administra accesos, publicación y comportamiento de cada formulario. Los cambios de permisos requieren que guardes la configuración correspondiente." aria-label="Ayuda: administración de formularios" aria-expanded="false" title="Ayuda: administración">?</button></div>
+          </div>
+          <a class="secondary-button compact admin-map-link" href="https://app.diagrams.net/?mode=github#HFemacchi12%2Ffibrazo-forms%2Fmain%2Fdocs%2FFIBRAZO_Forms_Flujos.drawio" target="_blank" rel="noopener">↗ Ver mapa en draw.io</a>
+        </div>
+        <div id="adminGlobal" class="admin-global"></div>
+        <div class="admin-access-note compact-note">
+          <strong>Regla de acceso</strong>
+          <span>Acceso global: administradores</span>
+          <button type="button" class="fz-help-button" data-admin-help="Solo los administradores tienen acceso global. Para cada formulario puedes autorizar dominios, correos específicos y/o un enlace público. Verifica el alcance antes de guardar permisos." aria-label="Ayuda: regla de acceso" aria-expanded="false" title="Ayuda: regla de acceso">?</button>
+        </div>
+        <div id="adminForms" class="admin-forms"></div>
+        <div id="adminStatus" class="save-status"></div>
+      </section>
+    </section>
+  </main>
+
+  <footer>FIBRAZO · Growth <span>Forms v0.8.163 · Filtros múltiples · Capas optimizadas · Motor territorial v3.5 · 2026</span></footer>
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+<script src="/executive-shell.js"></script></body>
+</html>
