@@ -21,3 +21,18 @@ const point={lat:2.95,lng:-75.28,type:'Presencial',timestamp:'2026-10-26T12:00:0
 const html=map.pointPopupHtml(point);assert(html.includes('Incumbente 1'));assert(html.includes('ISP 1'));assert(html.includes('operatorId=OP-NET'));assert(html.includes('qa@example.invalid'));assert(html.includes('Coordenadas'));assert(!html.includes('<img src=x'));assert(html.includes('&lt;img'));assert(html.includes('Sin ficha disponible'));
 map.setMapFullscreen(true);assert.equal(new URL(ctx.location.href).searchParams.get('map'),'only');assert.equal(nodes.mapOnlyView.textContent,'↙ Volver al dashboard');map.setMapFullscreen(false);assert.equal(new URL(ctx.location.href).searchParams.get('map'),null);
 console.log('PASS108: approved aliases, canonical IDs, ambiguous/missing records, operator rows, XSS escaping, shared scope and fullscreen URL.');
+// Real catalog handler: authentication, form ACL, cached permission recheck, DTO only.
+const Module=require('node:module'),originalLoad=Module._load;let signedIn=false,allowed=false,reads=0;
+const op=Array(32).fill('');op[0]='OP-NET';op[1]='Networks';op[11]='Neiva';op[17]='Private note not for navigation';op[29]='Sí';
+const presence=Array(26).fill('');presence[3]='Neiva';presence[8]='OP-NET';presence[20]='Presencia observada';
+const core={httpError:(m,s)=>Object.assign(Error(m),{status:s}),verifyUser:async()=>{if(!signedIn)throw Object.assign(Error('AUTH_REQUIRED'),{status:401});return{email:'qa@example.invalid'};},gauth:()=>({}),loadForms:async()=>[{id:'EXPLORACION_PRESENCIAL'}],userCapabilities:async()=>({permissions:[]}),canUseDashboard:()=>true,permissionFor:()=>({}),canAccess:()=>allowed};
+const google={sheets:()=>({spreadsheets:{values:{batchGet:async()=>{reads++;return{data:{valueRanges:[{values:[[],op]},{values:[[],presence]},{values:[[]]},{values:[[]]}]}};}}}})};
+Module._load=function(name,...args){if(name==='./_core')return core;if(name==='googleapis')return{google};return originalLoad.call(this,name,...args);};const catalogHandler=require('../api/_operator-catalog');Module._load=originalLoad;
+async function callCatalog(){const res={setHeader(){},status(code){this.code=code;return this;},json(body){this.body=body;return this;}};await catalogHandler({method:'GET'},res);return res;}
+(async()=>{
+ assert.equal((await callCatalog()).code,401);signedIn=true;assert.equal((await callCatalog()).code,403);assert.equal(reads,0);
+ allowed=true;const result=await callCatalog();assert.equal(result.code,200);assert.equal(result.body.operators[0].id,'OP-NET');assert.deepEqual(result.body.operators[0].cities,['Neiva']);assert(!JSON.stringify(result.body).includes('Private note'));assert.equal(reads,1);
+ allowed=false;assert.equal((await callCatalog()).code,403);assert.equal(reads,1);
+ await map.shareMap();assert.equal(nodes.mapShareUrl.hidden,false);assert.match(nodes.mapShareUrl.value,/map=only/);assert.match(nodes.mapShareStatus.textContent,/iniciar sesión/);
+ console.log('PASS108 API: unauthenticated/unauthorized denied, cached ACL rechecked, read-only minimal catalog, clipboard fallback.');
+})().catch(e=>{console.error(e);process.exitCode=1;});
