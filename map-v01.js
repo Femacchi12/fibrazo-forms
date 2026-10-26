@@ -2155,6 +2155,7 @@
     catch(_){const input=$('mapShareUrl');input.hidden=false;input.value=url;input.focus();input.select();$('mapShareStatus').textContent='Copia este enlace. Quien lo abra deberá iniciar sesión.';}
   }
   function onMapOpen(){
+    const fitSharedCity=requestedMap.cities.length>0&&!state.loadedOnce;
     state.viewActive=true;
     applySharedCities();
     if(operatorCatalog?.unavailable)operatorCatalog=null;
@@ -2168,12 +2169,12 @@
       if(cached.length){
         state.points=cached;
         updateFilters();
-        renderMarkers({fit:false});
+        renderMarkers({fit:fitSharedCity});
         state.loadedOnce=true;
         mapStatus("Mostrando "+cached.length+" puntos guardados · actualizando en segundo plano…","warning");
       }
     }
-    if(navigator.onLine)loadPoints({fit:false,silent:state.loadedOnce});
+    if(navigator.onLine)loadPoints({fit:fitSharedCity,silent:state.loadedOnce});
     updateLayerButtons();
     updatePolygonStatus();
     updateTrackingUi();
