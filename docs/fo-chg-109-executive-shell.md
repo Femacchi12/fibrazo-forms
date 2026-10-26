@@ -6,7 +6,12 @@ Cambios de presentación: cabecera institucional compacta; navegación horizonta
 
 La capa base OpenStreetMap existente recibe tratamiento oscuro CSS aislado en su contenedor, sin modificar polígonos ni marcadores ni incorporar proveedor/credencial externos. Vista satelital conserva colores originales. Formularios, sincronización, fotos, datos, automatizaciones y contratos de navegación 108 no se modifican.
 
-QA: suite Forms completa aprobada tras cambios de shell. Escenario qa-executive-109.html solo Preview, sin datos reales ni tokens válidos; debe retirarse antes de publicación. Incluye viewport móvil 390×844 en iframe. Validación visual pendiente. Versión prevista 0.8.162. Reversión: producción anterior 0.8.161, dpl_43HJMQuEqQeQDcwqBdR8orJ5r3M1 / runtime fa008f1382707747f3aa8f9a2571e7c5301b8f35; sin migración.
+QA: suite Forms completa aprobada tras cambios de shell. Escenario qa-executive-109.html solo Preview, sin datos reales ni tokens válidos; debe retirarse antes de publicación. Incluye viewport móvil 390×844 en iframe. Revisión visual sintética de escritorio y viewport móvil 390×844 completada. Versión publicada 0.8.162. Reversión: producción anterior 0.8.161, dpl_43HJMQuEqQeQDcwqBdR8orJ5r3M1 / runtime fa008f1382707747f3aa8f9a2571e7c5301b8f35; sin migración.
 
 
 Preparación de publicación: se retira el escenario sintético del árbol de producción. Suite Forms completa PASS; comprobación adicional conserva los 191 IDs originales, sin cambios de API, cola offline, configuración de formularios ni motor territorial. QA sintético: menú de cuenta desplegable; Solo mapa 1363×936; ancho de mapa 1043→1363 al contraer panel; retorno correcto. Último candidato de QA ba3338f ajusta espacio de popup bajo herramientas, evita partición de pestañas móviles, alinea pendientes y quita halo en triángulos. La validación con sesión real y teléfono físico se registra separada de la prueba en iframe 390×844.
+
+
+## Publicación verificada
+
+26/10/2026: runtime b2784b900c634b808e6222708574b59dc9faff61, producción READY dpl_AyjXiJmaPXD3JmYAngsBzszWZFHm, alias https://fibrazo-forms.vercel.app/ . Menú, sidebar, mapa oscuro y control único comprobados; apertura de búsqueda móvil y pestañas sin cortes; popup bajo toolbar, título/cierre despejados en escritorio y viewport móvil. Ajustes finales de legibilidad y blanco de cierre se verifican en CSS servido. Pruebas con cuenta real, teléfono físico y GPS físico quedan pendientes de Edu. Escenario QA no se publica. Manuales Forms/Exploración y registros FO-CHG-109 / EX-CHG-MAP-109 actualizados. Primera consulta de errores/fatal por despliegue sin grupos registrados; ventana inicial corta. Sin migración, datos, API ni reglas territoriales modificadas.
