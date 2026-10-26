@@ -270,6 +270,7 @@
 
     const street=L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
       maxZoom:20,
+      className:"fibrazo-base-street",
       attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
     });
     const satellite=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{
@@ -705,6 +706,7 @@
     const operators=(point.operators||[]).length?'<section class="map-operators"><h3>Operadores</h3><ul>'+operatorRowsHtml(point)+'</ul></section>':"";
     const note=point.note?'<div class="map-popup-note">'+esc(point.note)+'</div>':"";
     return '<div class="map-popup">'+
+      '<div class="map-detail-heading"><span aria-hidden="true">⌖</span><div><strong>Detalle del punto</strong><small>Información territorial y operadores</small></div></div>'+
       '<div class="map-popup-head"><span>'+esc(formType(point.type))+'</span><strong>'+esc(point.city?.assigned||point.observedCity||"Punto de exploración")+'</strong></div>'+
       '<div class="map-popup-row"><b>Fecha</b><span>'+esc(formatDate(point.timestamp))+'</span></div>'+
       '<div class="map-popup-row"><b>Usuario</b><span>'+esc(point.user||"—")+'</span></div>'+

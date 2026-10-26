@@ -390,16 +390,18 @@
     function setCollapsed(collapsed){
       content.hidden=collapsed;
       panel.classList.toggle("is-collapsed",collapsed);
-      openButton.hidden=!collapsed;
-      minimize.hidden=collapsed;
+      openButton.hidden=false;
+      openButton.setAttribute("aria-expanded",String(!collapsed));
+      openButton.setAttribute("aria-label",collapsed?"Abrir controles del mapa":"Contraer controles del mapa");
+      minimize.hidden=true;
       minimize.setAttribute("aria-expanded",String(!collapsed));
       if(collapsed){handle.querySelector("span").hidden=true;}
       else {handle.querySelector("span").hidden=false;minimize.textContent="−";}
     }
     minimize?.addEventListener("click",()=>setCollapsed(true));
-    openButton.addEventListener("click",()=>setCollapsed(false));
-    setCollapsed(true);
-    window.addEventListener("fibrazo:view-change",event=>{if(event.detail?.view==="map")setCollapsed(true);});
+    openButton.addEventListener("click",()=>setCollapsed(!content.hidden));
+    setCollapsed(window.innerWidth<900);
+    window.addEventListener("fibrazo:view-change",event=>{if(event.detail?.view==="map")setCollapsed(window.innerWidth<900);});
     $("mapFiltersToggle")?.addEventListener("click",()=>show("filters"));
     $("mapLayersToggle")?.addEventListener("click",()=>show("layers"));
     // Panel de mapa anclado a la esquina superior izquierda: no se arrastra.

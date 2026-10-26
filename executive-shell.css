@@ -1,0 +1,67 @@
+/* MAP-109 — institutional green, neutral surfaces, Montserrat / Poppins unchanged. */
+body.executive-shell main{max-width:none;margin:0;padding:0 24px 20px}
+.executive-shell .hero-header{display:flex;align-items:center;justify-content:space-between;min-height:64px;padding:10px 0;margin:0;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none}
+.executive-shell .hero-copy h1,.executive-shell .hero-copy>p{display:none}
+.executive-shell .hero-brand{margin:0;font-size:25px}
+.executive-shell .app-nav{padding:0;margin:0 0 14px;border:0;border-bottom:1px solid #58595B;border-radius:0;box-shadow:none;background:transparent;backdrop-filter:none}
+.executive-shell .app-nav .section-title{display:flex;margin:0;gap:0}
+.executive-shell .app-nav .section-title>div:first-child{display:none}
+.executive-shell .view-switch{display:flex;flex-wrap:wrap;gap:6px;width:auto}
+.executive-shell .view-switch button,.executive-shell .view-switch a{width:auto;min-height:44px;padding:12px 17px;border:0;border-radius:0;background:transparent;box-shadow:none;text-decoration:none;color:var(--brand-muted,#BBC1BE);font:600 13px Montserrat,system-ui,sans-serif}
+.executive-shell .view-switch button.active{color:var(--brand-primary,#43FFA5);border-bottom:2px solid var(--brand-primary,#43FFA5);background:rgba(67,255,165,.06)}
+.user-menu{position:relative;z-index:1100;font-family:Montserrat,system-ui,sans-serif}
+.user-menu>summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;min-height:44px;color:#BBC1BE}
+.user-menu>summary::-webkit-details-marker{display:none}
+.user-avatar{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:#202923;color:#43FFA5;border:1px solid #58595B;font-weight:700}
+.user-menu-card{position:absolute;right:0;top:52px;width:min(340px,calc(100vw - 24px));padding:20px;display:grid;gap:16px;background:#151515;border:1px solid #58595B;border-radius:14px;box-shadow:0 16px 40px #0009}
+.user-menu-card .update-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0}
+.user-menu-card .update-cards article{padding:10px;border:0;border-radius:6px;min-width:0}
+.user-menu-card .auth-session:not([hidden]){display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:0}
+.user-menu-card #signedInEmail{flex-basis:100%;overflow-wrap:anywhere;font-size:13px}
+.user-menu-card .pending-hub{margin:0}
+.executive-map-view #mapView>.map-kpis,.executive-map-view #mapView>.map-summary{display:none}
+.executive-map-view #mapView>section,.executive-map-view .exploration-map-panel{padding:0;margin:0;border:0;border-radius:0;box-shadow:none;background:transparent}
+.executive-map-view .exploration-map-panel>.section-title{display:none}
+.executive-map-view #mapCanvasWrap{height:calc(100dvh - 140px);min-height:480px;border:0;border-radius:12px;background:#151515}
+.executive-map-view #explorationMap{height:100%!important;min-height:0!important}
+/* Only the existing street tiles are transformed. Semantic point/polygon colours stay intact. */
+.fibrazo-base-street{filter:invert(1) grayscale(.85) brightness(.7) contrast(1.05)}
+#mapCanvasWrap .map-point-shape:not(.shape-test){border:0!important;box-shadow:none!important}
+#mapCanvasWrap #mapFullscreen{display:none!important}
+#mapCanvasWrap .map-quick-actions{top:12px!important;right:58px!important;gap:8px;max-width:calc(100% - 126px);flex-wrap:wrap;justify-content:flex-end}
+#mapCanvasWrap .map-quick-actions button{min-height:42px;border:1px solid #58595B;border-radius:9px;background:#181c1a;box-shadow:none;font:600 12px Montserrat,system-ui,sans-serif}
+#mapCanvasWrap #mapOnlyView,#mapCanvasWrap #mapShareOnly{color:#43FFA5;border-color:#58595B}
+#mapCanvasWrap .map-floating-handle{display:flex;align-items:center;gap:10px;padding:10px!important;min-height:48px}
+#mapCanvasWrap #mapFloatingOpen{order:-1;min-width:42px;min-height:42px;border:0;box-shadow:none;background:transparent;color:#43FFA5;font-size:24px}
+#mapCanvasWrap .map-floating-tools{left:0!important;top:0!important;border:1px solid #58595B!important;box-shadow:none!important;background:#151918!important;border-radius:10px!important}
+#mapCanvasWrap .map-floating-tools.is-collapsed{border:0!important;background:transparent!important}
+#mapCanvasWrap .map-search-dock{top:12px!important;left:76px!important}
+#mapCanvasWrap .map-search-dock .map-dock-icon{width:42px;height:42px;border:1px solid #58595B;border-radius:9px;box-shadow:none;background:#181c1a}
+#mapCanvasWrap .map-search-shell{background:#151918;border:1px solid #58595B;border-radius:10px;padding:8px}
+#mapCanvasWrap .map-search-shell input{border:0;background:transparent;color:#f7faf8;font-family:Montserrat,system-ui,sans-serif}
+#mapCanvasWrap .map-detail-heading{display:flex;align-items:center;gap:12px;padding:0 22px 16px 0;margin-bottom:12px;border-bottom:1px solid #58595B}
+#mapCanvasWrap .map-detail-heading>span{display:grid;place-items:center;flex:0 0 42px;height:42px;border-radius:50%;background:#20352b;color:#43FFA5;font-size:28px}
+#mapCanvasWrap .map-detail-heading strong{display:block;font:700 17px Montserrat,system-ui,sans-serif;color:#f7faf8}
+#mapCanvasWrap .map-detail-heading small{display:block;font-size:11px;color:#BBC1BE;margin-top:4px}
+#mapCanvasWrap .map-popup-head{padding-bottom:10px;margin-bottom:8px}
+#mapCanvasWrap .map-popup .map-popup-row{padding:6px 0}
+#mapCanvasWrap .map-popup .map-operator-link{border-radius:20px;padding:7px 12px;min-height:36px}
+#mapCanvasWrap .executive-secondary-actions{display:flex;flex-wrap:wrap;gap:6px;padding:10px}
+#mapCanvasWrap .executive-secondary-actions button{min-height:40px;font-size:11px}
+@media(min-width:900px){
+ #mapCanvasWrap.map-sidebar-open #explorationMap{margin-left:320px;width:calc(100% - 320px)!important}
+ #mapCanvasWrap.map-sidebar-open .map-floating-tools{left:0!important;top:0!important;bottom:0!important;width:308px!important;height:100%;max-height:100%;border-radius:0!important;overflow:auto}
+ #mapCanvasWrap.map-sidebar-open .map-search-dock{left:332px!important}
+ #mapCanvasWrap.map-sidebar-open .map-floating-handle{padding-left:10px!important}
+}
+@media(max-width:600px){
+ body.executive-shell main{padding:0 10px 10px}
+ .executive-shell .hero-brand{font-size:20px}
+ .executive-shell .view-switch{gap:0}
+ .executive-shell .view-switch button,.executive-shell .view-switch a{padding:10px;font-size:11px}
+ .executive-map-view #mapCanvasWrap{height:calc(100dvh - 140px);min-height:400px}
+ #mapCanvasWrap .map-quick-actions{top:12px!important;right:10px!important;gap:5px;max-width:calc(100% - 128px)}
+ #mapCanvasWrap .map-quick-actions button{padding:8px;font-size:10px}
+ #mapCanvasWrap .map-popup .map-operator-link{min-height:44px}
+ #mapCanvasWrap .map-detail-heading strong{font-size:15px}
+}
