@@ -378,6 +378,7 @@
     Object.values(forms).forEach((form) => {
       const card = document.createElement("article");
       card.className = "form-card";
+      card.dataset.formId = form.id;
       // Minimal preview: only the title and main action are visible initially.
       // All descriptive and administrative fields remain available on demand.
       const privateSlug=String(form.slug||form.id||"").toLowerCase();

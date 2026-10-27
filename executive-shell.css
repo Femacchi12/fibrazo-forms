@@ -166,3 +166,44 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 .executive-shell #adminView .admin-card-actions{padding:8px 0!important;margin-top:6px!important;gap:8px!important}
 @media(min-width:900px){.executive-shell .app-nav{left:240px!important;top:10px!important}.executive-shell .hero-header{min-height:64px!important}.executive-map-view #mapCanvasWrap{height:calc(100dvh - 84px)!important}}
 @media(max-width:600px){.executive-shell .view-switch button,.executive-shell .view-switch a{padding:9px!important}.executive-shell #formCards .form-card{padding:6px 0!important}.executive-shell #resultsView .kpis{gap:10px!important}.executive-shell #adminView .compact-add-row{grid-template-columns:minmax(0,1fr) auto!important}.executive-shell #adminView .admin-head{flex-wrap:wrap}}
+
+/* MAP-112: one coherent card family. Identity is conveyed by icon, grouping and state. */
+.executive-shell{--ui-card-bg:#111512;--ui-card-stroke:#ffffff18;--ui-card-open:#17211b;--ui-card-accent:#43FFA5}
+.executive-shell #formCards.form-cards{gap:7px!important}
+.executive-shell #formCards .form-card,.executive-shell #adminView .admin-form-card{
+ background:var(--ui-card-bg)!important;border:1px solid var(--ui-card-stroke)!important;border-left:3px solid #58595B!important;
+ border-radius:9px!important;box-shadow:none!important;overflow:hidden;padding:9px 12px!important;margin:0!important;
+}
+.executive-shell #formCards .form-card:hover,.executive-shell #adminView .admin-form-card:hover{border-color:#ffffff35!important;border-left-color:var(--ui-card-accent)!important}
+.executive-shell #formCards .form-card:has(.form-card-details[open]),.executive-shell #adminView .admin-form-card.open{
+ background:var(--ui-card-open)!important;border-color:#43ffa547!important;border-left-color:var(--ui-card-accent)!important;
+}
+.executive-shell #formCards .form-card:focus-within,.executive-shell #adminView .admin-form-card:focus-within{outline:1px solid #43ffa56b;outline-offset:2px}
+.executive-shell #adminView .admin-status-list{gap:7px!important;display:grid}
+.executive-shell #adminView .admin-accordion-head{padding:2px 0!important}
+.executive-shell #adminView .admin-accordion-head h3,.executive-shell #formCards .form-card-title{display:flex!important;align-items:center;gap:10px!important;line-height:1.4!important}
+.executive-shell .form-identity-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 30px;width:30px;height:30px;border-radius:8px;background:#43ffa50d;border:1px solid #43ffa524;color:#43FFA5}
+.executive-shell [data-design-kind="churn"] .form-identity-icon{border-style:dashed}
+.executive-shell [data-design-kind="virtual"] .form-identity-icon{border-radius:5px}
+.executive-shell [data-design-kind="field"] .form-identity-icon{border-radius:50%}
+.executive-shell [data-design-kind="operator"] .form-identity-icon{background:#43ffa51c}
+.executive-shell #formCards .form-card-details[open]>.form-card-details-body{border-top:1px solid #43ffa525!important;padding:12px 0 4px 40px!important;margin-top:5px!important}
+.executive-shell #adminView .admin-form-card.open .admin-accordion-body{border-top:1px solid #43ffa525!important;padding:10px 0 4px 40px!important;margin-top:8px!important}
+.executive-shell #adminView .admin-summary-chips{padding-left:40px}
+.executive-shell #adminView .admin-form-card.dirty{border-left-color:#ffd166!important}
+.executive-shell #resultsView>.panel{background:#111512!important;border:1px solid var(--ui-card-stroke)!important;border-radius:10px!important;padding:12px 14px!important;margin:8px 0!important}
+.executive-shell #adminView .admin-system-card{background:#111512!important;border:1px solid var(--ui-card-stroke)!important;border-radius:9px!important;padding:8px 12px!important}
+.executive-shell #adminView .admin-person-permissions>summary{background:transparent!important}
+.executive-shell #adminView .admin-person-permissions[open]{background:#43ffa506!important;border-left:2px solid #43ffa557!important;padding-left:10px!important}
+.executive-shell #adminView .admin-compact-section[open]{border-left:2px solid #43ffa540!important;padding-left:10px!important}
+.executive-shell #resultsView .operator-library-card[open]{background:#43ffa506!important;border-left:2px solid #43ffa557!important;padding-left:10px!important}
+.executive-shell #adminView .admin-status-group>summary{margin:6px 0!important}
+@media(max-width:600px){
+ .executive-shell #formCards .form-card,.executive-shell #adminView .admin-form-card{padding:8px!important}
+ .executive-shell #formCards .form-card-title{gap:7px!important}
+ .executive-shell .form-identity-icon{flex-basis:24px;width:24px;height:24px;border-radius:6px}
+ .executive-shell .form-identity-icon svg{width:16px;height:16px}
+ .executive-shell #formCards .form-card-details[open]>.form-card-details-body,.executive-shell #adminView .admin-form-card.open .admin-accordion-body{padding-left:0!important}
+ .executive-shell #adminView .admin-summary-chips{padding-left:34px}
+}
+@media(prefers-reduced-motion:reduce){.executive-shell #formCards .form-card{transition:none!important}}
