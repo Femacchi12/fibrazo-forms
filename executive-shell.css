@@ -120,3 +120,49 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 
 .executive-shell #formsView>.intro-panel{border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;padding:20px 0!important;margin:0!important}
 .executive-shell #formCards summary:focus-visible,.executive-shell .user-menu>summary:focus-visible{outline:2px solid #43FFA5;outline-offset:3px}
+
+/* MAP-111: bounded reading width and compact spacing; map/form workspace unchanged. */
+.executive-shell :is(#formsView,#resultsView,#adminView){box-sizing:border-box;width:100%!important;max-width:1080px!important;margin:0 auto!important}
+.executive-shell #formsView{max-width:820px!important}
+.executive-shell :is(#formsView>.intro-panel,#resultsView>.panel,#adminView>.panel){padding:10px 0!important}
+.executive-shell :is(#formsView,#resultsView,#adminView) .section-title{margin:0 0 10px!important;padding:0!important;gap:10px!important}
+.executive-shell :is(#formsView,#resultsView,#adminView) .section-title :is(h2,p){margin:3px 0!important}
+.executive-shell .view-switch{gap:2px!important}
+.executive-shell .view-switch button,.executive-shell .view-switch a{padding:9px 12px!important}
+.executive-shell #formCards.form-cards{gap:0!important;margin-top:8px!important}
+.executive-shell #formCards .form-card{padding:7px 0!important;gap:4px 10px!important;min-height:46px!important}
+.executive-shell #formCards .form-card-details::details-content{grid-column:1/-1;grid-row:2}
+.executive-shell #formCards .form-card-details[open]>.form-card-details-body{padding:8px 0!important}
+.executive-shell #resultsView .kpis{gap:12px!important;padding:8px 0!important;margin:0 0 8px!important}
+.executive-shell #resultsView .kpi{padding:4px 10px!important;min-height:0!important;gap:3px!important}
+.executive-shell #resultsView .kpi strong{margin:3px 0!important;line-height:1.1!important}
+.executive-shell #resultsView :is(.operator-library-disclosure-trigger,.results-disclosure-summary){padding:8px 0!important;min-height:44px!important}
+.executive-shell #resultsView :is(.operator-library-disclosure-content,.results-disclosure-body){padding:8px 0!important}
+.executive-shell #resultsView .competition-filters{gap:8px!important;margin:8px 0!important}
+.executive-shell #resultsView .competition-operator-picker>summary{padding:8px 0!important;min-height:40px!important;gap:10px!important}
+.executive-shell #resultsView .competition-evidence{padding:8px 0!important;margin:0!important;min-height:0!important}
+.executive-shell #resultsView .empty-state{padding:12px 0!important;margin:0!important;min-height:0!important}
+.executive-shell #resultsView .result-controls{gap:8px!important;margin:8px 0!important}
+.executive-shell #adminView :is(.admin-global,.admin-list-compact){margin:6px 0!important;gap:0!important}
+.executive-shell #adminView :is(.admin-system-card,.admin-status-group,.admin-person-permissions,.admin-permission-row,.compact-permission-box){border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important}
+.executive-shell #adminView :is(.admin-system-card,.admin-status-group)>summary{padding:8px 0!important;min-height:40px!important;gap:10px!important}
+.executive-shell #adminView .admin-person-permissions{border-bottom:1px solid #ffffff12!important;margin:0!important}
+.executive-shell #adminView .admin-person-permissions>summary{padding:7px 0!important;min-height:40px!important;gap:10px!important}
+.executive-shell #adminView .admin-person-permission-body{padding:8px 10px!important}
+.executive-shell #adminView .admin-person-identity{gap:2px!important}
+.executive-shell #adminView .admin-permission-row-summary{padding:7px 0!important;min-height:38px!important;gap:10px!important}
+.executive-shell #adminView .admin-status-list{padding:0!important;gap:0!important}
+.executive-shell #adminView .admin-accordion-head{padding:8px 0!important;min-height:48px!important;gap:12px!important}
+.executive-shell #adminView .admin-accordion-head h3{margin:3px 0!important}
+.executive-shell #adminView .admin-summary-chips{margin-top:3px!important;gap:8px!important}
+.executive-shell #adminView :is(.admin-accordion-body,.admin-system-body){padding:4px 0 10px!important}
+.executive-shell #adminView .admin-compact-section{margin:0!important}
+.executive-shell #adminView .admin-compact-section>summary{padding:7px 0!important;min-height:38px!important}
+.executive-shell #adminView .compact-section-body{padding:6px 0!important}
+.executive-shell #adminView .admin-access-note{padding:6px 0!important;margin:6px 0!important}
+.executive-shell #adminView :is(.permission-row,.admin-person-row){padding:6px 0!important;gap:10px!important}
+.executive-shell #adminView .compact-permission-box{padding:8px 0!important}
+.executive-shell #adminView .compact-add-row{margin-top:6px!important;gap:8px!important}
+.executive-shell #adminView .admin-card-actions{padding:8px 0!important;margin-top:6px!important;gap:8px!important}
+@media(min-width:900px){.executive-shell .app-nav{left:240px!important;top:10px!important}.executive-shell .hero-header{min-height:64px!important}.executive-map-view #mapCanvasWrap{height:calc(100dvh - 84px)!important}}
+@media(max-width:600px){.executive-shell .view-switch button,.executive-shell .view-switch a{padding:9px!important}.executive-shell #formCards .form-card{padding:6px 0!important}.executive-shell #resultsView .kpis{gap:10px!important}.executive-shell #adminView .compact-add-row{grid-template-columns:minmax(0,1fr) auto!important}.executive-shell #adminView .admin-head{flex-wrap:wrap}}
