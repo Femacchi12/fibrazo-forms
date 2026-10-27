@@ -207,3 +207,43 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
  .executive-shell #adminView .admin-summary-chips{padding-left:34px}
 }
 @media(prefers-reduced-motion:reduce){.executive-shell #formCards .form-card{transition:none!important}}
+
+/* MAP-113: compact account hierarchy and point metadata. Blue is the requested GPS cue only. */
+.user-menu-card{width:min(300px,calc(100vw - 24px));padding:16px;gap:10px;border-color:#ffffff24;background:#151918;box-shadow:0 12px 32px #0008}
+.user-menu-card>strong{font-size:13px;color:#f7faf8;letter-spacing:.01em}
+.user-menu-card .auth-session:not([hidden]){display:grid!important;grid-template-columns:minmax(0,1fr) auto;gap:10px!important;align-items:center;margin:0!important}
+.user-menu-card #signedInEmail{grid-column:1/-1;font-size:12px!important;color:#f7faf8;line-height:1.4}
+.user-menu-card .update-cards{grid-column:1/-1;gap:14px!important;padding:10px 0!important;margin:0!important;border-block:1px solid #ffffff14}
+.user-menu-card .update-cards article{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.user-menu-card .update-cards span{font-size:10px!important;color:#BBC1BE}
+.user-menu-card .update-cards b{font-size:11px!important;line-height:1.3;margin:0!important}
+.user-menu-card #networkToggle,.user-menu-card #signOutButton{min-height:36px!important;padding:7px 9px!important;font-size:11px!important;background:transparent!important;border:1px solid #ffffff26!important;border-radius:7px}
+.user-menu-card #networkLabel{display:inline!important}
+.user-menu-card .pending-toggle{padding:9px 0 0!important;min-height:32px!important;border-top:1px solid #ffffff14!important;gap:8px!important}
+.user-menu-card .pending-emoji{font-size:13px!important}
+.user-menu-card .pending-label{font-size:11px!important;font-weight:500!important}
+.user-menu-card .pending-count{font-size:10px!important;min-width:18px!important;min-height:18px!important;width:auto!important;height:auto!important;padding:2px 5px!important}
+#mapCanvasWrap #mapLocateMe{color:#d3dad6!important;display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px}
+#mapCanvasWrap #mapLocateMe:hover{background:#242b27!important;border-color:#43ffa566}
+#mapCanvasWrap #mapLocateMe .location-target-icon{flex:none;pointer-events:none}
+#mapCanvasWrap .map-popup{gap:0!important}
+#mapCanvasWrap .map-detail-heading{gap:9px;padding:0 28px 9px 0!important;margin-bottom:7px!important}
+#mapCanvasWrap .map-detail-heading>span{flex-basis:32px;height:32px;font-size:23px}
+#mapCanvasWrap .map-detail-heading strong{font-size:15px;line-height:1.3}
+#mapCanvasWrap .map-detail-heading small{font-size:10px;margin-top:2px}
+#mapCanvasWrap .map-popup-head{padding-bottom:6px!important;margin:0 0 6px!important;gap:2px}
+#mapCanvasWrap .map-popup .map-popup-row{grid-template-columns:78px minmax(0,1fr)!important;gap:8px!important;padding:3px 0!important;align-items:baseline;min-height:0!important}
+#mapCanvasWrap .map-popup .map-popup-row b{font-size:11px!important;line-height:1.35;color:#BBC1BE}
+#mapCanvasWrap .map-popup .map-popup-row>span{font-size:12px!important;line-height:1.35!important}
+#mapCanvasWrap .map-popup .map-operators{margin-top:8px;padding-top:9px}
+#mapCanvasWrap .map-popup .map-operators h3{font-size:13px;margin:0 0 7px}
+#mapCanvasWrap .map-popup .map-operators ul{gap:7px}
+#mapCanvasWrap .map-popup .map-operator-row{grid-template-columns:78px minmax(0,1fr)!important;gap:8px!important}
+#mapCanvasWrap .map-popup .map-operator-category{font-size:11px}
+#mapCanvasWrap .map-popup .map-operator-note{font-size:11px;line-height:1.3;margin-top:3px}
+#mapCanvasWrap .territorial-point-popup .leaflet-popup-content{width:min(360px,calc(100vw - 66px))!important;margin:14px!important;max-height:min(62dvh,560px,calc(100dvh - 180px))!important;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#777e79 #202622}
+#mapCanvasWrap .territorial-point-popup .leaflet-popup-content::-webkit-scrollbar{width:8px}
+#mapCanvasWrap .territorial-point-popup .leaflet-popup-content::-webkit-scrollbar-thumb{background:#777e79;border:2px solid #202622;border-radius:8px}
+#mapCanvasWrap .territorial-point-popup .leaflet-popup-content::-webkit-scrollbar-track{background:#202622}
+#mapCanvasWrap .territorial-point-popup .leaflet-popup-close-button{width:36px;height:36px;line-height:36px;font-size:22px}
+@media(max-width:600px){#mapCanvasWrap .map-popup .map-popup-row,#mapCanvasWrap .map-popup .map-operator-row{grid-template-columns:70px minmax(0,1fr)!important}#mapCanvasWrap .territorial-point-popup .leaflet-popup-close-button{width:44px;height:44px;line-height:44px}#mapCanvasWrap .map-detail-heading{padding-right:36px!important}}

@@ -622,6 +622,7 @@
     if(!container||container.dataset.longPressReady==="1")return;
     container.dataset.longPressReady="1";
     const activePointers=new Set();
+    const insideMapUi=target=>!!target?.closest?.(".leaflet-popup,.leaflet-control,.leaflet-tooltip,.map-search-dock,.map-tools-dock");
     let timer=null,start=null,pointerId=null;
 
     const cancel=()=>{
@@ -629,7 +630,7 @@
       start=null;pointerId=null;
     };
     container.addEventListener("pointerdown",event=>{
-      if(event.target.closest(".leaflet-control"))return;
+      if(event.button!==0||insideMapUi(event.target))return;
       activePointers.add(event.pointerId);
       if(activePointers.size>1){cancel();return;}
       pointerId=event.pointerId;
@@ -652,11 +653,21 @@
     container.addEventListener("pointercancel",release,{passive:true});
     container.addEventListener("pointerleave",event=>{if(event.pointerType==="mouse")release(event);},{passive:true});
     container.addEventListener("contextmenu",event=>{
-      if(event.target.closest(".leaflet-control"))return;
+      if(insideMapUi(event.target))return;
       event.preventDefault();
       const rect=container.getBoundingClientRect();
       const latlng=state.map.containerPointToLatLng([event.clientX-rect.left,event.clientY-rect.top]);
       openCoordinateSheet(latlng);
+    });
+    // Popup scrollbars, links and gestures belong to the popup, not the map below.
+    state.map.on("popupopen",event=>{
+      cancel();activePointers.clear();
+      const root=event.popup?.getElement?.();
+      if(!root||root.dataset.gestureBoundary==="1")return;
+      root.dataset.gestureBoundary="1";
+      L.DomEvent.disableClickPropagation(root);
+      L.DomEvent.disableScrollPropagation(root);
+      ["pointerdown","pointerup","pointercancel"].forEach(type=>root.addEventListener(type,event=>event.stopPropagation()));
     });
   }
 

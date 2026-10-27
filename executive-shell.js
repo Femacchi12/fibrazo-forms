@@ -11,8 +11,8 @@
     summary.append(avatar,document.createTextNode('⌄'));menu.append(summary);
     const card=document.createElement('div');card.className='user-menu-card';
     const title=document.createElement('strong');title.textContent='Mi cuenta';card.append(title);
-    const metrics=document.querySelector('.update-cards');if(metrics)card.append(metrics);
-    card.append(session);const pending=document.querySelector('.pending-hub');if(pending)card.append(pending);
+    const metrics=document.querySelector('.update-cards');
+    card.append(session);if(metrics)session.insertBefore(metrics,session.querySelector('.network-hub'));const pending=document.querySelector('.pending-hub');if(pending)card.append(pending);
     menu.append(card);header.append(menu);
     const email=$('signedInEmail');const update=()=>{avatar.textContent=(email?.textContent.trim()[0]||'F').toUpperCase();summary.title=email?.textContent||'Mi cuenta';};
     if(email)new MutationObserver(update).observe(email,{childList:true,subtree:true,characterData:true});update();
