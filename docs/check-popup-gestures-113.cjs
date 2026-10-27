@@ -1,0 +1,22 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const source=fs.readFileSync(require.resolve('../map-v01.js'),'utf8');
+const code=source.slice(source.indexOf('  function installLongPressSelection(){'),source.indexOf('  function statusLine('));
+const listeners={},mapEvents={},timers=new Map(),sheets=[];let next=1;
+const container={dataset:{},addEventListener:(type,fn)=>listeners[type]=fn,getBoundingClientRect:()=>({left:0,top:0})};
+const domCalls=[];
+const context={$:()=>container,state:{map:{on:(name,fn)=>mapEvents[name]=fn,containerPointToLatLng:p=>p}},L:{DomEvent:{disableClickPropagation:r=>domCalls.push(['click',r]),disableScrollPropagation:r=>domCalls.push(['scroll',r])}},navigator:{vibrate(){}},openCoordinateSheet:p=>sheets.push(p),setTimeout:fn=>{const id=next++;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id)};
+vm.runInNewContext(code+'installLongPressSelection();',context);
+const event=(ui=false,extra={})=>({target:{closest:selector=>ui?{}:null},pointerId:1,button:0,clientX:20,clientY:30,preventDefault(){this.prevented=true;},...extra});
+listeners.pointerdown(event(true));assert.equal(timers.size,0,'Popup scrollbar/UI must never begin coordinate long press');
+const menu=event(true);listeners.contextmenu(menu);assert.equal(sheets.length,0);assert(!menu.prevented,'Text context menu is not replaced with coordinate actions');
+listeners.pointerdown(event(false,{button:2}));assert.equal(timers.size,0,'Right mouse button must not start duplicate long press');
+listeners.pointerdown(event());assert.equal(timers.size,1);listeners.pointermove(event(false,{clientX:60}));assert.equal(timers.size,0);listeners.pointerup(event());
+listeners.pointerdown(event());const run=[...timers.values()][0];run();assert.equal(sheets.length,1,'Long press on map background remains available');listeners.pointerup(event());
+const bgMenu=event();listeners.contextmenu(bgMenu);assert(bgMenu.prevented);assert.equal(sheets.length,2,'Background right click remains available');
+listeners.pointerdown(event());const popupListeners={},root={dataset:{},addEventListener:(name,fn)=>popupListeners[name]=fn};
+mapEvents.popupopen({popup:{getElement:()=>root}});assert.equal(timers.size,0,'Opening a popup cancels any pending map gesture');assert.equal(domCalls.length,2);
+for(const name of ['pointerdown','pointerup','pointercancel']){let stopped=false;popupListeners[name]({stopPropagation(){stopped=true;}});assert(stopped);}
+mapEvents.popupopen({popup:{getElement:()=>root}});assert.equal(domCalls.length,2,'Reopening the same popup does not duplicate handlers');
+listeners.pointerdown(event());assert.equal(timers.size,1,'Popup opening cleared stale pointer state');listeners.pointercancel(event());assert.equal(timers.size,0);
+listeners.pointerdown(event());listeners.pointerdown(event(false,{pointerId:2}));assert.equal(timers.size,0,'Multitouch cancels coordinate selection');listeners.pointerup(event());listeners.pointerup(event(false,{pointerId:2}));
+console.log('PASS113: real gesture handler excludes popup/UI, isolates pointer/click/scroll, cancels stale timers, preserves map context/long-press and multi-touch cancellation.');

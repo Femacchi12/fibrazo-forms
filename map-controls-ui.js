@@ -416,7 +416,7 @@
     }
     if(canvas&&locate&&route){
       const dock=document.createElement("div");dock.className="map-tools-dock";
-      locate.textContent="⊙";locate.className="map-dock-icon";locate.setAttribute("aria-label","Mi ubicación");locate.title="Mi ubicación";
+      locate.innerHTML='<svg class="location-target-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 1v3m0 16v3M1 12h3m16 0h3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="12" r="4" fill="#3B82F6"/></svg>';locate.className="map-dock-icon";locate.setAttribute("aria-label","Mi ubicación");locate.title="Mi ubicación";
       const more=document.createElement("details");more.className="map-route-disclosure";
       const summary=document.createElement("summary");summary.textContent="⋮";summary.setAttribute("aria-label","Controles de recorrido");summary.title="Controles de recorrido";
       more.append(summary,route);

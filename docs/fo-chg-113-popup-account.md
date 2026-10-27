@@ -1,0 +1,9 @@
+# FO-CHG-113 — Cuenta, ubicación y aislamiento de gestos
+
+Versión 0.8.166. Base d9d2d586714da6c1c424bf95ca0da71b3605d3aa; reversión 0.8.165 / e1a2073cddb1a8c109ef8531c3ec04bea0b04b7b / dpl_33h3io78ZREmCa9y6he3WSKHvPy4.
+
+Mi cuenta: correo, métricas en línea, estado/salida y pendientes con jerarquía compacta. Se mueven los nodos originales sin duplicar ID ni eventos. Ubicación: diana con punto azul (indicación GPS solicitada por Edu), etiqueta accesible original y mismo evento/GPS. Paleta institucional general intacta. Popup: elimina gap entre filas, columnas de etiqueta cortas y datos más próximos, tipografía legible, scroll propio.
+
+Causa del bug: installLongPressSelection excluía controles pero no .leaflet-popup; presionar barra de scroll disparaba temporizador 720 ms y acciones de coordenada. Corrección: guardia para UI/popups, solo botón primario en long press; al abrir popup se cancela gesto pendiente y se aísla propagación click/scroll/pointer. Contexto y long press sobre fondo se conservan. No cambia datos, APIs, permisos, sincronización, geolocalización ni reglas territoriales. QA, pruebas y publicación se documentan al verificarse.
+
+Pruebas previas aprobadas: suite Forms completa y test real de gestos check-popup-gestures-113.cjs incorporado al comando; 191 IDs únicos conservados; sintaxis y diff. Preview 5bd3f8ee4c6c280f4ca279bb472e9b1e8c6f4bda / dpl_GdbzAeDz6e5CFr3N8qwxXVeECrsn READY. Escritorio: menú cuenta reordenado, diana azul, metadatos ~22 px por fila (360 px ancho). Mantener 1,1 s dentro del popup conserva 1 popup / 0 sheets. Móvil 390×844: contenido 314 px, viewport scroll 523 px y contenido 544 px; mantener 1,1 s sobre barra real conserva 1 popup / 0 sheets. El mapa del fixture usa datos/GPS sintéticos y APIs interceptadas, no sesión real ni GPS físico. No se afirma validación de portapapeles del navegador. Fixture excluida de producción.
