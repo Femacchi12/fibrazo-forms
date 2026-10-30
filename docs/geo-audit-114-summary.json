@@ -1,0 +1,549 @@
+{
+  "date": "2026-10-30",
+  "barrios": [
+    {
+      "city": "BUC_AMB",
+      "count": 641,
+      "points": 34358,
+      "missing": [],
+      "invalid": [],
+      "bboxDiff": [],
+      "maxBBoxMeters": 8.601865886248561e-09
+    },
+    {
+      "city": "CTG",
+      "count": 405,
+      "points": 24998,
+      "missing": [],
+      "invalid": [],
+      "bboxDiff": [
+        {
+          "row": 186,
+          "meters": 18.217623219724572
+        }
+      ],
+      "maxBBoxMeters": 18.217623219724572
+    },
+    {
+      "city": "BAQ",
+      "count": 91,
+      "points": 9165,
+      "missing": [],
+      "invalid": [],
+      "bboxDiff": [],
+      "maxBBoxMeters": 0.000552836976908111
+    },
+    {
+      "city": "SMR",
+      "count": 162,
+      "points": 3222,
+      "missing": [],
+      "invalid": [],
+      "bboxDiff": [],
+      "maxBBoxMeters": 0.0005547056581178822
+    },
+    {
+      "city": "MTR",
+      "count": 207,
+      "points": 6479,
+      "missing": [],
+      "invalid": [],
+      "bboxDiff": [],
+      "maxBBoxMeters": 0.0005553898525079148
+    },
+    {
+      "city": "SCL",
+      "count": 196,
+      "points": 6351,
+      "missing": [],
+      "invalid": [],
+      "bboxDiff": [],
+      "maxBBoxMeters": 0.0005564991965911759
+    },
+    {
+      "city": "TRB",
+      "count": 162,
+      "points": 5591,
+      "missing": [],
+      "invalid": [],
+      "bboxDiff": [],
+      "maxBBoxMeters": 0
+    },
+    {
+      "city": "NVA",
+      "count": 261,
+      "points": 3822,
+      "missing": [],
+      "invalid": [],
+      "bboxDiff": [],
+      "maxBBoxMeters": 0
+    },
+    {
+      "city": "VVC",
+      "count": 554,
+      "points": 18270,
+      "missing": [],
+      "invalid": [],
+      "bboxDiff": [],
+      "maxBBoxMeters": 0
+    },
+    {
+      "city": "IBG",
+      "count": 913,
+      "points": 17207,
+      "missing": [],
+      "invalid": [],
+      "bboxDiff": [],
+      "maxBBoxMeters": 0
+    }
+  ],
+  "readback": [
+    {
+      "city": "IBG",
+      "verified": 6
+    },
+    {
+      "city": "VVC",
+      "verified": 43
+    },
+    {
+      "city": "BUC_AMB",
+      "verified": 1
+    },
+    {
+      "city": "SMR",
+      "verified": 1
+    },
+    {
+      "city": "NVA",
+      "verified": 2
+    },
+    {
+      "city": "CTG",
+      "verified": 1
+    }
+  ],
+  "barriosTopologyBefore": [
+    {
+      "city": "BUC_AMB",
+      "features": 641,
+      "invalid": [
+        {
+          "row": 441,
+          "reason": "Hole lies outside shell[-73.090271912 7.062873444]"
+        },
+        {
+          "row": 582,
+          "reason": "Ring Self-intersection[-73.05467926 6.98900991]"
+        }
+      ]
+    },
+    {
+      "city": "CTG",
+      "features": 405,
+      "invalid": [
+        {
+          "row": 186,
+          "reason": "Self-intersection[-75.5018611982942 10.3572106598981]"
+        }
+      ]
+    },
+    {
+      "city": "BAQ",
+      "features": 91,
+      "invalid": []
+    },
+    {
+      "city": "SMR",
+      "features": 162,
+      "invalid": [
+        {
+          "row": 55,
+          "reason": "Self-intersection[-74.1943732711201 11.2455623743013]"
+        }
+      ]
+    },
+    {
+      "city": "MTR",
+      "features": 207,
+      "invalid": []
+    },
+    {
+      "city": "SCL",
+      "features": 196,
+      "invalid": []
+    },
+    {
+      "city": "TRB",
+      "features": 162,
+      "invalid": []
+    },
+    {
+      "city": "NVA",
+      "features": 261,
+      "invalid": [
+        {
+          "row": 29,
+          "reason": "Self-intersection[-75.2876095454545 2.94738418181818]"
+        },
+        {
+          "row": 98,
+          "reason": "Self-intersection[-75.270976 2.930424]"
+        }
+      ]
+    },
+    {
+      "city": "VVC",
+      "features": 554,
+      "invalid": [
+        {
+          "row": 110,
+          "reason": "Ring Self-intersection[-73.642338 4.163766]"
+        },
+        {
+          "row": 133,
+          "reason": "Self-intersection[-73.670667 4.084444]"
+        },
+        {
+          "row": 138,
+          "reason": "Self-intersection[-73.611747 4.127105]"
+        },
+        {
+          "row": 152,
+          "reason": "Self-intersection[-73.62692 4.12383]"
+        },
+        {
+          "row": 170,
+          "reason": "Self-intersection[-73.608061 4.148159]"
+        },
+        {
+          "row": 173,
+          "reason": "Self-intersection[-73.646088 4.102395]"
+        },
+        {
+          "row": 180,
+          "reason": "Self-intersection[-73.631164 4.156902]"
+        },
+        {
+          "row": 184,
+          "reason": "Self-intersection[-73.646008 4.159368]"
+        },
+        {
+          "row": 186,
+          "reason": "Self-intersection[-73.631954 4.129856]"
+        },
+        {
+          "row": 194,
+          "reason": "Self-intersection[-73.618086 4.153489]"
+        },
+        {
+          "row": 407,
+          "reason": "Self-intersection[-73.585811 4.136255]"
+        },
+        {
+          "row": 468,
+          "reason": "Self-intersection[-73.6494913787177 4.10050281954934]"
+        },
+        {
+          "row": 476,
+          "reason": "Self-intersection[-73.608439 4.144764]"
+        },
+        {
+          "row": 481,
+          "reason": "Self-intersection[-73.634862 4.142506]"
+        },
+        {
+          "row": 482,
+          "reason": "Self-intersection[-73.62398 4.142739]"
+        },
+        {
+          "row": 502,
+          "reason": "Self-intersection[-73.642942 4.158911]"
+        },
+        {
+          "row": 512,
+          "reason": "Self-intersection[-73.624887 4.14805]"
+        },
+        {
+          "row": 524,
+          "reason": "Self-intersection[-73.652874 4.104579]"
+        },
+        {
+          "row": 532,
+          "reason": "Self-intersection[-73.607933 4.133482]"
+        },
+        {
+          "row": 533,
+          "reason": "Self-intersection[-73.631177 4.155004]"
+        },
+        {
+          "row": 541,
+          "reason": "Self-intersection[-73.605214 4.136667]"
+        },
+        {
+          "row": 203,
+          "reason": "Self-intersection[-73.599346 4.113625]"
+        },
+        {
+          "row": 225,
+          "reason": "Self-intersection[-73.643929 4.146796]"
+        },
+        {
+          "row": 231,
+          "reason": "Self-intersection[-73.622875 4.104774]"
+        },
+        {
+          "row": 235,
+          "reason": "Self-intersection[-73.653478 4.161697]"
+        },
+        {
+          "row": 236,
+          "reason": "Self-intersection[-73.585934 4.113339]"
+        },
+        {
+          "row": 251,
+          "reason": "Self-intersection[-73.6094321568628 4.15381852941251]"
+        },
+        {
+          "row": 254,
+          "reason": "Self-intersection[-73.61525 4.152649]"
+        },
+        {
+          "row": 3,
+          "reason": "Self-intersection[-73.589443 4.120128]"
+        },
+        {
+          "row": 8,
+          "reason": "Self-intersection[-73.622024 4.120075]"
+        },
+        {
+          "row": 12,
+          "reason": "Self-intersection[-73.6512281334662 4.16401097908364]"
+        },
+        {
+          "row": 33,
+          "reason": "Self-intersection[-73.64933 4.142851]"
+        },
+        {
+          "row": 46,
+          "reason": "Self-intersection[-73.641442 4.146257]"
+        },
+        {
+          "row": 49,
+          "reason": "Self-intersection[-73.618861 4.134472]"
+        },
+        {
+          "row": 305,
+          "reason": "Self-intersection[-73.609524 4.138484]"
+        },
+        {
+          "row": 309,
+          "reason": "Self-intersection[-73.650593 4.161675]"
+        },
+        {
+          "row": 350,
+          "reason": "Self-intersection[-73.631626 4.143273]"
+        },
+        {
+          "row": 362,
+          "reason": "Self-intersection[-73.622897 4.129361]"
+        },
+        {
+          "row": 374,
+          "reason": "Self-intersection[-73.610638 4.143825]"
+        },
+        {
+          "row": 377,
+          "reason": "Self-intersection[-73.542428 4.124046]"
+        },
+        {
+          "row": 389,
+          "reason": "Self-intersection[-73.648908 4.103573]"
+        },
+        {
+          "row": 390,
+          "reason": "Self-intersection[-73.590874 4.135563]"
+        },
+        {
+          "row": 399,
+          "reason": "Self-intersection[-73.58732 4.113099]"
+        }
+      ]
+    },
+    {
+      "city": "IBG",
+      "features": 913,
+      "invalid": [
+        {
+          "row": 524,
+          "reason": "Self-intersection[-75.215247 4.43155]"
+        },
+        {
+          "row": 584,
+          "reason": "Self-intersection[-75.191462 4.42666]"
+        },
+        {
+          "row": 200,
+          "reason": "Self-intersection[-75.141301 4.392015]"
+        },
+        {
+          "row": 455,
+          "reason": "Self-intersection[-75.1948977700963 4.4377114978513]"
+        },
+        {
+          "row": 72,
+          "reason": "Self-intersection[-75.2383857153999 4.45170227065124]"
+        },
+        {
+          "row": 75,
+          "reason": "Self-intersection[-75.195257 4.425611]"
+        },
+        {
+          "row": 278,
+          "reason": "Self-intersection[-75.193113 4.452942]"
+        }
+      ]
+    }
+  ],
+  "barriosTopologyAfter": [
+    {
+      "city": "BUC_AMB",
+      "invalidRemaining": [
+        {
+          "row": 441,
+          "reason": "Hole lies outside shell[-73.090271912 7.062873444]"
+        }
+      ]
+    },
+    {
+      "city": "CTG",
+      "invalidRemaining": []
+    },
+    {
+      "city": "BAQ",
+      "invalidRemaining": []
+    },
+    {
+      "city": "SMR",
+      "invalidRemaining": []
+    },
+    {
+      "city": "MTR",
+      "invalidRemaining": []
+    },
+    {
+      "city": "SCL",
+      "invalidRemaining": []
+    },
+    {
+      "city": "TRB",
+      "invalidRemaining": []
+    },
+    {
+      "city": "NVA",
+      "invalidRemaining": []
+    },
+    {
+      "city": "VVC",
+      "invalidRemaining": []
+    },
+    {
+      "city": "IBG",
+      "invalidRemaining": [
+        {
+          "row": 72,
+          "reason": "Self-intersection[-75.2383857153999 4.45170227065124]"
+        }
+      ]
+    }
+  ],
+  "strata": [
+    {
+      "source": "MONTERIA/estratos_unificados.geojson",
+      "features": 6,
+      "invalid": []
+    },
+    {
+      "source": "SINCELEJO/estratos_unificados.geojson",
+      "features": 6,
+      "invalid": []
+    },
+    {
+      "source": "AMB/bucaramanga/full.geojson",
+      "features": 6,
+      "invalid": []
+    },
+    {
+      "source": "AMB/floridablanca/full.geojson",
+      "features": 6,
+      "invalid": []
+    },
+    {
+      "source": "AMB/giron/full.geojson",
+      "features": 4,
+      "invalid": []
+    },
+    {
+      "source": "AMB/piedecuesta/full.geojson",
+      "features": 5,
+      "invalid": []
+    },
+    {
+      "source": "BARRANQUILLA/estratos_unificados.geojson",
+      "features": 6,
+      "invalid": []
+    },
+    {
+      "source": "SANTAMARTA/estratos_unificados.geojson",
+      "features": 6,
+      "invalid": []
+    },
+    {
+      "source": "TURBACO/estratos_unificados.geojson",
+      "features": 4,
+      "invalid": []
+    },
+    {
+      "source": "IBAGUE/IBAGUE_estratos_unificados.geojson",
+      "features": 3,
+      "invalid": []
+    },
+    {
+      "source": "NEIVA/NEIVA_estratos_unificados.geojson",
+      "features": 3,
+      "invalid": []
+    },
+    {
+      "source": "VILLAVICENCIO/VILLAVICENCIO_estratos_unificados.geojson",
+      "features": 3,
+      "invalid": []
+    },
+    {
+      "source": "CARTAGENA/CARTAGENA_estratos_unificados_historicos_2022.geojson",
+      "features": 6,
+      "invalid": []
+    }
+  ],
+  "archives": [
+    {
+      "file": "audit-CENSUS.zip",
+      "sha256": "597c9861a0f56143efbf8cce3043a79e5e9290705104cc4c16dd0bb905c79f0c"
+    },
+    {
+      "file": "audit-AMB.zip",
+      "sha256": "7288b2cc7ca6ad7420a3bc124d27172e866003741a2abf2443e409c5aec4b5e7"
+    },
+    {
+      "file": "audit-CARIBE.zip",
+      "sha256": "626a81f74fac0d2bdc12d09e06da7924043ff10c7eebe2517971d68d6412a571"
+    },
+    {
+      "file": "audit-KMZ.zip",
+      "sha256": "423a9ffc4e7c859b74029d1c96f530a12c8bfaa729b190acbafca54ccdedf554"
+    },
+    {
+      "file": "ctg-audit.zip",
+      "sha256": "2506d0f5e3fb99288f81b51273d9fd77dfcfd0ac03e8d1688b3a9eb60bbfa487"
+    }
+  ]
+}

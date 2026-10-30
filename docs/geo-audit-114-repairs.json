@@ -1,6 +1,6 @@
 {
   "date": "2026-10-30",
-  "status": "PREPARED_NOT_APPLIED",
+  "status": "APPLIED_54_VERIFIED_2_HELD",
   "method": "Shapely 2.2.0 make_valid(structure, keep_collapsed=False); no translation/buffering; exclude abs signed-area delta >=0.1%; face classification mismatch area <1e-16 degree²",
   "rows": [
     {
@@ -1347,5 +1347,6 @@
       "sheet": "02_BARRIOS",
       "range": "O186"
     }
-  ]
+  ],
+  "verification": "All 54 cells read back equal to newWkt with GEO-114 audit note; no other fields written. Existing records not recalculated."
 }
