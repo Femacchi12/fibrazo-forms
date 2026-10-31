@@ -1,4 +1,4 @@
-/* MAP-109 — institutional green, neutral surfaces, Montserrat / Poppins unchanged. */
+/* MAP-109 / VIS-115 — institutional green, achromatic surfaces, Montserrat / Poppins unchanged. */
 body.executive-shell main{max-width:none!important;width:100%!important;box-sizing:border-box;margin:0!important;padding:0 24px 20px!important}
 .executive-shell .hero-header{display:flex;align-items:center;justify-content:space-between;min-height:64px!important;padding:10px 0!important;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;overflow:visible!important}
 .executive-shell .hero-copy h1,.executive-shell .hero-copy>p{display:none}
@@ -9,11 +9,11 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 .executive-shell .view-switch{display:flex;flex-wrap:wrap;gap:6px;width:auto}
 .executive-shell .view-switch button,.executive-shell .view-switch a{width:auto;min-height:44px;padding:12px 17px;border:0;border-radius:0;background:transparent;box-shadow:none;text-decoration:none;color:var(--brand-muted,#BBC1BE);font:600 13px Montserrat,system-ui,sans-serif}
 .executive-shell .view-switch button,.executive-shell .view-switch a{flex:0 0 auto!important;white-space:nowrap;word-break:normal}
-.executive-shell .view-switch button.active{color:var(--brand-primary,#43FFA5);border-bottom:2px solid var(--brand-primary,#43FFA5);background:rgba(67,255,165,.06)}
+.executive-shell .view-switch button.active{color:var(--brand-primary,#43FFA5);border-bottom:2px solid var(--brand-primary,#43FFA5);background:#202020}
 .user-menu{position:relative;z-index:1100;font-family:Montserrat,system-ui,sans-serif}
 .user-menu>summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;min-height:44px;color:#BBC1BE}
 .user-menu>summary::-webkit-details-marker{display:none}
-.user-avatar{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:#202923;color:#43FFA5;border:1px solid #58595B;font-weight:700}
+.user-avatar{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:#242424;color:#43FFA5;border:1px solid #58595B;font-weight:700}
 .user-menu-card{position:absolute;right:0;top:52px;width:min(340px,calc(100vw - 24px));padding:20px;display:grid;gap:16px;background:#151515;border:1px solid #58595B;border-radius:14px;box-shadow:0 16px 40px #0009}
 .user-menu-card .update-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0;width:100%}
 .user-menu-card .update-cards article{padding:10px;border:0;border-radius:6px;min-width:0}
@@ -32,18 +32,18 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 #mapCanvasWrap .map-point-shape:not(.shape-test){border:1.5px solid #fff!important;box-shadow:0 1px 3px #0008!important;filter:none!important}
 #mapCanvasWrap #mapFullscreen{display:none!important}
 #mapCanvasWrap .map-quick-actions{top:12px!important;right:58px!important;gap:8px;max-width:calc(100% - 126px);flex-wrap:wrap;justify-content:flex-end}
-#mapCanvasWrap .map-quick-actions button{min-height:42px;border:1px solid #58595B;border-radius:9px;background:#181c1a;box-shadow:none;font:600 12px Montserrat,system-ui,sans-serif}
+#mapCanvasWrap .map-quick-actions button{min-height:42px;border:1px solid #58595B;border-radius:9px;background:#242424;box-shadow:none;font:600 12px Montserrat,system-ui,sans-serif}
 #mapCanvasWrap #mapOnlyView,#mapCanvasWrap #mapShareOnly{color:#43FFA5;border-color:#58595B}
 #mapCanvasWrap .map-floating-handle{display:flex;align-items:center;gap:10px;padding:10px!important;min-height:48px}
 #mapCanvasWrap #mapFloatingOpen{order:-1;width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;border:0;box-shadow:none;background:transparent;color:#43FFA5;font-size:24px}
-#mapCanvasWrap .map-floating-tools{left:0!important;top:0!important;border:1px solid #58595B!important;box-shadow:none!important;background:#151918!important;border-radius:10px!important}
+#mapCanvasWrap .map-floating-tools{left:0!important;top:0!important;border:1px solid #58595B!important;box-shadow:none!important;background:#181818!important;border-radius:10px!important}
 #mapCanvasWrap .map-floating-tools.is-collapsed{border:0!important;background:transparent!important}
 #mapCanvasWrap .map-search-dock{top:12px!important;left:76px!important}
-#mapCanvasWrap .map-search-dock .map-dock-icon{width:42px;height:42px;border:1px solid #58595B;border-radius:9px;box-shadow:none;background:#181c1a}
-#mapCanvasWrap .map-search-shell{background:#151918;border:1px solid #58595B;border-radius:10px;padding:8px}
+#mapCanvasWrap .map-search-dock .map-dock-icon{width:42px;height:42px;border:1px solid #58595B;border-radius:9px;box-shadow:none;background:#242424}
+#mapCanvasWrap .map-search-shell{background:#181818;border:1px solid #58595B;border-radius:10px;padding:8px}
 #mapCanvasWrap .map-search-shell input{border:0;background:transparent;color:#f7faf8;font-family:Montserrat,system-ui,sans-serif}
 #mapCanvasWrap .map-detail-heading{display:flex;align-items:center;gap:12px;padding:0 22px 16px 0;margin-bottom:12px;border-bottom:1px solid #58595B}
-#mapCanvasWrap .map-detail-heading>span{display:grid;place-items:center;flex:0 0 42px;height:42px;border-radius:50%;background:#20352b;color:#43FFA5;font-size:28px}
+#mapCanvasWrap .map-detail-heading>span{display:grid;place-items:center;flex:0 0 42px;height:42px;border-radius:50%;background:#282828;color:#43FFA5;font-size:28px}
 #mapCanvasWrap .map-detail-heading>span{color:#43FFA5!important}
 #mapCanvasWrap .territorial-point-popup .leaflet-popup-content{width:min(420px,calc(100vw - 66px))!important;font-size:13px}
 #mapCanvasWrap .map-popup .map-popup-row b{font-size:12px}
@@ -113,7 +113,7 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 .executive-shell #formCards .form-card-title{grid-column:1;grid-row:1;align-self:center}
 .executive-shell #formCards .form-open-button{grid-column:2;grid-row:1}
 .executive-shell #formCards .form-card-details,.executive-shell #formCards .form-card-details[open]{display:contents!important}
-.executive-shell #formCards .form-card-details summary{grid-column:3;grid-row:1;box-sizing:border-box;justify-content:center;gap:8px;width:124px;min-height:36px!important;padding:6px 10px!important;border:1px solid #58595B;border-radius:6px;background:#181c1a;font:600 12px Montserrat,system-ui,sans-serif!important;white-space:nowrap}
+.executive-shell #formCards .form-card-details summary{grid-column:3;grid-row:1;box-sizing:border-box;justify-content:center;gap:8px;width:124px;min-height:36px!important;padding:6px 10px!important;border:1px solid #58595B;border-radius:6px;background:#242424;font:600 12px Montserrat,system-ui,sans-serif!important;white-space:nowrap}
 .executive-shell #formCards .form-card-details:not([open])>.form-card-details-body{display:none!important}
 .executive-shell #formCards .form-card-details[open]>.form-card-details-body{display:grid!important;grid-column:1/-1;grid-row:2;padding:14px 0!important;min-width:0}
 @media(max-width:480px){.executive-shell #formCards .form-card{column-gap:6px!important}.executive-shell #formCards .form-card-details summary{width:104px;padding:6px!important;font-size:10px!important}.executive-shell #formCards .form-card-title{font-size:12px!important}}
@@ -168,7 +168,7 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 @media(max-width:600px){.executive-shell .view-switch button,.executive-shell .view-switch a{padding:9px!important}.executive-shell #formCards .form-card{padding:6px 0!important}.executive-shell #resultsView .kpis{gap:10px!important}.executive-shell #adminView .compact-add-row{grid-template-columns:minmax(0,1fr) auto!important}.executive-shell #adminView .admin-head{flex-wrap:wrap}}
 
 /* MAP-112: one coherent card family. Identity is conveyed by icon, grouping and state. */
-.executive-shell{--ui-card-bg:#111512;--ui-card-stroke:#ffffff18;--ui-card-open:#17211b;--ui-card-accent:#43FFA5}
+.executive-shell{--ui-card-bg:#181818;--ui-card-stroke:#ffffff18;--ui-card-open:#242424;--ui-card-accent:#43FFA5}
 .executive-shell #formCards.form-cards{gap:7px!important}
 .executive-shell #formCards .form-card,.executive-shell #adminView .admin-form-card{
  background:var(--ui-card-bg)!important;border:1px solid var(--ui-card-stroke)!important;border-left:3px solid #58595B!important;
@@ -191,12 +191,12 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 .executive-shell #adminView .admin-form-card.open .admin-accordion-body{border-top:1px solid #43ffa525!important;padding:10px 0 4px 40px!important;margin-top:8px!important}
 .executive-shell #adminView .admin-summary-chips{padding-left:40px}
 .executive-shell #adminView .admin-form-card.dirty{border-left-color:#ffd166!important}
-.executive-shell #resultsView>.panel{background:#111512!important;border:1px solid var(--ui-card-stroke)!important;border-radius:10px!important;padding:12px 14px!important;margin:8px 0!important}
-.executive-shell #adminView .admin-system-card{background:#111512!important;border:1px solid var(--ui-card-stroke)!important;border-radius:9px!important;padding:8px 12px!important}
+.executive-shell #resultsView>.panel{background:#181818!important;border:1px solid var(--ui-card-stroke)!important;border-radius:10px!important;padding:12px 14px!important;margin:8px 0!important}
+.executive-shell #adminView .admin-system-card{background:#181818!important;border:1px solid var(--ui-card-stroke)!important;border-radius:9px!important;padding:8px 12px!important}
 .executive-shell #adminView .admin-person-permissions>summary{background:transparent!important}
-.executive-shell #adminView .admin-person-permissions[open]{background:#43ffa506!important;border-left:2px solid #43ffa557!important;padding-left:10px!important}
+.executive-shell #adminView .admin-person-permissions[open]{background:#202020!important;border-left:2px solid #43ffa557!important;padding-left:10px!important}
 .executive-shell #adminView .admin-compact-section[open]{border-left:2px solid #43ffa540!important;padding-left:10px!important}
-.executive-shell #resultsView .operator-library-card[open]{background:#43ffa506!important;border-left:2px solid #43ffa557!important;padding-left:10px!important}
+.executive-shell #resultsView .operator-library-card[open]{background:#202020!important;border-left:2px solid #43ffa557!important;padding-left:10px!important}
 .executive-shell #adminView .admin-status-group>summary{margin:6px 0!important}
 @media(max-width:600px){
  .executive-shell #formCards .form-card,.executive-shell #adminView .admin-form-card{padding:8px!important}
@@ -209,7 +209,7 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 @media(prefers-reduced-motion:reduce){.executive-shell #formCards .form-card{transition:none!important}}
 
 /* MAP-113: compact account hierarchy and point metadata. Blue is the requested GPS cue only. */
-.user-menu-card{width:min(300px,calc(100vw - 24px));padding:16px;gap:10px;border-color:#ffffff24;background:#151918;box-shadow:0 12px 32px #0008}
+.user-menu-card{width:min(300px,calc(100vw - 24px));padding:16px;gap:10px;border-color:#ffffff24;background:#181818;box-shadow:0 12px 32px #0008}
 .user-menu-card>strong{font-size:13px;color:#f7faf8;letter-spacing:.01em}
 .user-menu-card .auth-session:not([hidden]){display:grid!important;grid-template-columns:minmax(0,1fr) auto;gap:10px!important;align-items:center;margin:0!important}
 .user-menu-card #signedInEmail{grid-column:1/-1;font-size:12px!important;color:#f7faf8;line-height:1.4}
@@ -224,7 +224,7 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 .user-menu-card .pending-label{font-size:11px!important;font-weight:500!important}
 .user-menu-card .pending-count{font-size:10px!important;min-width:18px!important;min-height:18px!important;width:auto!important;height:auto!important;padding:2px 5px!important}
 #mapCanvasWrap #mapLocateMe{color:#d3dad6!important;display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px}
-#mapCanvasWrap #mapLocateMe:hover{background:#242b27!important;border-color:#43ffa566}
+#mapCanvasWrap #mapLocateMe:hover{background:#2b2b2b!important;border-color:#43ffa566}
 #mapCanvasWrap #mapLocateMe .location-target-icon{flex:none;pointer-events:none}
 #mapCanvasWrap .map-popup{gap:0!important}
 #mapCanvasWrap .map-detail-heading{gap:9px;padding:0 28px 9px 0!important;margin-bottom:7px!important}
@@ -241,9 +241,64 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 #mapCanvasWrap .map-popup .map-operator-row{grid-template-columns:78px minmax(0,1fr)!important;gap:8px!important}
 #mapCanvasWrap .map-popup .map-operator-category{font-size:11px}
 #mapCanvasWrap .map-popup .map-operator-note{font-size:11px;line-height:1.3;margin-top:3px}
-#mapCanvasWrap .territorial-point-popup .leaflet-popup-content{width:min(360px,calc(100vw - 66px))!important;margin:14px!important;max-height:min(62dvh,560px,calc(100dvh - 180px))!important;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#777e79 #202622}
+#mapCanvasWrap .territorial-point-popup .leaflet-popup-content{width:min(360px,calc(100vw - 66px))!important;margin:14px!important;max-height:min(62dvh,560px,calc(100dvh - 180px))!important;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#777e79 #242424}
 #mapCanvasWrap .territorial-point-popup .leaflet-popup-content::-webkit-scrollbar{width:8px}
-#mapCanvasWrap .territorial-point-popup .leaflet-popup-content::-webkit-scrollbar-thumb{background:#777e79;border:2px solid #202622;border-radius:8px}
-#mapCanvasWrap .territorial-point-popup .leaflet-popup-content::-webkit-scrollbar-track{background:#202622}
+#mapCanvasWrap .territorial-point-popup .leaflet-popup-content::-webkit-scrollbar-thumb{background:#777e79;border:2px solid #242424;border-radius:8px}
+#mapCanvasWrap .territorial-point-popup .leaflet-popup-content::-webkit-scrollbar-track{background:#242424}
 #mapCanvasWrap .territorial-point-popup .leaflet-popup-close-button{width:36px;height:36px;line-height:36px;font-size:22px}
 @media(max-width:600px){#mapCanvasWrap .map-popup .map-popup-row,#mapCanvasWrap .map-popup .map-operator-row{grid-template-columns:70px minmax(0,1fr)!important}#mapCanvasWrap .territorial-point-popup .leaflet-popup-close-button{width:44px;height:44px;line-height:44px}#mapCanvasWrap .map-detail-heading{padding-right:36px!important}}
+
+/* VIS-115: neutral canvas family; green remains a brand/status accent. */
+.executive-shell{--ui-card-bg:#181818;--ui-card-open:#242424;--fz-green-soft:#242424;--fz-control:#242424}
+.executive-shell .form-identity-icon,.executive-shell [data-design-kind="operator"] .form-identity-icon{background:#262626}
+.executive-shell :is(#adminView,#resultsView,#formsView) :is(input,select,textarea){background:#242424!important;border-color:#58595B!important}
+.executive-shell #adminView :is(.form-status-control,.admin-person-permission-body,.compact-section-body),
+.executive-shell #resultsView :is(.operator-specs>div,.competition-point,.operator-library-card[open]),
+.executive-shell .results-disclosure[open]>.results-disclosure-summary{background:#202020!important}
+.executive-shell #adminView .admin-accordion-head{background:transparent!important;border:0!important;box-shadow:none!important;color:var(--brand-text)}
+.executive-shell #adminView .admin-accordion-head:hover{background:#ffffff05!important}
+.executive-shell #adminView .admin-accordion-head:focus-visible{outline:2px solid #43FFA5!important;outline-offset:-2px}
+.executive-shell .view-switch{align-items:stretch}
+.executive-shell .view-switch button,.executive-shell .view-switch a{
+ display:inline-flex!important;align-items:center;justify-content:center;box-sizing:border-box!important;
+ height:44px;min-height:44px;line-height:1.2!important;margin:0!important;vertical-align:middle;
+ border:0!important;border-bottom:2px solid transparent!important;gap:5px;
+}
+.executive-shell .view-switch button.active{border-bottom-color:#43FFA5!important;background:#202020!important}
+.executive-shell .view-switch :is(button,a):hover{background:#202020!important}
+.executive-shell #formsView #formCards .form-open-button,.executive-shell #formsView #formCards .form-card-details summary{
+ display:inline-flex!important;align-items:center;justify-content:center;box-sizing:border-box!important;
+ width:124px!important;min-width:124px!important;height:44px!important;min-height:44px!important;
+ padding:8px 12px!important;border-radius:8px!important;font:600 12px Montserrat,system-ui,sans-serif!important;
+ line-height:1.2!important;margin:0!important;white-space:nowrap;
+}
+.executive-shell #formsView #formCards .form-card-details summary{background:#282828!important;border:1px solid #58595B!important;color:#F7FAF8!important;gap:10px!important;list-style:none}
+.executive-shell #formsView #formCards .form-card-details summary:hover{background:#333!important;border-color:#888!important}
+.executive-shell #formsView #formCards .form-card-details[open]>summary{background:#333!important;border-color:#888!important}
+.executive-shell #formsView #formCards .form-card-details summary::-webkit-details-marker{display:none}
+/* Same drawn chevron for native disclosures and existing accordion buttons. */
+.executive-shell #adminView .accordion-chevron,
+.executive-shell #adminView .admin-status-group>summary::after,
+.executive-shell #formsView #formCards .form-card-details>summary::after{
+ content:""!important;display:block!important;box-sizing:border-box;flex:0 0 8px;width:8px!important;height:8px!important;
+ padding:0!important;margin:0 4px 3px!important;border:0!important;border-right:1.7px solid currentColor!important;
+ border-bottom:1.7px solid currentColor!important;border-radius:0!important;font-size:0!important;color:#BBC1BE;
+ transform:rotate(45deg)!important;transition:transform .16s ease!important;background:transparent!important;
+}
+.executive-shell #adminView .admin-status-group>summary{justify-content:flex-start!important}
+.executive-shell #adminView .admin-status-group>summary>b{margin-left:auto}
+.executive-shell #adminView .admin-status-group>summary::after{margin-left:9px!important}
+.executive-shell #adminView .admin-form-card.open .accordion-chevron,
+.executive-shell #adminView .admin-status-group[open]>summary::after,
+.executive-shell #formsView #formCards .form-card-details[open]>summary::after{transform:rotate(225deg)!important;margin-top:4px!important;margin-bottom:0!important;color:#43FFA5}
+@media(max-width:600px){
+ .executive-shell .view-switch button,.executive-shell .view-switch a{height:44px;min-height:44px}
+ .executive-shell #formsView #formCards .form-open-button,.executive-shell #formsView #formCards .form-card-details summary{width:104px!important;min-width:104px!important;padding:8px!important;font-size:10px!important}
+ .executive-shell #formsView #formCards .form-card{column-gap:6px!important}
+}
+@media(max-width:600px){.executive-shell #formsView #formCards .form-card{grid-template-columns:minmax(0,1fr) auto!important}.executive-shell #formsView #formCards .form-card-title{grid-column:1/-1!important}.executive-shell #formsView #formCards .form-open-button{grid-column:1!important;grid-row:2!important}.executive-shell #formsView #formCards .form-card-details summary{grid-column:2!important;grid-row:2!important}.executive-shell #formsView #formCards .form-card-details::details-content,.executive-shell #formsView #formCards .form-card-details[open]>.form-card-details-body{grid-row:3!important}}
+@media(prefers-reduced-motion:reduce){.executive-shell #adminView .accordion-chevron,.executive-shell #adminView .admin-status-group>summary::after,.executive-shell #formsView #formCards .form-card-details>summary::after{transition:none!important}}
+
+.executive-shell #formsView #formCards .form-card .form-card-title{margin:0!important}
+
+@media(max-width:600px){.executive-shell #formsView #formCards .form-card .form-card-title{word-break:normal!important;overflow-wrap:normal!important;display:flex!important;align-items:center;gap:8px}.executive-shell #formsView #formCards .form-card .form-identity-icon{flex:0 0 30px}.executive-shell #formsView #formCards .form-open-button{justify-self:start}.executive-shell #formsView #formCards .form-card-details summary{justify-self:end}}
