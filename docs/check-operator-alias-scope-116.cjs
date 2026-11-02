@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict');
+const {applies,cities}=require('../api/_operator-alias-scope');
+const {buildPlan}=require('../api/_competition-plan');
+const alias=['RTR','RTC Comunicaciones - Conectando Regiones SAS','','Confirmado por Edu','','','Villavicencio'];
+assert(applies(alias,'Villavicencio'));assert(!applies(alias,'Cartagena'));
+assert(!applies([...alias.slice(0,3),'Pendiente','','','Villavicencio'],'Villavicencio'));
+assert(applies(['Alpinet','APINET','','Confirmado'],'Girón'));
+assert(!applies(['Alpinet','APINET','','Confirmado'],'Villavicencio'));
+assert.deepEqual(cities(alias),['Villavicencio']);
+const master=Array(32).fill('');master[0]='RTC_CANONICAL';master[1]=alias[1];master[11]='Villavicencio';
+const make=(city)=>{const row=Array(83).fill('');Object.assign(row,{0:'2026-11-02T12:00:00Z',1:'test',2:city,12:'RTR',17:4.15,18:-73.6,82:'No'});return{sourceId:'fixture',expl:[[],row],intel:[[]],base:{'01_OPERADORES':[['ID'],master],'26_BUC_EQUIVALENCIAS':[['Alias'],alias]}};};
+const p=buildPlan(make('Villavicencio'));
+assert.equal(p.changes['01_OPERADORES'].length,0);
+assert.equal(p.changes['20_CARGA_PROYECTOS_CIUDAD'][0].values[9],'RTC_CANONICAL');
+assert.equal(buildPlan(make('Cartagena')).changes['01_OPERADORES'].length,1);
+console.log('PASS116: approved identity reuses canonical ID only inside its explicit municipality; legacy AMB and pending aliases preserved.');

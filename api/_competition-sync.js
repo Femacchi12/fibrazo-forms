@@ -47,7 +47,7 @@ async function syncCompetition(auth,{sourceId,dryRun=false}={}){
   const readNames=[...Object.keys(widths),'26_BUC_EQUIVALENCIAS'];
   const [source,target]=await Promise.all([
    sheets.spreadsheets.values.batchGet({spreadsheetId:sourceId,ranges:[bound(sourceMeta,'RESP_EXPLORACION','CE'),bound(sourceMeta,'RESP_INTELIGENCIA_OPERADOR','AJ'),'RESP_EXPLORACION!FH1:FP'+sourceMeta.data.sheets.find(s=>s.properties.title==='RESP_EXPLORACION').properties.gridProperties.rowCount,'RESP_INTELIGENCIA_OPERADOR!AK1:AS'+sourceMeta.data.sheets.find(s=>s.properties.title==='RESP_INTELIGENCIA_OPERADOR').properties.gridProperties.rowCount],valueRenderOption:'UNFORMATTED_VALUE'}),
-   sheets.spreadsheets.values.batchGet({spreadsheetId:COMPETITION_SHEET_ID,ranges:readNames.map(n=>bound(meta,n,({32:'AF',26:'Z',19:'S',15:'O',18:'R'})[widths[n]]||'F')),valueRenderOption:'UNFORMATTED_VALUE'}),
+   sheets.spreadsheets.values.batchGet({spreadsheetId:COMPETITION_SHEET_ID,ranges:readNames.map(n=>bound(meta,n,({32:'AF',26:'Z',19:'S',15:'O',18:'R'})[widths[n]]||'G')),valueRenderOption:'UNFORMATTED_VALUE'}),
   ]);
   const base=Object.fromEntries(readNames.map((n,i)=>[n,target.data.valueRanges[i].values||[]]));
   const plan=buildPlan({expl:require('./_operational-reference').attach(source.data.valueRanges[0].values||[],source.data.valueRanges[2]?.values,163),intel:require('./_operational-reference').attach(source.data.valueRanges[1].values||[],source.data.valueRanges[3]?.values,36),base,sourceId});plan.originalLengths=Object.fromEntries(Object.entries(base).map(([k,v])=>[k,v.length]));

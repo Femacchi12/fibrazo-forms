@@ -40,7 +40,7 @@ function buildPlan({expl,intel,base,sourceId,now=new Date().toISOString()}){
   const national=['tigo','claro','movistar'].includes(fold(op.name));
   const amb=['bucaramanga','floridablanca','giron','piedecuesta'].includes(fold(record.city));
   const aliasFold=v=>fold(v).replace(/\s+/g,'');
-  const approved=amb?(base['26_BUC_EQUIVALENCIAS']||[]).slice(1).filter(r=>/^confirmado/i.test(clean(r[3]))&&aliasFold(r[0])===aliasFold(op.name)).map(r=>fold(r[1])):[];
+  const approved=(base['26_BUC_EQUIVALENCIAS']||[]).slice(1).filter(r=>require('./_operator-alias-scope').applies(r,record.city)&&aliasFold(r[0])===aliasFold(op.name)).map(r=>fold(r[1]));
   let matches=allOps.filter(r=>[r[1],r[2],r[26]].some(v=>fold(v)===fold(op.name)||approved.includes(fold(v))));
   const local=matches.filter(r=>fold(r[11])===fold(record.city));if(local.length)matches=local;
   if(national){const exact=matches.filter(r=>fold(r[1])===fold(op.name));if(exact.length)matches=exact;}

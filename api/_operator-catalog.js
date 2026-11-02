@@ -12,10 +12,10 @@ module.exports=async(req,res)=>{
   if(!cache||cache.expires<Date.now()){
    if(!flight)flight=(async()=>{
     const sheets=google.sheets({version:'v4',auth});
-    const r=await sheets.spreadsheets.values.batchGet({spreadsheetId:COMPETITION,ranges:['01_OPERADORES!A1:AF','03_PRESENCIA!A1:Z','02_PLANES_HISTORICO!A1:AJ','26_BUC_EQUIVALENCIAS!A1:F']});
+    const r=await sheets.spreadsheets.values.batchGet({spreadsheetId:COMPETITION,ranges:['01_OPERADORES!A1:AF','03_PRESENCIA!A1:Z','02_PLANES_HISTORICO!A1:AJ','26_BUC_EQUIVALENCIAS!A1:G']});
     const [operators=[],presence=[],plans=[],aliases=[]]=(r.data.valueRanges||[]).map(v=>v.values||[]);
     const result=operators.slice(1).filter(o=>o[0]).map(o=>({id:String(o[0]),name:String(o[1]||''),brand:String(o[2]||''),group:String(o[26]||''),city:String(o[11]||''),tech:String(o[5]||''),visible:String(o[29]||'').toLowerCase()!=='no',cities:[...new Set([...presence.slice(1).filter(p=>p[8]===o[0]&&!/no presta servicio|sin presencia|inactivo/i.test(p[20]||'')).map(p=>p[3]),...plans.slice(1).filter(p=>p[8]===o[0]&&!/inactivo|descartado/i.test(p[26]||'')).map(p=>p[5])].filter(Boolean))]}));
-    cache={operators:result,aliases:aliases.slice(1).filter(r=>/^confirmado/i.test(r[3]||'')).map(r=>({alias:String(r[0]||''),name:String(r[1]||''),cities:['Bucaramanga','Floridablanca','Girón','Piedecuesta']})),expires:Date.now()+120000};
+    cache={operators:result,aliases:aliases.slice(1).filter(r=>/^confirmado/i.test(r[3]||'')).map(r=>({alias:String(r[0]||''),name:String(r[1]||''),cities:require('./_operator-alias-scope').cities(r)})),expires:Date.now()+120000};
    })().finally(()=>{flight=null;});await flight;
   }
   return res.status(200).json({operators:cache.operators,aliases:cache.aliases});
