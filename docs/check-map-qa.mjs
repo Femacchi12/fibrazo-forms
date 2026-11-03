@@ -46,7 +46,7 @@ assert.ok(map.includes('map-copy-feedback'),"Aviso breve de coordenadas copiadas
 for(const id of ["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter"]){
   assert.match(html,new RegExp('id="'+id+'"[^>]*multiple'),id+" permite selección múltiple");
 }
-assert.ok(types.includes("map-typeahead-selections")&&types.includes('input.value="";sync();draw()'),"La búsqueda se limpia y conserva selecciones visibles");
+assert.ok(types.includes("map-typeahead-selections")&&types.includes('sync();draw();')&&!types.includes('input.value="";sync();draw()'),"La selección conserva la búsqueda activa y selecciones visibles");
 assert.ok(!html.includes('id="mapBaseStreet"')&&!html.includes('id="mapBaseSatellite"')&&html.includes('id="mapBaseToggle"'),"Un solo botón alterna el tipo de mapa");
 assert.ok(map.includes("installCoordinateSheetDrag")&&map.includes("map-coordinate-primary")&&map.includes('>↗ Ir</button>'),"Punto seleccionado movible y compacto");
 assert.ok(map.includes("polygonResponseCache")&&map.includes("ttl:reload?0:90000")&&read("api/map-polygons.js").includes("geometryCache"),"Caché cliente/servidor para polígonos");

@@ -35,7 +35,7 @@
     select._searchInput=input;
     let active=0;
     const values=()=>[...select.selectedOptions].map(option=>option.value).filter(value=>value&&value!=="all");
-    const close=()=>{menu.hidden=true;input.setAttribute("aria-expanded","false");input.value="";};
+    const close=()=>{menu.hidden=true;input.setAttribute("aria-expanded","false");};
     const sync=()=>{
       wrap.hidden=select.hidden;
       const locked=select.disabled||select.dataset.cityScope==="locked";
@@ -55,7 +55,6 @@
       const compactCity=select.id==="mapCityFilter";
       selections.hidden=chosen.length===0||compactCity;
       input.placeholder=compactCity?"Escribe para buscar…":chosen.length?"Agregar otra opción…":"Escribe para buscar…";
-      if(menu.hidden)input.value="";
     };
     const choose=value=>{
       const option=[...select.options].find(item=>item.value===value);
@@ -68,7 +67,7 @@
         if(all)all.selected=false;
         if(!values().length&&all)all.selected=true;
       }
-      input.value="";sync();draw();
+      sync();draw();
       select.dispatchEvent(new Event("change",{bubbles:true}));
     };
     const draw=()=>{
@@ -90,7 +89,7 @@
       if(!opts.length){const msg=document.createElement("p");msg.textContent="No hay coincidencias";menu.appendChild(msg);}
       active=0;menu.hidden=false;input.setAttribute("aria-expanded","true");
     };
-    input.addEventListener("focus",()=>{if(input.disabled)return;input.value="";draw();});
+    input.addEventListener("focus",()=>{if(input.disabled)return;draw();});
     input.addEventListener("input",draw);
     input.addEventListener("keydown",event=>{
       const buttons=[...menu.querySelectorAll("button")];
@@ -116,7 +115,7 @@
       if(button)choose(button.dataset.removeValue);
     });
     input.addEventListener("blur",()=>setTimeout(()=>{close();sync();},130));
-    select._typeaheadOpen=()=>{if(input.disabled)return;input.value="";draw();};
+    select._typeaheadOpen=()=>{if(input.disabled)return;draw();};
     select._typeaheadClose=()=>{close();sync();};
     select.addEventListener("change",()=>{sync();if(!menu.hidden)draw();});
     new MutationObserver(()=>{sync();if(!menu.hidden)draw();}).observe(select,{childList:true,subtree:true,attributes:true,attributeFilter:["hidden","disabled","data-city-scope"]});
@@ -449,7 +448,7 @@
     for(const id of ["mapClearFilters","mapQuickReset"]){
       $(id)?.addEventListener("click",()=>ids.forEach(key=>{
         const select=$(key);
-        if(select?._searchInput)select._searchInput.value="";
+        if(select?._searchInput){select._searchInput.value="";select._searchInput.dispatchEvent(new Event("input",{bubbles:true}));}
       }));
     }
   }

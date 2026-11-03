@@ -886,8 +886,7 @@
       renderCompetitionAnalysis(b.dataset.operator);
       const hasKnowledge=intelligenceRows().some(r=>String(r.data?.operador||"").toLowerCase()===String(b.dataset.operator||"").toLowerCase());
       if(hasKnowledge){
-        const library=$("operatorLibraryDisclosure"),search=$("operatorLibrarySearch");
-        if(search)search.value=""; // La selección territorial tiene prioridad sobre un filtro anterior de búsqueda.
+        const library=$("operatorLibraryDisclosure");
         if(library)library.open=true;
         renderOperatorLibrary(b.dataset.operator);
         (library||$("operatorLibraryCards"))?.scrollIntoView({behavior:"smooth",block:"start"});

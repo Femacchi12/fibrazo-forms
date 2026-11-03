@@ -1107,6 +1107,7 @@
   }
 
   function clearFilters(){
+    for(const id of ["mapBarrioSearch","mapEstratoSearch","mapTroncalSearch"]){if($(id))$(id).value="";}
     selectFilterValues($("mapCityFilter"),[]);
     selectFilterValues($("mapTypeFilter"),[]);
     if($("mapPhotosFilter"))$("mapPhotosFilter").checked=false;
@@ -1413,7 +1414,6 @@
     const next=mode==="all"?"all":"visible";
     if(state.barrioListMode===next)return;
     state.barrioListMode=next;
-    if($("mapBarrioSearch"))$("mapBarrioSearch").value="";
     renderBarrioControls();
     if(state.polygonActive.barrios)loadLayerIndex("barrios");
   }
