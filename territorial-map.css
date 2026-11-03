@@ -34,3 +34,9 @@ body.territorial-only-view #mapCanvasWrap .map-quick-actions{right:58px!importan
  #mapCanvasWrap .map-popup .map-operator-link{min-height:44px;padding:8px 10px;font-size:12px}
  #mapCanvasWrap .map-only-status{left:8px;bottom:132px;max-width:calc(100% - 100px);font-size:11px}
 }
+
+/* FO-CHG-118: direct Maps action beside the copyable coordinates. */
+#mapCanvasWrap .map-popup .map-coordinate-actions{display:inline-flex;align-items:center;gap:8px;max-width:100%}
+#mapCanvasWrap .map-popup .map-coordinate-actions .map-coordinate-tap{flex:0 1 auto;min-width:0}
+#mapCanvasWrap .map-popup .map-point-maps-link{display:inline-flex;flex:none;align-items:center;justify-content:center;min-height:24px;padding:3px 7px;border:1px solid var(--brand-primary,#43FFA5);border-radius:7px;background:transparent;color:var(--brand-primary,#43FFA5);font:600 11px/1.2 var(--brand-font-ui,Montserrat,system-ui,sans-serif);text-decoration:none;white-space:nowrap}
+#mapCanvasWrap .map-popup .map-point-maps-link:focus-visible{outline:2px solid var(--brand-primary,#43FFA5);outline-offset:2px}

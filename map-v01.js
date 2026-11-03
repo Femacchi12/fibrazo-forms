@@ -711,7 +711,6 @@
   }
   function popupHtml(point){
     const links=[];
-    links.push('<a href="'+esc(googlePointUrl(point.lat,point.lng))+'" target="_blank" rel="noopener">↗ Ir a Google Maps</a>');
     if(point.evidence)links.push('<a href="'+esc(point.evidence)+'" target="_blank" rel="noopener">↗ Evidencia</a>');
     (point.photos||[]).forEach((url,index)=>links.push('<a href="'+esc(url)+'" target="_blank" rel="noopener">↗ Foto '+(index+1)+'</a>'));
     const operators=(point.operators||[]).length?'<section class="map-operators"><h3>Operadores</h3><ul>'+operatorRowsHtml(point)+'</ul></section>':"";
@@ -724,7 +723,7 @@
       '<div class="map-popup-row"><b>Ciudad</b><span>'+esc(statusLine("",point.city).replace(/^:\s*/,""))+'</span></div>'+
       '<div class="map-popup-row"><b>Barrio</b><span>'+esc(statusLine("",point.barrio,"barrio").replace(/^:\s*/,""))+'</span></div>'+
       '<div class="map-popup-row"><b>Estrato</b><span>'+esc(statusLine("",point.estrato,"estrato").replace(/^:\s*/,""))+'</span></div>'+
-      '<div class="map-popup-row"><b>Coordenadas</b><span>'+coordinateCopyButton(point.lat,point.lng)+'</span></div>'+
+      '<div class="map-popup-row"><b>Coordenadas</b><span class="map-coordinate-actions">'+coordinateCopyButton(point.lat,point.lng)+'<a class="map-point-maps-link" href="'+esc(googlePointUrl(point.lat,point.lng))+'" target="_blank" rel="noopener noreferrer" title="Abrir este punto en Google Maps" aria-label="Abrir este punto en Google Maps">Ir</a></span></div>'+
       (point.isTest?'<div class="map-popup-test">⚠ Registro de prueba · excluido de análisis</div>':"")+
       operators+note+
       (links.length?'<div class="map-popup-links">'+links.join("")+'</div>':"")+
