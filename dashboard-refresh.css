@@ -1,0 +1,41 @@
+/* Visual 2026-11: dashboard surfaces; field layouts and map semantics stay intact. */
+body.executive-shell {
+  --ui-card-bg:#0e1211; --ui-card-open:#171d1a; --fz-control:#202724;
+  --brand-text:#f5f8f6; --brand-muted:#aab5af;
+  background:#000!important; color:#f5f8f6;
+  font-family:Montserrat,system-ui,sans-serif;
+}
+body.executive-shell :is(.panel,.form-card,.operator-library-card,.competition-point,.user-menu-card,.auth-card) {
+  background:#0e1211!important; border:1px solid #343c38!important;
+  border-radius:20px!important; box-shadow:none!important;
+}
+body.executive-shell :is(h1,h2,h3,h4) { color:#f5f8f6; font-weight:800; letter-spacing:-.025em; }
+body.executive-shell .hero-copy h1 { font-size:clamp(18px,2vw,24px)!important; font-weight:800!important; }
+body.executive-shell :is(.section-title h2,.panel h2) { font-size:clamp(19px,1.7vw,25px); line-height:1.2; }
+body.executive-shell :is(button,.primary-button,.secondary-button,select,input:not([type=checkbox]):not([type=radio]),textarea) {
+  font-family:Montserrat,system-ui,sans-serif; border-radius:999px!important;
+}
+body.executive-shell textarea { border-radius:18px!important; }
+body.executive-shell :is(input:not([type=checkbox]):not([type=radio]),select,textarea) {
+  background-color:#1b211e!important; border-color:#536159!important; color:#f5f8f6!important;
+}
+body.executive-shell :is(input,textarea)::placeholder { color:#b2bdb7; opacity:1; }
+body.executive-shell :is(.primary-button,.form-open-button) {
+  background:#087451!important; border:1px solid #087451!important; color:#fff!important; font-weight:700!important;
+}
+body.executive-shell :is(.primary-button,.form-open-button):hover { background:#0b8961!important; }
+body.executive-shell :is(.secondary-button,.form-card-details>summary) {
+  background:#1b211e!important; border:1px solid #4a5750!important; color:#f5f8f6!important;
+  border-radius:999px!important; font-weight:700!important;
+}
+body.executive-shell :is(.view-switch button,.view-switch a) {
+  border:1px solid #36423b!important; border-radius:999px!important; color:#e1e8e4!important;
+  background:#141b17!important; margin:2px!important; font-weight:700!important;
+}
+body.executive-shell .view-switch button.active { background:#087451!important; border-color:#087451!important; color:#fff!important; }
+body.executive-shell :is(button,summary,a,input,select,textarea):focus-visible { outline:2px solid #43ffa5!important; outline-offset:3px; }
+/* Native form switches and Leaflet map buttons retain their existing geometry and meaning. */
+body.executive-shell #mapCanvasWrap .leaflet-control button { border-radius:8px!important; }
+@media(max-width:600px) {
+  body.executive-shell :is(.panel,.form-card,.operator-library-card) { border-radius:16px!important; }
+}
