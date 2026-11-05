@@ -39,3 +39,31 @@ body.executive-shell #mapCanvasWrap .leaflet-control button { border-radius:8px!
 @media(max-width:600px) {
   body.executive-shell :is(.panel,.form-card,.operator-library-card) { border-radius:16px!important; }
 }
+
+/* Reference surfaces: temporary windows use the same neutral charcoal as cards. */
+body.executive-shell.executive-shell :is(.pending-popover,.network-popover,.fz-help-popover,
+  .map-coordinate-sheet,.map-coordinate-modal,.editable-options-menu,.map-point-legend-panel,
+  .map-floating-tools,.map-floating-content,.map-filter-disclosure,.leaflet-popup-content-wrapper,
+  .leaflet-popup-tip,.map-popup,.polygon-popup,.fbz-chat-panel,.fbz-chat-answer) {
+  background:#101312!important; color:#f5f8f6!important; border-color:#353b38!important;
+}
+body.executive-shell.executive-shell :is(.pending-popover,.network-popover,.fz-help-popover,
+  .map-coordinate-sheet,.map-coordinate-modal,.editable-options-menu,.map-floating-tools,
+  .leaflet-popup-content-wrapper,.fbz-chat-panel,.fbz-chat-answer) { border-radius:18px!important; }
+body.executive-shell.executive-shell :is(.map-coordinate-sheet,.fz-help-popover,.fbz-chat-panel) {
+  font-family:Montserrat,system-ui,sans-serif!important;
+}
+body.executive-shell.executive-shell :is(.editable-options-menu,.map-floating-tools,.map-coordinate-sheet)
+  :is(input:not([type=checkbox]),select,textarea) {
+  background:#151817!important; color:#f5f8f6!important; border-color:#404643!important;
+}
+body.executive-shell.executive-shell :is(.map-coordinate-sheet,.map-floating-tools,.fz-help-popover,
+  .pending-popover,.network-popover,.fbz-chat-panel) button { border-radius:999px!important; }
+body.executive-shell.executive-shell .fbz-chat-form button {
+  background:#087451!important; border-color:#087451!important; color:#fff!important;
+}
+body.executive-shell.executive-shell :is(.fbz-chat-question,.fbz-chat-panel th) { background:#202522!important; }
+body.executive-shell.form-mode #formWorkspace :is(input:not([type=checkbox]):not([type=radio]),select,textarea) {
+  background:#151817!important; border-color:#404643!important; color:#f5f8f6!important;
+}
+body.executive-shell.form-mode #formWorkspace .editable-options-menu { background:#101312!important; }
