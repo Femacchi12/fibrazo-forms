@@ -62,6 +62,9 @@ body.executive-shell.executive-shell :is(.map-coordinate-sheet,.map-floating-too
 body.executive-shell.executive-shell .fbz-chat-form button {
   background:#087451!important; border-color:#087451!important; color:#fff!important;
 }
+body.executive-shell.executive-shell .fbz-chat-launch {
+  background:#087451!important; border-color:#087451!important; color:#fff!important; font-weight:700!important;
+}
 body.executive-shell.executive-shell :is(.fbz-chat-question,.fbz-chat-panel th) { background:#202522!important; }
 body.executive-shell.form-mode #formWorkspace :is(input:not([type=checkbox]):not([type=radio]),select,textarea) {
   background:#151817!important; border-color:#404643!important; color:#f5f8f6!important;
