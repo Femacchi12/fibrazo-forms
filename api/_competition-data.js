@@ -1,6 +1,6 @@
 const {google}=require('googleapis');
 const core=require('./_core');
-const ORIGINS=new Set(['https://femacchi12.github.io','https://fibrazo-forms.vercel.app','https://fibrazo-competencia-bm3wg21kr-fernandoemacchi-9206.vercel.app']);
+const ORIGINS=new Set(['https://femacchi12.github.io','https://fibrazo-forms.vercel.app','https://fibrazo-competencia-qa-git-fix-comp-9b26a5-fernandoemacchi-9206.vercel.app','https://fibrazo-competencia-bm3wg21kr-fernandoemacchi-9206.vercel.app']);
 const RANGES=Object.freeze({
  '1372196091:A1:AJ1600':"'02_PLANES_HISTORICO'!A1:AJ1600",
  '30011601:A1:BM80':"'30_CONSOL_FICHAS'!A1:BM80",
