@@ -1,0 +1,7 @@
+/* Ajustes visuales aprobados: controles, avatar y subtítulos. */
+html body.executive-shell .user-avatar{width:42px;height:42px;box-sizing:border-box;background:#050605!important;color:#fff!important;border:0!important;box-shadow:none!important}
+html body.executive-shell .view-switch :is(button,a):not(.active):not([aria-current=page]):not([aria-selected=true]){background:#050605!important;color:#fff!important}
+html body.executive-shell .view-switch button:is(.active,[aria-selected=true],[aria-pressed=true],[aria-current=page]){background:#00e69a!important;color:#000!important;border-color:#00e69a!important}
+html body.executive-shell :is(.section-title,.section-heading)>div>span{color:#43ffa5!important}
+html body.executive-shell #sectionEyebrow{color:#ffcf40!important}
+html body.executive-shell #formEyebrow{color:#c6a2ff!important}
