@@ -1346,7 +1346,7 @@
     if(action){
       action.textContent="👁";
       action.disabled=!ready;
-      action.title=ready?(selected.size?"Ocultar todo":"Mostrar todo"):"Selecciona una sola ciudad para habilitar Troncales";
+      action.title=ready?(selected.size?"Ocultar troncales seleccionadas":"Mostrar última selección de troncales"):"Selecciona una sola ciudad para habilitar Troncales";
       action.setAttribute("aria-label",action.title);
       const visible=ready&&selected.size>0&&state.filterLayersVisible.mapCityFilter;
       action.setAttribute("aria-pressed",String(visible));
