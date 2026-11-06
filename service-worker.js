@@ -1,4 +1,4 @@
-const CACHE="fibrazo-forms-v0.8.170-20261106-layers119b";
+const CACHE="fibrazo-forms-v0.8.171-20261106-favicon";
 const SYNC_TAG="fibrazo-queue-v1";
 // Local, pinned SDK files avoid a CDN dependency during startup and worker wakeup.
 importScripts('/vendor/firebase-app-compat-12.19.0.js','/vendor/firebase-auth-compat-12.19.0.js','/firebase-config.js','/background-territory.js','/qa-stratum-policy.js','/offline-v04.js');
@@ -6,7 +6,7 @@ const APP_SHELL=[
   "/executive-shell.js","/executive-shell.css","/dashboard-refresh.css",
   "/operator-navigation.js","/territorial-map.css",
   "/dashboard-chat.js","/dashboard-chat.css","/","/public","/styles.css","/brand-alignment.css","/executive-density.css","/forms-config.js","/app.js","/access-v03.js",
-  "/background-territory.js","/qa-stratum-policy.js","/ux-v04.js","/offline-v04.js","/admin-v03.js","/public-v05.js","/map-v01.js","/map-controls-ui.js","/manifest.webmanifest","/icon-fbz-growth-form-v8-192.png","/icon-fbz-growth-form-v8-512.png","/forms-field-scale.css","/firebase-config.js",
+  "/background-territory.js","/qa-stratum-policy.js","/ux-v04.js","/offline-v04.js","/admin-v03.js","/public-v05.js","/map-v01.js","/map-controls-ui.js","/manifest.webmanifest","/favicon-forms.svg","/visual-transversal-20261106.css","/icon-fbz-growth-form-v8-192.png","/icon-fbz-growth-form-v8-512.png","/forms-field-scale.css","/firebase-config.js",
   "/vendor/firebase-app-compat-12.19.0.js","/vendor/firebase-auth-compat-12.19.0.js"
 ];
 const REMOTE_SHELL=[
