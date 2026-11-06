@@ -8,3 +8,8 @@ html body.executive-shell #formEyebrow{color:#c6a2ff!important}
 
 /* Mantener visible la selección frente a reglas heredadas. */
 html body:not(#fz-excepcion-visual):not(#fz-excepcion-visual-2) :is(.view-switch,.mini-switch,.analysis-tabs,.product-nav,.reports-categories,.records-subtabs,.city-scope-row) :is(button,a):is(.active,.selected,.is-active,[aria-pressed="true"],[aria-selected="true"],[aria-current="page"]){background:#00e69a!important;background-image:none!important;color:#000!important;border-color:#00e69a!important}
+
+/* Barra superior sin recuadro y botones con las medidas de Competencia. */
+html body:not(#fz-nav-a):not(#fz-nav-b) .app-nav,html body:not(#fz-nav-a):not(#fz-nav-b) .app-nav .section-title,html body:not(#fz-nav-a):not(#fz-nav-b) .app-nav .view-switch{background:transparent!important;background-image:none!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+html body:not(#fz-nav-a):not(#fz-nav-b) .app-nav .view-switch :is(button,a){box-sizing:border-box!important;height:auto!important;min-height:0!important;padding:9px 12px!important;margin:0!important;border:1px solid #484848!important;border-radius:999px!important;box-shadow:none!important;font:700 13px/15.6px Montserrat,Inter,system-ui,sans-serif!important}
+html body:not(#fz-nav-a):not(#fz-nav-b) .app-nav .view-switch :is(button,a):is(.active,[aria-current="page"],[aria-selected="true"],[aria-pressed="true"]){background:#00e69a!important;color:#000!important;border-color:#00e69a!important}
