@@ -183,8 +183,9 @@
           count.title=lockedMessage;
           summary.setAttribute("aria-disabled",String(!ready));
           if(action){
-            action.disabled=!ready;
-            action.title=lockedMessage;
+            const cityHidden=document.querySelector('.map-filter-disclosure[data-control="mapCityFilter"]')?.dataset.layerVisible==="false";
+            action.disabled=!ready||cityHidden;
+            if(lockedMessage||cityHidden)action.title=lockedMessage||"Activa Ciudades para mostrar esta capa";
           }
         };
         summary.addEventListener("click",event=>{
@@ -199,6 +200,7 @@
           updateCount();
         });
         content.addEventListener("change",updateCount);
+        document.addEventListener("fibrazo:map-filter-layer-visibility",updateCount);
         new MutationObserver(updateCount).observe(content,{childList:true,subtree:true,attributes:true,attributeFilter:["data-selected-count","data-city-scope"]});
         updateCount();
       }
@@ -255,6 +257,7 @@
         leading.className=eyeEnabled?"map-layer-eye-action map-filter-eye-action":"map-control-leading map-control-filter-leading";
         if(eyeEnabled){
           leading.type="button";leading.textContent="👁";
+          group.dataset.layerVisible="true";
         }else{
           leading.setAttribute("aria-hidden","true");leading.textContent="⌕";
         }
@@ -277,29 +280,21 @@
           count.title=lockedMessage;
           summary.setAttribute("aria-disabled",String(locked));
           if(eyeEnabled){
-            if(selected)group.dataset.savedValues=[...control.selectedOptions].filter(option=>option.value&&option.value!=="all").map(option=>option.value).join("|");
-            leading.classList.toggle("eye-hidden",selected>0);
+            const visible=group.dataset.layerVisible!=="false";
+            leading.classList.toggle("eye-hidden",!visible);
             leading.disabled=locked;
-            leading.title=locked?lockedMessage:selected?"Apagar este filtro":group.dataset.savedValues?"Restaurar este filtro":"Selecciona opciones para activar el filtro";
+            leading.title=locked?lockedMessage:(visible?"Ocultar ":"Mostrar ")+meta.title.toLowerCase();
             leading.setAttribute("aria-label",leading.title);
+            leading.setAttribute("aria-pressed",String(visible));
           }
         };
         if(eyeEnabled)leading.addEventListener("click",event=>{
           event.preventDefault();event.stopPropagation();
           if(id==="mapOperatorFilter"&&control.dataset.cityScope!=="ready")return;
-          const selected=[...control.selectedOptions].filter(option=>option.value&&option.value!=="all");
-          const saved=(group.dataset.savedValues||"").split("|").filter(Boolean);
-          if(selected.length){
-            for(const option of control.options)option.selected=option.value==="all";
-          }else if(saved.length){
-            const wanted=new Set(saved);
-            let restored=0;
-            for(const option of control.options){option.selected=option.value!=="all"&&wanted.has(option.value);if(option.selected)restored++;}
-            const all=[...control.options].find(option=>option.value==="all");if(all)all.selected=restored===0;
-          }else{
-            group.open=true;control._typeaheadOpen?.();return;
-          }
-          control.dispatchEvent(new Event("change",{bubbles:true}));
+          const visible=group.dataset.layerVisible==="false";
+          group.dataset.layerVisible=String(visible);
+          document.dispatchEvent(new CustomEvent("fibrazo:map-filter-layer-visibility",{detail:{id,visible}}));
+          updateCount();
         });
         control.addEventListener("change",updateCount);
         new MutationObserver(updateCount).observe(control,{childList:true,subtree:true,attributes:true,attributeFilter:["selected","disabled","data-city-scope"]});

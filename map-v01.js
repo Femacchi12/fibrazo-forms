@@ -47,6 +47,8 @@
     polygonIndexControllers:{barrios:null,estratos:null,troncales:null},
     polygonIndexData:{barrios:[],estratos:[],troncales:[]},
     polygonSelections:{barrios:new Set(),estratos:new Set(["1","2","3"]),troncales:new Set()},
+    polygonSavedSelections:{barrios:null,estratos:null,troncales:null},
+    filterLayersVisible:{mapCityFilter:true,mapOperatorFilter:true},
     cityCatalog:[],
     barrioListMode:"all",
     barrioAllSelected:false,
@@ -847,6 +849,7 @@
   }
 
   function filteredPoints(){
+    if(!state.filterLayersVisible.mapCityFilter||!state.filterLayersVisible.mapOperatorFilter)return [];
     const cities=filterValues("mapCityFilter");
     const types=filterValues("mapTypeFilter");
     const users=filterValues("mapUserFilter");
@@ -1313,7 +1316,7 @@
     const selected=ready?state.polygonSelections.estratos.size:0;
     host.dataset.cityScope=ready?"ready":"locked";
     host.dataset.selectedCount=String(selected);
-    const action=$("mapClearEstratos");if(action){action.textContent="👁";action.disabled=!ready;action.title=ready?(selected?"Ocultar todo":"Mostrar todo"):"Selecciona una sola ciudad para habilitar Estratos";action.setAttribute("aria-label",action.title);action.classList.toggle("eye-hidden",ready&&selected>0);}
+    const action=$("mapClearEstratos");if(action){const visible=!!selected&&state.filterLayersVisible.mapCityFilter;action.textContent="👁";action.disabled=!ready;action.title=ready?(selected?"Ocultar estratos seleccionados":"Mostrar última selección de estratos"):"Selecciona una sola ciudad para habilitar Estratos";action.setAttribute("aria-label",action.title);action.setAttribute("aria-pressed",String(visible));action.classList.toggle("eye-hidden",!visible);}
     host.hidden=!ready||!state.polygonActive.estratos;
     if(host.hidden)return;
     const query=norm($("mapEstratoSearch")?.value||"");
@@ -1345,7 +1348,9 @@
       action.disabled=!ready;
       action.title=ready?(selected.size?"Ocultar todo":"Mostrar todo"):"Selecciona una sola ciudad para habilitar Troncales";
       action.setAttribute("aria-label",action.title);
-      action.classList.toggle("eye-hidden",ready&&selected.size>0);
+      const visible=ready&&selected.size>0&&state.filterLayersVisible.mapCityFilter;
+      action.setAttribute("aria-pressed",String(visible));
+      action.classList.toggle("eye-hidden",!visible);
     }
     host.hidden=!ready||!state.polygonActive.troncales;
     if(host.hidden)return;
@@ -1383,7 +1388,7 @@
       :state.polygonSelections.barrios.size):0;
     host.dataset.cityScope=ready?"ready":"locked";
     host.dataset.selectedCount=String(selectedTotal);
-    const allAction=$("mapSelectAllBarrios");if(allAction){allAction.textContent="👁";allAction.disabled=!ready;allAction.title=ready?(selectedTotal?"Ocultar todo":"Mostrar todo"):"Selecciona una sola ciudad para habilitar Barrios";allAction.setAttribute("aria-label",allAction.title);allAction.classList.toggle("eye-hidden",ready&&!!selectedTotal);}
+    const allAction=$("mapSelectAllBarrios");if(allAction){const visible=!!selectedTotal&&state.filterLayersVisible.mapCityFilter;allAction.textContent="👁";allAction.disabled=!ready;allAction.title=ready?(selectedTotal?"Ocultar barrios seleccionados":"Mostrar última selección de barrios"):"Selecciona una sola ciudad para habilitar Barrios";allAction.setAttribute("aria-label",allAction.title);allAction.setAttribute("aria-pressed",String(visible));allAction.classList.toggle("eye-hidden",!visible);}
     host.hidden=!ready||!state.polygonActive.barrios;
     if(host.hidden)return;
     const search=norm($("mapBarrioSearch")?.value||"");
@@ -1500,6 +1505,7 @@
       state.polygonSelectionTimers[layer]=null;
       state.polygonIndexData[layer]=[];
       state.polygonSelections[layer].clear();
+      state.polygonSavedSelections[layer]=null;
       if(layer==="barrios"){
         state.barrioAllSelected=false;
         state.barrioExcluded.clear();
@@ -1513,7 +1519,7 @@
       }else state.polygonStatus[layer]=ready?"":"selecciona una sola ciudad";
       const group=state.polygonGroups?.[layer];
       if(group&&state.map){
-        if(state.polygonActive[layer]&&!state.map.hasLayer(group))group.addTo(state.map);
+        if(state.filterLayersVisible.mapCityFilter&&state.polygonActive[layer]&&!state.map.hasLayer(group))group.addTo(state.map);
         if(!state.polygonActive[layer]&&state.map.hasLayer(group))state.map.removeLayer(group);
       }
     }
@@ -1616,7 +1622,7 @@
     const loadStarted=performance.now();
     const selection=state.polygonSelections[layer];
     const group=state.polygonGroups[layer];
-    if(!state.map.hasLayer(group))group.addTo(state.map);
+    if(state.filterLayersVisible.mapCityFilter&&!state.map.hasLayer(group))group.addTo(state.map);
 
     state.polygonControllers[layer]?.abort();
     state.polygonControllers[layer]=null;
@@ -1741,12 +1747,42 @@
 
   function clearLayerSelection(layer){
     if(!territorialCityReady())return;
+    state.polygonControllers[layer]?.abort();
+    state.polygonControllers[layer]=null;
     state.polygonSelections[layer].clear();
     if(layer==="barrios"){
       state.barrioAllSelected=false;
       state.barrioExcluded.clear();
     }
     clearPolygonLayer(layer,{keepStatus:true});
+    renderLayerControls();
+    loadPolygonLayer(layer,{silent:true});
+  }
+
+  // El ojo guarda la selección exacta, incluyendo el modo "todos salvo" de barrios.
+  function toggleSelectedLayerVisibility(layer){
+    if(!territorialCityReady())return;
+    const selected=layer==="barrios"
+      ?(state.barrioAllSelected?Math.max(0,state.polygonIndexData.barrios.length-state.barrioExcluded.size):state.polygonSelections.barrios.size)
+      :state.polygonSelections[layer].size;
+    if(selected){
+      state.polygonSavedSelections[layer]={values:[...state.polygonSelections[layer]],all:layer==="barrios"&&state.barrioAllSelected,excluded:layer==="barrios"?[...state.barrioExcluded]:[]};
+      clearLayerSelection(layer);
+      return;
+    }
+    const saved=state.polygonSavedSelections[layer];
+    if(!saved){
+      const action=$(layer==="estratos"?"mapClearEstratos":layer==="barrios"?"mapSelectAllBarrios":"mapToggleAllTroncales");
+      const disclosure=action?.closest("details.map-layer-disclosure");
+      if(disclosure)disclosure.open=true;
+      return;
+    }
+    if(!state.polygonActive[layer])togglePolygonLayer(layer);
+    state.polygonSelections[layer]=new Set(saved.values);
+    if(layer==="barrios"){
+      state.barrioAllSelected=saved.all;
+      state.barrioExcluded=new Set(saved.excluded);
+    }
     renderLayerControls();
     loadPolygonLayer(layer,{silent:true});
   }
@@ -1790,7 +1826,7 @@
         state.barrioAllSelected=false;
         state.barrioExcluded.clear();
       }
-      if(!state.map.hasLayer(group))group.addTo(state.map);
+      if(state.filterLayersVisible.mapCityFilter&&!state.map.hasLayer(group))group.addTo(state.map);
       state.polygonStatus[layer]="actualizando índice…";
       updateLayerButtons();
       const requiredZoom=layer==="estratos"?11:10;
@@ -2240,6 +2276,21 @@
     document.addEventListener("visibilitychange",recoverMapConnection);
     window.addEventListener("fibrazo:access-ready",recoverMapConnection);
     document.addEventListener("click",handleMapCoordinateCopy);
+    document.addEventListener("fibrazo:map-filter-layer-visibility",event=>{
+      const {id,visible}=event.detail||{};
+      if(!Object.hasOwn(state.filterLayersVisible,id))return;
+      state.filterLayersVisible[id]=!!visible;
+      if(id==="mapCityFilter"&&state.map){
+        for(const layer of ["barrios","estratos","troncales"]){
+          const group=state.polygonGroups?.[layer];
+          if(!group)continue;
+          if(visible&&state.polygonActive[layer]&&!state.map.hasLayer(group))group.addTo(state.map);
+          if(!visible&&state.map.hasLayer(group))state.map.removeLayer(group);
+        }
+      }
+      renderLayerControls();
+      renderMarkers();
+    });
     ["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter","mapDateFrom","mapDateTo","mapPhotosFilter"].forEach(id=>$(id)?.addEventListener("change",()=>{
       updateFilterCount();
       if(id==="mapCityFilter"){
@@ -2294,21 +2345,21 @@
       if(bounds&&ensureMap())state.map.fitBounds(bounds,{padding:[22,22],maxZoom:13});
       else viewBucaramanga();
     });
-    $("mapClearEstratos")?.addEventListener("click",()=>{
-      if(state.polygonSelections.estratos.size)clearLayerSelection("estratos");
-      else {state.polygonSelections.estratos=new Set(["1","2","3","4","5","6"]);renderLayerControls();loadPolygonLayer("estratos",{silent:true});}
-    });
+    $("mapClearEstratos")?.addEventListener("click",()=>toggleSelectedLayerVisibility("estratos"));
     $("mapClearBarrios")?.addEventListener("click",()=>clearLayerSelection("barrios"));
-    $("mapSelectAllBarrios")?.addEventListener("click",()=>{
-      const selected=state.barrioAllSelected?Math.max(0,state.polygonIndexData.barrios.length-state.barrioExcluded.size):state.polygonSelections.barrios.size;
-      if(selected)clearLayerSelection("barrios");else selectAllBarrios();
-    });
+    $("mapSelectAllBarrios")?.addEventListener("click",()=>toggleSelectedLayerVisibility("barrios"));
+    $("mapSelectAllBarriosOptions")?.addEventListener("click",selectAllBarrios);
     $("mapBarrioModeVisible")?.addEventListener("click",()=>setBarrioListMode("visible"));
     $("mapBarrioModeAll")?.addEventListener("click",()=>setBarrioListMode("all"));
     $("mapBarrioSearch")?.addEventListener("input",renderBarrioControls);
     $("mapEstratoSearch")?.addEventListener("input",renderEstratoControls);
     $("mapTroncalSearch")?.addEventListener("input",renderTroncalControls);
-    $("mapToggleAllTroncales")?.addEventListener("click",toggleAllTroncales);
+    $("mapToggleAllTroncales")?.addEventListener("click",()=>toggleSelectedLayerVisibility("troncales"));
+    $("mapSelectAllTroncalesOptions")?.addEventListener("click",()=>{
+      if(!territorialCityReady())return;
+      for(const item of state.polygonIndexData.troncales||[])state.polygonSelections.troncales.add(String(item.id));
+      renderLayerControls();loadPolygonLayer("troncales");
+    });
     $("mapTroncalOptions")?.addEventListener("change",event=>{
       const input=event.target.closest('input[data-layer-option="troncales"]');
       if(input)setLayerSelection("troncales",input.value,input.checked);
