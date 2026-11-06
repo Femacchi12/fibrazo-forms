@@ -17,7 +17,6 @@ module.exports=async(req,res)=>{
     if(!core.canUseDashboard(user,caps.adminActive,forms))return res.status(403).json({error:'ACCESS_DENIED'});
     const report=REPORTS[String(req.query.report||'')];
     if(!report)return res.status(404).json({error:'REPORT_NOT_FOUND'});
-    console.info('TERRITORIAL_REPORT_ACCOUNT',process.env.GOOGLE_CLIENT_EMAIL);
     const drive=google.drive({version:'v3',auth});
     const [metadata,content]=await Promise.all([
       drive.files.get({fileId:report.id,fields:'id,name,modifiedTime',supportsAllDrives:true}),
