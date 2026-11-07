@@ -1115,11 +1115,6 @@ body.form-mode #reviewWorkspace .review-section-head h2{
 #mapFloatingTools .map-filter-disclosure .map-typeahead>input{
   padding-left:25px!important;
 }
-#mapFloatingTools .map-filter-disclosure .map-typeahead::before{
-  left:11px!important;
-  top:10px!important;
-  font-size:12px!important;
-}
 #mapFloatingTools .map-reference-group{
   margin:0!important;
   padding:0!important;
