@@ -84,7 +84,16 @@
         button.append(tick,name);
         button.setAttribute("role","option");
         button.setAttribute("aria-selected",String(opt.selected));
-        menu.appendChild(button);
+        if(select.id==="mapCityFilter"&&opt.value!=="all"){
+          const row=document.createElement("div");
+          row.className="map-city-option-row";
+          const go=document.createElement("button");
+          go.type="button";go.className="map-city-goto";go.dataset.navigateCity=opt.value;
+          go.title="Ir a "+opt.textContent+" en el mapa";
+          go.setAttribute("aria-label","Ver toda la ciudad de "+opt.textContent);
+          go.textContent="➜";
+          row.append(button,go);menu.appendChild(row);
+        }else menu.appendChild(button);
       });
       if(!opts.length){const msg=document.createElement("p");msg.textContent="No hay coincidencias";menu.appendChild(msg);}
       active=0;menu.hidden=false;input.setAttribute("aria-expanded","true");
@@ -107,6 +116,12 @@
     });
     menu.addEventListener("pointerdown",event=>event.preventDefault());
     menu.addEventListener("click",event=>{
+      const go=event.target.closest("button[data-navigate-city]");
+      if(go){
+        event.preventDefault();
+        document.dispatchEvent(new CustomEvent("fibrazo:map-navigate-city",{detail:{city:go.dataset.navigateCity}}));
+        return;
+      }
       const button=event.target.closest("button[data-value]");
       if(button)choose(button.dataset.value);
     });
