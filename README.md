@@ -303,3 +303,12 @@ FO-CHG-104 (0.8.157): [full operator catalogue preload](docs/fo-chg-104-operator
 FO-CHG-105 (0.8.158): [recover lost acknowledgements](docs/fo-chg-105-receipt-recovery.md). Confirm original receipt before retrying mobile uploads; retain originals when uncertain and keep edit recovery separate.
 
 FO-CHG-106 (0.8.159): [numeric operational stratum with status/distance](docs/fo-chg-106-stratum-field.md). Display and retain the nearest valid stratum in the field, preserve FUERA and distance separately, and respect observed-stratum priority in analysis.
+
+
+## Actualización de navegación del mapa — 2026-11-06
+
+- El selector **Ciudades** mantiene selección múltiple: cada fila tiene una flecha independiente para ir a la extensión de esa ciudad sin cambiar las capas seleccionadas.
+- Con exactamente una ciudad seleccionada, incluido el caso de deseleccionar otras hasta dejar una, el mapa se ajusta automáticamente a su extensión; esto no depende de puntos o capas cargadas.
+- Los límites territoriales en formato SHP `[oeste,sur,este,norte]` se convierten a `[[sur,oeste],[norte,este]]` antes de invocar Leaflet; corrige Montería y Sincelejo y conserva ciudades con límites ya normalizados.
+- Los controles de selección de ciudades, operadores y capas territoriales utilizan apariencia circular; sigue siendo posible seleccionar varias opciones.
+- Archivos modificados: `map-v01.js`, `map-controls-ui.js`, `styles.css`, `index.html`. **Validación visual autenticada pendiente**; verificar navegación por flechas, cambios de selección, capas visibles y comportamiento en móvil.
