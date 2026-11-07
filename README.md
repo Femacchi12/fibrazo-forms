@@ -368,3 +368,26 @@ Se incorporan los cambios acordados después de revisar la captura de producció
 - **Archivos**: `index.html`, `map-controls-ui.js`, `map-v01.js`, `ajustes-visuales-20261106.css`, `service-worker.js`.
 
 QA de aceptación: sin buscador de Estratos, seis círculos centrados; cabeceras planas y filas compactas, sin superposiciones en móvil; al pulsar el ojo dos veces la capa recupera las mismas selecciones; cambiar una opción con el ojo apagado vuelve a mostrar la capa; al navegar entre ciudades se conservan flechas y centrado automático. Verificación visual autenticada y despliegue READY pendientes de confirmar en cada release.
+
+
+## FO-CHG-126/127 · Estratos y Troncales con selección multiciudad (2026-11-07)
+
+### Requerimiento
+Permitir que el usuario seleccione dos o más ciudades (por ejemplo, Cartagena, Montería y Villavicencio), active Estratos 1–6 y visualice sus polígonos en todas las ciudades seleccionadas. Habilitar el mismo esquema para Troncales, sin cambiar el modo de trabajo de Barrios.
+
+### Implementación
+- `map-v01.js` permite 1+ ciudades en Estratos y Troncales; **Barrios conserva el requisito de exactamente una ciudad**. Estratos mantiene la selección de valores 1–6 al agregar o quitar ciudades (por defecto 1–3 al iniciar una nueva selección). Troncales mantiene las opciones que siguen perteneciendo a ciudades seleccionadas.
+- **Estratos multiciudad**: consulta `/api/map-polygons` una vez por ciudad, manteniendo el adaptador de origen, versión y calidad de cada ciudad. Se solicita la cobertura completa mediante bbox global y se combina solo en el renderizador. Si hay paginación (incluida Barranquilla), se valida la continuidad y se recuperan todas las páginas. Las capas históricas, municipales o DANE 2018 conservan sus atributos de procedencia.
+- **Troncales multiciudad**: solicita el índice territorial de cada ciudad por separado (`mode=index&scope=all`), muestra el municipio en cada fila y utiliza un ID visual compuesto `ciudad::ID_Troncal` para evitar colisiones entre fuentes. Al dibujar, separa la selección por ciudad y solicita `mode=geometry&fullCoverage=1` con paginación completa. Los IDs originales se envían exclusivamente al origen de su ciudad.
+- Se limita la simultaneidad a dos consultas por lote para reducir carga de APIs. Los abortos y validaciones de selección impiden dibujar respuestas de una selección anterior. Un fallo parcial se informa y no se interpreta como cobertura inexistente.
+- El ojito de cada capa continúa guardando/restaurando las opciones previas. Las flechas de navegación mantienen las ciudades seleccionadas y no se fuerza recentrado en Bucaramanga al activar capas multiciudad.
+- No se modifica `api/map-polygons.js`, los datos de Google Sheets, los GeoJSON, las reglas de asignación territorial a puntos, los permisos ni la sincronización móvil. La API sigue recibiendo **exactamente una ciudad por consulta**, para no activar el fallback de origen de Bucaramanga cuando el parámetro `cities` contiene varias ciudades.
+- Las Troncales solo se listan si su fuente territorial las tiene; la selección multiciudad no crea cobertura donde no existe.
+- `map-controls-ui.js` explica que Estratos y Troncales admiten varias ciudades y que Barrios requiere una sola.
+
+### Verificación pendiente de producción
+- Cartagena + Montería + Villavicencio: estratos 1–3 visibles en las tres; seleccionar/deseleccionar un estrato debe afectar las tres ciudades.
+- Dos o más ciudades con troncales disponibles: índice con nombres y municipios, ID sin colisiones, selección individual y "Seleccionar todos", cargando únicamente los polígonos elegidos.
+- Alternar flechas de navegación, añadir/quitar ciudades y usar los ojos sin perder las opciones conservadas.
+- Barrios continúa restringido a una ciudad. Probar una fuente sin troncales (lista vacía correcta), errores parciales, móvil y conexión intermitente.
+- No declarar QA autenticada ni publicación final completa sin verificar Vercel READY y el comportamiento con sesión de usuario.
