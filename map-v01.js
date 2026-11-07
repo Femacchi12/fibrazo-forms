@@ -1453,14 +1453,23 @@
     };
   }
 
+  // Map navigation is independent of selected layers and visible survey points.
+  // Older SHP bounds are [west,south,east,north]; newer bounds are [[south,west],[north,east]].
+  function navigateToCity(city){
+    const key=scopeCity(city),raw=QA_CITY_BOUNDS[key];
+    if(!raw||!ensureMap())return false;
+    const bounds=raw.length===4?[[raw[1],raw[0]],[raw[3],raw[2]]]:raw;
+    if(!Array.isArray(bounds)||bounds.length!==2)return false;
+    state.follow=false;
+    const follow=$("mapFollowToggle");if(follow)follow.checked=false;
+    state.polygonFocusUntil=Date.now()+750;
+    state.map.invalidateSize();
+    state.map.fitBounds(bounds,{padding:[24,24],maxZoom:13});
+    return true;
+  }
   function centerQaCityIfEmpty(){
     const selected=filterValues("mapCityFilter");
-    if(selected.length!==1||!ensureMap()||filteredPoints().length)return;
-    const bounds=QA_CITY_BOUNDS[selected[0]];
-    if(bounds){
-      state.polygonFocusUntil=Date.now()+500;
-      state.map.fitBounds(bounds,{padding:[24,24],maxZoom:13});
-    }
+    if(selected.length===1)navigateToCity(selected[0]);
   }
 
   function resetTerritorialScopeForCity(){
@@ -2276,6 +2285,10 @@
     document.addEventListener("visibilitychange",recoverMapConnection);
     window.addEventListener("fibrazo:access-ready",recoverMapConnection);
     document.addEventListener("click",handleMapCoordinateCopy);
+    document.addEventListener("fibrazo:map-navigate-city",event=>{
+      const city=event.detail?.city;
+      if(city&&!navigateToCity(city))mapStatus("No hay extensión geográfica disponible para "+city+".","warning");
+    });
     document.addEventListener("fibrazo:map-filter-layer-visibility",event=>{
       const {id,visible}=event.detail||{};
       if(!Object.hasOwn(state.filterLayersVisible,id))return;
