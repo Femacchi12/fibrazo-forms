@@ -324,3 +324,11 @@ Cambio visual aprobado para `Capas y filtros` (no altera las fuentes territorial
 - Filas con espaciado, tipografía y alineación consistentes; flechas independientes para navegar a cada ciudad se mantienen a la derecha.
 - Archivos: `ajustes-visuales-20261106.css`, `index.html` (versión de caché `FO-CHG-121`).
 - **QA pendiente en sesión autenticada:** apertura/cierre sin superposición, scroll en Ciudades/Operadores/Barrios, selección múltiple y flechas, contadores y móvil estrecho. El despliegue solo puede considerarse operativo cuando Vercel reporte READY.
+
+## FO-CHG-122 · Ajuste visual tras revisión de producción
+
+- Corrección de la discrepancia detectada en capturas de producción: Ciudades y Operadores aún mostraban casillas nativas cuadradas. Ahora `map-controls-ui.js` dibuja marcadores circulares `map-filter-round` sin depender del estilo nativo del navegador.
+- Se refuerzan estilos en `ajustes-visuales-20261106.css` para conservar contadores amarillos `#ffcf40` con texto negro, alinear flechas, radios de estratos (colores en un único indicador) y selección de barrios.
+- El desplegable permanece en el flujo del acordeón, con desplazamiento vertical interno, para evitar la superposición con otros grupos de capas.
+- `index.html` renueva las versiones de los recursos estáticos a `FO-CHG-122` / `selector122`.
+- QA requerido con sesión autenticada: contrastar las cuatro secciones con la referencia aprobada, confirmar scroll en móvil, navegación por flecha, persistencia de selección y ausencia de superposición. No modificar reglas territoriales.
