@@ -1319,8 +1319,8 @@
     const action=$("mapClearEstratos");if(action){const visible=!!selected&&state.filterLayersVisible.mapCityFilter;action.textContent="👁";action.disabled=!ready;action.title=ready?(selected?"Ocultar estratos seleccionados":"Mostrar última selección de estratos"):"Selecciona una sola ciudad para habilitar Estratos";action.setAttribute("aria-label",action.title);action.setAttribute("aria-pressed",String(visible));action.classList.toggle("eye-hidden",!visible);}
     host.hidden=!ready||!state.polygonActive.estratos;
     if(host.hidden)return;
-    const query=norm($("mapEstratoSearch")?.value||"");
-    options.innerHTML=["1","2","3","4","5","6"].filter(value=>!query||norm("Estrato "+value).includes(query)).map(value=>{
+    // Six fixed strata: no search input or filtered rows are necessary.
+    options.innerHTML=["1","2","3","4","5","6"].map(value=>{
       const checked=state.polygonSelections.estratos.has(value);
       return '<label class="map-selective-option estrato-option'+(checked?' active':'')+'">'+
         '<input type="checkbox" data-layer-option="estratos" value="'+value+'" '+(checked?'checked':'')+'>'+
@@ -2365,7 +2365,6 @@
     $("mapBarrioModeVisible")?.addEventListener("click",()=>setBarrioListMode("visible"));
     $("mapBarrioModeAll")?.addEventListener("click",()=>setBarrioListMode("all"));
     $("mapBarrioSearch")?.addEventListener("input",renderBarrioControls);
-    $("mapEstratoSearch")?.addEventListener("input",renderEstratoControls);
     $("mapTroncalSearch")?.addEventListener("input",renderTroncalControls);
     $("mapToggleAllTroncales")?.addEventListener("click",()=>toggleSelectedLayerVisibility("troncales"));
     $("mapSelectAllTroncalesOptions")?.addEventListener("click",()=>{
