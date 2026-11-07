@@ -391,3 +391,23 @@ Permitir que el usuario seleccione dos o más ciudades (por ejemplo, Cartagena, 
 - Alternar flechas de navegación, añadir/quitar ciudades y usar los ojos sin perder las opciones conservadas.
 - Barrios continúa restringido a una ciudad. Probar una fuente sin troncales (lista vacía correcta), errores parciales, móvil y conexión intermitente.
 - No declarar QA autenticada ni publicación final completa sin verificar Vercel READY y el comportamiento con sesión de usuario.
+
+
+## FO-CHG-128 · Operadores multiciudad y ciudades elegidas primero (2026-11-07)
+
+### Comportamiento
+- **Operadores:** se habilita `mapOperatorFilter` cuando hay al menos una ciudad seleccionada, no solo cuando hay exactamente una. Su catálogo de incumbentes e ISP se obtiene de la unión de los puntos de exploración cargados para **todas las ciudades seleccionadas**. Al filtrar por operador se muestran los puntos que cumplen simultáneamente ciudad, operador y demás filtros actuales; **no** se interpreta como geometría de cobertura de un operador ni como fuente territorial nueva.
+- Al agregar/quitar ciudades, la reconstrucción asíncrona del listado de operadores conserva las opciones seleccionadas, incluso mientras no hayan llegado nuevos puntos. Las opciones con presencia en las ciudades activas se actualizan al terminar la consulta. Enlaces compartidos con varios valores de `cities` y `operators` continúan funcionando.
+- **Ciudades:** el menú de selección ubica primero las seleccionadas **en orden cronológico de selección**, separadas de facto de las restantes, que permanecen en orden alfabético en español. Al desmarcar una, vuelve al conjunto alfabético. «Todas las ciudades» sigue disponible y aparece al comienzo si no hay selecciones. El orden se mantiene tras recargar los puntos, renovar el catálogo o reconstruir el `select[multiple]`, sin cambiar las selecciones reales ni los parámetros de la API.
+- Se conservan las flechas de centrado de ciudad, los contadores, Estratos y Troncales multiciudad, Barrios de una sola ciudad, los ojitos y la estética compacta.
+- Archivos: `map-v01.js`, `map-controls-ui.js`, `index.html`, `service-worker.js`. No se modifican Sheets, fuentes geográficas, reglas de negocio de clasificación, formularios ni bases.
+
+### Criterios de aceptación
+1. Activar Cartagena + Montería + Villavicencio; abrir Operadores sin bloqueo y comprobar catálogo de las tres según puntos cargados.
+2. Filtrar por un incumbente y por un ISP; los puntos mostrados deben cumplir filtro y ciudades seleccionadas. Al añadir/quitar una ciudad, mantener el filtro elegido sin borrarlo.
+3. Orden del menú: Cartagena primero, Montería segunda, Villavicencio tercera. Desmarcar Montería → vuelve a su lugar alfabético bajo las elegidas; desmarcar todas → abecedario normal.
+4. Recargar el catálogo/puntos, cerrar y abrir secciones, comprobar que el orden de selección se mantiene durante la sesión y que las flechas navegan correctamente.
+5. Vista escritorio/móvil, sin superposiciones, estados de filtro coherentes y sin alterar capas territoriales.
+6. Nota: el servidor de puntos `/api/map` limita el conjunto transmitido a un máximo configurado; no atribuir ausencia de un operador a cobertura inexistente cuando no hay relevamientos cargados.
+
+Verificación técnica estática: orden de ciudades probado en siete transiciones; QA autenticada móvil y publicación READY deben comprobarse por separado.
