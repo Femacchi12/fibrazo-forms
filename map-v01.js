@@ -1738,6 +1738,104 @@
     }
   }
 
+  // FO-CHG-126: every source remains a single-city API request. Do not route a
+  // comma-separated selection through polygonSource(), which defaults to BGA.
+  // The full-city precalculated geometries are merged only for the map display.
+  async function loadMultiCityEstratos({silent=false}={}){
+    const cities=[...new Set(filterValues("mapCityFilter").map(scopeCity))];
+    if(cities.length<2||!state.polygonActive.estratos||!ensureMap())return;
+    const selected=[...state.polygonSelections.estratos].sort();
+    const key="multi:"+cities.slice().sort().join(",")+"|"+selected.join(",");
+    if(!state.manualRefreshId&&state.polygonFullKey===key)return;
+    if(!state.manualRefreshId&&state.polygonFullLoadingKey===key)return;
+    state.polygonControllers.estratos?.abort();
+    state.polygonIndexControllers.estratos?.abort();
+    state.polygonIndexControllers.estratos=null;
+    const controller=new AbortController();
+    state.polygonControllers.estratos=controller;
+    if(state.filterLayersVisible.mapCityFilter&&!state.map.hasLayer(state.polygonGroups.estratos)){
+      state.polygonGroups.estratos.addTo(state.map);
+    }
+    if(!selected.length){
+      clearPolygonLayer("estratos",{keepStatus:true});
+      state.polygonStatus.estratos="Sin estratos seleccionados";
+      renderLayerControls();
+      state.polygonControllers.estratos=null;
+      return;
+    }
+    state.polygonFullLoadingKey=key;
+    const busyToken=beginMapBusy("Cargando estratos de "+cities.length+" ciudades…");
+    if(!silent){state.polygonStatus.estratos="Cargando estratos de "+cities.length+" ciudades…";updatePolygonStatus();}
+    const loaded=[],failed=[];
+    const reload=state.manualRefreshId?"&reload="+encodeURIComponent(state.manualRefreshId)+"&forceRefresh=1":"";
+    const loadCity=async city=>{
+      // World bbox + zoom 15 requests the complete city, even when the map
+      // currently displays a different selected municipality.
+      const base="/api/map-polygons?mode=geometry&layer=estratos&bbox=-180%2C-90%2C180%2C90&zoom=15"+
+        "&cities="+encodeURIComponent(city)+"&estratos="+encodeURIComponent(selected.join(","))+
+        "&qaDissolve=1&fullCoverage=1"+reload;
+      const first=await authorizedFetch(base,controller,{ttl:reload?0:90000});
+      if(!first?.ok||!Array.isArray(first.features))throw Error("Respuesta de estratos incompleta");
+      const pageCount=(first.transportPaged||first.fullCoverage)?Math.max(1,Number(first.pageCount)||1):1;
+      if(!Number.isInteger(pageCount)||pageCount>40)throw Error("La cobertura requiere más páginas de las admitidas");
+      const features=[...first.features];
+      for(let page=1;page<pageCount;page++){
+        const next=await authorizedFetch(base+"&page="+page,controller,{ttl:reload?0:90000});
+        if(!next?.ok||next.page!==page||!Array.isArray(next.features))throw Error("Página de estratos incompleta");
+        if(first.sourceVersion&&next.sourceVersion!==first.sourceVersion)throw Error("Versiones de estratos distintas");
+        features.push(...next.features);
+      }
+      if(first.transportPaged&&features.length!==Number(first.optimizedFeatureCount)){
+        throw Error("No se recibió la cobertura completa de "+cityLabel(city));
+      }
+      return {city,data:first,features:features.map((feature,index)=>{
+        const rawId=String(feature?.properties?.id||feature?.id||index);
+        const id=city+"::"+rawId;
+        return {...feature,id,properties:{...feature.properties,id,
+          municipio:feature.properties?.municipio||cityLabel(city)}};
+      })};
+    };
+    try{
+      // Limit simultaneous Drive/API requests (and compressed GeoJSON memory).
+      for(let start=0;start<cities.length;start+=2){
+        const batch=cities.slice(start,start+2);
+        const results=await Promise.allSettled(batch.map(loadCity));
+        if(controller.signal.aborted||cities.join(",")!==filterValues("mapCityFilter").map(scopeCity).join(","))return;
+        results.forEach((result,index)=>{
+          if(result.status==="fulfilled")loaded.push(result.value);
+          else failed.push(batch[index]);
+        });
+        state.polygonStatus.estratos="Estratos de "+loaded.length+"/"+cities.length+" ciudades cargados…";
+        updatePolygonStatus();
+      }
+      if(!loaded.length)throw Error("No se pudieron cargar las ciudades seleccionadas");
+      const features=loaded.flatMap(item=>item.features);
+      const drawn=drawPolygonLayer("estratos",features);
+      state.polygonFullKey=key;
+      const counts=new Map(["1","2","3","4","5","6"].map(value=>[value,0]));
+      for(const f of features){const value=String(f.properties?.estrato||"");if(counts.has(value))counts.set(value,counts.get(value)+1);}
+      state.polygonIndexData.estratos=[...counts].map(([value,count])=>({value,count}));
+      const historical=loaded.filter(item=>item.data.qaHistorical).map(item=>cityLabel(item.city));
+      const census=loaded.filter(item=>item.data.censusReference).map(item=>cityLabel(item.city));
+      state.polygonStatus.estratos=loaded.length+"/"+cities.length+" ciudades · "+features.length+
+        " grupos de estratos · "+drawn+" geometrías"+
+        (historical.length?" · histórico QA: "+historical.join(", "):"")+
+        (census.length?" · referencia DANE 2018: "+census.join(", "):"")+
+        (failed.length?" · sin cargar: "+failed.map(cityLabel).join(", "):"");
+      if(failed.length)mapStatus("No se pudieron cargar los estratos de "+failed.map(cityLabel).join(", ")+". Las demás ciudades permanecen visibles.","warning");
+      renderLayerControls();
+    }catch(error){
+      if(error?.name==="AbortError"||controller.signal.aborted)return;
+      state.polygonStatus.estratos="No se pudieron cargar los estratos de las ciudades seleccionadas";
+      mapStatus(state.polygonStatus.estratos,"warning");
+      renderLayerControls();
+    }finally{
+      if(state.polygonFullLoadingKey===key)state.polygonFullLoadingKey="";
+      if(state.polygonControllers.estratos===controller)state.polygonControllers.estratos=null;
+      endMapBusy(busyToken);
+    }
+  }
+
   function refreshPolygonLayer(layer,{silent=false}={}){
     if(!layerCityReady(layer)||!state.polygonActive[layer])return Promise.resolve();
     if(layer==="estratos"&&filterValues("mapCityFilter").length>1)return loadMultiCityEstratos({silent});
