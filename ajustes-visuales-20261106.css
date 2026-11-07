@@ -127,3 +127,107 @@ html body .map-floating-host :is(.map-filter-disclosure,.map-layer-disclosure)>s
   }
   html body .map-floating-host .map-typeahead-options{max-height:166px}
 }
+
+
+/* FO-CHG-122 | Fidelidad al diseño aprobado del selector */
+/* Se usan marcadores visuales propios: el navegador no puede convertirlos en cuadrados nativos. */
+html body .map-floating-tools .map-typeahead-options .map-filter-round{
+  display:inline-flex!important;position:relative;box-sizing:border-box;
+  align-items:center;justify-content:center;flex:0 0 17px;
+  width:17px!important;height:17px!important;min-width:17px!important;min-height:17px!important;
+  border:2px solid #86978e!important;border-radius:999px!important;
+  background:#0a0e0c!important;box-shadow:none!important;
+}
+html body .map-floating-tools .map-typeahead-options .map-filter-round.is-selected{
+  border-color:#43ffa5!important;background:#0c1b14!important;
+}
+html body .map-floating-tools .map-typeahead-options .map-filter-round.is-selected::after{
+  content:"";position:absolute;inset:3px;border-radius:999px;background:#43ffa5;
+}
+html body .map-floating-tools .map-typeahead-options .map-city-option-row{
+  grid-template-columns:minmax(0,1fr) 35px!important;
+  width:100%;padding:1px 1px!important;
+}
+html body .map-floating-tools .map-typeahead-options button[data-value]{
+  min-height:37px!important;padding:7px 8px!important;gap:9px!important;
+  font-size:11px!important;line-height:1.3!important;
+}
+html body .map-floating-tools .map-typeahead-options .map-city-goto{
+  min-width:35px!important;width:35px!important;min-height:37px!important;
+  color:#f5f9f7!important;font-size:19px!important;
+}
+html body .map-floating-tools .map-typeahead-options .map-city-goto:hover{color:#43ffa5!important}
+/* La opción abierta tiene altura limitada y scroll propio, sin superposición de paneles. */
+html body .map-floating-tools .map-filter-disclosure[open]>.map-typeahead,
+html body .map-floating-tools .map-layer-disclosure[open]>.map-selective-layer{
+  position:relative!important;float:none!important;
+  max-width:100%;box-sizing:border-box;
+}
+html body .map-floating-tools .map-typeahead-options{
+  position:relative!important;top:auto!important;left:auto!important;right:auto!important;
+  max-height:200px!important;box-shadow:none!important;
+}
+html body .map-floating-tools .map-typeahead>input[type="search"],
+html body .map-floating-tools :is(#mapEstratoSearch,#mapBarrioSearch,#mapTroncalSearch){
+  box-sizing:border-box!important;width:100%!important;min-height:37px!important;
+  border-radius:9px!important;padding:8px 10px!important;
+}
+/* Estratos: círculo de selección y punto cromático en el mismo centro. */
+html body .map-floating-tools #mapEstratoOptions .map-selective-option.estrato-option{
+  display:grid!important;grid-template-columns:19px minmax(0,1fr)!important;
+  min-height:37px!important;gap:9px!important;
+}
+html body .map-floating-tools #mapEstratoOptions .estrato-option input[type="checkbox"]{
+  grid-row:1!important;grid-column:1!important;
+  width:18px!important;height:18px!important;
+}
+html body .map-floating-tools #mapEstratoOptions .estrato-option>i{
+  grid-row:1!important;grid-column:1!important;
+  z-index:1;justify-self:center;align-self:center;
+  width:7px!important;height:7px!important;min-width:7px!important;
+  border-radius:50%!important;pointer-events:none;
+}
+html body .map-floating-tools #mapEstratoOptions .estrato-option>span{
+  grid-column:2!important;grid-row:1!important;
+}
+html body .map-floating-tools #mapBarrioOptions .barrio-option{
+  display:grid!important;grid-template-columns:18px minmax(0,1fr)!important;gap:9px!important;
+  min-height:43px!important;
+}
+/* Igualar el tamaño y la lectura de las filas de todos los tipos. */
+html body .map-floating-tools #mapBarrioOptions .barrio-option b,
+html body .map-floating-tools #mapEstratoOptions .estrato-option b,
+html body .map-floating-tools #mapTroncalOptions .troncal-option b{
+  font-size:11px!important;font-weight:600!important;
+}
+html body .map-floating-tools :is(.map-layer-disclosure,.map-filter-disclosure)>summary>.map-control-count{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  flex:0 1 auto!important;min-width:0!important;max-width:125px!important;
+  padding:6px 10px!important;border:0!important;border-radius:999px!important;
+  background-color:#ffcf40!important;background-image:none!important;
+  color:#080808!important;-webkit-text-fill-color:#080808!important;
+  font:800 10px/1.15 Montserrat,Inter,system-ui,sans-serif!important;
+  text-shadow:none!important;opacity:1!important;
+  white-space:normal!important;
+}
+html body .map-floating-tools :is(.map-layer-disclosure,.map-filter-disclosure)>summary{
+  gap:7px!important;min-height:42px!important;
+}
+html body .map-floating-tools .map-filter-disclosure .map-typeahead,
+html body .map-floating-tools .map-layer-disclosure .map-selective-layer{
+  margin-bottom:9px!important;
+}
+html body .map-floating-tools #mapBarrioControls .map-barrio-actions{
+  display:flex!important;align-items:center;gap:5px;
+}
+html body .map-floating-tools #mapBarrioControls #mapSelectAllBarriosOptions{
+  width:auto!important;max-width:100%;min-height:32px!important;
+  padding:6px 11px!important;border:1px solid #43ffa5!important;
+  border-radius:999px!important;background:#050605!important;color:#fff!important;
+  font:700 10px/1.25 Montserrat,Inter,system-ui,sans-serif!important;
+}
+@media(max-width:410px){
+  html body .map-floating-tools :is(.map-layer-disclosure,.map-filter-disclosure)>summary>.map-control-count{
+    max-width:105px!important;padding:5px 7px!important;font-size:9px!important;
+  }
+}
