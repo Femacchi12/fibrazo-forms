@@ -238,7 +238,12 @@
       const qaEstratos=new Set(["neiva","villavicencio","ibague"]);
       const refresh=()=>{
         const cities=[...cityFilter.selectedOptions].map(o=>o.value).filter(v=>v&&v!=="all");
-        if(cities.length!==1){notice.hidden=true;return;}
+        if(cities.length>1){
+          notice.hidden=false;
+          notice.textContent="Comparación multiciudad: Estratos y Troncales disponibles según la información de cada ciudad. Barrios requiere una sola ciudad.";
+          return;
+        }
+        if(cities.length===0){notice.hidden=true;return;}
         const city=normCity(cities[0]);
         notice.hidden=city==="bucaramanga-amb";
         if(qaEstratos.has(city))notice.textContent="Estratos y barrios disponibles en QA. Troncales sin capa cargada para esta ciudad.";
