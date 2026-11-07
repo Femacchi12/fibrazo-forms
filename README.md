@@ -418,3 +418,11 @@ Verificación técnica estática: orden de ciudades probado en siete transicione
 - Se desactiva el ornamento nativo del campo `search` para mantener la misma apariencia entre Chrome de escritorio y Android.
 - Cambios solo en `ajustes-visuales-20261106.css`, actualización de caché en `service-worker.js` e invalidación de estilos en `index.html`. Sin cambios de filtros, selección, datos o navegación.
 - QA pendiente: comprobar visualmente en móvil y escritorio que la lupa no se superpone al placeholder ni al texto introducido, y que los filtros y la navegación permanecen funcionales.
+
+## FO-CHG-130 · Retiro de lupa anterior duplicada (2026-11-07)
+
+- Las capturas posteriores a FO-CHG-129 muestran una lupa antigua superpuesta con el icono SVG nuevo en los campos de búsqueda de Ciudades y Operadores.
+- **Causa:** las reglas `.map-filter-disclosure .map-typeahead::before` de `brand-alignment.css` y `executive-density.css` todavía inyectaban el carácter de lupa `⌕`. Ambas reglas se eliminaron en origen, sin agregar un override adicional.
+- Se mantiene la lupa SVG alineada, el padding izquierdo del input y los estilos del sistema visual FO-CHG-129. Se renuevan las versiones de las dos hojas de estilo en `index.html` y la caché PWA en `service-worker.js`.
+- Sin cambios de selección de ciudades, operadores, estratos, troncales, barrios, navegación ni datos.
+- Verificación: comprobar que aparece una única lupa en Ciudades y Operadores, con el placeholder alineado, tanto en Chrome de escritorio como Android; publicación final exige Vercel READY.
