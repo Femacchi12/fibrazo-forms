@@ -13,3 +13,117 @@ html body:not(#fz-excepcion-visual):not(#fz-excepcion-visual-2) :is(.view-switch
 html body:not(#fz-nav-a):not(#fz-nav-b) .app-nav,html body:not(#fz-nav-a):not(#fz-nav-b) .app-nav .section-title,html body:not(#fz-nav-a):not(#fz-nav-b) .app-nav .view-switch{background:transparent!important;background-image:none!important;border:0!important;border-radius:0!important;box-shadow:none!important}
 html body:not(#fz-nav-a):not(#fz-nav-b) .app-nav .view-switch :is(button,a){box-sizing:border-box!important;height:auto!important;min-height:0!important;padding:9px 12px!important;margin:0!important;border:1px solid #484848!important;border-radius:999px!important;box-shadow:none!important;font:700 13px/15.6px Montserrat,Inter,system-ui,sans-serif!important}
 html body:not(#fz-nav-a):not(#fz-nav-b) .app-nav .view-switch :is(button,a):is(.active,[aria-current="page"],[aria-selected="true"],[aria-pressed="true"]){background:#00e69a!important;color:#000!important;border-color:#00e69a!important}
+
+
+/* FO-CHG-121 | Selectores de capas unificados · 2026-11-06 */
+/* Las listas viven dentro del acordeón; nunca se dibujan encima de sus hermanas. */
+html body .map-floating-host .map-filter-disclosure,
+html body .map-floating-host .map-layer-disclosure{
+  box-sizing:border-box;min-width:0;max-width:100%;position:relative;
+}
+html body .map-floating-host .map-filter-disclosure .map-typeahead{
+  box-sizing:border-box;display:flex;flex-direction:column;gap:7px;position:static;
+  min-width:0;width:calc(100% - 8px);max-width:calc(100% - 8px);
+}
+html body .map-floating-host .map-typeahead-options{
+  position:static!important;inset:auto!important;top:auto!important;left:auto!important;right:auto!important;
+  display:block;box-sizing:border-box;width:100%;min-width:0;max-width:100%;
+  max-height:190px;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;
+  z-index:auto!important;margin:0;padding:4px;background:#0b1210!important;
+  border:1px solid #34463d!important;border-radius:10px;
+  box-shadow:none!important;
+}
+html body .map-floating-host .map-typeahead-options[hidden]{display:none!important}
+html body .map-floating-host .map-typeahead-options .map-city-option-row{
+  display:grid;grid-template-columns:minmax(0,1fr) 32px;align-items:center;width:100%;min-width:0;
+}
+html body .map-floating-host .map-typeahead-options button[data-value]{
+  display:flex;align-items:center;gap:9px;box-sizing:border-box;
+  width:100%;min-width:0;min-height:34px;margin:0;padding:6px 8px;
+  font:600 11px/1.35 Montserrat,Inter,system-ui,sans-serif;
+  text-align:left;white-space:normal;overflow-wrap:anywhere;
+  border:0!important;border-radius:7px;background:transparent!important;color:#f5f7f6!important;
+}
+html body .map-floating-host .map-typeahead-options button[data-value][aria-selected="true"]{
+  background:#12372a!important;color:#fff!important;
+}
+html body .map-floating-host .map-typeahead-options button[data-value]:hover,
+html body .map-floating-host .map-typeahead-options button[data-value]:focus-visible{
+  background:#204434!important;
+}
+html body .map-floating-host .map-typeahead-options .map-city-goto{
+  display:flex;align-items:center;justify-content:center;
+  box-sizing:border-box;min-width:32px;width:32px;min-height:34px;height:auto;
+  margin:0!important;padding:3px!important;border:0!important;border-radius:7px!important;
+  color:#43ffa5!important;background:transparent!important;
+  font-size:18px!important;line-height:1!important;
+}
+html body .map-floating-host .map-typeahead-options .map-city-goto:hover,
+html body .map-floating-host .map-typeahead-options .map-city-goto:focus-visible{
+  background:#204434!important;
+}
+/* Un único control circular, independientemente del origen del filtro. */
+html body .map-floating-host .map-typeahead-options input[type="checkbox"],
+html body .map-floating-host .map-selective-option input[type="checkbox"]{
+  appearance:none!important;-webkit-appearance:none!important;
+  box-sizing:border-box;display:inline-block;flex:0 0 16px;
+  width:16px!important;height:16px!important;min-width:16px!important;min-height:16px!important;
+  margin:0!important;padding:0!important;border:1.5px solid #889b92!important;border-radius:50%!important;
+  background:#0a100d!important;box-shadow:none!important;vertical-align:middle;
+  pointer-events:none;
+}
+html body .map-floating-host .map-typeahead-options input[type="checkbox"]:checked,
+html body .map-floating-host .map-selective-option input[type="checkbox"]:checked{
+  border-color:#43ffa5!important;background:#43ffa5!important;
+  box-shadow:inset 0 0 0 3.5px #0b1712!important;
+}
+html body .map-floating-host .map-selective-option{
+  box-sizing:border-box;width:100%;max-width:100%;min-width:0;
+  min-height:36px!important;gap:8px!important;padding:6px 8px!important;
+  border-radius:7px!important;
+}
+html body .map-floating-host .map-selective-option>i{
+  width:11px!important;height:11px!important;min-width:11px!important;
+  border-radius:50%!important;align-self:center;box-shadow:none;
+}
+html body .map-floating-host .map-selective-option>span{
+  min-width:0;overflow-wrap:anywhere;
+}
+html body .map-floating-host .map-selective-option b{
+  font:600 11px/1.35 Montserrat,Inter,system-ui,sans-serif!important;
+  white-space:normal;overflow-wrap:anywhere;
+}
+html body .map-floating-host .map-selective-option small{
+  font:400 9px/1.3 Montserrat,Inter,system-ui,sans-serif!important;
+  white-space:normal;overflow-wrap:anywhere;
+}
+html body .map-floating-host .barrio-option{
+  grid-template-columns:16px minmax(0,1fr)!important;
+}
+html body .map-floating-host .estrato-option{
+  grid-template-columns:16px 11px minmax(0,1fr)!important;
+}
+/* Contadores: amarillo institucional + negro; sin afectar el verde de selección. */
+html body .map-floating-host :is(.map-filter-disclosure,.map-layer-disclosure)>summary .map-control-count{
+  box-sizing:border-box;display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;
+  max-width:132px;min-width:0;min-height:25px;padding:4px 9px;margin-left:auto!important;
+  border:0!important;border-radius:999px!important;background:#ffcf40!important;
+  color:#060807!important;box-shadow:none!important;
+  font:800 10px/1.2 Montserrat,Inter,system-ui,sans-serif!important;
+  text-align:center;white-space:normal;
+}
+html body .map-floating-host :is(.map-filter-disclosure,.map-layer-disclosure)>summary{
+  box-sizing:border-box;min-width:0;gap:6px!important;
+}
+html body .map-floating-host :is(.map-filter-disclosure,.map-layer-disclosure)>summary .map-control-label{
+  flex:1 1 auto;min-width:0;
+}
+html body .map-floating-host :is(.map-filter-disclosure,.map-layer-disclosure)>summary::after{
+  flex:0 0 11px;margin-left:2px;
+}
+@media(max-width:420px){
+  html body .map-floating-host :is(.map-filter-disclosure,.map-layer-disclosure)>summary .map-control-count{
+    max-width:111px;padding:4px 7px;font-size:9px!important;
+  }
+  html body .map-floating-host .map-typeahead-options{max-height:166px}
+}
