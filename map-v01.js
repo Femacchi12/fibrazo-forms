@@ -1618,6 +1618,7 @@
   async function loadLayerIndex(layer,{silent=false}={}){
     if(!layerCityReady(layer)||!state.polygonActive[layer]||!ensureMap())return;
     if(layer==="estratos"&&filterValues("mapCityFilter").length>1)return loadMultiCityEstratos({silent});
+    if(layer==="troncales"&&filterValues("mapCityFilter").length>1)return loadMultiCityTroncalesIndex({silent});
     const selectedCity=filterValues("mapCityFilter").join(",");
     if(layer==="estratos"&&hasStaticEstratos(selectedCity)&&(!isAmbCity(selectedCity)||state.qaDissolveEstratos)&&!state.manualRefreshId&&
        (state.polygonFullKey||state.polygonFullLoadingKey))return;
@@ -1666,6 +1667,7 @@
   async function loadPolygonLayer(layer,{silent=false}={}){
     if(!layerCityReady(layer)||!state.polygonActive[layer]||!ensureMap())return;
     if(layer==="estratos"&&filterValues("mapCityFilter").length>1)return loadMultiCityEstratos({silent});
+    if(layer==="troncales"&&filterValues("mapCityFilter").length>1)return loadMultiCityTroncalesGeometry({silent});
     const fullCity=filterValues("mapCityFilter").join(",");
     const fullKey=layer==="estratos"&&hasStaticEstratos(fullCity)&&(!isAmbCity(fullCity)||state.qaDissolveEstratos)
       ?fullCity+"|"+[...state.polygonSelections.estratos].sort().join(","):"";
@@ -1871,9 +1873,151 @@
     }
   }
 
+  // FO-CHG-127: Troncales are indexed separately by their territorial source.
+  // Prefix IDs with a city key in the UI to avoid mixing equal IDs across Sheets.
+  async function loadMultiCityTroncalesIndex({silent=false}={}){
+    const cities=[...new Set(filterValues("mapCityFilter").map(scopeCity))];
+    if(cities.length<2||!state.polygonActive.troncales||!ensureMap())return;
+    const key=cities.slice().sort().join(",");
+    if(state.multiTroncalIndexKey===key&&!state.manualRefreshId){
+      return loadMultiCityTroncalesGeometry({silent});
+    }
+    state.polygonIndexControllers.troncales?.abort();
+    const controller=new AbortController();
+    state.polygonIndexControllers.troncales=controller;
+    const busyToken=silent?null:beginMapBusy("Consultando troncales de "+cities.length+" ciudades…");
+    if(!silent){state.polygonStatus.troncales="Buscando troncales por ciudad…";updatePolygonStatus();}
+    const results=[],failed=[];
+    const reload=state.manualRefreshId?"&reload="+encodeURIComponent(state.manualRefreshId)+"&forceRefresh=1":"";
+    try{
+      for(let start=0;start<cities.length;start+=2){
+        const batch=cities.slice(start,start+2);
+        const settled=await Promise.allSettled(batch.map(async city=>{
+          const url="/api/map-polygons?mode=index&layer=troncales&scope=all"+
+            "&bbox=-180%2C-90%2C180%2C90&zoom=15&cities="+encodeURIComponent(city)+reload;
+          const data=await authorizedFetch(url,controller,{ttl:reload?0:45000});
+          if(!data?.ok||!Array.isArray(data.items))throw Error("Índice no disponible");
+          return {city,items:data.items.map(item=>({
+            ...item,id:city+"::"+String(item.id),
+            rawId:String(item.id),city,
+            municipio:item.municipio||cityLabel(city)
+          }))};
+        }));
+        if(controller.signal.aborted||cities.join(",")!==filterValues("mapCityFilter").map(scopeCity).join(","))return;
+        settled.forEach((entry,i)=>{
+          if(entry.status==="fulfilled")results.push(entry.value);
+          else failed.push(batch[i]);
+        });
+      }
+      state.polygonIndexData.troncales=results.flatMap(x=>x.items).sort((a,b)=>
+        a.municipio.localeCompare(b.municipio,"es")||a.name.localeCompare(b.name,"es",{numeric:true}));
+      state.multiTroncalIndexKey=failed.length?"":key;
+      state.polygonStatus.troncales=state.polygonIndexData.troncales.length+
+        " troncales de "+results.length+"/"+cities.length+" ciudades"+
+        (failed.length?" · fallo: "+failed.map(cityLabel).join(", "):"");
+      if(failed.length)mapStatus("No se pudieron consultar las troncales de "+failed.map(cityLabel).join(", ")+".","warning");
+      renderLayerControls();
+      if(state.polygonSelections.troncales.size)await loadMultiCityTroncalesGeometry({silent:true});
+    }catch(error){
+      if(error?.name==="AbortError"||controller.signal.aborted)return;
+      state.polygonStatus.troncales="Error al consultar troncales multiciudad";
+      renderLayerControls();
+    }finally{
+      if(state.polygonIndexControllers.troncales===controller)state.polygonIndexControllers.troncales=null;
+      endMapBusy(busyToken);
+    }
+  }
+
+  async function loadMultiCityTroncalesGeometry({silent=false}={}){
+    const cities=[...new Set(filterValues("mapCityFilter").map(scopeCity))];
+    if(cities.length<2||!state.polygonActive.troncales||!ensureMap())return;
+    const selected=[...state.polygonSelections.troncales].map(String).sort();
+    const key=cities.slice().sort().join(",")+"|"+selected.join(",");
+    if(!state.manualRefreshId&&(state.multiTroncalKey===key||state.multiTroncalLoadingKey===key))return;
+    state.polygonControllers.troncales?.abort();
+    const controller=new AbortController();
+    state.polygonControllers.troncales=controller;
+    if(state.filterLayersVisible.mapCityFilter&&!state.map.hasLayer(state.polygonGroups.troncales)){
+      state.polygonGroups.troncales.addTo(state.map);
+    }
+    if(!selected.length){
+      clearPolygonLayer("troncales",{keepStatus:true});
+      state.polygonStatus.troncales="Sin troncales seleccionadas";
+      renderLayerControls();
+      state.polygonControllers.troncales=null;
+      return;
+    }
+    const perCity=new Map(cities.map(city=>[city,[]]));
+    for(const value of selected){
+      const split=value.indexOf("::");
+      if(split<1)continue;
+      const city=value.slice(0,split),id=value.slice(split+2);
+      if(perCity.has(city)&&id)perCity.get(city).push(id);
+    }
+    const active=[...perCity].filter(([,ids])=>ids.length);
+    if(!active.length){
+      clearPolygonLayer("troncales",{keepStatus:true});
+      state.polygonStatus.troncales="Selecciona troncales en las ciudades";
+      renderLayerControls();
+      return;
+    }
+    state.multiTroncalLoadingKey=key;
+    const busyToken=beginMapBusy("Dibujando troncales de varias ciudades…");
+    if(!silent){state.polygonStatus.troncales="Cargando troncales seleccionadas…";updatePolygonStatus();}
+    const loaded=[],failed=[];
+    const reload=state.manualRefreshId?"&reload="+encodeURIComponent(state.manualRefreshId):"";
+    try{
+      for(let start=0;start<active.length;start+=2){
+        const batch=active.slice(start,start+2);
+        const settled=await Promise.allSettled(batch.map(async([city,ids])=>{
+          const base="/api/map-polygons?mode=geometry&layer=troncales"+
+            "&bbox=-180%2C-90%2C180%2C90&zoom=15&fullCoverage=1&cities="+encodeURIComponent(city)+
+            "&ids="+encodeURIComponent(ids.join(","))+reload;
+          const first=await authorizedFetch(base+"&page=0",controller,{ttl:reload?0:60000});
+          if(!first?.ok||!Array.isArray(first.features))throw Error("Respuesta incompleta de troncales");
+          const pages=Math.max(1,Number(first.pageCount)||1);
+          if(pages>40)throw Error("Más páginas de las admitidas");
+          const features=[...first.features];
+          for(let page=1;page<pages;page++){
+            const next=await authorizedFetch(base+"&page="+page,controller,{ttl:reload?0:60000});
+            if(!next?.ok||!Array.isArray(next.features)||next.page!==page)throw Error("Troncales incompletas");
+            features.push(...next.features);
+          }
+          if(first.fullCoverage&&features.length!==Number(first.totalVisible))throw Error("Cobertura incompleta");
+          return {city,features:features.map((feature,index)=>{
+            const id=city+"::"+String(feature?.properties?.id||feature?.id||index);
+            return {...feature,id,properties:{...feature.properties,id,
+              municipio:feature.properties?.municipio||cityLabel(city)}};
+          })};
+        }));
+        if(controller.signal.aborted||cities.join(",")!==filterValues("mapCityFilter").map(scopeCity).join(","))return;
+        settled.forEach((entry,i)=>{
+          if(entry.status==="fulfilled")loaded.push(entry.value);
+          else failed.push(batch[i][0]);
+        });
+      }
+      const features=loaded.flatMap(row=>row.features);
+      const drawn=drawPolygonLayer("troncales",features);
+      state.multiTroncalKey=failed.length?"":key;
+      state.polygonStatus.troncales=features.length+" troncales recibidas · "+drawn+" dibujadas"+
+        (failed.length?" · sin cargar: "+failed.map(cityLabel).join(", "):"");
+      if(failed.length)mapStatus("No se pudieron cargar las troncales de "+failed.map(cityLabel).join(", ")+".","warning");
+      renderLayerControls();
+    }catch(error){
+      if(error?.name==="AbortError"||controller.signal.aborted)return;
+      state.polygonStatus.troncales="No se pudieron dibujar las troncales seleccionadas";
+      renderLayerControls();
+    }finally{
+      if(state.multiTroncalLoadingKey===key)state.multiTroncalLoadingKey="";
+      if(state.polygonControllers.troncales===controller)state.polygonControllers.troncales=null;
+      endMapBusy(busyToken);
+    }
+  }
+
   function refreshPolygonLayer(layer,{silent=false}={}){
     if(!layerCityReady(layer)||!state.polygonActive[layer])return Promise.resolve();
     if(layer==="estratos"&&filterValues("mapCityFilter").length>1)return loadMultiCityEstratos({silent});
+    if(layer==="troncales"&&filterValues("mapCityFilter").length>1)return loadMultiCityTroncalesIndex({silent});
     return loadLayerIndex(layer,{silent});
   }
 
@@ -1882,7 +2026,8 @@
     if(state.polygonReloadTimer)clearTimeout(state.polygonReloadTimer);
     state.polygonReloadTimer=setTimeout(()=>{
       for(const layer of ["barrios","estratos","troncales"]){
-        if(!state.polygonActive[layer])continue;
+        if(!state.polygonActive[layer]||!layerCityReady(layer))continue;
+        if(layer==="troncales"&&filterValues("mapCityFilter").length>1)continue;
         if(layer==="barrios"&&state.barrioListMode==="all")loadPolygonLayer(layer,{silent:true});
         else refreshPolygonLayer(layer,{silent:true});
       }
