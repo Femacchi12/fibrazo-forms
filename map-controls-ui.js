@@ -5,9 +5,7 @@
   const norm=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
   const ids=["mapCityFilter","mapTypeFilter","mapOperatorFilter","mapUserFilter"];
   const selectedCityCount=()=>[...($("mapCityFilter")?.selectedOptions||[])].filter(option=>option.value&&option.value!=="all").length;
-  const cityLockMessage=()=>selectedCityCount()>1?
-    "Debe dejar seleccionada una sola ciudad.":
-    "Debe seleccionar al menos una ciudad.";
+  const cityLockMessage=()=>"Selecciona al menos una ciudad.";
   function searchable(select){
     if(!select||select.dataset.typeaheadReady)return;
     select.dataset.typeaheadReady="1";
@@ -34,9 +32,26 @@
     select.tabIndex=-1;
     select._searchInput=input;
     let active=0;
+    // Keep a stable order by selection time even when map data rebuilds the native SELECT.
+    // Unselected cities remain alphabetical, with the "all cities" option first.
+    let citySelectionOrder=[];
     const values=()=>[...select.selectedOptions].map(option=>option.value).filter(value=>value&&value!=="all");
+    const refreshCityOrder=()=>{
+      if(select.id!=="mapCityFilter")return;
+      const chosen=new Set(values());
+      citySelectionOrder=citySelectionOrder.filter(value=>chosen.has(value));
+      for(const value of chosen)if(!citySelectionOrder.includes(value))citySelectionOrder.push(value);
+    };
+    const cityOptionSort=(a,b)=>{
+      const first=citySelectionOrder.indexOf(a.value),second=citySelectionOrder.indexOf(b.value);
+      if(first!==-1||second!==-1)return first===-1?1:second===-1?-1:first-second;
+      if(a.value==="all")return -1;
+      if(b.value==="all")return 1;
+      return a.textContent.localeCompare(b.textContent,"es",{sensitivity:"base",numeric:true});
+    };
     const close=()=>{menu.hidden=true;input.setAttribute("aria-expanded","false");};
     const sync=()=>{
+      refreshCityOrder();
       wrap.hidden=select.hidden;
       const locked=select.disabled||select.dataset.cityScope==="locked";
       wrap.classList.toggle("is-locked",locked);
@@ -74,12 +89,16 @@
         document.dispatchEvent(new CustomEvent("fibrazo:map-filter-layer-visibility",{detail:{id:select.id,visible:true}}));
       }
       sync();draw();
+      if(select.id==="mapCityFilter")menu.scrollTop=0;
       select.dispatchEvent(new Event("change",{bubbles:true}));
     };
     const draw=()=>{
       if(select.disabled||select.dataset.cityScope==="locked")return;
+      refreshCityOrder();
       const query=norm(input.value);
-      const opts=[...select.options].filter(o=>!o.disabled&&!o.hidden&&norm(o.textContent).includes(query)).slice(0,100);
+      const opts=[...select.options].filter(o=>!o.disabled&&!o.hidden&&norm(o.textContent).includes(query));
+      if(select.id==="mapCityFilter")opts.sort(cityOptionSort);
+      opts.splice(100);
       menu.replaceChildren();
       const shown=select.closest(".map-filter-disclosure")?.dataset.layerVisible!=="false";
       opts.forEach(opt=>{
