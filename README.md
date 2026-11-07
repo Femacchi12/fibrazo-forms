@@ -353,3 +353,18 @@ Las capturas móviles posteriores a FO-CHG-122 aún mostraban ciudades y operado
 - Pulsar la flecha de una ciudad nunca cambia la selección. Marcar/desmarcar sí cambia las capas; al quedar una ciudad, el mapa la centra.
 - Refrescar la aplicación con el nuevo Service Worker debe mostrar los recursos nuevos incluso si existía una versión anterior instalada.
 - La comprobación visual en navegador autenticado y el estado READY de Vercel deben verificarse antes de declarar completamente publicado el cambio.
+
+
+## FO-CHG-125 · Compactación, estratos sin buscador y ojos reversibles (2026-11-07)
+
+Se incorporan los cambios acordados después de revisar la captura de producción y la referencia de filas compactas, sin recuadros por desplegable.
+
+- **Estratos**: se elimina `mapEstratoSearch` del HTML y su lógica de filtrado; se muestran siempre los seis estratos.
+- **Densidad visual**: cabeceras y filas más bajas, menor espaciado y padding, se eliminan bordes interiores de los acordeones, conservando el panel y la separación de controles interactivos.
+- **Indicadores de estrato**: se centra el checkbox circular en su columna; el punto cromático se superpone centrado sobre el mismo círculo.
+- **Ojos reversibles, ciudades y operadores**: el ojo cambia la visibilidad de las selecciones en el mapa sin borrar el `select[multiple]`; el listado y contador reflejan el estado oculto, y al reactivar recuperan exactamente los valores previos. Al cambiar una opción con la capa oculta, esta vuelve a hacerse visible.
+- **Ojos reversibles, estratos, barrios y troncales**: se conserva el mecanismo existente `polygonSavedSelections` que registra las opciones y el modo de barrios `all/excluded` antes de ocultarlas y las recupera al mostrar.
+- **PWA**: versión de app-shell `fibrazo-forms-v0.8.178-20261107-compact-eye-125`. No se limpia IndexedDB ni la cola de registros offline.
+- **Archivos**: `index.html`, `map-controls-ui.js`, `map-v01.js`, `ajustes-visuales-20261106.css`, `service-worker.js`.
+
+QA de aceptación: sin buscador de Estratos, seis círculos centrados; cabeceras planas y filas compactas, sin superposiciones en móvil; al pulsar el ojo dos veces la capa recupera las mismas selecciones; cambiar una opción con el ojo apagado vuelve a mostrar la capa; al navegar entre ciudades se conservan flechas y centrado automático. Verificación visual autenticada y despliegue READY pendientes de confirmar en cada release.
