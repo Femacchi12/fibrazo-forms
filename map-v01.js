@@ -56,6 +56,7 @@
     qaDissolveEstratos:false,
     polygonFullKey:"",
     polygonFullLoadingKey:"",
+    multiTroncalIndexKey:"",multiTroncalKey:"",multiTroncalLoadingKey:"",
     manualRefreshId:null,
     previousTerritorialCity:"",
     polygonReloadTimer:null,
@@ -107,7 +108,8 @@
   // Neighborhoods/trunks remain single-city. Strata can be compared across selected cities.
   const territorialCityReady=()=>filterValues("mapCityFilter").length===1;
   const estratosCityReady=()=>filterValues("mapCityFilter").length>=1;
-  const layerCityReady=layer=>layer==="estratos"?estratosCityReady():territorialCityReady();
+  const troncalesCityReady=()=>filterValues("mapCityFilter").length>=1;
+  const layerCityReady=layer=>layer==="estratos"?estratosCityReady():layer==="troncales"?troncalesCityReady():territorialCityReady();
   const isAmbCity=city=>city==="bucaramanga-amb";
   const selectFilterValues=(select,values)=>{
     if(!select)return;
@@ -1240,6 +1242,9 @@
     if(layer==="estratos"){
       state.polygonFullKey="";state.polygonFullLoadingKey="";
     }
+    if(layer==="troncales"){
+      state.multiTroncalKey="";state.multiTroncalLoadingKey="";
+    }
     state.polygonFeatures[layer]=[];
     state.polygonRefs[layer]=new Map();
     if(!keepStatus)state.polygonStatus[layer]="";
@@ -1343,7 +1348,7 @@
     const host=$("mapTroncalControls"),options=$("mapTroncalOptions"),action=$("mapToggleAllTroncales");
     if(!host||!options)return;
     const selected=state.polygonSelections.troncales;
-    const ready=territorialCityReady();
+    const ready=troncalesCityReady();
     host.dataset.cityScope=ready?"ready":"locked";
     host.dataset.selectedCount=String(ready?selected.size:0);
     if(action){
@@ -1368,7 +1373,7 @@
   }
 
   function toggleAllTroncales(){
-    if(!territorialCityReady())return;
+    if(!troncalesCityReady())return;
     if(state.polygonSelections.troncales.size)clearLayerSelection("troncales");
     else {
       for(const item of state.polygonIndexData.troncales||[])state.polygonSelections.troncales.add(String(item.id));
@@ -1482,6 +1487,28 @@
     const priorStrata=[...state.polygonSelections.estratos];
     const savedStrata=state.polygonSavedSelections.estratos;
     const strataWasInitialized=!!state.estratosInitialized;
+    const previousCity=state.previousTerritorialCity;
+    const priorTrunks=[...state.polygonSelections.troncales];
+    const savedTrunks=state.polygonSavedSelections.troncales;
+    const priorTrunksActive=state.polygonActive.troncales;
+    const trunkSelectionsForScope=values=>{
+      const picked=new Set(selected.map(scopeCity));
+      return (values||[]).map(value=>{
+        const token=String(value);
+        if(selected.length>1){
+          if(token.includes("::"))return token;
+          return previousCity?scopeCity(previousCity)+"::"+token:null;
+        }
+        if(token.includes("::")){
+          const split=token.indexOf("::");
+          return picked.has(token.slice(0,split))?token.slice(split+2):null;
+        }
+        return previousCity===selected[0]?token:null;
+      }).filter(value=>{
+        if(!value)return false;
+        return selected.length===1||picked.has(value.slice(0,value.indexOf("::")));
+      });
+    };
     const city=selected.length===1?selected[0]:"";
     // Explicit comparison: start with original full coverage, never silently enable union.
     // This QA trial starts with the complete, already-unified MultiPolygon layer.
@@ -1512,6 +1539,8 @@
     }
     updateQaToolbar();
     polygonResponseCache.clear();
+    state.multiTroncalIndexKey="";
+    state.multiTroncalKey="";state.multiTroncalLoadingKey="";
     for(const layer of ["barrios","estratos","troncales"]){
       state.polygonControllers[layer]?.abort();
       state.polygonIndexControllers[layer]?.abort();
@@ -1521,18 +1550,24 @@
       state.polygonSelectionTimers[layer]=null;
       state.polygonIndexData[layer]=[];
       state.polygonSelections[layer].clear();
-      state.polygonSavedSelections[layer]=layer==="estratos"&&strataReady?savedStrata:null;
+      state.polygonSavedSelections[layer]=layer==="estratos"&&strataReady?savedStrata
+        :layer==="troncales"&&selected.length&&savedTrunks
+        ?{...savedTrunks,values:trunkSelectionsForScope(savedTrunks.values)}:null;
       if(layer==="barrios"){
         state.barrioAllSelected=false;
         state.barrioExcluded.clear();
       }
       clearPolygonLayer(layer,{keepStatus:true});
-      state.polygonActive[layer]=layer==="estratos"?strataReady:false;
+      state.polygonActive[layer]=layer==="estratos"?strataReady
+        :layer==="troncales"?!!selected.length&&priorTrunksActive:false;
       if(strataReady&&layer==="estratos"){
         // Shared stratum filter is preserved while cities are added or removed.
         state.polygonSelections.estratos=new Set(strataWasInitialized?priorStrata:["1","2","3"]);
         state.estratosInitialized=true;
         state.polygonStatus.estratos=selected.length+" ciudad"+(selected.length===1?"":"es")+" · cargando estratos…";
+      }else if(selected.length&&layer==="troncales"){
+        state.polygonSelections.troncales=new Set(trunkSelectionsForScope(priorTrunks));
+        state.polygonStatus.troncales=selected.length+" ciudad"+(selected.length===1?"":"es")+" · cargando troncales…";
       }else state.polygonStatus[layer]=ready?"":"selecciona una sola ciudad";
       const group=state.polygonGroups?.[layer];
       if(group&&state.map){
@@ -2477,7 +2512,7 @@
     $("mapTroncalSearch")?.addEventListener("input",renderTroncalControls);
     $("mapToggleAllTroncales")?.addEventListener("click",()=>toggleSelectedLayerVisibility("troncales"));
     $("mapSelectAllTroncalesOptions")?.addEventListener("click",()=>{
-      if(!territorialCityReady())return;
+      if(!troncalesCityReady())return;
       for(const item of state.polygonIndexData.troncales||[])state.polygonSelections.troncales.add(String(item.id));
       renderLayerControls();loadPolygonLayer("troncales");
     });
