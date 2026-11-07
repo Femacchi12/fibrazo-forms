@@ -79,7 +79,7 @@
         const button=document.createElement("button");
         button.type="button";button.dataset.value=opt.value;
         button.innerHTML="";
-        const tick=document.createElement("input");tick.type="checkbox";tick.tabIndex=-1;tick.checked=opt.selected;tick.setAttribute("aria-hidden","true");
+        const tick=document.createElement("span");tick.className="map-filter-round"+(opt.selected?" is-selected":"");tick.setAttribute("aria-hidden","true");
         const name=document.createElement("span");name.textContent=opt.textContent;
         button.append(tick,name);
         button.setAttribute("role","option");
