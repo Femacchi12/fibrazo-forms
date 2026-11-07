@@ -79,9 +79,9 @@
         const button=document.createElement("button");
         button.type="button";button.dataset.value=opt.value;
         button.innerHTML="";
-        const tick=document.createElement("span");tick.className="map-filter-round"+(opt.selected?" is-selected":"");tick.setAttribute("aria-hidden","true");
-        const name=document.createElement("span");name.textContent=opt.textContent;
-        button.append(tick,name);
+        // Decorative circular marker is drawn by CSS ::before; aria-selected remains the state source.
+        const name=document.createElement("span");name.className="map-option-label";name.textContent=opt.textContent;
+        button.append(name);
         button.setAttribute("role","option");
         button.setAttribute("aria-selected",String(opt.selected));
         if(select.id==="mapCityFilter"&&opt.value!=="all"){
