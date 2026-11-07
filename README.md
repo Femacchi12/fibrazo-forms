@@ -312,3 +312,15 @@ FO-CHG-106 (0.8.159): [numeric operational stratum with status/distance](docs/fo
 - Los límites territoriales en formato SHP `[oeste,sur,este,norte]` se convierten a `[[sur,oeste],[norte,este]]` antes de invocar Leaflet; corrige Montería y Sincelejo y conserva ciudades con límites ya normalizados.
 - Los controles de selección de ciudades, operadores y capas territoriales utilizan apariencia circular; sigue siendo posible seleccionar varias opciones.
 - Archivos modificados: `map-v01.js`, `map-controls-ui.js`, `styles.css`, `index.html`. **Validación visual autenticada pendiente**; verificar navegación por flechas, cambios de selección, capas visibles y comportamiento en móvil.
+
+
+## FO-CHG-121 · Selectores unificados (2026-11-06)
+
+Cambio visual aprobado para `Capas y filtros` (no altera las fuentes territoriales ni reglas de selección):
+
+- Ciudades y Operadores muestran sus opciones **dentro del acordeón**, con scroll interno y sin superponerse con Estratos, Barrios o la barra del panel.
+- Controles circulares uniformes en Ciudades, Operadores y capas territoriales, manteniendo estratos diferenciados por color.
+- Encabezados con contadores de selección en **amarillo FIBRAZO `#ffcf40` y texto negro**, en vez de verde.
+- Filas con espaciado, tipografía y alineación consistentes; flechas independientes para navegar a cada ciudad se mantienen a la derecha.
+- Archivos: `ajustes-visuales-20261106.css`, `index.html` (versión de caché `FO-CHG-121`).
+- **QA pendiente en sesión autenticada:** apertura/cierre sin superposición, scroll en Ciudades/Operadores/Barrios, selección múltiple y flechas, contadores y móvil estrecho. El despliegue solo puede considerarse operativo cuando Vercel reporte READY.
