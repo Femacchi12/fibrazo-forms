@@ -104,7 +104,10 @@
     const select=$(id);
     return select?[...select.selectedOptions].map(option=>option.value).filter(value=>value&&value!=="all"):[];
   };
+  // Neighborhoods/trunks remain single-city. Strata can be compared across selected cities.
   const territorialCityReady=()=>filterValues("mapCityFilter").length===1;
+  const estratosCityReady=()=>filterValues("mapCityFilter").length>=1;
+  const layerCityReady=layer=>layer==="estratos"?estratosCityReady():territorialCityReady();
   const isAmbCity=city=>city==="bucaramanga-amb";
   const selectFilterValues=(select,values)=>{
     if(!select)return;
@@ -1312,7 +1315,7 @@
   function renderEstratoControls(){
     const host=$("mapEstratoControls"),options=$("mapEstratoOptions"),hint=$("mapEstratoHint");
     if(!host||!options)return;
-    const ready=territorialCityReady();
+    const ready=estratosCityReady();
     const selected=ready?state.polygonSelections.estratos.size:0;
     host.dataset.cityScope=ready?"ready":"locked";
     host.dataset.selectedCount=String(selected);
@@ -1475,6 +1478,10 @@
   function resetTerritorialScopeForCity(){
     const ready=territorialCityReady();
     const selected=filterValues("mapCityFilter");
+    const strataReady=selected.length>0;
+    const priorStrata=[...state.polygonSelections.estratos];
+    const savedStrata=state.polygonSavedSelections.estratos;
+    const strataWasInitialized=!!state.estratosInitialized;
     const city=selected.length===1?selected[0]:"";
     // Explicit comparison: start with original full coverage, never silently enable union.
     // This QA trial starts with the complete, already-unified MultiPolygon layer.
@@ -1482,23 +1489,23 @@
     if(isAmbCity(city)&&!isAmbCity(state.previousTerritorialCity))state.qaDissolveEstratos=true;
     state.previousTerritorialCity=city;
     const title=document.querySelector("#mapLayersPanel .map-layers-head strong");
-    const cityName=city==="ibague"?"Ibagué":city?cityLabel(city):"Selecciona una ciudad";
+    const cityName=selected.length>1?selected.length+" ciudades seleccionadas":city==="ibague"?"Ibagué":city?cityLabel(city):"Selecciona una ciudad";
     if(title)title.textContent=cityName;
     if($("mapViewBucaramanga"))$("mapViewBucaramanga").textContent=QA_CITY_BOUNDS[city]?"◎ Ver "+cityName:"◎ Ver Bucaramanga + AMB";
     const qaToggle=$("mapEstratoOptimizePilot");
     if(qaToggle){
-      const isPrecomputed=["neiva","villavicencio","ibague","cartagena","sincelejo","monteria","barranquilla","santa marta","turbaco"].includes(city);
+      const isPrecomputed=selected.length>1||["neiva","villavicencio","ibague","cartagena","sincelejo","monteria","barranquilla","santa marta","turbaco"].includes(city);
       qaToggle.disabled=isPrecomputed;
       qaToggle.checked=isPrecomputed||state.qaDissolveEstratos;
       const label=qaToggle.closest("label");
       if(label){
         const textNode=[...label.childNodes].find(node=>node.nodeType===3);
-        if(textNode)textNode.nodeValue=["barranquilla","turbaco"].includes(city)?" Estratos municipales · unificados":["sincelejo","monteria","santa marta"].includes(city)?" Referencia censal2018 · unificada":city==="cartagena"
+        if(textNode)textNode.nodeValue=selected.length>1?" Estratos superpuestos por ciudad · fuentes individuales":["barranquilla","turbaco"].includes(city)?" Estratos municipales · unificados":["sincelejo","monteria","santa marta"].includes(city)?" Referencia censal2018 · unificada":city==="cartagena"
           ?" Estratos históricos 2022 (QA, sin vigencia validada)"
           :isPrecomputed
           ?" Estratos precalculados y unificados (QA)"
           :" Prueba QA: unificar polígonos por estrato";
-        label.title=["barranquilla","turbaco"].includes(city)?"Fuente municipal; vigencia no declarada en metadatos":["sincelejo","monteria","santa marta"].includes(city)?"Estrato predominante por manzana · fuente Censo DANE2018":isPrecomputed
+        label.title=selected.length>1?"Visualización comparativa por ciudad; conserva la procedencia y vigencia de cada fuente":["barranquilla","turbaco"].includes(city)?"Fuente municipal; vigencia no declarada en metadatos":["sincelejo","monteria","santa marta"].includes(city)?"Estrato predominante por manzana · fuente Censo DANE2018":isPrecomputed
           ?"Esta ciudad utiliza por defecto los polígonos unificados del paquete QA"
           :"Comparar capas originales y unificadas de Bucaramanga";
       }
@@ -1514,17 +1521,18 @@
       state.polygonSelectionTimers[layer]=null;
       state.polygonIndexData[layer]=[];
       state.polygonSelections[layer].clear();
-      state.polygonSavedSelections[layer]=null;
+      state.polygonSavedSelections[layer]=layer==="estratos"&&strataReady?savedStrata:null;
       if(layer==="barrios"){
         state.barrioAllSelected=false;
         state.barrioExcluded.clear();
       }
       clearPolygonLayer(layer,{keepStatus:true});
-      state.polygonActive[layer]=ready&&layer==="estratos";
-      if(ready&&layer==="estratos"){
-        state.polygonSelections.estratos=new Set(["1","2","3"]);
+      state.polygonActive[layer]=layer==="estratos"?strataReady:false;
+      if(strataReady&&layer==="estratos"){
+        // Shared stratum filter is preserved while cities are added or removed.
+        state.polygonSelections.estratos=new Set(strataWasInitialized?priorStrata:["1","2","3"]);
         state.estratosInitialized=true;
-        state.polygonStatus.estratos="cargando estratos 1, 2 y 3…";
+        state.polygonStatus.estratos=selected.length+" ciudad"+(selected.length===1?"":"es")+" · cargando estratos…";
       }else state.polygonStatus[layer]=ready?"":"selecciona una sola ciudad";
       const group=state.polygonGroups?.[layer];
       if(group&&state.map){
@@ -1573,7 +1581,8 @@
   }
 
   async function loadLayerIndex(layer,{silent=false}={}){
-    if(!territorialCityReady()||!state.polygonActive[layer]||!ensureMap())return;
+    if(!layerCityReady(layer)||!state.polygonActive[layer]||!ensureMap())return;
+    if(layer==="estratos"&&filterValues("mapCityFilter").length>1)return loadMultiCityEstratos({silent});
     const selectedCity=filterValues("mapCityFilter").join(",");
     if(layer==="estratos"&&hasStaticEstratos(selectedCity)&&(!isAmbCity(selectedCity)||state.qaDissolveEstratos)&&!state.manualRefreshId&&
        (state.polygonFullKey||state.polygonFullLoadingKey))return;
@@ -1620,7 +1629,8 @@
   }
 
   async function loadPolygonLayer(layer,{silent=false}={}){
-    if(!territorialCityReady()||!state.polygonActive[layer]||!ensureMap())return;
+    if(!layerCityReady(layer)||!state.polygonActive[layer]||!ensureMap())return;
+    if(layer==="estratos"&&filterValues("mapCityFilter").length>1)return loadMultiCityEstratos({silent});
     const fullCity=filterValues("mapCityFilter").join(",");
     const fullKey=layer==="estratos"&&hasStaticEstratos(fullCity)&&(!isAmbCity(fullCity)||state.qaDissolveEstratos)
       ?fullCity+"|"+[...state.polygonSelections.estratos].sort().join(","):"";
@@ -1729,12 +1739,13 @@
   }
 
   function refreshPolygonLayer(layer,{silent=false}={}){
-    if(!territorialCityReady()||!state.polygonActive[layer])return Promise.resolve();
+    if(!layerCityReady(layer)||!state.polygonActive[layer])return Promise.resolve();
+    if(layer==="estratos"&&filterValues("mapCityFilter").length>1)return loadMultiCityEstratos({silent});
     return loadLayerIndex(layer,{silent});
   }
 
   function schedulePolygonReload(){
-    if(!territorialCityReady()||!state.viewActive||Date.now()<state.polygonFocusUntil)return;
+    if(!estratosCityReady()||!state.viewActive||Date.now()<state.polygonFocusUntil)return;
     if(state.polygonReloadTimer)clearTimeout(state.polygonReloadTimer);
     state.polygonReloadTimer=setTimeout(()=>{
       for(const layer of ["barrios","estratos","troncales"]){
@@ -1749,13 +1760,13 @@
     if(state.polygonFilterTimer)clearTimeout(state.polygonFilterTimer);
     state.polygonFilterTimer=setTimeout(()=>{
       state.polygonFilterTimer=null;
-      if(!territorialCityReady())return;
-      for(const layer of ["barrios","estratos","troncales"])if(state.polygonActive[layer])refreshPolygonLayer(layer,{silent:true});
+      if(!estratosCityReady())return;
+      for(const layer of ["barrios","estratos","troncales"])if(layerCityReady(layer)&&state.polygonActive[layer])refreshPolygonLayer(layer,{silent:true});
     },260);
   }
 
   function clearLayerSelection(layer){
-    if(!territorialCityReady())return;
+    if(!layerCityReady(layer))return;
     state.polygonControllers[layer]?.abort();
     state.polygonControllers[layer]=null;
     state.polygonSelections[layer].clear();
@@ -1770,7 +1781,7 @@
 
   // El ojo guarda la selección exacta, incluyendo el modo "todos salvo" de barrios.
   function toggleSelectedLayerVisibility(layer){
-    if(!territorialCityReady())return;
+    if(!layerCityReady(layer))return;
     const selected=layer==="barrios"
       ?(state.barrioAllSelected?Math.max(0,state.polygonIndexData.barrios.length-state.barrioExcluded.size):state.polygonSelections.barrios.size)
       :state.polygonSelections[layer].size;
@@ -1797,7 +1808,7 @@
   }
 
   function setLayerSelection(layer,value,checked){
-    if(!territorialCityReady())return;
+    if(!layerCityReady(layer))return;
     const key=String(value);
     const set=state.polygonSelections[layer];
     if(layer==="barrios"&&state.barrioAllSelected){
@@ -1816,7 +1827,7 @@
   }
 
   function togglePolygonLayer(layer){
-    if(!territorialCityReady()){
+    if(!layerCityReady(layer)){
       state.polygonStatus[layer]="selecciona una sola ciudad";
       renderLayerControls();
       return;
