@@ -15,219 +15,224 @@ html body:not(#fz-nav-a):not(#fz-nav-b) .app-nav .view-switch :is(button,a){box-
 html body:not(#fz-nav-a):not(#fz-nav-b) .app-nav .view-switch :is(button,a):is(.active,[aria-current="page"],[aria-selected="true"],[aria-pressed="true"]){background:#00e69a!important;color:#000!important;border-color:#00e69a!important}
 
 
-/* FO-CHG-121 | Selectores de capas unificados · 2026-11-06 */
-/* Las listas viven dentro del acordeón; nunca se dibujan encima de sus hermanas. */
-html body .map-floating-host .map-filter-disclosure,
-html body .map-floating-host .map-layer-disclosure{
-  box-sizing:border-box;min-width:0;max-width:100%;position:relative;
+/* FO-CHG-123 | Sistema único de selectores · referencia visual aprobada
+   Scoped to FIBRAZO Forms map only. Replaces overlapping 121/122 rules. */
+#mapCanvasWrap #mapFloatingTools{--map-green:#43ffa5;--map-yellow:#ffcf40;--map-panel:#0b100e;--map-outline:#365548;}
+#mapCanvasWrap #mapFloatingTools .map-floating-content{overflow-x:hidden!important;overscroll-behavior:contain;}
+#mapCanvasWrap #mapFloatingTools .map-floating-tabs{
+  position:sticky!important;top:0;z-index:20!important;
+  padding:5px 2px 10px!important;margin:0 0 4px!important;
+  background:#101312!important;background-image:none!important;
+  border-bottom:1px solid #303d36;
 }
-html body .map-floating-host .map-filter-disclosure .map-typeahead{
-  box-sizing:border-box;display:flex;flex-direction:column;gap:7px;position:static;
-  min-width:0;width:calc(100% - 8px);max-width:calc(100% - 8px);
+#mapCanvasWrap #mapFloatingTools .map-floating-host .map-filters{
+  display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:7px!important;
+  min-width:0!important;width:100%!important;
 }
-html body .map-floating-host .map-typeahead-options{
-  position:static!important;inset:auto!important;top:auto!important;left:auto!important;right:auto!important;
-  display:block;box-sizing:border-box;width:100%;min-width:0;max-width:100%;
-  max-height:190px;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;
-  z-index:auto!important;margin:0;padding:4px;background:#0b1210!important;
-  border:1px solid #34463d!important;border-radius:10px;
-  box-shadow:none!important;
+#mapCanvasWrap #mapFloatingTools .map-filter-disclosure,
+#mapCanvasWrap #mapFloatingTools .map-layer-disclosure{
+  box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:100%!important;
+  margin:0 0 7px!important;padding:0!important;overflow:visible!important;
+  border:0!important;border-radius:0!important;background:transparent!important;
 }
-html body .map-floating-host .map-typeahead-options[hidden]{display:none!important}
-html body .map-floating-host .map-typeahead-options .map-city-option-row{
-  display:grid;grid-template-columns:minmax(0,1fr) 32px;align-items:center;width:100%;min-width:0;
+/* Each header is a uniform dark card, with the badge outside the title. */
+#mapCanvasWrap #mapFloatingTools :is(.map-filter-disclosure,.map-layer-disclosure)>summary{
+  display:flex!important;align-items:center!important;gap:8px!important;
+  box-sizing:border-box!important;min-width:0!important;min-height:46px!important;
+  padding:7px 10px!important;margin:0!important;
+  background:#202322!important;border:1px solid #303a34!important;border-radius:10px!important;
+  color:#fff!important;list-style:none!important;text-align:left;
 }
-html body .map-floating-host .map-typeahead-options button[data-value]{
-  display:flex;align-items:center;gap:9px;box-sizing:border-box;
-  width:100%;min-width:0;min-height:34px;margin:0;padding:6px 8px;
-  font:600 11px/1.35 Montserrat,Inter,system-ui,sans-serif;
-  text-align:left;white-space:normal;overflow-wrap:anywhere;
-  border:0!important;border-radius:7px;background:transparent!important;color:#f5f7f6!important;
+#mapCanvasWrap #mapFloatingTools :is(.map-filter-disclosure,.map-layer-disclosure)>summary::-webkit-details-marker{display:none!important}
+#mapCanvasWrap #mapFloatingTools :is(.map-filter-disclosure,.map-layer-disclosure)>summary .map-control-label{
+  display:block;flex:1 1 auto!important;min-width:0!important;
+  color:#fafcfa!important;font:800 12px/1.25 Montserrat,Inter,system-ui,sans-serif!important;
 }
-html body .map-floating-host .map-typeahead-options button[data-value][aria-selected="true"]{
-  background:#12372a!important;color:#fff!important;
-}
-html body .map-floating-host .map-typeahead-options button[data-value]:hover,
-html body .map-floating-host .map-typeahead-options button[data-value]:focus-visible{
-  background:#204434!important;
-}
-html body .map-floating-host .map-typeahead-options .map-city-goto{
-  display:flex;align-items:center;justify-content:center;
-  box-sizing:border-box;min-width:32px;width:32px;min-height:34px;height:auto;
-  margin:0!important;padding:3px!important;border:0!important;border-radius:7px!important;
-  color:#43ffa5!important;background:transparent!important;
-  font-size:18px!important;line-height:1!important;
-}
-html body .map-floating-host .map-typeahead-options .map-city-goto:hover,
-html body .map-floating-host .map-typeahead-options .map-city-goto:focus-visible{
-  background:#204434!important;
-}
-/* Un único control circular, independientemente del origen del filtro. */
-html body .map-floating-host .map-typeahead-options input[type="checkbox"],
-html body .map-floating-host .map-selective-option input[type="checkbox"]{
-  appearance:none!important;-webkit-appearance:none!important;
-  box-sizing:border-box;display:inline-block;flex:0 0 16px;
-  width:16px!important;height:16px!important;min-width:16px!important;min-height:16px!important;
-  margin:0!important;padding:0!important;border:1.5px solid #889b92!important;border-radius:50%!important;
-  background:#0a100d!important;box-shadow:none!important;vertical-align:middle;
-  pointer-events:none;
-}
-html body .map-floating-host .map-typeahead-options input[type="checkbox"]:checked,
-html body .map-floating-host .map-selective-option input[type="checkbox"]:checked{
-  border-color:#43ffa5!important;background:#43ffa5!important;
-  box-shadow:inset 0 0 0 3.5px #0b1712!important;
-}
-html body .map-floating-host .map-selective-option{
-  box-sizing:border-box;width:100%;max-width:100%;min-width:0;
-  min-height:36px!important;gap:8px!important;padding:6px 8px!important;
-  border-radius:7px!important;
-}
-html body .map-floating-host .map-selective-option>i{
-  width:11px!important;height:11px!important;min-width:11px!important;
-  border-radius:50%!important;align-self:center;box-shadow:none;
-}
-html body .map-floating-host .map-selective-option>span{
-  min-width:0;overflow-wrap:anywhere;
-}
-html body .map-floating-host .map-selective-option b{
-  font:600 11px/1.35 Montserrat,Inter,system-ui,sans-serif!important;
-  white-space:normal;overflow-wrap:anywhere;
-}
-html body .map-floating-host .map-selective-option small{
-  font:400 9px/1.3 Montserrat,Inter,system-ui,sans-serif!important;
-  white-space:normal;overflow-wrap:anywhere;
-}
-html body .map-floating-host .barrio-option{
-  grid-template-columns:16px minmax(0,1fr)!important;
-}
-html body .map-floating-host .estrato-option{
-  grid-template-columns:16px 11px minmax(0,1fr)!important;
-}
-/* Contadores: amarillo institucional + negro; sin afectar el verde de selección. */
-html body .map-floating-host :is(.map-filter-disclosure,.map-layer-disclosure)>summary .map-control-count{
-  box-sizing:border-box;display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;
-  max-width:132px;min-width:0;min-height:25px;padding:4px 9px;margin-left:auto!important;
-  border:0!important;border-radius:999px!important;background:#ffcf40!important;
-  color:#060807!important;box-shadow:none!important;
+#mapCanvasWrap #mapFloatingTools :is(.map-filter-disclosure,.map-layer-disclosure)>summary .map-control-count{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  box-sizing:border-box!important;flex:0 1 auto!important;min-width:0!important;max-width:135px!important;
+  min-height:27px!important;padding:5px 10px!important;margin:0!important;
+  border:0!important;border-radius:999px!important;
+  background:#ffcf40!important;background-image:none!important;
+  color:#080808!important;-webkit-text-fill-color:#080808!important;
   font:800 10px/1.2 Montserrat,Inter,system-ui,sans-serif!important;
-  text-align:center;white-space:normal;
+  opacity:1!important;text-shadow:none!important;text-align:center!important;white-space:normal!important;
 }
-html body .map-floating-host :is(.map-filter-disclosure,.map-layer-disclosure)>summary{
-  box-sizing:border-box;min-width:0;gap:6px!important;
+#mapCanvasWrap #mapFloatingTools :is(.map-filter-disclosure,.map-layer-disclosure)>summary::after{
+  flex:0 0 auto!important;margin:0!important;color:#f7faf8!important;font-size:17px!important;
 }
-html body .map-floating-host :is(.map-filter-disclosure,.map-layer-disclosure)>summary .map-control-label{
-  flex:1 1 auto;min-width:0;
+#mapCanvasWrap #mapFloatingTools :is(.map-filter-disclosure,.map-layer-disclosure)[open]>summary::after{color:#f7faf8!important}
+#mapCanvasWrap #mapFloatingTools :is(.map-filter-disclosure,.map-layer-disclosure)>summary .map-layer-eye-action,
+#mapCanvasWrap #mapFloatingTools :is(.map-filter-disclosure,.map-layer-disclosure)>summary .map-control-leading{
+  flex:0 0 21px!important;width:21px!important;min-width:21px!important;height:26px!important;
+  padding:0!important;margin:0!important;border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;
+  color:#43ffa5!important;font-size:17px!important;line-height:26px!important;text-align:center;
 }
-html body .map-floating-host :is(.map-filter-disclosure,.map-layer-disclosure)>summary::after{
-  flex:0 0 11px;margin-left:2px;
+/* The open content belongs to the normal document flow, not a floating menu. */
+#mapCanvasWrap #mapFloatingTools .map-filter-disclosure>.map-typeahead,
+#mapCanvasWrap #mapFloatingTools .map-layer-disclosure>.map-selective-layer{
+  position:relative!important;float:none!important;clear:both!important;
+  display:flex!important;flex-direction:column!important;gap:7px!important;
+  box-sizing:border-box!important;min-width:0!important;max-width:100%!important;
+  width:calc(100% - 8px)!important;
+  margin:4px 4px 3px!important;padding:8px!important;
+  background:#0b110e!important;border:1px solid #365548!important;border-radius:11px!important;
+  box-shadow:none!important;overflow:hidden!important;
 }
-@media(max-width:420px){
-  html body .map-floating-host :is(.map-filter-disclosure,.map-layer-disclosure)>summary .map-control-count{
-    max-width:111px;padding:4px 7px;font-size:9px!important;
-  }
-  html body .map-floating-host .map-typeahead-options{max-height:166px}
+#mapCanvasWrap #mapFloatingTools .map-filter-disclosure>.map-typeahead[hidden],
+#mapCanvasWrap #mapFloatingTools .map-layer-disclosure>.map-selective-layer[hidden]{display:none!important}
+#mapCanvasWrap #mapFloatingTools .map-typeahead input[type="search"],
+#mapCanvasWrap #mapFloatingTools :is(#mapEstratoSearch,#mapBarrioSearch,#mapTroncalSearch){
+  box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:100%!important;
+  min-height:37px!important;margin:0!important;padding:7px 11px!important;
+  background:#1a211e!important;border:1px solid #384b42!important;border-radius:8px!important;
+  color:#fff!important;font:500 11px/1.3 Montserrat,Inter,system-ui,sans-serif!important;
 }
-
-
-/* FO-CHG-122 | Fidelidad al diseño aprobado del selector */
-/* Se usan marcadores visuales propios: el navegador no puede convertirlos en cuadrados nativos. */
-html body .map-floating-tools .map-typeahead-options .map-filter-round{
-  display:inline-flex!important;position:relative;box-sizing:border-box;
-  align-items:center;justify-content:center;flex:0 0 17px;
-  width:17px!important;height:17px!important;min-width:17px!important;min-height:17px!important;
-  border:2px solid #86978e!important;border-radius:999px!important;
-  background:#0a0e0c!important;box-shadow:none!important;
+#mapCanvasWrap #mapFloatingTools .map-typeahead-options{
+  position:relative!important;inset:auto!important;top:auto!important;left:auto!important;right:auto!important;
+  box-sizing:border-box!important;display:block;width:100%!important;min-width:0!important;max-width:100%!important;
+  max-height:210px!important;min-height:0!important;overflow-x:hidden!important;overflow-y:auto!important;
+  margin:0!important;padding:4px!important;border:0!important;border-radius:8px!important;
+  background:#0b100e!important;box-shadow:none!important;z-index:auto!important;
+  scrollbar-width:thin;scrollbar-color:#777f79 #181f1b;overscroll-behavior:contain;
 }
-html body .map-floating-tools .map-typeahead-options .map-filter-round.is-selected{
-  border-color:#43ffa5!important;background:#0c1b14!important;
+#mapCanvasWrap #mapFloatingTools .map-typeahead-options[hidden]{display:none!important}
+#mapCanvasWrap #mapFloatingTools .map-typeahead-options .map-city-option-row{
+  display:grid!important;grid-template-columns:minmax(0,1fr) 33px!important;align-items:center;
+  min-width:0!important;width:100%!important;gap:1px!important;
 }
-html body .map-floating-tools .map-typeahead-options .map-filter-round.is-selected::after{
-  content:"";position:absolute;inset:3px;border-radius:999px;background:#43ffa5;
+#mapCanvasWrap #mapFloatingTools .map-typeahead-options button[data-value]{
+  display:flex!important;align-items:center!important;gap:10px!important;
+  box-sizing:border-box!important;flex:1 1 auto!important;min-width:0!important;width:100%!important;
+  min-height:38px!important;margin:0!important;padding:7px 8px!important;
+  background:transparent!important;background-image:none!important;border:0!important;border-radius:8px!important;
+  color:#f7faf8!important;-webkit-text-fill-color:#f7faf8!important;
+  font:600 11px/1.3 Montserrat,Inter,system-ui,sans-serif!important;
+  white-space:normal!important;text-align:left!important;cursor:pointer!important;
 }
-html body .map-floating-tools .map-typeahead-options .map-city-option-row{
-  grid-template-columns:minmax(0,1fr) 35px!important;
-  width:100%;padding:1px 1px!important;
+#mapCanvasWrap #mapFloatingTools .map-typeahead-options button[data-value]::before{
+  content:""!important;display:block!important;position:static!important;flex:0 0 18px!important;
+  box-sizing:border-box!important;width:18px!important;height:18px!important;min-width:18px!important;min-height:18px!important;
+  border:2px solid #85958b!important;border-radius:50%!important;
+  background:#0b100e!important;box-shadow:none!important;
 }
-html body .map-floating-tools .map-typeahead-options button[data-value]{
-  min-height:37px!important;padding:7px 8px!important;gap:9px!important;
-  font-size:11px!important;line-height:1.3!important;
+#mapCanvasWrap #mapFloatingTools .map-typeahead-options button[data-value][aria-selected="true"]::before{
+  border-color:#43ffa5!important;
+  background:radial-gradient(circle at center,#43ffa5 0 4px,#0a1811 4.2px)!important;
 }
-html body .map-floating-tools .map-typeahead-options .map-city-goto{
-  min-width:35px!important;width:35px!important;min-height:37px!important;
-  color:#f5f9f7!important;font-size:19px!important;
+#mapCanvasWrap #mapFloatingTools .map-typeahead-options button[data-value][aria-selected="true"]{
+  background:#103527!important;color:#fff!important;
 }
-html body .map-floating-tools .map-typeahead-options .map-city-goto:hover{color:#43ffa5!important}
-/* La opción abierta tiene altura limitada y scroll propio, sin superposición de paneles. */
-html body .map-floating-tools .map-filter-disclosure[open]>.map-typeahead,
-html body .map-floating-tools .map-layer-disclosure[open]>.map-selective-layer{
-  position:relative!important;float:none!important;
-  max-width:100%;box-sizing:border-box;
+#mapCanvasWrap #mapFloatingTools .map-typeahead-options button[data-value]:hover,
+#mapCanvasWrap #mapFloatingTools .map-typeahead-options button[data-value]:focus-visible{
+  background:#1b4030!important;
 }
-html body .map-floating-tools .map-typeahead-options{
-  position:relative!important;top:auto!important;left:auto!important;right:auto!important;
-  max-height:200px!important;box-shadow:none!important;
+#mapCanvasWrap #mapFloatingTools .map-typeahead-options .map-option-label{
+  display:block;flex:1 1 auto;min-width:0;overflow-wrap:anywhere;font:inherit;
 }
-html body .map-floating-tools .map-typeahead>input[type="search"],
-html body .map-floating-tools :is(#mapEstratoSearch,#mapBarrioSearch,#mapTroncalSearch){
-  box-sizing:border-box!important;width:100%!important;min-height:37px!important;
-  border-radius:9px!important;padding:8px 10px!important;
+#mapCanvasWrap #mapFloatingTools .map-typeahead-options .map-city-goto{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  box-sizing:border-box!important;flex:0 0 33px!important;min-width:33px!important;width:33px!important;
+  min-height:38px!important;height:38px!important;margin:0!important;padding:3px!important;
+  border:0!important;border-radius:8px!important;background:transparent!important;
+  color:#fff!important;-webkit-text-fill-color:#fff!important;
+  font:800 18px/1 Montserrat,system-ui,sans-serif!important;
 }
-/* Estratos: círculo de selección y punto cromático en el mismo centro. */
-html body .map-floating-tools #mapEstratoOptions .map-selective-option.estrato-option{
-  display:grid!important;grid-template-columns:19px minmax(0,1fr)!important;
-  min-height:37px!important;gap:9px!important;
+#mapCanvasWrap #mapFloatingTools .map-typeahead-options .map-city-goto:hover,
+#mapCanvasWrap #mapFloatingTools .map-typeahead-options .map-city-goto:focus-visible{
+  background:#1b4030!important;color:#43ffa5!important;-webkit-text-fill-color:#43ffa5!important;
 }
-html body .map-floating-tools #mapEstratoOptions .estrato-option input[type="checkbox"]{
-  grid-row:1!important;grid-column:1!important;
-  width:18px!important;height:18px!important;
+/* Uniform round inputs for territorial layers; estratos preserve their own 6 colors. */
+#mapCanvasWrap #mapFloatingTools .map-selective-option{
+  display:grid!important;grid-template-columns:18px minmax(0,1fr)!important;
+  align-items:center!important;gap:9px!important;box-sizing:border-box!important;
+  width:100%!important;min-width:0!important;min-height:38px!important;
+  margin:0!important;padding:7px 8px!important;border:0!important;border-radius:8px!important;
+  background:transparent!important;color:#fff!important;
 }
-html body .map-floating-tools #mapEstratoOptions .estrato-option>i{
-  grid-row:1!important;grid-column:1!important;
-  z-index:1;justify-self:center;align-self:center;
-  width:7px!important;height:7px!important;min-width:7px!important;
-  border-radius:50%!important;pointer-events:none;
+#mapCanvasWrap #mapFloatingTools .map-selective-option.active{
+  background:#103527!important;
 }
-html body .map-floating-tools #mapEstratoOptions .estrato-option>span{
+#mapCanvasWrap #mapFloatingTools .map-selective-option input[type="checkbox"]{
+  appearance:none!important;-webkit-appearance:none!important;
+  grid-column:1!important;grid-row:1!important;
+  box-sizing:border-box!important;display:block!important;flex:0 0 18px!important;
+  width:18px!important;height:18px!important;min-width:18px!important;min-height:18px!important;
+  margin:0!important;padding:0!important;border:2px solid #899b91!important;border-radius:50%!important;
+  background:#0b100e!important;box-shadow:none!important;pointer-events:none!important;
+}
+#mapCanvasWrap #mapFloatingTools .map-selective-option input[type="checkbox"]:checked{
+  border-color:#43ffa5!important;
+  background:radial-gradient(circle at center,#43ffa5 0 4px,#0a1811 4.2px)!important;
+}
+#mapCanvasWrap #mapFloatingTools .map-selective-option>span{
+  grid-column:2!important;grid-row:1!important;min-width:0!important;
+  display:flex!important;flex-direction:column;gap:2px!important;
+}
+#mapCanvasWrap #mapFloatingTools .map-selective-option b{
+  color:#f8fbf9!important;font:600 11px/1.3 Montserrat,Inter,system-ui,sans-serif!important;
+  white-space:normal!important;overflow-wrap:anywhere;
+}
+#mapCanvasWrap #mapFloatingTools .map-selective-option small{
+  color:#abbab0!important;font:400 9px/1.3 Montserrat,Inter,system-ui,sans-serif!important;
+  white-space:normal!important;overflow-wrap:anywhere;
+}
+#mapCanvasWrap #mapFloatingTools #mapEstratoOptions .estrato-option>i{
+  display:block!important;grid-column:1!important;grid-row:1!important;
+  z-index:2;justify-self:center;align-self:center;
+  width:8px!important;height:8px!important;min-width:8px!important;
+  border:0!important;border-radius:50%!important;box-shadow:none!important;pointer-events:none!important;
+}
+#mapCanvasWrap #mapFloatingTools #mapEstratoOptions .estrato-option input[type="checkbox"]:checked{
+  background:#0a1811!important;
+}
+#mapCanvasWrap #mapFloatingTools #mapEstratoOptions .estrato-option>span{
   grid-column:2!important;grid-row:1!important;
 }
-html body .map-floating-tools #mapBarrioOptions .barrio-option{
-  display:grid!important;grid-template-columns:18px minmax(0,1fr)!important;gap:9px!important;
-  min-height:43px!important;
+#mapCanvasWrap #mapFloatingTools :is(#mapEstratoOptions,#mapBarrioOptions,#mapTroncalOptions){
+  box-sizing:border-box!important;display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+  min-width:0!important;width:100%!important;gap:1px!important;
+  margin:0!important;padding:2px!important;
+  border:0!important;border-radius:7px!important;background:#0b100e!important;
+  overflow-x:hidden!important;overflow-y:auto!important;
+  scrollbar-width:thin;scrollbar-color:#777f79 #181f1b;overscroll-behavior:contain;
 }
-/* Igualar el tamaño y la lectura de las filas de todos los tipos. */
-html body .map-floating-tools #mapBarrioOptions .barrio-option b,
-html body .map-floating-tools #mapEstratoOptions .estrato-option b,
-html body .map-floating-tools #mapTroncalOptions .troncal-option b{
-  font-size:11px!important;font-weight:600!important;
+#mapCanvasWrap #mapFloatingTools #mapEstratoOptions{max-height:276px!important}
+#mapCanvasWrap #mapFloatingTools #mapBarrioOptions{max-height:230px!important}
+#mapCanvasWrap #mapFloatingTools #mapTroncalOptions{max-height:210px!important}
+#mapCanvasWrap #mapFloatingTools #mapBarrioControls .map-barrio-search{
+  box-sizing:border-box!important;display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+  gap:7px!important;width:100%!important;margin:0!important;padding:0!important;
 }
-html body .map-floating-tools :is(.map-layer-disclosure,.map-filter-disclosure)>summary>.map-control-count{
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  flex:0 1 auto!important;min-width:0!important;max-width:125px!important;
-  padding:6px 10px!important;border:0!important;border-radius:999px!important;
-  background-color:#ffcf40!important;background-image:none!important;
-  color:#080808!important;-webkit-text-fill-color:#080808!important;
-  font:800 10px/1.15 Montserrat,Inter,system-ui,sans-serif!important;
-  text-shadow:none!important;opacity:1!important;
-  white-space:normal!important;
+#mapCanvasWrap #mapFloatingTools #mapBarrioControls .map-barrio-actions{
+  display:flex!important;align-items:center!important;gap:7px!important;
+  width:100%!important;padding:0!important;margin:0!important;
 }
-html body .map-floating-tools :is(.map-layer-disclosure,.map-filter-disclosure)>summary{
-  gap:7px!important;min-height:42px!important;
+#mapCanvasWrap #mapFloatingTools #mapSelectAllBarriosOptions{
+  box-sizing:border-box!important;flex:0 1 auto!important;width:auto!important;max-width:100%!important;
+  min-height:33px!important;height:auto!important;padding:7px 12px!important;margin:0!important;
+  border:1px solid #43ffa5!important;border-radius:999px!important;
+  background:#050605!important;color:#fff!important;
+  font:750 11px/1.25 Montserrat,Inter,system-ui,sans-serif!important;white-space:nowrap!important;
 }
-html body .map-floating-tools .map-filter-disclosure .map-typeahead,
-html body .map-floating-tools .map-layer-disclosure .map-selective-layer{
-  margin-bottom:9px!important;
+#mapCanvasWrap #mapFloatingTools .map-typeahead-selections:not([hidden]){
+  box-sizing:border-box!important;max-width:100%!important;overflow:hidden!important;
 }
-html body .map-floating-tools #mapBarrioControls .map-barrio-actions{
-  display:flex!important;align-items:center;gap:5px;
-}
-html body .map-floating-tools #mapBarrioControls #mapSelectAllBarriosOptions{
-  width:auto!important;max-width:100%;min-height:32px!important;
-  padding:6px 11px!important;border:1px solid #43ffa5!important;
-  border-radius:999px!important;background:#050605!important;color:#fff!important;
-  font:700 10px/1.25 Montserrat,Inter,system-ui,sans-serif!important;
-}
-@media(max-width:410px){
-  html body .map-floating-tools :is(.map-layer-disclosure,.map-filter-disclosure)>summary>.map-control-count{
-    max-width:105px!important;padding:5px 7px!important;font-size:9px!important;
+@media(max-width:480px){
+  #mapCanvasWrap #mapFloatingTools .map-typeahead-options{max-height:185px!important}
+  #mapCanvasWrap #mapFloatingTools :is(.map-filter-disclosure,.map-layer-disclosure)>summary{
+    gap:6px!important;min-height:43px!important;padding:6px 8px!important;
+  }
+  #mapCanvasWrap #mapFloatingTools :is(.map-filter-disclosure,.map-layer-disclosure)>summary .map-control-label{
+    font-size:11px!important;
+  }
+  #mapCanvasWrap #mapFloatingTools :is(.map-filter-disclosure,.map-layer-disclosure)>summary .map-control-count{
+    max-width:111px!important;min-height:25px!important;padding:5px 7px!important;
+    font-size:9px!important;
+  }
+  #mapCanvasWrap #mapFloatingTools .map-filter-disclosure>.map-typeahead,
+  #mapCanvasWrap #mapFloatingTools .map-layer-disclosure>.map-selective-layer{
+    padding:7px!important;
   }
 }
