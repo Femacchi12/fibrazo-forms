@@ -411,3 +411,10 @@ Permitir que el usuario seleccione dos o más ciudades (por ejemplo, Cartagena, 
 6. Nota: el servidor de puntos `/api/map` limita el conjunto transmitido a un máximo configurado; no atribuir ausencia de un operador a cobertura inexistente cuando no hay relevamientos cargados.
 
 Verificación técnica estática: orden de ciudades probado en siete transiciones; QA autenticada móvil y publicación READY deben comprobarse por separado.
+
+## FO-CHG-129 · Alineación de lupas en filtros (2026-11-07)
+
+- Corrección visual puntual de los campos de búsqueda de Ciudades y Operadores: icono SVG de lupa centrado verticalmente a 10 px del borde izquierdo, tamaño de 15 px, y texto de búsqueda con 34 px de padding izquierdo para evitar superposición.
+- Se desactiva el ornamento nativo del campo `search` para mantener la misma apariencia entre Chrome de escritorio y Android.
+- Cambios solo en `ajustes-visuales-20261106.css`, actualización de caché en `service-worker.js` e invalidación de estilos en `index.html`. Sin cambios de filtros, selección, datos o navegación.
+- QA pendiente: comprobar visualmente en móvil y escritorio que la lupa no se superpone al placeholder ni al texto introducido, y que los filtros y la navegación permanecen funcionales.
