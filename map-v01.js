@@ -2504,7 +2504,7 @@
     if(requestedMap.cities.length)selectFilterValues(selector,requestedMap.cities.map(scopeCity));
   }
   function applySharedOperators(){
-    if(sharedOperatorsApplied||!requestedMap.operators.length||filterValues('mapCityFilter').length!==1)return;
+    if(sharedOperatorsApplied||!requestedMap.operators.length||filterValues('mapCityFilter').length<1)return;
     sharedOperatorsApplied=true;const selector=$('mapOperatorFilter');
     for(const value of requestedMap.operators)if(![...selector.options].some(o=>o.value===value))selector.add(new Option('Operador no disponible: '+value,value));
     selectFilterValues(selector,requestedMap.operators);
