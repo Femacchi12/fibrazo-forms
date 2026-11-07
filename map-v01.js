@@ -917,9 +917,11 @@
     }
     if(operator){
       const selectedCities=filterValues("mapCityFilter");
-      const cityReady=selectedCities.length===1;
+      // Operators filter survey points across the UNION of selected cities.
+      const cityReady=selectedCities.length>=1;
       const current=cityReady?filterValues("mapOperatorFilter"):[];
-      const activeCities=new Set(selectedCities);
+      const previousLabels=new Map([...operator.options].map(option=>[option.value,option.textContent]));
+      const activeCities=new Set(selectedCities.map(scopeCity));
       const eligiblePoints=cityReady?state.points.filter(p=>matchesCitySelection(activeCities,p.city?.assigned||p.observedCity||"")):[];
       const profiles=eligiblePoints.map(operatorProfile);
       const incumbents=new Set(profiles.flatMap(profile=>profile.incumbents));
@@ -934,7 +936,18 @@
       ].filter(([value])=>incumbents.has(value));
       if(hasOnlyIsps)bases.push(["isps","Solo ISPs · sin incumbentes"]);
       operator.innerHTML='<option value="all">Todos los operadores</option>'+bases.map(([value,label])=>'<option value="'+value+'">'+label+'</option>').join("")+isps.map(([key,label])=>'<option value="isp:'+esc(key)+'">ISP · '+esc(label)+'</option>').join("");
-      for(const value of current)if(requestedMap.operators.includes(value)&&![...operator.options].some(o=>o.value===value))operator.add(new Option('Operador no disponible: '+value,value));
+      // Keep the user's operator selections while asynchronous city data is reloading.
+      // The available options are rebuilt when points arrive; never silently clear a filter.
+      for(const value of current){
+        if(![...operator.options].some(option=>option.value===value)){
+          operator.add(new Option(previousLabels.get(value)||"Operador seleccionado · "+value,value));
+        }
+      }
+      for(const value of requestedMap.operators){
+        if(cityReady&&![...operator.options].some(option=>option.value===value)){
+          operator.add(new Option(previousLabels.get(value)||"Operador del enlace · "+value,value));
+        }
+      }
       operator.dataset.cityScope=cityReady?"ready":"locked";
       operator.disabled=!cityReady;
       selectFilterValues(operator,current);
