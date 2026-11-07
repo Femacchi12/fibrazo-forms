@@ -58,7 +58,7 @@
     polygonFullLoadingKey:"",
     multiTroncalIndexKey:"",multiTroncalKey:"",multiTroncalLoadingKey:"",
     manualRefreshId:null,
-    previousTerritorialCity:"",
+    previousTerritorialCity:"",previousTerritorialCities:[],
     polygonReloadTimer:null,
     polygonSelectionTimers:{barrios:null,estratos:null,troncales:null},
     polygonFilterTimer:null,
@@ -1488,6 +1488,7 @@
     const savedStrata=state.polygonSavedSelections.estratos;
     const strataWasInitialized=!!state.estratosInitialized;
     const previousCity=state.previousTerritorialCity;
+    const previousSelectedCities=state.previousTerritorialCities||[];
     const priorTrunks=[...state.polygonSelections.troncales];
     const savedTrunks=state.polygonSavedSelections.troncales;
     const priorTrunksActive=state.polygonActive.troncales;
@@ -1515,6 +1516,7 @@
     // The visible button still allows an explicit switch to the original geometry.
     if(isAmbCity(city)&&!isAmbCity(state.previousTerritorialCity))state.qaDissolveEstratos=true;
     state.previousTerritorialCity=city;
+    state.previousTerritorialCities=[...selected];
     const title=document.querySelector("#mapLayersPanel .map-layers-head strong");
     const cityName=selected.length>1?selected.length+" ciudades seleccionadas":city==="ibague"?"Ibagué":city?cityLabel(city):"Selecciona una ciudad";
     if(title)title.textContent=cityName;
@@ -1562,7 +1564,7 @@
         :layer==="troncales"?!!selected.length&&priorTrunksActive:false;
       if(strataReady&&layer==="estratos"){
         // Shared stratum filter is preserved while cities are added or removed.
-        state.polygonSelections.estratos=new Set(strataWasInitialized?priorStrata:["1","2","3"]);
+        state.polygonSelections.estratos=new Set(strataWasInitialized&&previousSelectedCities.length?priorStrata:["1","2","3"]);
         state.estratosInitialized=true;
         state.polygonStatus.estratos=selected.length+" ciudad"+(selected.length===1?"":"es")+" · cargando estratos…";
       }else if(selected.length&&layer==="troncales"){
@@ -2639,7 +2641,7 @@
     $("mapLayerBarrios")?.addEventListener("click",()=>togglePolygonLayer("barrios"));
     $("mapLayerEstratos")?.addEventListener("click",()=>togglePolygonLayer("estratos"));
     $("mapLayerTroncales")?.addEventListener("click",()=>togglePolygonLayer("troncales"));
-    // FO-CHG-046: las capas territoriales se habilitan solo con una ciudad exacta.
+    // FO-CHG-126/127: Estratos y Troncales permiten varias ciudades; Barrios requiere exactamente una.
     resetTerritorialScopeForCity();
     $("mapViewBucaramanga")?.addEventListener("click",()=>{
       const city=filterValues("mapCityFilter")[0]||"";
