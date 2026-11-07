@@ -2106,7 +2106,7 @@
 
   function togglePolygonLayer(layer){
     if(!layerCityReady(layer)){
-      state.polygonStatus[layer]="selecciona una sola ciudad";
+      state.polygonStatus[layer]=layer==="barrios"?"selecciona una sola ciudad":"selecciona al menos una ciudad";
       renderLayerControls();
       return;
     }
@@ -2130,7 +2130,7 @@
       const requiredZoom=layer==="estratos"?11:10;
       const cities=filterValues("mapCityFilter");
       const selectsAMB=!cities.length||cities.some(name=>["bucaramanga","floridablanca","giron","piedecuesta"].includes(norm(name)));
-      if(selectsAMB&&(!viewTouchesBucaramanga()||state.map.getZoom()<requiredZoom)){
+      if(cities.length===1&&selectsAMB&&(!viewTouchesBucaramanga()||state.map.getZoom()<requiredZoom)){
         viewBucaramanga();
       }else{
         refreshPolygonLayer(layer);
