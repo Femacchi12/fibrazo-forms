@@ -332,3 +332,24 @@ Cambio visual aprobado para `Capas y filtros` (no altera las fuentes territorial
 - El desplegable permanece en el flujo del acordeón, con desplazamiento vertical interno, para evitar la superposición con otros grupos de capas.
 - `index.html` renueva las versiones de los recursos estáticos a `FO-CHG-122` / `selector122`.
 - QA requerido con sesión autenticada: contrastar las cuatro secciones con la referencia aprobada, confirmar scroll en móvil, navegación por flecha, persistencia de selección y ausencia de superposición. No modificar reglas territoriales.
+
+
+## FO-CHG-123 · Estilos definitivos del panel y renovación de caché (2026-11-07)
+
+### Diagnóstico
+Las capturas móviles posteriores a FO-CHG-122 aún mostraban ciudades y operadores sin indicador circular y contadores con letras verdosas. Se detectaron dos causas: (1) overrides FO-CHG-121 y 122 duplicados, y (2) Service Worker con `CACHE=fibrazo-forms-v0.8.176-20261106-nav`, que intercepta los recursos del app shell por **ruta**, ignorando los nuevos parámetros de versión en el HTML.
+
+### Implementación
+- `map-controls-ui.js`: los selectores de Ciudades y Operadores muestran el círculo como pseudo-elemento del botón, derivado del atributo `aria-selected`, sin depender de `input[type=checkbox]` ni de un `span` que pueda quedar oculto; el control de selección original continúa siendo `select[multiple]`.
+- `ajustes-visuales-20261106.css`: se reemplazan las reglas FO-CHG-121/122 superpuestas por un bloque **FO-CHG-123** único y aislado bajo `#mapCanvasWrap #mapFloatingTools`. Incluye círculos uniformes, puntos de color por estrato, badges amarillo `#ffcf40` con texto negro y `-webkit-text-fill-color`, tarjetas oscuras, lista dentro del acordeón, scroll interno y espaciados responsivos.
+- `index.html`: recursos de estilos y selector con versiones `FO-CHG-123` y `panel123`.
+- `service-worker.js`: `CACHE=fibrazo-forms-v0.8.177-20261107-panel-123`. El nuevo caché se instala como una unidad y el worker elimina las versiones previas al activarse, sin modificar las colas offline de IndexedDB.
+- Conservados: navegación individual por flechas, selección múltiple y centrado automático de una ciudad, filtros territoriales, operadores, colores de estrato, permisos y datos.
+
+### Criterios de aceptación y QA
+- En móvil y escritorio, Ciudades, Operadores, Estratos, Barrios y Troncales exhiben radios del mismo tamaño y estados distinguibles.
+- Los contadores amarillos utilizan texto **negro** legible incluso cuando no hay elementos seleccionados.
+- Una sección expandida desplaza el contenido inferior sin superponerse al encabezado o a otras secciones; cada lista larga puede desplazarse internamente.
+- Pulsar la flecha de una ciudad nunca cambia la selección. Marcar/desmarcar sí cambia las capas; al quedar una ciudad, el mapa la centra.
+- Refrescar la aplicación con el nuevo Service Worker debe mostrar los recursos nuevos incluso si existía una versión anterior instalada.
+- La comprobación visual en navegador autenticado y el estado READY de Vercel deben verificarse antes de declarar completamente publicado el cambio.
