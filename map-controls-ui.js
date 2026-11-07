@@ -43,6 +43,7 @@
       input.disabled=locked;
       input.title=locked?cityLockMessage():"";
       if(locked)close();
+      const shown=select.closest(".map-filter-disclosure")?.dataset.layerVisible!=="false";
       const chosen=values();
       selections.replaceChildren(...chosen.map(value=>{
         const option=[...select.options].find(item=>item.value===value);
@@ -53,8 +54,8 @@
         return chip;
       }));
       const compactCity=select.id==="mapCityFilter";
-      selections.hidden=chosen.length===0||compactCity;
-      input.placeholder=compactCity?"Escribe para buscar…":chosen.length?"Agregar otra opción…":"Escribe para buscar…";
+      selections.hidden=chosen.length===0||compactCity||!shown;
+      input.placeholder=compactCity||!shown?"Escribe para buscar…":chosen.length?"Agregar otra opción…":"Escribe para buscar…";
     };
     const choose=value=>{
       const option=[...select.options].find(item=>item.value===value);
@@ -67,6 +68,11 @@
         if(all)all.selected=false;
         if(!values().length&&all)all.selected=true;
       }
+      const disclosure=select.closest(".map-filter-disclosure");
+      if(disclosure?.dataset.layerVisible==="false"){
+        disclosure.dataset.layerVisible="true";
+        document.dispatchEvent(new CustomEvent("fibrazo:map-filter-layer-visibility",{detail:{id:select.id,visible:true}}));
+      }
       sync();draw();
       select.dispatchEvent(new Event("change",{bubbles:true}));
     };
@@ -75,6 +81,7 @@
       const query=norm(input.value);
       const opts=[...select.options].filter(o=>!o.disabled&&!o.hidden&&norm(o.textContent).includes(query)).slice(0,100);
       menu.replaceChildren();
+      const shown=select.closest(".map-filter-disclosure")?.dataset.layerVisible!=="false";
       opts.forEach(opt=>{
         const button=document.createElement("button");
         button.type="button";button.dataset.value=opt.value;
@@ -83,7 +90,7 @@
         const name=document.createElement("span");name.className="map-option-label";name.textContent=opt.textContent;
         button.append(name);
         button.setAttribute("role","option");
-        button.setAttribute("aria-selected",String(opt.selected));
+        button.setAttribute("aria-selected",String(opt.selected&&shown));
         if(select.id==="mapCityFilter"&&opt.value!=="all"){
           const row=document.createElement("div");
           row.className="map-city-option-row";
@@ -132,6 +139,7 @@
     input.addEventListener("blur",()=>setTimeout(()=>{close();sync();},130));
     select._typeaheadOpen=()=>{if(input.disabled)return;draw();};
     select._typeaheadClose=()=>{close();sync();};
+    select._typeaheadRefresh=()=>{sync();if(!menu.hidden)draw();};
     select.addEventListener("change",()=>{sync();if(!menu.hidden)draw();});
     new MutationObserver(()=>{sync();if(!menu.hidden)draw();}).observe(select,{childList:true,subtree:true,attributes:true,attributeFilter:["hidden","disabled","data-city-scope"]});
     sync();
@@ -285,8 +293,9 @@
         const updateCount=()=>{
           const selected=[...control.selectedOptions].filter(option=>option.value&&option.value!=="all").length;
           const locked=id==="mapOperatorFilter"&&control.dataset.cityScope!=="ready";
-          count.textContent=locked?"0 seleccionados":selected?selected+" "+(selected===1?meta.one:meta.many):meta.all;
-          group.classList.toggle("has-selection",selected>0);
+          const shown=group.dataset.layerVisible!=="false";
+          count.textContent=locked||!shown?"0 "+meta.many:selected?selected+" "+(selected===1?meta.one:meta.many):meta.all;
+          group.classList.toggle("has-selection",shown&&selected>0);
           group.classList.toggle("filter-locked",locked);
           const lockedMessage=locked?cityLockMessage():"";
           summary.title=lockedMessage;
@@ -298,7 +307,7 @@
             const visible=group.dataset.layerVisible!=="false";
             leading.classList.toggle("eye-hidden",!visible);
             leading.disabled=locked;
-            leading.title=locked?lockedMessage:(visible?"Ocultar ":"Mostrar ")+meta.title.toLowerCase();
+            leading.title=locked?lockedMessage:(visible?"Ocultar selección de ":"Restaurar selección de ")+meta.title.toLowerCase();
             leading.setAttribute("aria-label",leading.title);
             leading.setAttribute("aria-pressed",String(visible));
           }
@@ -310,6 +319,7 @@
           group.dataset.layerVisible=String(visible);
           document.dispatchEvent(new CustomEvent("fibrazo:map-filter-layer-visibility",{detail:{id,visible}}));
           updateCount();
+          control._typeaheadRefresh?.();
         });
         control.addEventListener("change",updateCount);
         new MutationObserver(updateCount).observe(control,{childList:true,subtree:true,attributes:true,attributeFilter:["selected","disabled","data-city-scope"]});
