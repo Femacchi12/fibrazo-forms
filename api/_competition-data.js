@@ -25,8 +25,8 @@ module.exports=async(req,res)=>{
  if(req.method!=='GET')return res.status(405).json({error:'METHOD_NOT_ALLOWED'});
  try{
   const user=await core.verifyUser(req),auth=core.gauth();
-  const [forms,caps]=await Promise.all([core.loadForms(auth),core.userCapabilities(auth,user.email)]);
-  if(!core.canUseDashboard(user,caps.adminActive,forms))return res.status(403).json({error:'ACCESS_DENIED'});
+  const allowed=await require('./_dashboard-access').canReadConfiguredDashboard(auth,user,'competencia');
+  if(!allowed)return res.status(403).json({error:'ACCESS_DENIED'});
   const range=Object.hasOwn(RANGES,String(req.query.dataset||''))?RANGES[String(req.query.dataset)]:null;
   if(!range)return res.status(400).json({error:'INVALID_DATASET'});
   const sheets=google.sheets({version:'v4',auth});
