@@ -10,10 +10,10 @@ module.exports=async(req,res)=>{
     const [forms,caps]=await Promise.all([loadForms(auth),userCapabilities(auth,user.email)]);
     if(!canUseDashboard(user,caps.adminActive,forms)) throw httpError("DASHBOARD_ACCESS_DENIED",403);
     return res.status(200).json({
-      admin:caps.adminActive,
-      baseAdmin:caps.base,
-      canCreateForms:caps.canCreateForms,
-      canManageUsers:caps.canManageUsers,
+      admin:user.email==="eduardo@fibrazo.com",
+      baseAdmin:user.email==="eduardo@fibrazo.com",
+      canCreateForms:user.email==="eduardo@fibrazo.com"&&caps.canCreateForms,
+      canManageUsers:user.email==="eduardo@fibrazo.com"&&caps.canManageUsers,
       forms:forms.map(form=>{
         const permission=permissionFor(caps.permissions,user.email,form.id,caps.base);
         const canViewDatabase=permission.canViewDatabase||permission.canManagePermissions;
