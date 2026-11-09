@@ -404,7 +404,8 @@ module.exports=async(req,res)=>{
     }
     const meta=usesPrecalculated?null:await loadMeta(auth,layer,source);
     if(meta?.cfg)cfg=meta.cfg;
-    if(!canUseDashboard(user,caps.adminActive,forms))throw httpError("DASHBOARD_ACCESS_DENIED",403);
+    const canReadAll=await require("./_dashboard-access").canReadConfiguredDashboard(auth,user,"forms");
+    if(!canReadAll&&!canUseDashboard(user,caps.adminActive,forms))throw httpError("DASHBOARD_ACCESS_DENIED",403);
     if(precalcCity){
       return require("./_estratos-precalc").handle(auth,req,res,precalcCity,[bbox.minLon,bbox.minLat,bbox.maxLon,bbox.maxLat],zoom);
     }
