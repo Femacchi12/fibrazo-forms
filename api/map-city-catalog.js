@@ -11,7 +11,8 @@ module.exports=async(req,res)=>{
     if(req.method!=="GET")return res.status(405).json({error:"Method not allowed"});
     const user=await verifyUser(req),auth=gauth();
     const [forms,caps]=await Promise.all([loadForms(auth),userCapabilities(auth,user.email)]);
-    if(!canUseDashboard(user,caps.adminActive,forms))return res.status(403).json({error:"FORBIDDEN"});
+    const canReadAll=await require("./_dashboard-access").canReadConfiguredDashboard(auth,user,"forms");
+    if(!canReadAll&&!canUseDashboard(user,caps.adminActive,forms))return res.status(403).json({error:"FORBIDDEN"});
     if(cache&&Date.now()<expires)return res.status(200).json({ok:true,cities:cache});
     const result=await google.sheets({version:"v4",auth}).spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"01_CIUDADES!A1:E250"});
     const rows=result.data.values||[];
