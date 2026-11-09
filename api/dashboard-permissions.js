@@ -73,3 +73,5 @@ module.exports=async function(req,res){
     return res.status(503).json({error:"POLICY_UNAVAILABLE"});
   }
 };
+
+module.exports._loadRow=loadRow;
