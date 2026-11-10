@@ -434,3 +434,11 @@ Verificación técnica estática: orden de ciudades probado en siete transicione
 - Espaciado entre renglones reducido, tipografía homogénea y enlace accesible con foco visible; los enlaces a Foto 1, Foto 2, etc., y la información restante del popup no se modifican.
 - Archivos: `map-v01.js`, `territorial-map.css`, referencias de versión en `index.html` y caché PWA en `service-worker.js`.
 - QA requerida: revisar puntos con operador enlazado y sin ficha inequívoca, asegurar que enlaces ↗ continúan abriendo la misma ficha, verificar móvil y escritorio, ausencia de texto secundario, sin cambios en fotos. No declarar verificación visual de producción hasta confirmar despliegue.
+
+## FO-CHG-132 · Interfilado de operadores del mapa (2026-11-10)
+
+- Ajuste de densidad en el popup de puntos explorados: las filas Incumbente / ISP pasan a tener separación de 1 px entre elementos, padding vertical de 2 px por renglón y altura adaptable al texto, comparable a las líneas Barrio / Estrato / Coordenadas.
+- Enlaces verdes con flecha y nombres sin ficha conservados: se elimina la altura mínima artificial de 24–25 px tanto en escritorio como en el ajuste móvil. Se alinean etiqueta y nombre por línea base y se fija interlineado uniforme.
+- **Sin cambios** en contenido, fuentes, listas de operadores, enlace a Competencia, fotografías, filtros, navegación o reglas de negocio.
+- Modificado: `territorial-map.css`; invalidación de versión en `index.html` y renovación de Service Worker para Chrome/PWA.
+- Criterio de aceptación: filas compactas, sin separación excesiva entre Incumbentes ni ISPs, sin texto superpuesto y con enlaces/fotos operativos en móvil y escritorio. Verificación visual de producción pendiente de despliegue final READY.
