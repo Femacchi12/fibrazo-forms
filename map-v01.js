@@ -707,9 +707,10 @@
     return (navigation?.entries(point.operators)||[]).map(item=>{
       const found=operatorCatalog?navigation.resolve(operatorCatalog,item.name,city):null;
       const url=found?navigation.link(found,item.name,city):'';
+      // Compact popup: operator + technology only. Catalog ambiguity/status stays
+      // in the operator library; do not expose explanatory text below the name.
       const value=url?'<a class="map-operator-link" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(item.name)+' <span aria-hidden="true">↗</span></a>':'<span class="map-operator-name">'+esc(item.name)+'</span>';
-      const message=url?'':!found?'Consultando ficha…':operatorCatalog.unavailable?'No se pudo consultar Competencia. Reintenta al abrir el mapa.':found.message;
-      return '<li class="map-operator-row"><span class="map-operator-category">'+esc(item.label)+'</span><div>'+value+(message?'<small class="map-operator-note">'+esc(message)+'</small>':'')+'</div></li>';
+      return '<li class="map-operator-row"><span class="map-operator-category">'+esc(item.label)+'</span><div>'+value+'</div></li>';
     }).join('');
   }
   function pointPopupHtml(point){
