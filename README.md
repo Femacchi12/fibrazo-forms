@@ -442,3 +442,10 @@ Verificación técnica estática: orden de ciudades probado en siete transicione
 - **Sin cambios** en contenido, fuentes, listas de operadores, enlace a Competencia, fotografías, filtros, navegación o reglas de negocio.
 - Modificado: `territorial-map.css`; invalidación de versión en `index.html` y renovación de Service Worker para Chrome/PWA.
 - Criterio de aceptación: filas compactas, sin separación excesiva entre Incumbentes ni ISPs, sin texto superpuesto y con enlaces/fotos operativos en móvil y escritorio. Verificación visual de producción pendiente de despliegue final READY.
+
+## FO-CHG-133 · Corregir regla de espaciado sobrescrita (2026-11-10)
+
+- **Diagnóstico:** pese a FO-CHG-132, el popup mostraba huecos excesivos entre Incumbentes e ISPs. `executive-shell.css` se carga después de `territorial-map.css` y redefine `.map-operators ul{gap:7px}`, anulando el `gap:1px` de FO-CHG-132. La captura de producción confirma la diferencia frente a las filas Barrio, Estrato y Coordenadas.
+- **Corrección en origen:** `executive-shell.css` y `territorial-map.css` se armonizan con `gap:0` en la lista de operadores y `padding:3px 0`, `min-height:0`, `align-items:baseline` por fila. Es el mismo padding y la misma alineación de las filas de detalle; ya no hay un espacio extra entre Incumbentes e ISPs. Se conserva el interlineado compacto.
+- No cambian textos, enlaces, fotos, colores, datos ni lógica de navegación. Se incrementan versiones de los dos CSS en `index.html` y caché PWA para evitar estilos antiguos en Chrome.
+- **QA:** cotejar separación de los 6 operadores con las filas del detalle en móvil y escritorio; comprobar enlaces verde ↗ y fotografías. Validación estática y despliegue READY no sustituyen inspección visual autenticada.
