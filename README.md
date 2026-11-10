@@ -426,3 +426,11 @@ Verificación técnica estática: orden de ciudades probado en siete transicione
 - Se mantiene la lupa SVG alineada, el padding izquierdo del input y los estilos del sistema visual FO-CHG-129. Se renuevan las versiones de las dos hojas de estilo en `index.html` y la caché PWA en `service-worker.js`.
 - Sin cambios de selección de ciudades, operadores, estratos, troncales, barrios, navegación ni datos.
 - Verificación: comprobar que aparece una única lupa en Ciudades y Operadores, con el placeholder alineado, tanto en Chrome de escritorio como Android; publicación final exige Vercel READY.
+
+## FO-CHG-131 · Popup mapa: operadores compactos (2026-11-10)
+
+- Solicitud visual aprobada: en el detalle del punto de Exploración, sección «Operadores», mostrar una lista compacta; los operadores enlazados ya no se presentan como botones con borde ni cápsulas. Se representan como **texto verde FIBRAZO con flecha ↗**, manteniendo el enlace funcional a la ficha de Competencia cuando esté disponible. Los nombres sin enlace se representan también en verde pero sin flecha falsa.
+- Se retiran los mensajes explicativos del catálogo debajo del nombre (ejemplo: «Sin información registrada...» para Tigo HFC y «Hay varias fichas...» para Claro FTTH). Se conserva el nombre con su tecnología y los rótulos Incumbente/ISP, sin alterar el proceso de resolución de enlaces ni borrar datos de origen.
+- Espaciado entre renglones reducido, tipografía homogénea y enlace accesible con foco visible; los enlaces a Foto 1, Foto 2, etc., y la información restante del popup no se modifican.
+- Archivos: `map-v01.js`, `territorial-map.css`, referencias de versión en `index.html` y caché PWA en `service-worker.js`.
+- QA requerida: revisar puntos con operador enlazado y sin ficha inequívoca, asegurar que enlaces ↗ continúan abriendo la misma ficha, verificar móvil y escritorio, ausencia de texto secundario, sin cambios en fotos. No declarar verificación visual de producción hasta confirmar despliegue.
