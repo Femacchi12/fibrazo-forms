@@ -52,7 +52,7 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 #mapCanvasWrap .map-detail-heading small{display:block;font-size:11px;color:#BBC1BE;margin-top:4px}
 #mapCanvasWrap .map-popup-head{padding-bottom:10px;margin-bottom:8px}
 #mapCanvasWrap .map-popup .map-popup-row{padding:6px 0}
-#mapCanvasWrap .map-popup .map-operator-link{border-radius:20px;padding:7px 12px;min-height:36px}
+#mapCanvasWrap .map-popup .map-operator-link{border-radius:0;padding:0;min-height:0}
 #mapCanvasWrap .executive-secondary-actions{display:flex;flex-wrap:wrap;gap:6px;padding:10px}
 #mapCanvasWrap .executive-secondary-actions button{min-height:40px;font-size:11px}
 @media(min-width:900px){
@@ -72,7 +72,7 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
  .executive-map-view #mapCanvasWrap{height:calc(100dvh - 140px)!important;min-height:400px!important}
  #mapCanvasWrap .map-quick-actions{top:12px!important;right:10px!important;gap:5px;max-width:calc(100% - 128px)}
  #mapCanvasWrap .map-quick-actions button{padding:8px;font-size:10px}
- #mapCanvasWrap .map-popup .map-operator-link{min-height:44px}
+ #mapCanvasWrap .map-popup .map-operator-link{min-height:0}
  #mapCanvasWrap .map-detail-heading strong{font-size:15px}
 }
 .executive-map-view #mapCanvasWrap.map-fullscreen{height:100dvh!important;min-height:0!important;width:100vw!important;max-height:none!important}
