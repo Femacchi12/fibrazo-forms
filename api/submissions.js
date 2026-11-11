@@ -381,12 +381,13 @@ async function hasExistingResponseForEmail(auth,form,email){
   );
 }
 
-async function readRows(auth,forms,requested,limit,user,caps){
+async function readRows(auth,forms,requested,limit,user,caps,canReadAll=false){
   const selected=requested==="all"?forms:forms.filter(form=>form.id===requested);
   const email=String(user?.email||"").toLowerCase();
   const internal=email===EXCEPTION||email.endsWith(DEFAULT_DOMAIN);
   const allowed=selected.filter(form=>{
     const p=permissionFor(caps.permissions,email,form.id,caps.base);
+    if(canReadAll&&String(form.status||"").toLowerCase()==="activo")return true;
     if(canAccess(form,user,caps.base,p))return true;
     return form.access==="PUBLICO"&&internal;
   });
@@ -411,7 +412,7 @@ async function readRows(auth,forms,requested,limit,user,caps){
       if(String(row[testIndex]||"").trim().toLowerCase()==="sí")continue;
       const emailIndex=form.id==="CHURN"?25:form.id==="INTELIGENCIA_OPERADOR"?19:24;
       const rowEmail=String(row[emailIndex]||"").trim().toLowerCase();
-      if(!caps.adminActive&&rowEmail!==email)continue;
+      if(!canReadAll&&!caps.adminActive&&rowEmail!==email)continue;
       if(form.id==="CHURN"){
         out.push({
           formId:form.id,timestamp:row[0],id:row[1],
@@ -476,7 +477,8 @@ module.exports=async(req,res)=>{
     if(req.method==="GET"){
       const user=await verifyUser(req);
       const [forms,caps]=await Promise.all([loadForms(auth),userCapabilities(auth,user.email)]);
-      if(!canUseDashboard(user,caps.adminActive,forms)) throw httpError("DASHBOARD_ACCESS_DENIED",403);
+      const canReadAll=await require("./_dashboard-access").canReadConfiguredDashboard(auth,user,"forms");
+      if(!canReadAll&&!canUseDashboard(user,caps.adminActive,forms)) throw httpError("DASHBOARD_ACCESS_DENIED",403);
       const requested=String(req.query.form||"all").toUpperCase();
       if(req.query.receipt){
         const form=forms.find(item=>item.id===requested);
@@ -488,7 +490,7 @@ module.exports=async(req,res)=>{
       }
       const limit=Math.min(Number(req.query.limit)||100,250);
       return await reply({
-        rows:await readRows(auth,forms,requested==="ALL"?"all":requested,limit,user,caps)
+        rows:await readRows(auth,forms,requested==="ALL"?"all":requested,limit,user,caps,canReadAll)
       });
     }
 

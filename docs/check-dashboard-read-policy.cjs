@@ -1,0 +1,17 @@
+"use strict";
+const assert = require("node:assert/strict");
+const {validateGrant,canReadDashboard} = require("../api/_dashboard-read-policy");
+const domain = {dashboard:"forms",kind:"domain",subject:"@fibrazo.com",enabled:true};
+const explicit = {dashboard:"redmine",kind:"email",subject:"lector@example.org",enabled:true};
+const user = email => ({email,emailVerified:true});
+assert.equal(canReadDashboard(user("eduardo@fibrazo.com"),"forms",[domain]),true);
+assert.equal(canReadDashboard(user("EDUARDO@FIBRAZO.COM"),"forms",[domain]),true);
+assert.equal(canReadDashboard(user("a@fibrazo.com.evil"),"forms",[domain]),false);
+assert.equal(canReadDashboard({email:"a@fibrazo.com",emailVerified:false},"forms",[domain]),false);
+assert.equal(canReadDashboard(user("a@fibrazo.com"),"redmine",[domain]),false);
+assert.equal(canReadDashboard(user("lector@example.org"),"redmine",[explicit]),true);
+assert.equal(canReadDashboard(user("lector@example.org"),"forms",[explicit]),false);
+assert.equal(canReadDashboard(user("a@fibrazo.com"),"forms",[{...domain,enabled:false}]),false);
+assert.equal(canReadDashboard(user("a@fibrazo.com"),"forms",null),false);
+assert.throws(()=>validateGrant({...domain,subject:"@fibrazo.com.evil/path"}),/INVALID_SUBJECT/);
+console.log("Dashboard read policy tests passed");

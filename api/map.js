@@ -71,9 +71,11 @@ module.exports=async(req,res)=>{
     const user=await verifyUser(req);
     const auth=gauth();
     const [forms,caps]=await Promise.all([loadForms(auth),userCapabilities(auth,user.email)]);
-    if(!canUseDashboard(user,caps.adminActive,forms))throw httpError("DASHBOARD_ACCESS_DENIED",403);
+    const canReadAll=await require("./_dashboard-access").canReadConfiguredDashboard(auth,user,"forms");
+    if(!canReadAll&&!canUseDashboard(user,caps.adminActive,forms))throw httpError("DASHBOARD_ACCESS_DENIED",403);
 
     const access=formAccess(forms,caps,user);
+    if(canReadAll){for(const form of forms){if(String(form.status||"").toLowerCase()!=="activo")continue;if(form.id==="EXPLORACION")access.virtual=true;if(form.id==="EXPLORACION_PRESENCIAL")access.presential=true;if(form.id==="INTELIGENCIA_OPERADOR")access.intelligence=true;}}
     if(!access.virtual&&!access.presential&&!access.intelligence)throw httpError("MAP_ACCESS_DENIED",403);
 
     const sheets=google.sheets({version:"v4",auth});
@@ -99,7 +101,7 @@ module.exports=async(req,res)=>{
       if(isPresential(row)&&!access.presential)continue;
       if(!isVirtual(row)&&!isPresential(row))continue;
       const rowEmail=String(row[24]||"").trim().toLowerCase();
-      if(!admin&&rowEmail!==email)continue;
+      if(!canReadAll&&!admin&&rowEmail!==email)continue;
       const isTest=String(row[82]||"").trim().toLowerCase()==="sí";
       if(isTest&&(!includeTests||rowEmail!==email))continue;
 
@@ -168,7 +170,7 @@ module.exports=async(req,res)=>{
     // estables. No se reutilizan índices de RESP_EXPLORACION.
     for(const row of (intelResponse.data.values||[])){
       const rowEmail=String(row[19]||"").trim().toLowerCase();
-      if(!admin&&rowEmail!==email)continue;
+      if(!canReadAll&&!admin&&rowEmail!==email)continue;
       const isTest=String(row[31]||"").trim().toLowerCase()==="sí";
       if(isTest&&(!includeTests||rowEmail!==email))continue;
       const lat=num(row[9]),lng=num(row[10]);

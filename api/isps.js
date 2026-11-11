@@ -11,7 +11,8 @@ module.exports=async(req,res)=>{
     const user=await verifyUser(req);
     const auth=gauth();
     const [forms,caps]=await Promise.all([loadForms(auth),userCapabilities(auth,user.email)]);
-    if(!canUseDashboard(user,caps.adminActive,forms))return res.status(403).json({error:"Access denied"});
+    const canReadAll=await require("./_dashboard-access").canReadConfiguredDashboard(auth,user,"forms");
+    if(!canReadAll&&!canUseDashboard(user,caps.adminActive,forms))return res.status(403).json({error:"Access denied"});
     const sheets=google.sheets({version:"v4",auth});
     const ranges=["RESP_EXPLORACION!M2:P","RESP_INTELIGENCIA_OPERADOR!C2:C","LISTAS!A2:B","RESP_EXPLORACION!CE2:CE","RESP_INTELIGENCIA_OPERADOR!AF2:AF"];
     const response=await sheets.spreadsheets.values.batchGet({spreadsheetId:SHEET_ID,ranges});

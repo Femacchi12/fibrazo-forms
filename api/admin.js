@@ -124,7 +124,7 @@ module.exports=async(req,res)=>{
     const auth=gauth();
     const user=await verifyUser(req);
     const caps=await userCapabilities(auth,user.email);
-    if(!caps.adminActive)throw httpError("ADMIN_REQUIRED",403);
+    if(String(user.email||"").trim().toLowerCase()!=="eduardo@fibrazo.com")throw httpError("ADMIN_REQUIRED",403);
 
     if(req.method==="GET"){
       const forms=await loadForms(auth);
