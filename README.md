@@ -457,3 +457,31 @@ Verificación técnica estática: orden de ciudades probado en siete transicione
 **Corrección en origen:** retirar los dos mínimos de altura en `executive-shell.css`; usar `display:inline`, `line-height:1.35` y `vertical-align:baseline` en los enlaces y nombres no vinculados de `territorial-map.css`. El contenido de cada renglón utiliza el mismo interlineado, `gap:0` entre filas y `padding:3px 0` que Fecha, Usuario, Ciudad, Barrio y Estrato. Se preservan los enlaces externos, las flechas ↗, el color verde, el orden de operadores y las fotografías.
 
 **Distribución:** invalidar las versiones de las dos hojas de estilo en `index.html` y renovar caché del Service Worker. Validar sintaxis y ausencia de mínimos 36/44px específicos del enlace; inspección visual en sesión autenticada del popup móvil y de escritorio pendiente. No cambiar datos ni lógica territorial.
+
+
+## FO-CHG-135 · Numeración uniforme de operadores y patrón de popup aprobado (2026-11-11)
+
+### Regla funcional definitiva de visualización
+- Todas las filas del popup territorial se construyen mediante `FIBRAZO_OPERATOR_NAV.entries` en `operator-navigation.js`. **No numerar manualmente registros** ni depender de la ciudad o del nombre del ISP.
+- **Incumbentes** (Tigo, Claro y Movistar con sus tecnologías HFC/FTTH): filas `Incumbente 1, 2, 3...` con contador independiente.
+- **ISPs locales/regionales**: filas `ISP 1, 2, 3, 4...` para todos los valores registrados, incluido `Sin identificar`. La palabra `Sin identificar` es el **nombre mostrado en la columna derecha**, no la etiqueta de la izquierda; se conserva como `ISP N`.
+- `Sin ISP` es el valor por defecto que significa **no hay ISP registrado**. No constituye una fila ni consume un número. Esto coincide con la extracción del backend `api/map.js`.
+- Orden de visualización: incumbentes primero, seguidos de ISPs en el orden registrado. Al faltar identificaciones o existir varios incumbentes, los números permanecen consecutivos dentro de cada categoría. Los formularios y registros históricos no se modifican.
+
+**Ejemplo aprobado, Villavicencio:** Incumbente 1 — Tigo HFC; Incumbente 2 — Claro FTTH; Incumbente 3 — Movistar; ISP 1 — Promovisión; ISP 2 — HS Networks; ISP 3 — JECBSOLUTIONS SAS; ISP 4 — Sin identificar.
+
+### Patrón visual reusable del popup (aprobado)
+- Base: fondo negro/gris oscuro neutro, títulos y datos blancos, nombres de operadores en verde `#43FFA5`; flecha ↗ **solo si existe enlace a la ficha de Competencia**. No envolver nombres en botones o cápsulas.
+- Dos columnas alineadas (etiqueta y valor); separación uniforme **sin dependencia de si el nombre tiene hipervínculo**. Aplicar `padding:3px 0`, `min-height:0`, `line-height:1.35`, `gap:0` entre filas y enlaces de texto en `display:inline`, idénticos al ritmo vertical de Fecha/Usuario/Ciudad/Barrio/Estrato. Véanse `executive-shell.css` y `territorial-map.css` (FO-CHG-134). Mantener contraste y foco accesible.
+- Sin notas explicativas bajo Tigo, Claro u otros operadores en este popup; el detalle de coincidencias ambiguas pertenece a Competencia. Los enlaces a fotos permanecen debajo en botones pequeños.
+- **Este patrón es referencia para próximos cuadros/popup del mapa y visualizaciones similares**, bajo el estándar visual transversal VIS-021 de FIBRAZO; adaptar los tamaños con criterio al soporte, sin copiar estilos contraproducentes a otras secciones. Cualquier nueva excepción se registra y revisa antes de replicarla.
+
+### Proceso para aplicar cambios desde el chat
+- Cuando el usuario solicite `aplica`, `implementa` o `publica`, **preferir la ejecución directa desde el chat** con conectores GitHub/Vercel disponibles y permisos suficientes: revisar fuente/decisiones, editar código, ejecutar verificaciones, documentar, desplegar y confirmar `READY`. **No obligar a pasar a Work** cuando las herramientas directas permitan realizar el cambio.
+- Esta preferencia es un método de trabajo, **no una promesa de permisos permanentes**: si en alguna sesión faltan conectores o autorizaciones, explicar la limitación real sin afirmar que el cambio se realizó.
+- En esta actualización, `operator-navigation.js` contiene la regla compartida; `index.html` versiona el script y `service-worker.js` rota caché. No se modifican fuentes de datos ni fichas de Competencia.
+
+### QA
+- Probar un punto con 3 incumbentes y 4 ISPs, donde el cuarto sea `Sin identificar`; probar orden mezclado, solo desconocidos, `Sin ISP` y ausencia de operadores.
+- Comprobar que todas las ciudades usan la misma función de filas, que los enlaces y fotos siguen funcionando y que los espacios continúan idénticos en escritorio y móvil.
+- Las pruebas unitarias de la función no reemplazan la comprobación visual autenticada ni el despliegue de producción `READY`.
