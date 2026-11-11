@@ -3,7 +3,22 @@
  const clean=v=>String(v??'').trim();
  const fold=v=>clean(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
  const COMPETITION='https://femacchi12.github.io/dashboard-competencia-fibrazo/';
- function entries(names){let incumbent=0,isp=0;return(names||[]).filter(v=>clean(v)).map(name=>({name:clean(name),label:/^(tigo|claro|movistar)/i.test(clean(name))?'Incumbente '+(++incumbent):/^(sin isp|sin identificar)$/i.test(clean(name))?'Sin identificar':'ISP '+(++isp)})).sort((a,b)=>Number(!a.label.startsWith('Incumbente'))-Number(!b.label.startsWith('Incumbente')));}
+ // FO-CHG-135: number every displayed ISP, including an unidentified provider.
+ // "Sin ISP" is the form's empty-value sentinel, not an additional provider.
+ function entries(names){
+  let incumbent=0,isp=0;
+  return (Array.isArray(names)?names:[])
+   .map(clean)
+   .filter(name=>name&&!/^sin isp$/i.test(name))
+   .map(name=>{
+    const isIncumbent=/^(tigo|claro|movistar)/i.test(name);
+    return {
+     name:/^sin identificar$/i.test(name)?'Sin identificar':name,
+     label:isIncumbent?'Incumbente '+(++incumbent):'ISP '+(++isp)
+    };
+   })
+   .sort((a,b)=>Number(!a.label.startsWith('Incumbente'))-Number(!b.label.startsWith('Incumbente')));
+ }
  function resolve(catalog,name,city){
   const cityKey=fold(city);let wanted=fold(name);
   if(cityKey==='neiva')wanted=({networ:'networks',wirlet:'wirtel',nov:'novanet',nob:'novanet'})[wanted]||wanted;
