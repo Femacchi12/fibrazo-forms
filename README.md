@@ -449,3 +449,11 @@ Verificación técnica estática: orden de ciudades probado en siete transicione
 - **Corrección en origen:** `executive-shell.css` y `territorial-map.css` se armonizan con `gap:0` en la lista de operadores y `padding:3px 0`, `min-height:0`, `align-items:baseline` por fila. Es el mismo padding y la misma alineación de las filas de detalle; ya no hay un espacio extra entre Incumbentes e ISPs. Se conserva el interlineado compacto.
 - No cambian textos, enlaces, fotos, colores, datos ni lógica de navegación. Se incrementan versiones de los dos CSS en `index.html` y caché PWA para evitar estilos antiguos en Chrome.
 - **QA:** cotejar separación de los 6 operadores con las filas del detalle en móvil y escritorio; comprobar enlaces verde ↗ y fotografías. Validación estática y despliegue READY no sustituyen inspección visual autenticada.
+
+## FO-CHG-134 · Altura uniforme para operadores vinculados (2026-11-11)
+
+**Diagnóstico de la diferencia que persistía tras FO-CHG-133:** el popup mostraba filas más altas exclusivamente cuando el nombre del operador tenía enlace a Competencia. Aunque se normalizó el `gap` de la lista, `executive-shell.css` todavía aplicaba `min-height:36px` a `.map-operator-link` y `min-height:44px` en móviles. Al cargarse después de `territorial-map.css`, esos valores sobrescribían el `min-height:0` ya aprobado. Además, la presentación `inline-flex` creaba una caja de línea distinta de la de los nombres sin enlace.
+
+**Corrección en origen:** retirar los dos mínimos de altura en `executive-shell.css`; usar `display:inline`, `line-height:1.35` y `vertical-align:baseline` en los enlaces y nombres no vinculados de `territorial-map.css`. El contenido de cada renglón utiliza el mismo interlineado, `gap:0` entre filas y `padding:3px 0` que Fecha, Usuario, Ciudad, Barrio y Estrato. Se preservan los enlaces externos, las flechas ↗, el color verde, el orden de operadores y las fotografías.
+
+**Distribución:** invalidar las versiones de las dos hojas de estilo en `index.html` y renovar caché del Service Worker. Validar sintaxis y ausencia de mínimos 36/44px específicos del enlace; inspección visual en sesión autenticada del popup móvil y de escritorio pendiente. No cambiar datos ni lógica territorial.
