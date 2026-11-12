@@ -1,4 +1,4 @@
-const CACHE="fibrazo-forms-v0.8.187-20261111-operator-numbering-135";
+const CACHE="fibrazo-forms-v0.8.188-20261112-focus-group-136";
 const SYNC_TAG="fibrazo-queue-v1";
 // Local, pinned SDK files avoid a CDN dependency during startup and worker wakeup.
 importScripts('/vendor/firebase-app-compat-12.19.0.js','/vendor/firebase-auth-compat-12.19.0.js','/firebase-config.js','/background-territory.js','/qa-stratum-policy.js','/offline-v04.js');
@@ -45,7 +45,7 @@ self.addEventListener("fetch",event=>{
   const request=event.request;if(request.method!=="GET")return;
   const url=new URL(request.url);
   // Never store authenticated responses or intercept Firebase's auth handler.
-  if(url.pathname.startsWith("/api/")||url.pathname.startsWith("/__/"))return;
+  if(url.pathname.startsWith("/api/")||url.pathname.startsWith("/__/")||url.pathname.startsWith("/focus-group"))return;
   const local=url.origin===self.location.origin;
   if(!local&&!REMOTE_SHELL.includes(url.href)&&!["fonts.googleapis.com","fonts.gstatic.com"].includes(url.hostname))return;
   const navigation=request.mode==="navigate"&&local;
