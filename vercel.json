@@ -6,6 +6,10 @@
       "destination": "https://dashboards-fibrazo.firebaseapp.com/__/auth/:path*"
     },
     {
+      "source": "/api/focus-group",
+      "destination": "/api/public?focus=1"
+    },
+    {
       "source": "/form/:slug",
       "destination": "/"
     },
