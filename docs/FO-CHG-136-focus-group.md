@@ -12,6 +12,12 @@
 - API nueva: `/api/focus-group` POST, validación servidor, honeypot, guarda en pestaña separada RESP_FOCUS_GROUP_2026 de la base existente de Forms; GET restringido a administradores base mediante token Firebase.
 - Los datos no se envían al dashboard territorial, no se reutilizan para ventas y no se comparten públicamente.
 - No se solicita documento de identidad en la preinscripción por minimización de datos.
+- GPS opcional: la solicitud de permiso del navegador se dispara al enfocar el campo Dirección; se informa el uso en el texto de ayuda. Si acepta, coordenadas, precisión, fecha y estado se registran en columnas S:W. Si rechaza, el formulario sigue igual. La posición corresponde al dispositivo al responder, NO acredita la ubicación de la vivienda ni su estrato.
+- Se agregó enlace al formulario dentro de `index.html` (dashboard autenticado). El público abre `/focus-group` sin autenticación.
+
+## Corrección de despliegue — 12/11/2026
+- Diagnóstico comprobado en Vercel: `exceeded_serverless_functions_per_deployment`; Hobby limita a 12 funciones. Los primeros despliegues de la función `api/focus-group.js` fallaron por exceder el límite.
+- Se eliminó `api/focus-group.js` y se reutilizó `api/public.js`, conservando el endpoint público por rewrite. No se requiere upgrade de plan.
 
 ## Verificación pendiente
 - Confirmar despliegue de Vercel READY asociado al commit de formulario.
