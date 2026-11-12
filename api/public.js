@@ -1,6 +1,7 @@
 const {gauth,loadForms,runtimePolicy,httpError}=require("./_core");
 
 module.exports=async(req,res)=>{
+  if(String(req.query?.focus||"")==="1")return require("../focus-group-handler")(req,res);
   if(req.method==="GET"&&req.query?.rescue==="1")return require("./_recovery")(req,res);
   res.setHeader("Cache-Control","no-store");
   try{
