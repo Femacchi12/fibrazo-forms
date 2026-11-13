@@ -435,12 +435,19 @@
       '<div class="form-card-details-body"><div class="form-card-details-meta"><span class="eyebrow">ESTUDIO DE OPINIÓN</span><span class="status-badge">ACTIVO</span></div>' +
       '<p>Formulario público de preinscripción para el estudio de hábitos y consumo de servicios del hogar en Cartagena. Reconocimiento de $100.000 COP por participar.</p>' +
       '<div class="private-form-link"><div><span>ENLACE PÚBLICO</span><a href="/focus-group" target="_blank" rel="noopener">https://fibrazo-forms.vercel.app/focus-group</a></div>' +
-      '<button class="copy-focus-link" type="button">Copiar</button></div></div></details>';
+      '<button class="copy-private-link copy-focus-link" type="button" aria-label="Copiar enlace público">Copiar</button></div></div></details>';
     focus.querySelector(".form-open-button").addEventListener("click",()=>window.open("/focus-group","_blank","noopener"));
     focus.querySelector(".copy-focus-link").addEventListener("click",async event=>{
-      const button=event.currentTarget;
-      try{await navigator.clipboard.writeText(location.origin+"/focus-group");button.textContent="✓ Copiado";}
-      catch(_){button.textContent="Copiar enlace desde el formulario";}
+      event.preventDefault();event.stopPropagation();
+      const button=event.currentTarget,previous=button.textContent;
+      try{await navigator.clipboard.writeText(location.origin+"/focus-group");}
+      catch(_){
+        const input=document.createElement("textarea");input.value=location.origin+"/focus-group";
+        input.style.position="fixed";input.style.opacity="0";document.body.appendChild(input);input.select();
+        document.execCommand("copy");input.remove();
+      }
+      button.textContent="✓ Copiado";button.classList.add("copied");
+      setTimeout(()=>{button.textContent=previous;button.classList.remove("copied");},1600);
     });
     host.appendChild(focus);
   }
