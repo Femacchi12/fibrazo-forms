@@ -424,6 +424,25 @@
       });
       host.appendChild(card);
     });
+    // FO-CHG-137: public research form follows the same card / icon / actions pattern.
+    const focus=document.createElement("article");
+    focus.className="form-card";
+    focus.dataset.designKind="research";
+    focus.innerHTML =
+      '<h3 class="form-card-title"><span class="form-identity-icon" aria-hidden="true">💬</span>Focus Group · Tu hogar, tu voz</h3>' +
+      '<button class="primary-button form-open-button" type="button">Abrir →</button>' +
+      '<details class="form-card-details"><summary>Ver detalles</summary>' +
+      '<div class="form-card-details-body"><div class="form-card-details-meta"><span class="eyebrow">ESTUDIO DE OPINIÓN</span><span class="status-badge">ACTIVO</span></div>' +
+      '<p>Formulario público de preinscripción para el estudio de hábitos y consumo de servicios del hogar en Cartagena. Reconocimiento de $100.000 COP por participar.</p>' +
+      '<div class="private-form-link"><div><span>ENLACE PÚBLICO</span><a href="/focus-group" target="_blank" rel="noopener">https://fibrazo-forms.vercel.app/focus-group</a></div>' +
+      '<button class="copy-focus-link" type="button">Copiar</button></div></div></details>';
+    focus.querySelector(".form-open-button").addEventListener("click",()=>window.open("/focus-group","_blank","noopener"));
+    focus.querySelector(".copy-focus-link").addEventListener("click",async event=>{
+      const button=event.currentTarget;
+      try{await navigator.clipboard.writeText(location.origin+"/focus-group");button.textContent="✓ Copiado";}
+      catch(_){button.textContent="Copiar enlace desde el formulario";}
+    });
+    host.appendChild(focus);
   }
 
   function openForm(id) {
