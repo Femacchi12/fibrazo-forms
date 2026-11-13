@@ -25,3 +25,8 @@ Se agregó el código `docs/FOCUS_GROUP_AVISOS_GMAIL.gs`, diseñado como trigger
 - Activación/autorización del script de correos y comprobación con correo de prueba.
 - Política de retención/borrado y acceso a datos personales.
 - Sede aún pendiente de autorización de colegio.
+
+## Ajuste de texto — 12/11/2026
+- Invitación separada en párrafos: requisitos, dinámica moderada (6–10 personas), duración, incentivo y aclaración de que no es actividad de ventas; referencia a decisiones «sobre los servicios del hogar».
+- Enlace a Maps visualmente secundario, más pequeño y discreto; sede continúa pendiente de autorización.
+- Ayuda bajo Dirección reducida a «Usaremos tu dirección para organizar la convocatoria.» La transparencia sobre la ubicación opcional se conserva en el encabezado del paso «Tu barrio y tu hogar» y en el consentimiento final. No se alteró el flujo de solicitud de GPS.
