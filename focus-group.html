@@ -8,5 +8,97 @@
 <div class="step"><h2>Los servicios de tu hogar</h2><p>No hay respuestas buenas ni malas. Nos interesa conocer tu realidad.</p><label class="field"><span>¿Participás en la decisión de contratar o cambiar servicios del hogar? *</span><select name="decision" required><option value="">Seleccioná una opción</option><option value="Decido">Sí, tomo la decisión</option><option value="Compartimos">Sí, comparto esa decisión</option><option value="No">No, otra persona decide</option></select></label><label class="field"><span>¿Qué proveedor de internet fijo tiene actualmente tu hogar? *</span><select name="operador" required><option value="">Seleccioná una opción</option><option>Claro</option><option>Tigo</option><option>Movistar</option><option>FIBRAZO</option><option>Proveedor local</option><option>Otro operador</option><option>No tengo internet fijo</option></select><small class="hint">Seleccioná el proveedor que usa tu vivienda, no el de tus datos móviles.</small></label><label class="field" id="otherOperator" style="display:none"><span>¿Cuál es el proveedor?</span><input name="otroOperador" maxlength="120" placeholder="Nombre del proveedor"></label></div>
 <div class="step"><h2>¿Cuándo podrías asistir?</h2><p>Las sesiones se proyectan para el último fin de semana de noviembre. El lugar y la hora se comunicarán por teléfono a las personas seleccionadas.</p><label class="field"><span>¿Qué día te queda mejor? *</span><select name="disponibilidad" required><option value="">Seleccioná una opción</option><option value="Sábado 28">Sábado 28 de noviembre</option><option value="Domingo 29">Domingo 29 de noviembre</option><option value="Ambos">Cualquiera de los dos días</option><option value="Por confirmar">Todavía no estoy seguro/a</option></select></label><label class="field"><span>¿Cómo conociste esta invitación? (opcional)</span><select name="fuente"><option value="">Seleccioná una opción</option><option>Asesor en mi barrio</option><option>WhatsApp</option><option>Familiar o vecino</option><option>Líder comunitario</option><option>Redes sociales</option><option>Otro medio</option></select></label><label class="consent"><input name="consentimiento" type="checkbox" required><span>Autorizo a FIBRAZO S.A.S. a utilizar mis datos exclusivamente para evaluar mi participación en este estudio y contactarme por teléfono o correo sobre la convocatoria. Conozco la <a href="https://www.fibrazo.com.co/privacy-policy/" target="_blank" rel="noopener">política de tratamiento de datos</a>. *</span></label><p style="font-size:12px"><b>Reconocimiento:</b> $100.000 COP para cada persona seleccionada que asista y complete la sesión de 90 minutos. Inscribirse no asegura un cupo ni implica recibir el incentivo.</p></div>
 <div class="error" id="error" role="alert" aria-live="polite"></div><div class="actions"><button type="button" class="btn secondary" id="back" style="display:none">← Atrás</button><button type="button" class="btn" id="next">Continuar →</button><button type="submit" class="btn hidden" id="send">Enviar preinscripción ✓</button></div></form></section><section class="card success" id="success"><div class="check">✓</div><h2>¡Gracias por participar!</h2><p>Recibimos tu preinscripción. Nuestro equipo revisará tu perfil y, si corresponde a los participantes que buscamos, se comunicará telefónicamente para confirmar horario y sede.</p><p style="color:#43ffa5">Tu voz puede ayudarnos a mejorar los servicios del hogar.</p><small id="receipt"></small><div class="actions success-actions"><button type="button" class="btn secondary" id="again">Completar otra inscripción</button><button type="button" class="btn" id="share">Compartir enlace ↗</button><button type="button" class="btn secondary" id="copy">Copiar enlace</button></div><p id="shareStatus" role="status" aria-live="polite"></p></section><footer class="foot">FIBRAZO · Investigación de hábitos y consumo · Cartagena, Colombia</footer></main><script>
-(()=>{"use strict";const f=document.getElementById("form"),steps=[...document.querySelectorAll(".step")],error=document.getElementById("error");let i=0;let geo={status:"no solicitado"};let geoRequested=false;const startedAt=Date.now(),phone=v=>{const n=String(v||"").replace(/[\s().-]/g,"");return n.startsWith("+57")?n.slice(3):n.startsWith("57")&&n.length===12?n.slice(2):n};const data=()=>Object.fromEntries(new FormData(f).entries());function show(){steps.forEach((s,j)=>s.classList.toggle("active",j===i));document.getElementById("stepLabel").textContent="PASO "+(i+1)+" DE 4";document.getElementById("meter").style.width=((i+1)*25)+"%";document.getElementById("back").style.display=i?"":"none";document.getElementById("next").classList.toggle("hidden",i===3);document.getElementById("send").classList.toggle("hidden",i!==3);error.textContent="";document.getElementById("formCard").scrollIntoView({behavior:"smooth",block:"start"});}function validate(){const inputs=[...steps[i].querySelectorAll("input,select")];for(const x of inputs){if(!x.checkValidity()){error.textContent=x.validity.valueMissing?"Completá los campos obligatorios antes de continuar.":"Revisá el formato del campo indicado.";x.focus();return false;}}const d=data();if(i===0){if(Number(d.edad)<=30||Number(d.edad)>110){error.textContent="La convocatoria es para personas mayores de 30 años.";return false;}if(!/^3\d{9}$/.test(phone(d.telefono))||phone(d.telefono)!==phone(d.telefonoConfirmacion)){error.textContent="Ingresá un celular colombiano válido (10 dígitos comenzando por 3) y comprobá que coincida en ambos campos.";return false;}}if(i===2){if(d.operador==="FIBRAZO"){error.textContent="Esta convocatoria está dirigida a hogares que actualmente no tienen FIBRAZO. Gracias por tu interés.";return false;}if(d.decision==="No"){error.textContent="En este estudio buscamos personas que decidan o participen en decisiones de los servicios del hogar.";return false;}}return true;}document.getElementById("next").onclick=()=>{if(validate()&&i<3){i++;show();}};document.getElementById("back").onclick=()=>{if(i>0){i--;show();}};f.elements.direccion.addEventListener("focus",()=>{if(geoRequested)return;geoRequested=true;if(!navigator.geolocation){geo={status:"error"};return;}navigator.geolocation.getCurrentPosition(pos=>{geo={status:"autorizado",lat:pos.coords.latitude,lng:pos.coords.longitude,accuracy:pos.coords.accuracy,capturedAt:new Date(pos.timestamp).toISOString()};},err=>{geo={status:err.code===1?"rechazado":"error"};},{enableHighAccuracy:false,timeout:10000,maximumAge:0});});f.elements.operador.addEventListener("change",()=>{document.getElementById("otherOperator").style.display=["Proveedor local","Otro operador"].includes(f.elements.operador.value)?"block":"none";});f.addEventListener("submit",async e=>{e.preventDefault();if(!validate())return;const d=data();d.consentimiento=f.elements.consentimiento.checked;d.geo=geo;const btn=document.getElementById("send");btn.disabled=true;btn.textContent="Enviando…";error.textContent="";try{const response=await fetch("/api/focus-group",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:d,startedAt,website:f.elements.website.value})});const result=await response.json();if(!response.ok)throw Error(result.error||"No se pudo enviar");document.getElementById("formCard").style.display="none";document.getElementById("success").style.display="block";document.getElementById("receipt").textContent="Referencia: "+result.id;document.getElementById("success").scrollIntoView({behavior:"smooth"});}catch(ex){error.textContent=ex.message||"Error inesperado";btn.disabled=false;btn.textContent="Enviar preinscripción ✓";}});})();
+(()=>{
+"use strict";
+const form=document.getElementById("form"),steps=Array.from(document.querySelectorAll(".step")),summary=document.getElementById("error");
+let current=0,geo={status:"no solicitado"},geoPromise=null,geoRequested=false,startedAt=Date.now();
+const phone=value=>{const clean=String(value||"").replace(/[\\s().-]/g,"");return clean.startsWith("+57")?clean.slice(3):clean.startsWith("57")&&clean.length===12?clean.slice(2):clean;};
+const values=()=>Object.fromEntries(new FormData(form).entries());
+function clearField(el){
+ el.removeAttribute("aria-invalid");const parent=el.closest(".field,.consent");if(!parent)return;
+ parent.classList.remove("has-error");parent.querySelector(".field-error")?.remove();
+}
+function invalid(el,message){
+ const parent=el.closest(".field,.consent");if(!parent)return;
+ el.setAttribute("aria-invalid","true");parent.classList.add("has-error");
+ let node=parent.querySelector(".field-error");if(!node){node=document.createElement("small");node.className="field-error";parent.appendChild(node);}node.textContent=message;
+}
+form.querySelectorAll("input,select").forEach(el=>{el.addEventListener("input",()=>clearField(el));el.addEventListener("change",()=>clearField(el));});
+function render(){
+ steps.forEach((el,i)=>el.classList.toggle("active",i===current));
+ document.getElementById("stepLabel").textContent="PASO "+(current+1)+" DE 4";
+ document.getElementById("meter").style.width=((current+1)*25)+"%";
+ document.getElementById("back").style.display=current?"":"none";
+ document.getElementById("next").classList.toggle("hidden",current===3);
+ document.getElementById("send").classList.toggle("hidden",current!==3);
+ summary.textContent="";
+ document.getElementById("formCard").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function validate(){
+ const controls=Array.from(steps[current].querySelectorAll("input,select"));
+ controls.forEach(clearField);let count=0,first=null;
+ function flag(el,message){if(!el)return;invalid(el,message);count++;if(!first)first=el;}
+ for(const el of controls){
+   if(el.required&&((el.type==="checkbox"&&!el.checked)||(!el.value.trim()))){flag(el,"Este campo es obligatorio.");continue;}
+   if(el.value&&el.type==="email"&&!el.checkValidity())flag(el,"Ingresá un correo válido, por ejemplo nombre@correo.com.");
+   if(el.value&&el.type==="number"&&!el.checkValidity())flag(el,"Ingresá una edad válida.");
+ }
+ const d=values();
+ if(current===0){
+  if(d.edad&&(!Number.isInteger(Number(d.edad))||Number(d.edad)<30||Number(d.edad)>110))flag(form.elements.edad,"Se admiten personas de 30 años o más.");
+  const a=phone(d.telefono),b=phone(d.telefonoConfirmacion);
+  if(d.telefono&&!/^3\\d{9}$/.test(a))flag(form.elements.telefono,"Debe tener 10 dígitos y comenzar por 3. Podés incluir +57.");
+  if(d.telefonoConfirmacion&&a!==b)flag(form.elements.telefonoConfirmacion,"Los números de celular no coinciden.");
+ }
+ if(current===2){
+  if(d.operador==="FIBRAZO")flag(form.elements.operador,"Esta convocatoria es para hogares que actualmente no tienen FIBRAZO.");
+  if(d.decision==="No")flag(form.elements.decision,"Buscamos a quienes deciden o comparten las decisiones de servicios.");
+ }
+ if(count){summary.textContent="Revisá los "+count+" campo(s) marcados en rojo para continuar.";first?.focus();return false;}
+ summary.textContent="";return true;
+}
+document.getElementById("next").addEventListener("click",()=>{if(validate()&&current<3){current++;render();}});
+document.getElementById("back").addEventListener("click",()=>{if(current>0){current--;render();}});
+form.elements.operador.addEventListener("change",()=>{
+ document.getElementById("otherOperator").style.display=["Proveedor local","Otro operador"].includes(form.elements.operador.value)?"block":"none";
+});
+function requestGeo(){
+ if(geoRequested)return;geoRequested=true;
+ if(!navigator.geolocation||!window.isSecureContext){geo={status:"error"};return;}
+ geoPromise=new Promise(resolve=>{
+  navigator.geolocation.getCurrentPosition(
+    position=>{geo={status:"autorizado",lat:position.coords.latitude,lng:position.coords.longitude,accuracy:position.coords.accuracy,capturedAt:new Date(position.timestamp).toISOString()};resolve();},
+    problem=>{geo={status:problem.code===1?"rechazado":"error"};resolve();},
+    {enableHighAccuracy:false,timeout:12000,maximumAge:0}
+  );
+ });
+}
+form.elements.direccion.addEventListener("focus",requestGeo);
+form.elements.direccion.addEventListener("click",requestGeo);
+form.addEventListener("submit",async event=>{
+ event.preventDefault();if(!validate())return;
+ const button=document.getElementById("send");button.disabled=true;button.textContent="Enviando…";summary.textContent="";
+ try{
+  if(geoPromise)await geoPromise;
+  const d=values();d.consentimiento=form.elements.consentimiento.checked;d.geo=geo;
+  const response=await fetch("/api/focus-group",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:d,startedAt,website:form.elements.website.value})});
+  const payload=await response.json();if(!response.ok)throw new Error(payload.error||"No se pudo guardar la inscripción.");
+  document.getElementById("formCard").style.display="none";
+  document.getElementById("success").style.display="block";
+  document.getElementById("receipt").textContent="Referencia de inscripción: "+payload.id;
+  document.getElementById("success").scrollIntoView({behavior:"smooth",block:"start"});
+ }catch(problem){summary.textContent=problem.message||"Error inesperado al enviar. Intentá nuevamente.";}
+ finally{button.disabled=false;button.textContent="Enviar preinscripción ✓";}
+});
+const link="https://fibrazo-forms.vercel.app/focus-group";
+document.getElementById("again").addEventListener("click",()=>window.location.assign(link));
+document.getElementById("copy").addEventListener("click",async()=>{
+ try{await navigator.clipboard.writeText(link);document.getElementById("shareStatus").textContent="Enlace copiado."; }catch(_){document.getElementById("shareStatus").textContent="Copiá este enlace: "+link;}
+});
+document.getElementById("share").addEventListener("click",async()=>{
+ try{if(navigator.share){await navigator.share({title:"Tu hogar, tu voz · FIBRAZO",text:"Participá en nuestro estudio de opinión en Cartagena",url:link});}
+ else{await navigator.clipboard.writeText(link);document.getElementById("shareStatus").textContent="Enlace copiado para compartir.";}}
+ catch(e){if(e.name!=="AbortError")document.getElementById("shareStatus").textContent="Podés compartir este enlace: "+link;}
+});
+})();
 </script></body></html>
