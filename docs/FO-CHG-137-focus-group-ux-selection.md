@@ -30,3 +30,15 @@ Se agregó el código `docs/FOCUS_GROUP_AVISOS_GMAIL.gs`, diseñado como trigger
 - Invitación separada en párrafos: requisitos, dinámica moderada (6–10 personas), duración, incentivo y aclaración de que no es actividad de ventas; referencia a decisiones «sobre los servicios del hogar».
 - Enlace a Maps visualmente secundario, más pequeño y discreto; sede continúa pendiente de autorización.
 - Ayuda bajo Dirección reducida a «Usaremos tu dirección para organizar la convocatoria.» La transparencia sobre la ubicación opcional se conserva en el encabezado del paso «Tu barrio y tu hogar» y en el consentimiento final. No se alteró el flujo de solicitud de GPS.
+
+## Control de publicación y botón Copiar — 13/11/2026
+
+- Botón Copiar del Focus Group reutiliza las mismas clases CSS, funcionalidad y señal transitoria «✓ Copiado» de los demás formularios.
+- La página pública `/focus-group` no requiere cuenta Google ni autenticación mientras esté habilitada; no se solicita acceso al dashboard al participante.
+- Nuevo control de administración para administradores base de FIBRAZO Forms: abrir/cerrar la convocatoria mediante `/api/focus-group?manage=1` con Firebase ID Token, validación de permisos en el servidor. El switch se muestra en **Administrar → Formularios activos → Focus Group · Tu hogar, tu voz**.
+- Estado canónico: celda `Y2` de `RESP_FOCUS_GROUP_2026` en la hoja corporativa, encabezado `Y1` = `PUBLIC_ENABLED`. Valor TRUE/FALSE. Predeterminado TRUE cuando aún no fue configurado.
+- Endpoint anónimo `GET /api/focus-group?config=1` retorna exclusivamente `publicEnabled`, sin datos personales, y con `Cache-Control: no-store`.
+- Con publicación desactivada se oculta la inscripción en la página pública, se muestra aviso de convocatoria cerrada y **el POST es rechazado con HTTP 403 del lado del servidor**, aun si alguien intenta enviar una solicitud manual. Los registros históricos permanecen.
+- La tarjeta del listado de formularios muestra PÚBLICO / CERRADO según lectura del estado.
+- No se ha usado una nueva Serverless Function: se reutiliza `api/public.js` con helper `api/_focus-group.js`; conserva compatibilidad plan Vercel Hobby.
+- QA pendiente: login como administrador, activar/desactivar, probar pantalla y POST desactivado, reactivar y verificar.
