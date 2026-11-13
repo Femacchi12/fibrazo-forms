@@ -41,7 +41,7 @@ module.exports=async(req,res)=>{
   if(!/^3\d{9}$/.test(t)||t!==tc)return res.status(400).json({error:"Revisá el número de celular y su confirmación"});
   if(!d.nombre||!d.apellido||!d.barrio||!d.direccion)return res.status(400).json({error:"Completá los datos obligatorios"});
   if(d.nombre.length>100||d.apellido.length>100||d.barrio.length>120||d.direccion.length>200)return res.status(400).json({error:"Revisá la longitud de los datos"});
-  if(!Number.isInteger(Number(d.edad))||Number(d.edad)<=30||Number(d.edad)>110)return res.status(400).json({error:"Esta convocatoria está dirigida a mayores de 30 años"});
+  if(!Number.isInteger(Number(d.edad))||Number(d.edad)<30||Number(d.edad)>110)return res.status(400).json({error:"Esta convocatoria está dirigida a personas de 30 años o más"});
   if(!["3","4","5","6","No sé"].includes(d.estrato))return res.status(400).json({error:"Estrato fuera del perfil"});
   if(!["Decido","Compartimos"].includes(d.decision))return res.status(400).json({error:"Se requiere decidir o compartir las decisiones del hogar"});
   if(!["Claro","Tigo","Movistar","Otro operador","Proveedor local","No tengo internet fijo"].includes(d.operador))return res.status(400).json({error:"Seleccioná el servicio de internet"});
