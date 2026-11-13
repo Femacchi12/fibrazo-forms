@@ -302,3 +302,39 @@ body.executive-shell main{max-width:none!important;width:100%!important;box-sizi
 .executive-shell #formsView #formCards .form-card .form-card-title{margin:0!important}
 
 @media(max-width:600px){.executive-shell #formsView #formCards .form-card .form-card-title{word-break:normal!important;overflow-wrap:normal!important;display:flex!important;align-items:center;gap:8px}.executive-shell #formsView #formCards .form-card .form-identity-icon{flex:0 0 30px}.executive-shell #formsView #formCards .form-open-button{justify-self:start}.executive-shell #formsView #formCards .form-card-details summary{justify-self:end}}
+
+/* VIS-022 / FO-CHG-139 — Portal Mi Fibrazo shared icon identity.
+   Applies to FORM identity/action icons, not semantic status indicators or map markers.
+   Canonical system: round #43FFA5 disc, pure black monochrome SVG glyph.
+   Do not restore per-form square/dashed/dim green variants. */
+.executive-shell #formCards .form-card .form-identity-icon,
+.executive-shell #adminForms .admin-form-card .form-identity-icon{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:0 0 30px!important;
+  width:30px!important;
+  height:30px!important;
+  min-width:30px!important;
+  min-height:30px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:#43FFA5!important;
+  background-image:none!important;
+  color:#000!important;
+  box-shadow:none!important;
+}
+.executive-shell #formCards .form-card .form-identity-icon svg,
+.executive-shell #adminForms .admin-form-card .form-identity-icon svg{
+  display:block;
+  flex:0 0 18px;
+  width:18px!important;
+  height:18px!important;
+  fill:none!important;
+  stroke:#000!important;
+}
+.executive-shell #formCards .form-card .form-identity-icon svg :is(path,circle,rect,line,polyline,polygon),
+.executive-shell #adminForms .admin-form-card .form-identity-icon svg :is(path,circle,rect,line,polyline,polygon){
+  stroke:#000!important;
+}
