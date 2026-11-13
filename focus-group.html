@@ -12,7 +12,7 @@
 "use strict";
 const form=document.getElementById("form"),steps=Array.from(document.querySelectorAll(".step")),summary=document.getElementById("error");
 let current=0,geo={status:"no solicitado"},geoPromise=null,geoRequested=false,startedAt=Date.now();
-const phone=value=>{const clean=String(value||"").replace(/[\\s().-]/g,"");return clean.startsWith("+57")?clean.slice(3):clean.startsWith("57")&&clean.length===12?clean.slice(2):clean;};
+const phone=value=>{const clean=String(value||"").replace(/[\s().-]/g,"");return clean.startsWith("+57")?clean.slice(3):clean.startsWith("57")&&clean.length===12?clean.slice(2):clean;};
 const values=()=>Object.fromEntries(new FormData(form).entries());
 function clearField(el){
  el.removeAttribute("aria-invalid");const parent=el.closest(".field,.consent");if(!parent)return;
@@ -47,7 +47,7 @@ function validate(){
  if(current===0){
   if(d.edad&&(!Number.isInteger(Number(d.edad))||Number(d.edad)<30||Number(d.edad)>110))flag(form.elements.edad,"Se admiten personas de 30 años o más.");
   const a=phone(d.telefono),b=phone(d.telefonoConfirmacion);
-  if(d.telefono&&!/^3\\d{9}$/.test(a))flag(form.elements.telefono,"Debe tener 10 dígitos y comenzar por 3. Podés incluir +57.");
+  if(d.telefono&&!/^3\d{9}$/.test(a))flag(form.elements.telefono,"Debe tener 10 dígitos y comenzar por 3. Podés incluir +57.");
   if(d.telefonoConfirmacion&&a!==b)flag(form.elements.telefonoConfirmacion,"Los números de celular no coinciden.");
  }
  if(current===2){
