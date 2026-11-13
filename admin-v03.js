@@ -297,6 +297,52 @@
         (isActive?host.querySelector(".active-group"):host.querySelector(".inactive-group")).open=true;
       }
     });
+    renderFocusPublication();
+  }
+
+  async function renderFocusPublication(){
+    if(!adminMeta.baseAdmin)return;
+    const container=document.createElement("details");
+    container.className="admin-form-card accordion compact";
+    container.dataset.formId="FOCUS_GROUP_2026";
+    container.innerHTML=
+      '<summary class="admin-accordion-head compact-head" style="list-style:none;cursor:pointer">'+
+        '<div><span>FOCUS_GROUP_2026</span><h3>Focus Group · Tu hogar, tu voz</h3><div class="admin-summary-chips"><span class="form-status-chip" data-focus-badge>Consultando…</span><span>Invitación pública · Cartagena</span></div></div>'+
+        '<b class="accordion-chevron">⌄</b>'+
+      '</summary>'+
+      '<div class="admin-accordion-body compact-body" style="display:block">'+
+       '<div class="form-status-control"><div><span>PUBLICACIÓN</span><strong>Habilitar inscripciones por enlace</strong><small>Activado: cualquier persona con el enlace puede inscribirse. Desactivado: se muestra convocatoria cerrada y el servidor no acepta respuestas. Los registros anteriores se conservan.</small></div>'+
+        '<label class="switch status-switch" aria-label="Publicar Focus Group"><input type="checkbox" data-focus-public disabled><i></i></label></div>'+
+       '<div class="compact-public-row"><input aria-label="Enlace Focus Group" readonly value="'+esc(location.origin+"/focus-group")+'"><button type="button" class="copy-private-link" data-focus-copy>Copiar</button></div>'+
+       '<div class="form-actions"><button type="button" class="primary-button compact" data-focus-save disabled>Guardar publicación</button></div>'+
+       '<p data-focus-message role="status" aria-live="polite" class="field-help">Consultando el estado actual…</p>'+
+      '</div>';
+    host.querySelector("[data-active-list]").appendChild(container);
+    const toggle=container.querySelector("[data-focus-public]"),save=container.querySelector("[data-focus-save]"),badge=container.querySelector("[data-focus-badge]"),message=container.querySelector("[data-focus-message]");
+    const setStatus=enabled=>{toggle.checked=enabled;badge.textContent=enabled?"Público":"Cerrado";badge.classList.toggle("active",enabled);badge.classList.toggle("inactive",!enabled);};
+    container.querySelector("[data-focus-copy]").addEventListener("click",async event=>{
+      const button=event.currentTarget,prev=button.textContent;try{
+        await navigator.clipboard.writeText(location.origin+"/focus-group");
+        button.textContent="✓ Copiado";button.classList.add("copied");
+      }catch(_){message.textContent="No se pudo copiar automáticamente; seleccioná el enlace.";}
+      setTimeout(()=>{button.textContent=prev;button.classList.remove("copied");},1600);
+    });
+    try{
+      const response=await fetch("/api/focus-group?config=1",{cache:"no-store"});
+      if(!response.ok)throw new Error("No fue posible consultar el estado.");
+      const data=await response.json();if(!container.isConnected)return;
+      setStatus(data.publicEnabled===true);toggle.disabled=false;message.textContent="Elegí el estado y guardá para aplicar el cambio.";
+      toggle.addEventListener("change",()=>{save.disabled=false;message.textContent="Hay cambios sin guardar.";});
+      save.addEventListener("click",async()=>{
+        save.disabled=true;toggle.disabled=true;message.textContent="Guardando estado…";
+        try{
+          const response=await fetch("/api/focus-group?manage=1",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await tok()},body:JSON.stringify({publicEnabled:toggle.checked})});
+          const result=await response.json();
+          if(!response.ok)throw new Error(result.error||"No se pudo actualizar la publicación.");
+          setStatus(result.publicEnabled);message.textContent=result.publicEnabled?"Convocatoria pública habilitada.":"Convocatoria cerrada; no se aceptan nuevas respuestas.";
+        }catch(e){message.textContent=e.message||"Error al guardar.";save.disabled=false;}finally{toggle.disabled=false;}
+      });
+    }catch(e){message.textContent=e.message||"No se pudo comprobar el estado del formulario.";toggle.disabled=true;}
   }
 
   function toggleRow(key,title,copy,checked){
