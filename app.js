@@ -429,7 +429,7 @@
     focus.className="form-card";
     focus.dataset.designKind="research";
     focus.innerHTML =
-      '<h3 class="form-card-title"><span class="form-identity-icon" aria-hidden="true">💬</span>Focus Group · Tu hogar, tu voz</h3>' +
+      '<h3 class="form-card-title"><span class="form-identity-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5 9 9 0 0 1-3.8-.8L4 20l1.5-4.3A7.5 7.5 0 1 1 20 11.5Z"/><path d="M8 11h8M8 14h5"/></svg></span>Focus Group · Tu hogar, tu voz</h3>' +
       '<button class="primary-button form-open-button" type="button">Abrir →</button>' +
       '<details class="form-card-details"><summary>Ver detalles</summary>' +
       '<div class="form-card-details-body"><div class="form-card-details-meta"><span class="eyebrow">ESTUDIO DE OPINIÓN</span><span class="status-badge" data-focus-status>CONSULTANDO</span></div>' +
