@@ -19,12 +19,39 @@ async function ensureTab(auth){
  })().catch(e=>{setupPromise=null;throw e;});
  await setupPromise;return s;
 }
+const POLICY_RANGE="'"+TAB+"'!Y1:Y2";
+async function readPublication(auth){
+ const sheets=google.sheets({version:"v4",auth});
+ const response=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:POLICY_RANGE});
+ const rows=response.data.values||[];
+ // First release is public until an administrator explicitly closes the invitation.
+ return String(rows[1]?.[0]??"TRUE").trim().toUpperCase()!=="FALSE";
+}
+async function writePublication(auth,enabled){
+ const sheets=await ensureTab(auth);
+ await sheets.spreadsheets.values.update({
+  spreadsheetId:SHEET_ID,range:POLICY_RANGE,valueInputOption:"RAW",
+  requestBody:{values:[["PUBLIC_ENABLED"],[enabled?"TRUE":"FALSE"]]}
+ });
+ return enabled;
+}
 module.exports=async(req,res)=>{
  res.setHeader("Cache-Control","no-store");
  res.setHeader("X-Content-Type-Options","nosniff");
- if(req.method==="GET"&&req.query?.status==="1")return res.status(200).json({ready:true,form:"focus-group-2026"});
  try{
   if(!SHEET_ID)throw new Error("STORAGE_NOT_CONFIGURED");
+  if(req.method==="GET"&&req.query?.config==="1"){
+   const enabled=await readPublication(gauth());
+   return res.status(200).json({publicEnabled:enabled,form:"FOCUS_GROUP_2026"});
+  }
+  if(req.method==="POST"&&req.query?.manage==="1"){
+   const actor=await verifyUser(req);
+   if(!isBaseAdmin(actor.email))return res.status(403).json({error:"No autorizado"});
+   if(typeof req.body?.publicEnabled!=="boolean")return res.status(400).json({error:"Estado de publicación inválido"});
+   const enabled=await writePublication(gauth(),req.body.publicEnabled);
+   return res.status(200).json({ok:true,publicEnabled:enabled});
+  }
+  if(req.method==="GET"&&req.query?.status==="1")return res.status(200).json({ready:true,form:"focus-group-2026"});
   if(req.method==="GET"){
    const actor=await verifyUser(req);
    if(!isBaseAdmin(actor.email))return res.status(403).json({error:"No autorizado"});
@@ -34,6 +61,8 @@ module.exports=async(req,res)=>{
   }
   if(req.method!=="POST")return res.status(405).json({error:"Método no permitido"});
   if(!String(req.headers["content-type"]||"").includes("application/json"))return res.status(415).json({error:"Formato no permitido"});
+  // Check server-side on EVERY submission: hiding the public UI alone is insufficient.
+  if(!(await readPublication(gauth())))return res.status(403).json({error:"La convocatoria está cerrada y no admite nuevas inscripciones."});
   const p=req.body||{},d=p.data||{};
   if(p.website)return res.status(400).json({error:"Solicitud inválida"});
   if(!Number(p.startedAt)||Date.now()-Number(p.startedAt)<2500||Date.now()-Number(p.startedAt)>7200000)return res.status(400).json({error:"Tiempo de formulario inválido"});
