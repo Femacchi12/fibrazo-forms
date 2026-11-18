@@ -2,6 +2,7 @@ const {gauth,loadForms,runtimePolicy,httpError}=require("./_core");
 
 module.exports=async(req,res)=>{
   if(String(req.query?.focus||"")==="1")return require("./_focus-group")(req,res);
+  if(String(req.query?.opinion||"")==="1")return require("./_estudio-opinion")(req,res);
   if(req.method==="GET"&&req.query?.rescue==="1")return require("./_recovery")(req,res);
   res.setHeader("Cache-Control","no-store");
   try{
