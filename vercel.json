@@ -10,6 +10,10 @@
       "destination": "/api/public?focus=1"
     },
     {
+      "source": "/api/estudio-opinion",
+      "destination": "/api/public?opinion=1"
+    },
+    {
       "source": "/form/:slug",
       "destination": "/"
     },
