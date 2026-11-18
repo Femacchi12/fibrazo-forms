@@ -21,6 +21,7 @@ async function ensureTab(auth){
 }
 const POLICY_RANGE="'"+TAB+"'!Y1:Y2";
 async function readPublication(auth){
+ await ensureTab(auth); // First public visit creates its isolated responses sheet.
  const sheets=google.sheets({version:"v4",auth});
  const response=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:POLICY_RANGE});
  const rows=response.data.values||[];
