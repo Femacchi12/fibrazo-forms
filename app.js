@@ -458,6 +458,32 @@
       badge.classList.toggle("active",active);
       badge.classList.toggle("inactive",!active);
     }).catch(()=>{if(focus.isConnected)focus.querySelector("[data-focus-status]").textContent="SIN VERIFICAR";});
+    // Independent, neutral public study; does not modify the branded focus-group form.
+    const opinion=document.createElement("article");
+    opinion.className="form-card";
+    opinion.dataset.designKind="research";
+    opinion.innerHTML=
+      '<h3 class="form-card-title"><span class="form-identity-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 10 10 0 0 1-4.1-.9L3 21l2-5A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8 11h9M8 15h6"/></svg></span>Estudio de opinión · Convocatoria neutral</h3>'+
+      '<button class="primary-button form-open-button" type="button">Abrir →</button>'+
+      '<details class="form-card-details"><summary>Ver detalles</summary>'+
+      '<div class="form-card-details-body"><div class="form-card-details-meta"><span class="eyebrow">INVESTIGACIÓN DE CONSUMO</span><span class="status-badge" data-opinion-status>CONSULTANDO</span></div>'+
+      '<p>Versión de convocatoria sin identidad comercial visible. Respuestas almacenadas en una base separada. El aviso de privacidad identifica al responsable legal.</p>'+
+      '<div class="private-form-link"><div><span>ENLACE PÚBLICO</span><a href="/estudio-opinion" target="_blank" rel="noopener">'+escapeHtml(location.origin+"/estudio-opinion")+'</a></div>'+
+      '<button class="copy-private-link" type="button" data-copy-opinion>Copiar</button></div></div></details>';
+    opinion.querySelector(".form-open-button").addEventListener("click",()=>window.open("/estudio-opinion","_blank","noopener"));
+    opinion.querySelector("[data-copy-opinion]").addEventListener("click",async ev=>{
+      ev.preventDefault();ev.stopPropagation();const button=ev.currentTarget,old=button.textContent;
+      try{await navigator.clipboard.writeText(location.origin+"/estudio-opinion");}
+      catch(_){const input=document.createElement("textarea");input.value=location.origin+"/estudio-opinion";input.style.position="fixed";input.style.opacity="0";document.body.appendChild(input);input.select();document.execCommand("copy");input.remove();}
+      button.textContent="✓ Copiado";button.classList.add("copied");
+      setTimeout(()=>{button.textContent=old;button.classList.remove("copied");},1600);
+    });
+    host.appendChild(opinion);
+    fetch("/api/estudio-opinion?config=1",{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("STATUS_UNAVAILABLE");return r.json();}).then(data=>{
+      if(!opinion.isConnected)return;const badge=opinion.querySelector("[data-opinion-status]");
+      const active=data.publicEnabled===true;badge.textContent=active?"PÚBLICO":"CERRADO";
+      badge.classList.toggle("active",active);badge.classList.toggle("inactive",!active);
+    }).catch(()=>{if(opinion.isConnected)opinion.querySelector("[data-opinion-status]").textContent="SIN VERIFICAR";});
   }
 
   function openForm(id) {
