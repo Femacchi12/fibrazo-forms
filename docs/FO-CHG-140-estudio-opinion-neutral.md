@@ -48,3 +48,9 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 **Pruebas:** se validó sintaxis JS de frontend y backend. Pendiente comprobar despliegue Vercel READY, ingreso de ejemplo y persistencia de ambos campos en las columnas Z y AA.
 
 **Dominio:** se recomendó contratar un dominio neutral independiente y añadirlo en Vercel (Settings > Domains); el dominio por sí solo apuntaría a la raíz del dashboard actual. Para usar la raíz del dominio como landing page de la encuesta, realizar un despliegue/proyecto aislado que sirva el formulario como página inicial y conserve la API y el almacenamiento corporativos, con transparencia del responsable legal en consentimiento. Ningún dominio fue comprado ni configurado.
+
+## FO-CHG-143 — Título y dominio neutral (19/11/2026)
+- Título de campaña actualizado a **«Estudio de opinión · Tu voz, tu hogar»**, con encabezado visible «Tu voz, tu hogar», metadatos HTML y encabezado para compartir.
+- Se conserva la identidad cromática neutral y el formulario de FIBRAZO original intacto.
+- Consulta de dominios mediante Vercel (solo lectura): estudioopinion.co, estudiodeopinion.co, tuvoztuhogar.co y tuvozytuhogar.co disponibles al momento de consulta; compra inicial USD 29,99 y renovación USD 24,80 según respuesta del registrador, sujetos a modificación. estudioopinion.com.co no disponible.
+- Recomendación: **estudioopinion.co**. Sin compra ni cambios de DNS/propiedad del dominio; debe aprobarse el gasto y registrar el dominio antes de asignarlo. Separar la landing de la raíz del dashboard requiere configurar un despliegue/proyecto neutral o routing por host para que el dominio apunte directamente a la encuesta.
