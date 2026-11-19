@@ -98,3 +98,10 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - Fuente corporativa `RESP_ESTUDIO_OPINION_2026`: conserva columna O «Disponibilidad» con fecha, columna **AB** «Horario sesión 28-11-2026» con hora. Expande las columnas de la hoja hasta AB (28) si es necesario, conservando Y2 «PUBLIC_ENABLED»; Z y AA siguen como estrato vivienda y tipo de ingresos.
 - Link canónico público: `https://estudios-de-opinion.vercel.app/`. La ruta heredada corporativa permanece para compatibilidad técnica, no se presenta como URL del dashboard ni se considera una base de datos adicional.
 - Estado QA al iniciar: hoja tenía encabezados A:AA, ninguna inscripción visible; por lo tanto **no existía evidencia de un envío real exitoso** desde el dominio neutral. Confirmar estructura AB y realizar una prueba E2E separadamente sin introducir candidatos falsos en la convocatoria.
+
+## FO-CHG-147 — Retiro de URL duplicada (19/11/2026)
+- Eliminado físicamente del repositorio el antiguo `estudio-opinion.html` ubicado en la raíz de FIBRAZO Forms.
+- Agregado redirect permanente en `vercel.json` desde `https://fibrazo-forms.vercel.app/estudio-opinion` a `https://estudios-de-opinion.vercel.app/`, para evitar duplicar formularios y preservar enlaces compartidos anteriormente.
+- La API corporativa `/api/estudio-opinion` permanece activa porque **es la única fuente de persistencia** para la encuesta del nuevo proyecto neutral. No se eliminó la pestaña `RESP_ESTUDIO_OPINION_2026` ni ningún registro.
+- El sitio canónico se mantiene exclusivamente en `neutral-site/index.html` y el proyecto `estudios-de-opinion`.
+- Este bloque reemplaza como estado vigente las notas previas que proponían conservar el HTML heredado por compatibilidad.
