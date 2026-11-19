@@ -80,3 +80,10 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - Vercel confirmó `READY` para el despliegue del proyecto neutral y el dominio `verified: true`.
 - Pendiente QA real de carga en navegador externo, `GET /api/estudio-opinion?config=1` a través del proxy y envío/post a la base. El verificador web no pudo conectarse a la URL desde este entorno; eso no demuestra una caída del sitio.
 - Al modificar `estudio-opinion.html` del proyecto original en el futuro, sincronizar los cambios relevantes en `neutral-site/index.html`, o introducir build compartido para evitar divergencias.
+
+## FO-CHG-145 — URL neutral única en dashboard (19/11/2026)
+- En la tarjeta «Estudio de opinión · Convocatoria neutral» del dashboard FIBRAZO Forms, acciones **Abrir**, **Ver detalles → enlace público** y **Copiar** usan únicamente `https://estudios-de-opinion.vercel.app/`.
+- En «Administrar → Estudio de opinión», el enlace y botón **Copiar** muestran exactamente la misma URL neutral. El control activar/desactivar continúa usando la API corporativa y conserva permisos.
+- La ruta heredada `/estudio-opinion` en `fibrazo-forms.vercel.app` se conserva operativamente como compatibilidad, pero no debe difundirse ni aparecer como enlace público del dashboard; sigue existiendo la API `/api/estudio-opinion` necesaria para el nuevo sitio neutral.
+- Se actualizan versiones de scripts en `index.html` y caché PWA para evitar enlaces anteriores retenidos en el navegador.
+- QA: validar que el botón «Abrir», el enlace «Ver detalles», «Copiar» y el campo de Administrar coincidan, así como el despliegue Vercel READY; sin alterar el Focus Group original.
