@@ -32,3 +32,19 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - Solución: agregar `/estudio-opinion` a las rutas que el Service Worker no intercepta y renovar la versión del caché a `v0.8.193-20261119-opinion-navigation141`.
 - No se modificaron la encuesta original, el almacenamiento ni el control de publicación.
 - QA de publicación: comprobar Vercel READY para el commit de código; realizar prueba real de apertura en navegador con PWA antigua y en sesión nueva.
+
+## FO-CHG-142 — Ampliación de perfil y estratos (19/11/2026)
+
+**Alcance:** solo versión neutral `/estudio-opinion`. Se conserva sin cambios la versión original `/focus-group`.
+
+- Estrato declarado de la vivienda: nueva pregunta obligatoria `estratoVivienda`, valores 2 a 6.
+- Estrato en la factura de energía eléctrica de Afinia: pregunta obligatoria `estrato`, valores 2 a 6; se mantiene en la columna histórica J «Estrato factura energía».
+- Tipo de ingresos: nueva pregunta voluntaria `tipoIngresos` en paso 3, opciones Fijos, Variables, Mixtos o vacío («Prefiero no responder»); no se solicitan ingresos en dinero ni documentación económica.
+- Introducción actualizada a estrato 2 o superior.
+- API valida por separado ambos estratos y acepta tipo de ingresos vacío.
+- Base `RESP_ESTUDIO_OPINION_2026`: nuevas columnas Z «Estrato declarado de vivienda» y AA «Tipo de ingresos (opcional)». Se mantienen A:W; X queda libre; Y1:Y2 se preserva para `PUBLIC_ENABLED`. Se amplía la cuadrícula a 27 columnas al inicializar, si hace falta.
+- Se mantienen las inscripciones anteriores; los campos nuevos de filas previas permanecen vacíos, sin inventar datos.
+
+**Pruebas:** se validó sintaxis JS de frontend y backend. Pendiente comprobar despliegue Vercel READY, ingreso de ejemplo y persistencia de ambos campos en las columnas Z y AA.
+
+**Dominio:** se recomendó contratar un dominio neutral independiente y añadirlo en Vercel (Settings > Domains); el dominio por sí solo apuntaría a la raíz del dashboard actual. Para usar la raíz del dominio como landing page de la encuesta, realizar un despliegue/proyecto aislado que sirva el formulario como página inicial y conserve la API y el almacenamiento corporativos, con transparencia del responsable legal en consentimiento. Ningún dominio fue comprado ni configurado.
