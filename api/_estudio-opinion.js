@@ -14,6 +14,12 @@ async function ensureTab(auth){
   if(!(meta.data.sheets||[]).some(x=>x.properties?.title===TAB)){
    try{await s.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,requestBody:{requests:[{addSheet:{properties:{title:TAB,gridProperties:{frozenRowCount:1}}}}]}});}catch(e){if(!/already exists|duplicate/i.test(e.message||""))throw e;}
   }
+  // Sheets are created with 26 columns by default; new data extends to AA (27).
+  const sheetMeta=await s.spreadsheets.get({spreadsheetId:SHEET_ID,fields:"sheets(properties(title,sheetId,gridProperties(columnCount)))"});
+  const currentSheet=(sheetMeta.data.sheets||[]).find(x=>x.properties?.title===TAB);
+  if(!currentSheet)throw new Error("OPINION_SHEET_NOT_FOUND");
+  const columns=currentSheet.properties?.gridProperties?.columnCount||26;
+  if(columns<27)await s.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,requestBody:{requests:[{appendDimension:{sheetId:currentSheet.properties.sheetId,dimension:"COLUMNS",length:27-columns}}]}});
   const first=await s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!A1:W1"});
   if(!first.data.values?.length)await s.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!A1:W1",valueInputOption:"RAW",requestBody:{values:[HEADERS]}});
   // Preserve Y1:Y2 reserved for PUBLIC_ENABLED. Append new fields in Z and AA.
