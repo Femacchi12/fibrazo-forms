@@ -87,3 +87,14 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - La ruta heredada `/estudio-opinion` en `fibrazo-forms.vercel.app` se conserva operativamente como compatibilidad, pero no debe difundirse ni aparecer como enlace público del dashboard; sigue existiendo la API `/api/estudio-opinion` necesaria para el nuevo sitio neutral.
 - Se actualizan versiones de scripts en `index.html` y caché PWA para evitar enlaces anteriores retenidos en el navegador.
 - QA: validar que el botón «Abrir», el enlace «Ver detalles», «Copiar» y el campo de Administrar coincidan, así como el despliegue Vercel READY; sin alterar el Focus Group original.
+
+## FO-CHG-146 — Sede y agenda definitiva de convocatoria (19/11/2026)
+- Formulario neutral `/estudio-opinion` y página pública `neutral-site/index.html` sincronizados.
+- **Institución Educativa Las Gaviotas, Sede Niño Jesús**, Cartagena; coordenadas especificadas por usuario: `10.40173, -75.49147`. Enlace directo a Google Maps por coordenadas, sin inventar dirección postal.
+- **Única fecha** disponible: sábado **28 de noviembre de 2026**.
+- Horarios de inicio disponibles: **09:00, 14:00 y 17:00**, hora local de Cartagena; cada sesión de 90 minutos, sujeto a confirmación telefónica de participación.
+- El formulario mantiene fecha fija `disponibilidad="Sábado 28"` y pregunta obligatoria `horaSesion` con los tres horarios.
+- Backend `api/_estudio-opinion.js` valida ambas dimensiones; rechaza domingo 29, alternativas antiguas y horas diferentes. No afecta el Focus Group original.
+- Fuente corporativa `RESP_ESTUDIO_OPINION_2026`: conserva columna O «Disponibilidad» con fecha, columna **AB** «Horario sesión 28-11-2026» con hora. Expande las columnas de la hoja hasta AB (28) si es necesario, conservando Y2 «PUBLIC_ENABLED»; Z y AA siguen como estrato vivienda y tipo de ingresos.
+- Link canónico público: `https://estudios-de-opinion.vercel.app/`. La ruta heredada corporativa permanece para compatibilidad técnica, no se presenta como URL del dashboard ni se considera una base de datos adicional.
+- Estado QA al iniciar: hoja tenía encabezados A:AA, ninguna inscripción visible; por lo tanto **no existía evidencia de un envío real exitoso** desde el dominio neutral. Confirmar estructura AB y realizar una prueba E2E separadamente sin introducir candidatos falsos en la convocatoria.
