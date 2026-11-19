@@ -14,16 +14,16 @@ async function ensureTab(auth){
   if(!(meta.data.sheets||[]).some(x=>x.properties?.title===TAB)){
    try{await s.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,requestBody:{requests:[{addSheet:{properties:{title:TAB,gridProperties:{frozenRowCount:1}}}}]}});}catch(e){if(!/already exists|duplicate/i.test(e.message||""))throw e;}
   }
-  // Sheets are created with 26 columns by default; new data extends to AA (27).
+  // Sheets are created with 26 columns by default; the study now extends to AB (28).
   const sheetMeta=await s.spreadsheets.get({spreadsheetId:SHEET_ID,fields:"sheets(properties(title,sheetId,gridProperties(columnCount)))"});
   const currentSheet=(sheetMeta.data.sheets||[]).find(x=>x.properties?.title===TAB);
   if(!currentSheet)throw new Error("OPINION_SHEET_NOT_FOUND");
   const columns=currentSheet.properties?.gridProperties?.columnCount||26;
-  if(columns<27)await s.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,requestBody:{requests:[{appendDimension:{sheetId:currentSheet.properties.sheetId,dimension:"COLUMNS",length:27-columns}}]}});
+  if(columns<28)await s.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,requestBody:{requests:[{appendDimension:{sheetId:currentSheet.properties.sheetId,dimension:"COLUMNS",length:28-columns}}]}});
   const first=await s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!A1:W1"});
   if(!first.data.values?.length)await s.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!A1:W1",valueInputOption:"RAW",requestBody:{values:[HEADERS]}});
-  // Preserve Y1:Y2 reserved for PUBLIC_ENABLED. Append new fields in Z and AA.
-  await s.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!Z1:AA1",valueInputOption:"RAW",requestBody:{values:[["Estrato declarado de vivienda","Tipo de ingresos (opcional)"]]}});
+  // Preserve Y1:Y2 for PUBLIC_ENABLED. New survey fields in Z, AA and AB.
+  await s.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!Z1:AB1",valueInputOption:"RAW",requestBody:{values:[["Estrato declarado de vivienda","Tipo de ingresos (opcional)","Horario sesión 28-11-2026"]]}});
  })().catch(e=>{setupPromise=null;throw e;});
  await setupPromise;return s;
 }
@@ -65,8 +65,8 @@ module.exports=async(req,res)=>{
    const actor=await verifyUser(req);
    if(!isBaseAdmin(actor.email))return res.status(403).json({error:"No autorizado"});
    const s=await ensureTab(gauth());
-   const r=await s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!A1:AA2000"});
-   return res.status(200).json({headers:[...HEADERS,"","PUBLIC_ENABLED","Estrato declarado de vivienda","Tipo de ingresos (opcional)"],rows:(r.data.values||[]).slice(1),sheetId:SHEET_ID});
+   const r=await s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!A1:AB2000"});
+   return res.status(200).json({headers:[...HEADERS,"","PUBLIC_ENABLED","Estrato declarado de vivienda","Tipo de ingresos (opcional)","Horario sesión 28-11-2026"],rows:(r.data.values||[]).slice(1),sheetId:SHEET_ID});
   }
   if(req.method!=="POST")return res.status(405).json({error:"Método no permitido"});
   if(!String(req.headers["content-type"]||"").includes("application/json"))return res.status(415).json({error:"Formato no permitido"});
@@ -85,13 +85,14 @@ module.exports=async(req,res)=>{
   if(d.tipoIngresos && !["Fijos","Variables","Mixtos"].includes(d.tipoIngresos))return res.status(400).json({error:"Tipo de ingresos no reconocido"});
   if(!["Decido","Compartimos"].includes(d.decision))return res.status(400).json({error:"Se requiere decidir o compartir las decisiones del hogar"});
   if(!["Claro","Tigo","Movistar","Otro operador","Proveedor local","No tengo internet fijo"].includes(d.operador))return res.status(400).json({error:"Seleccioná el servicio de internet"});
-  if(!["Sábado 28","Domingo 29","Ambos","Por confirmar"].includes(d.disponibilidad))return res.status(400).json({error:"Seleccioná disponibilidad"});
+  if(d.disponibilidad!=="Sábado 28")return res.status(400).json({error:"La única fecha habilitada es el sábado 28 de noviembre de 2026"});
+  if(!["09:00","14:00","17:00"].includes(d.horaSesion))return res.status(400).json({error:"Seleccioná uno de los tres horarios disponibles"});
   if(!validMail(String(d.email||"").trim()))return res.status(400).json({error:"Correo electrónico inválido"});
   if(d.consentimiento!==true)return res.status(400).json({error:"Se requiere autorización de tratamiento de datos"});
   const auth=gauth();const hash=await checkPublicRate(auth,{id:"ESTUDIO_OPINION_2026",rateLimit:5},req);
   const s=await ensureTab(auth),id="EO-"+Date.now().toString(36).toUpperCase()+"-"+Math.random().toString(36).slice(2,7).toUpperCase();
-  const g=d.geo||{};const lat=Number(g.lat),lng=Number(g.lng),accuracy=Number(g.accuracy);const geoValid=g.status==="autorizado"&&Number.isFinite(lat)&&lat>=-90&&lat<=90&&Number.isFinite(lng)&&lng>=-180&&lng<=180&&Number.isFinite(accuracy)&&accuracy>=0&&accuracy<=100000;const geoStatus=geoValid?"Autorizado":g.status==="rechazado"?"Rechazado":g.status==="error"?"No disponible":"No solicitado";const row=[new Date().toISOString(),id,cell(d.nombre,100),cell(d.apellido,100),Number(d.edad),"+57"+t,cell(d.email,180),cell(d.barrio,120),cell(d.direccion,200),d.estrato,d.decision,d.operador==="No tengo internet fijo"?"No":"Sí",d.operador,cell(d.otroOperador,120),d.disponibilidad,cell(d.fuente,80),"SI","Preinscrito",geoValid?lat:"",geoValid?lng:"",geoValid?Math.round(accuracy):"",geoStatus,geoValid?cell(g.capturedAt,40):"","","",String(d.estratoVivienda),cell(d.tipoIngresos,20)];
-  await s.spreadsheets.values.append({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!A:AA",insertDataOption:"INSERT_ROWS",valueInputOption:"RAW",requestBody:{values:[row]}});
+  const g=d.geo||{};const lat=Number(g.lat),lng=Number(g.lng),accuracy=Number(g.accuracy);const geoValid=g.status==="autorizado"&&Number.isFinite(lat)&&lat>=-90&&lat<=90&&Number.isFinite(lng)&&lng>=-180&&lng<=180&&Number.isFinite(accuracy)&&accuracy>=0&&accuracy<=100000;const geoStatus=geoValid?"Autorizado":g.status==="rechazado"?"Rechazado":g.status==="error"?"No disponible":"No solicitado";const row=[new Date().toISOString(),id,cell(d.nombre,100),cell(d.apellido,100),Number(d.edad),"+57"+t,cell(d.email,180),cell(d.barrio,120),cell(d.direccion,200),d.estrato,d.decision,d.operador==="No tengo internet fijo"?"No":"Sí",d.operador,cell(d.otroOperador,120),d.disponibilidad,cell(d.fuente,80),"SI","Preinscrito",geoValid?lat:"",geoValid?lng:"",geoValid?Math.round(accuracy):"",geoStatus,geoValid?cell(g.capturedAt,40):"","","",String(d.estratoVivienda),cell(d.tipoIngresos,20),d.horaSesion];
+  await s.spreadsheets.values.append({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!A:AB",insertDataOption:"INSERT_ROWS",valueInputOption:"RAW",requestBody:{values:[row]}});
   await logSecurity(auth,{formId:"ESTUDIO_OPINION_2026",ipHash:hash,req}).catch(()=>{});
   return res.status(201).json({ok:true,id});
  }catch(e){console.error("ESTUDIO_OPINION",e?.message);return res.status(e.status||500).json({error:e.status===429?"Demasiados intentos. Probá más tarde.":"No se pudo procesar la inscripción. Intentá nuevamente."});}
