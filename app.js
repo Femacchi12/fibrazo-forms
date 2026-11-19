@@ -468,7 +468,7 @@
       '<details class="form-card-details"><summary>Ver detalles</summary>'+
       '<div class="form-card-details-body"><div class="form-card-details-meta"><span class="eyebrow">INVESTIGACIÓN DE CONSUMO</span><span class="status-badge" data-opinion-status>CONSULTANDO</span></div>'+
       '<p>Versión de convocatoria sin identidad comercial visible. Respuestas almacenadas en una base separada. El aviso de privacidad identifica al responsable legal.</p>'+
-      '<div class="private-form-link"><div><span>ENLACE PÚBLICO</span><a href="/estudio-opinion" target="_blank" rel="noopener">'+escapeHtml("https://estudios-de-opinion.vercel.app/")+'</a></div>'+
+      '<div class="private-form-link"><div><span>ENLACE PÚBLICO</span><a href="https://estudios-de-opinion.vercel.app/" target="_blank" rel="noopener">'+escapeHtml("https://estudios-de-opinion.vercel.app/")+'</a></div>'+
       '<button class="copy-private-link" type="button" data-copy-opinion>Copiar</button></div></div></details>';
     opinion.querySelector(".form-open-button").addEventListener("click",()=>window.open("https://estudios-de-opinion.vercel.app/","_blank","noopener"));
     opinion.querySelector("[data-copy-opinion]").addEventListener("click",async ev=>{
