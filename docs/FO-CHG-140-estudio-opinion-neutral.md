@@ -54,3 +54,29 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - Se conserva la identidad cromática neutral y el formulario de FIBRAZO original intacto.
 - Consulta de dominios mediante Vercel (solo lectura): estudioopinion.co, estudiodeopinion.co, tuvoztuhogar.co y tuvozytuhogar.co disponibles al momento de consulta; compra inicial USD 29,99 y renovación USD 24,80 según respuesta del registrador, sujetos a modificación. estudioopinion.com.co no disponible.
 - Recomendación: **estudioopinion.co**. Sin compra ni cambios de DNS/propiedad del dominio; debe aprobarse el gasto y registrar el dominio antes de asignarlo. Separar la landing de la raíz del dashboard requiere configurar un despliegue/proyecto neutral o routing por host para que el dominio apunte directamente a la encuesta.
+
+## FO-CHG-144 — Cabecera restaurada y portal público neutral gratuito (19/11/2026)
+
+**Título visual aprobado**
+- Marca superior: ESTUDIO DE OPINIÓN · CARTAGENA 2026.
+- Etiqueta: TU EXPERIENCIA IMPORTA.
+- Título principal: «Tu hogar, tu voz.»
+- Se mantienen colores neutrales lavanda/gris, sin logos comerciales en el encabezado.
+- Metadatos HTML/Open Graph y Web Share actualizados a «Estudio de opinión · Tu hogar, tu voz».
+- No se modifica `/focus-group` ni sus datos.
+
+**Arquitectura para encuestas neutrales reutilizables**
+- Vercel: proyecto separado `estudios-de-opinion` con ID `prj_uQhe8G5LterXxvxjyctfiLSYvvIu` en la cuenta personal de Vercel aprobada para el proyecto.
+- URL gratuita, sin pago de registro: `https://estudios-de-opinion.vercel.app/`. Dominio `verified: true`, despliegue `READY` ID `dpl_DSDhbzCG7ozJZ5hTA5rRA27gt6HC`.
+- Fuente GitHub: `Femacchi12/fibrazo-forms`, carpeta `neutral-site/`, configurada como raíz del nuevo proyecto Vercel. Despliega cambios desde `main`.
+- `neutral-site/index.html`: copia pública de la versión neutral que sirve en raíz. `neutral-site/estudio-opinion-icon.svg`: ícono neutral.
+- `neutral-site/vercel.json`: proxy de `/api/estudio-opinion` hacia `https://fibrazo-forms.vercel.app/api/estudio-opinion`. La solicitud del navegador permanece same-origin frente al proyecto público, mientras que la validación y persistencia siguen en el backend corporativo. No se duplicaron secretos, roles ni credenciales Firebase.
+- Protección Vercel SSO deshabilitada **solo en este proyecto público**; la administración y base corporativa originales permanecen con sus controles.
+- El dominio neutral `*.vercel.app` es gratuito en la configuración vigente del plan. Un dominio propio `.co` **no** es gratuito y exigiría registro/pago.
+- Futuras encuestas: incorporar nuevas rutas estáticas en `neutral-site/`, publicar mediante GitHub/Vercel y añadir, si requieren guardado, reglas backend/API y consentimiento correspondientes. Mantener control de publicación por encuesta y fuentes corporativas.
+- No se compraron dominios ni se configuraron DNS externos.
+
+**Verificación**
+- Vercel confirmó `READY` para el despliegue del proyecto neutral y el dominio `verified: true`.
+- Pendiente QA real de carga en navegador externo, `GET /api/estudio-opinion?config=1` a través del proxy y envío/post a la base. El verificador web no pudo conectarse a la URL desde este entorno; eso no demuestra una caída del sitio.
+- Al modificar `estudio-opinion.html` del proyecto original en el futuro, sincronizar los cambios relevantes en `neutral-site/index.html`, o introducir build compartido para evitar divergencias.
