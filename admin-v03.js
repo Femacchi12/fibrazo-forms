@@ -359,7 +359,7 @@
       '<div class="admin-accordion-body compact-body" style="display:block">'+
        '<div class="form-status-control"><div><span>PUBLICACIÓN</span><strong>Habilitar inscripciones por enlace</strong><small>Activado: cualquier persona con el enlace puede inscribirse. Desactivado: se muestra convocatoria cerrada y el servidor no acepta respuestas. Los registros anteriores se conservan.</small></div>'+
         '<label class="switch status-switch" aria-label="Publicar Estudio de opinión"><input type="checkbox" data-opinion-public disabled><i></i></label></div>'+
-       '<div class="compact-public-row"><input aria-label="Enlace Estudio de opinión" readonly value="'+esc(location.origin+"/estudio-opinion")+'"><button type="button" class="copy-private-link" data-opinion-copy>Copiar</button></div>'+
+       '<div class="compact-public-row"><input aria-label="Enlace Estudio de opinión" readonly value="'+esc("https://estudios-de-opinion.vercel.app/")+'"><button type="button" class="copy-private-link" data-opinion-copy>Copiar</button></div>'+
        '<div class="form-actions"><button type="button" class="primary-button compact" data-opinion-save disabled>Guardar publicación</button></div>'+
        '<p data-opinion-message role="status" aria-live="polite" class="field-help">Consultando el estado actual…</p>'+
       '</div>';
@@ -368,7 +368,7 @@
     const setStatus=enabled=>{toggle.checked=enabled;badge.textContent=enabled?"Público":"Cerrado";badge.classList.toggle("active",enabled);badge.classList.toggle("inactive",!enabled);};
     container.querySelector("[data-opinion-copy]").addEventListener("click",async event=>{
       const button=event.currentTarget,prev=button.textContent;try{
-        await navigator.clipboard.writeText(location.origin+"/estudio-opinion");
+        await navigator.clipboard.writeText("https://estudios-de-opinion.vercel.app/");
         button.textContent="✓ Copiado";button.classList.add("copied");
       }catch(_){message.textContent="No se pudo copiar automáticamente; seleccioná el enlace.";}
       setTimeout(()=>{button.textContent=prev;button.classList.remove("copied");},1600);
