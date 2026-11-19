@@ -63,5 +63,12 @@
       "maxDuration": 30
     }
   },
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':(exclude)docs/**' ':(exclude)README.md' || exit 1"
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':(exclude)docs/**' ':(exclude)README.md' || exit 1",
+  "redirects": [
+    {
+      "source": "/estudio-opinion",
+      "destination": "https://estudios-de-opinion.vercel.app/",
+      "permanent": true
+    }
+  ]
 }
