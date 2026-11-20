@@ -463,7 +463,7 @@
     opinion.className="form-card";
     opinion.dataset.designKind="research";
     opinion.innerHTML=
-      '<h3 class="form-card-title"><span class="form-identity-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 10 10 0 0 1-4.1-.9L3 21l2-5A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8 11h9M8 15h6"/></svg></span>Focus Group · Estratos 2 y 3+</h3>'+
+      '<h3 class="form-card-title"><span class="form-identity-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 10 10 0 0 1-4.1-.9L3 21l2-5A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8 11h9M8 15h6"/></svg></span>Focus Group</h3>'+
       '<button class="primary-button form-open-button" type="button">Abrir →</button>'+
       '<details class="form-card-details"><summary>Ver detalles</summary>'+
       '<div class="form-card-details-body"><div class="form-card-details-meta"><span class="eyebrow">INVESTIGACIÓN DE CONSUMO</span><span class="status-badge" data-opinion-status>CONSULTANDO</span></div>'+
@@ -471,7 +471,7 @@
       '<div class="private-form-link"><div><span>ENLACE PÚBLICO</span><a href="https://estudios-de-opinion.vercel.app/" target="_blank" rel="noopener">'+escapeHtml("https://estudios-de-opinion.vercel.app/")+'</a></div>'+
       '<button class="copy-private-link" type="button" data-copy-opinion>Copiar</button></div><div style="margin-top:10px"><button type="button" class="primary-button compact" data-opinion-summary>Resumen de inscriptos ↗</button></div></div></details>';
     opinion.querySelector(".form-open-button").addEventListener("click",()=>window.open("https://estudios-de-opinion.vercel.app/","_blank","noopener"));
-    opinion.querySelector("[data-opinion-summary]").addEventListener("click",()=>window.FIBRAZO_OPEN_OPINION_SUMMARY?.());
+    opinion.querySelector("[data-opinion-summary]").addEventListener("click",()=>window.open("/?resumen=focus-group","_blank","noopener"));
     opinion.querySelector("[data-copy-opinion]").addEventListener("click",async ev=>{
       ev.preventDefault();ev.stopPropagation();const button=ev.currentTarget,old=button.textContent;
       try{await navigator.clipboard.writeText("https://estudios-de-opinion.vercel.app/");}
