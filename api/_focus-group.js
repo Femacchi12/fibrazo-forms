@@ -78,7 +78,15 @@ module.exports=async(req,res)=>{
   if(!validMail(String(d.email||"").trim()))return res.status(400).json({error:"Correo electrónico inválido"});
   if(d.consentimiento!==true)return res.status(400).json({error:"Se requiere autorización de tratamiento de datos"});
   const auth=gauth();const hash=await checkPublicRate(auth,{id:"FOCUS_GROUP_2026",rateLimit:5},req);
-  const s=await ensureTab(auth),id="FG-"+Date.now().toString(36).toUpperCase()+"-"+Math.random().toString(36).slice(2,7).toUpperCase();
+  const s=await ensureTab(auth);
+  // Reciprocal cross-campaign guard: the legacy questionnaire has no document field.
+  const [focusRows,studyRows]=await Promise.all([
+   s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!B2:F3000"}),
+   s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'RESP_ESTUDIO_OPINION_2026'!B2:F3000"})
+  ]);
+  const duplicate=(rows,prefix)=>(rows.data.values||[]).some(v=>String(v[0]||"").startsWith(prefix)&&phone(v[4])===t);
+  if(duplicate(focusRows,"FG-")||duplicate(studyRows,"EO-"))return res.status(409).json({error:"Estos datos ya fueron cargados en una inscripción anterior. No es necesario volver a registrarse."});
+  const id="FG-"+Date.now().toString(36).toUpperCase()+"-"+Math.random().toString(36).slice(2,7).toUpperCase();
   const g=d.geo||{};const lat=Number(g.lat),lng=Number(g.lng),accuracy=Number(g.accuracy);const geoValid=g.status==="autorizado"&&Number.isFinite(lat)&&lat>=-90&&lat<=90&&Number.isFinite(lng)&&lng>=-180&&lng<=180&&Number.isFinite(accuracy)&&accuracy>=0&&accuracy<=100000;const geoStatus=geoValid?"Autorizado":g.status==="rechazado"?"Rechazado":g.status==="error"?"No disponible":"No solicitado";const row=[new Date().toISOString(),id,cell(d.nombre,100),cell(d.apellido,100),Number(d.edad),"+57"+t,cell(d.email,180),cell(d.barrio,120),cell(d.direccion,200),d.estrato,d.decision,d.operador==="No tengo internet fijo"?"No":"Sí",d.operador,cell(d.otroOperador,120),d.disponibilidad,cell(d.fuente,80),"SI","Preinscrito",geoValid?lat:"",geoValid?lng:"",geoValid?Math.round(accuracy):"",geoStatus,geoValid?cell(g.capturedAt,40):""];
   await s.spreadsheets.values.append({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!A:W",insertDataOption:"INSERT_ROWS",valueInputOption:"RAW",requestBody:{values:[row]}});
   await logSecurity(auth,{formId:"FOCUS_GROUP_2026",ipHash:hash,req}).catch(()=>{});
