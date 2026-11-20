@@ -140,3 +140,10 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - **Acceso moderadores:** enlace a resumen corporativo bajo Firebase. Lectura solo de personas con dominio habilitado; operaciones de gestión limitadas a admin base. Evitar enlaces públicos directos a la hoja con PII.
 - **Compatibilidad:** filas antiguas sin AG se interpretan según fecha/días O y horarios AB. No se borran ni se duplican datos anteriores.
 - **QA requerido:** verificar HTTP/configuración por dominio neutral, comprobación no autenticada 401 para resumen, autenticación con usuario corporativo, filtros, cambios de estado, cierres manuales, sugerencias y envío real de formulario hasta Sheets; documentar cualquier fallo antes de considerarlo terminado.
+
+## FO-CHG-149-B — Corrección de persistencia y rescate de inscripción (20/11/2026)
+- Hallazgo: Google Sheets `values.append` con `A:AG`, combinando encabezados no contiguos con un indicador de publicación en Y2, permitió insertar la primera respuesta a partir de Z2 en lugar de A2. Esta desviación explicaba por qué no figuraba en los resultados de lectura.
+- Se identificó el registro de prueba con referencia `EO-MWP1WN4T-SCX7T` desplazado 25 columnas. Se migró a la fila 3, columnas A:AG, conservando su identificador, fecha y valores; se eliminó la copia desplazada Z2:BA2. La fila 2 no se usará para registros de inscripción.
+- Se cambió el guardado en `api/_estudio-opinion.js` a `spreadsheets.batchUpdate.appendCells`: escritura atómica de una fila desde columna A, sin depender de la detección automática de la tabla. Commit `733392ab`.
+- Se confirmó por lectura corporativa que la fila 3 tiene el ID original en B, la campaña en AF y la sesión seleccionada en AG; la columna Z2 ya no contiene la fecha de respuesta desplazada.
+- Pendiente: prueba de una inscripción posterior al nuevo despliegue para verificar la escritura en A:AG y lectura desde la vista de resumen con autenticación.
