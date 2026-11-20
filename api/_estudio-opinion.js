@@ -59,7 +59,7 @@ module.exports=async(req,res)=>{
    if(!String(req.headers["content-type"]||"").includes("application/json"))return res.status(415).json({error:"Formato no permitido"});
    if(!(await readPublication(gauth())))return res.status(403).json({error:"La convocatoria no está habilitada"});
    const cedula=String(req.body?.cedula??"").trim(),telefono=phone(req.body?.telefono);
-   if(!/^[0-9]{6,10}$/.test(cedula)||!/^3\\d{9}$/.test(telefono))return res.status(400).json({error:"Revisá la cédula y el número de celular antes de continuar"});
+   if(!/^[0-9]{6,10}$/.test(cedula)||!/^3\d{9}$/.test(telefono))return res.status(400).json({error:"Revisá la cédula y el número de celular antes de continuar"});
    const auth=gauth();
    // Rate-limit public lookups to reduce automated identification-number enumeration.
    const ipHash=await checkPublicRate(auth,{id:"OPINION_DUPLICATE_CHECK",rateLimit:12},req);
