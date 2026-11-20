@@ -196,3 +196,10 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - Se mantiene una segunda comprobación completa en el POST final para evitar guardar duplicados ante carreras de registro; con mensajes separados y HTTP 409.
 - Para seguridad se reutilizan las bases de convocatorias autorizadas, sin difundir información de otros registros. Registros de prueba **no eliminados** por indicación del usuario; la limpieza se realizará al terminar el desarrollo.
 - Pruebas de aceptación: primer paso no permite continuar con cédula duplicada ni celular duplicado; permite continuar con ambos nuevos; servidor no devuelve PII en verificación; POST final sigue rechazando duplicados; errores de red detienen el avance.
+
+### QA y corrección final FO-CHG-153 (20/11/2026)
+- Prueba automatizada inicial descubrió un doble escape del patrón de celular (`\\d` literal), que generaba el error «Revisá la cédula y el número de celular antes de continuar» incluso con números válidos. Se corrigió en **formulario neutral y servidor** (commits `f0bdb03c` y `1e8f36f8`) y se verificó la sintaxis.
+- Despliegues Vercel **READY** del mismo código `1e8f36f8` en ambas aplicaciones: FIBRAZO Forms corporativo y dominio neutral.
+- Prueba aislada del endpoint con respuestas de Google Sheets simuladas, sin exponer ni alterar datos reales: 4/4 casos correctos: teléfono duplicado en estudio neutral, cédula duplicada en estudio neutral, teléfono duplicado en Focus Group anterior, y combinación de ambos identificadores sin registro.
+- La simulación no sustituye un POST final real con cédula y teléfono repetidos. La segunda prueba visual con el número registrado estuvo restringida por el entorno de navegación; no se falsea un resultado exitoso. El formulario sigue **bloqueando el avance** cuando el servidor no completa la consulta.
+- Registros de prueba conservados según decisión del usuario; no se eliminan hasta cierre de desarrollo.
