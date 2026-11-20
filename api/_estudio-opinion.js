@@ -129,10 +129,8 @@ module.exports=async(req,res)=>{
    s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'RESP_FOCUS_GROUP_2026'!B2:F3000"})
   ]);
   const samePhone=(values,prefix)=>String(values[0]||"").startsWith(prefix)&&phone(values[4])===t;
-  const alreadyStudy=(studyRows.data.values||[]).some(values=>samePhone(values,"EO-")||(String(values[0]||"").startsWith("EO-")&&String(values[32]||"").trim()===cedula));
-  const alreadyLegacy=(legacyRows.data.values||[]).some(values=>samePhone(values,"FG-"));
   const duplicateId=(studyRows.data.values||[]).some(values=>String(values[0]||"").startsWith("EO-")&&String(values[32]||"").trim()===cedula);
-  const duplicatePhone=(studyRows.data.values||[]).some(values=>samePhone(values,"EO-"))||alreadyLegacy;
+  const duplicatePhone=(studyRows.data.values||[]).some(values=>samePhone(values,"EO-"))||(legacyRows.data.values||[]).some(values=>samePhone(values,"FG-"));
   if(duplicateId||duplicatePhone)return res.status(409).json({
    error:duplicateId?"Este número de cédula ya se encuentra registrado. No es necesario volver a inscribirte.":"Este número de celular ya se encuentra registrado. Si necesitás actualizar tu contacto, comunicate con el equipo organizador.",
    cedulaRegistrada:duplicateId,telefonoRegistrado:duplicatePhone
