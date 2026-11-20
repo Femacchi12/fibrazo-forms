@@ -132,7 +132,7 @@ module.exports=async(req,res)=>{
   const duplicateId=(studyRows.data.values||[]).some(values=>String(values[0]||"").startsWith("EO-")&&String(values[32]||"").trim()===cedula);
   const duplicatePhone=(studyRows.data.values||[]).some(values=>samePhone(values,"EO-"))||(legacyRows.data.values||[]).some(values=>samePhone(values,"FG-"));
   if(duplicateId||duplicatePhone)return res.status(409).json({
-   error:duplicateId?"Este número de cédula ya se encuentra registrado. No es necesario volver a inscribirte.":"Este número de celular ya se encuentra registrado. Si necesitás actualizar tu contacto, comunicate con el equipo organizador.",
+   error:duplicateId?"Este número de cédula ya se encuentra registrado. Si necesitás actualizar tus datos, escribinos por WhatsApp.":"Este número de celular ya se encuentra registrado. Si necesitás actualizar tus datos, escribinos por WhatsApp.",
    cedulaRegistrada:duplicateId,telefonoRegistrado:duplicatePhone
   });
   const id="EO-"+Date.now().toString(36).toUpperCase()+"-"+Math.random().toString(36).slice(2,7).toUpperCase();
