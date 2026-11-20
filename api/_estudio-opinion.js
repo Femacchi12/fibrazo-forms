@@ -98,7 +98,10 @@ module.exports=async(req,res)=>{
   if(!validMail(String(d.email||"").trim()))return res.status(400).json({error:"Correo electrónico inválido"});
   if(d.consentimiento!==true)return res.status(400).json({error:"Se requiere autorización de tratamiento de datos"});
   const auth=gauth();const hash=await checkPublicRate(auth,{id:"ESTUDIO_OPINION_2026",rateLimit:5},req);
-  const s=await management.ensure(),id="EO-"+Date.now().toString(36).toUpperCase()+"-"+Math.random().toString(36).slice(2,7).toUpperCase();
+  const s=await management.ensure();
+  const existing=await s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!B3:F3000"});
+  if((existing.data.values||[]).some(values=>String(values[0]||"").startsWith("EO-")&&phone(values[4])===t))return res.status(409).json({error:"Este celular ya tiene una preinscripción. Nuestro equipo se comunicará para confirmar su disponibilidad."});
+  const id="EO-"+Date.now().toString(36).toUpperCase()+"-"+Math.random().toString(36).slice(2,7).toUpperCase();
   const g=d.geo||{};const lat=Number(g.lat),lng=Number(g.lng),accuracy=Number(g.accuracy);const geoValid=g.status==="autorizado"&&Number.isFinite(lat)&&lat>=-90&&lat<=90&&Number.isFinite(lng)&&lng>=-180&&lng<=180&&Number.isFinite(accuracy)&&accuracy>=0&&accuracy<=100000;const geoStatus=geoValid?"Autorizado":g.status==="rechazado"?"Rechazado":g.status==="error"?"No disponible":"No solicitado";const row=[new Date().toISOString(),id,cell(d.nombre,100),cell(d.apellido,100),Number(d.edad),"+57"+t,cell(d.email,180),cell(d.barrio,120),cell(d.direccion,200),d.estrato,d.decision,d.operador==="No tengo internet fijo"?"No":"Sí",d.operador,cell(d.otroOperador,120),availability,cell(d.fuente,80),"SI","Preinscrito",geoValid?lat:"",geoValid?lng:"",geoValid?Math.round(accuracy):"",geoStatus,geoValid?cell(g.capturedAt,40):"","","",String(d.estratoVivienda),cell(d.tipoIngresos,20),selectedSlots,"","","",management.CAMPAIGN,chosen.join(",")];
   // Sheets values.append inferred the first data column as Z because Y2 stores publication settings.
   // appendCells atomically creates a full new row starting in column A, preserving the Y2 flag.
