@@ -24,7 +24,7 @@ async function ensureTab(auth){
   const first=await s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!A1:W1"});
   if(!first.data.values?.length)await s.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!A1:W1",valueInputOption:"RAW",requestBody:{values:[HEADERS]}});
   // Preserve Y1:Y2 for PUBLIC_ENABLED. New survey fields in Z, AA and AB.
-  await s.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!Z1:AB1",valueInputOption:"RAW",requestBody:{values:[["Estrato declarado de vivienda","Tipo de ingresos (opcional)","Horario sesión 28-11-2026"]]}});
+  await s.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!Z1:AB1",valueInputOption:"RAW",requestBody:{values:[["Estrato declarado de vivienda","Tipo de ingresos (opcional)","Horarios disponibles 28-29/11/2026"]]}});
  })().catch(e=>{setupPromise=null;throw e;});
  await setupPromise;return s;
 }
@@ -68,7 +68,7 @@ module.exports=async(req,res)=>{
    if(!isBaseAdmin(actor.email))return res.status(403).json({error:"No autorizado"});
    const s=await ensureTab(gauth());
    const r=await s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!A1:AB2000"});
-   return res.status(200).json({headers:[...HEADERS,"","PUBLIC_ENABLED","Estrato declarado de vivienda","Tipo de ingresos (opcional)","Horario sesión 28-11-2026"],rows:(r.data.values||[]).slice(1),sheetId:SHEET_ID});
+   return res.status(200).json({headers:[...HEADERS,"","PUBLIC_ENABLED","Estrato declarado de vivienda","Tipo de ingresos (opcional)","Horarios disponibles 28-29/11/2026"],rows:(r.data.values||[]).slice(1),sheetId:SHEET_ID});
   }
   if(req.method!=="POST")return res.status(405).json({error:"Método no permitido"});
   if(!String(req.headers["content-type"]||"").includes("application/json"))return res.status(415).json({error:"Formato no permitido"});
