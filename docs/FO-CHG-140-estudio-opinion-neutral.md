@@ -147,3 +147,13 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - Se cambió el guardado en `api/_estudio-opinion.js` a `spreadsheets.batchUpdate.appendCells`: escritura atómica de una fila desde columna A, sin depender de la detección automática de la tabla. Commit `733392ab`.
 - Se confirmó por lectura corporativa que la fila 3 tiene el ID original en B, la campaña en AF y la sesión seleccionada en AG; la columna Z2 ya no contiene la fecha de respuesta desplazada.
 - Pendiente: prueba de una inscripción posterior al nuevo despliegue para verificar la escritura en A:AG y lectura desde la vista de resumen con autenticación.
+
+## QA de inscripción completa — 20/11/2026
+- Despliegue de corrección de persistencia `733392ab` en Vercel `READY`, alias corporativo `fibrazo-forms.vercel.app`.
+- Se realizó una inscripción sintética por navegador externo desde `https://estudios-de-opinion.vercel.app/`, con dos sesiones seleccionadas, sin GPS. El navegador recibió respuesta de éxito e identificador `EO-MWPFYGFE-QT6HS`.
+- Lectura de Sheets confirmó que el registro se guardó en **A4:AG4** con ID en B4, fechas en O4/AB4 y sesiones precisas en AG4. No quedó desplazado a otras columnas.
+- Una vez comprobado el resultado, se eliminó **exclusivamente el registro sintético de QA**, identificado por nombre/apellido de prueba e ID; se verificó que solo persistiera la preinscripción original `EO-MWP1WN4T-SCX7T` en la fila 3. No se borraron registros reales ni se alteró el control de publicación.
+- API `GET /api/estudio-opinion?config=1`: respondió las cuatro sesiones activas desde el dominio público y el corporativo.
+- API privada `GET /api/estudio-opinion?summary=1` sin token: HTTP 401, comportamiento esperado.
+- **Pendiente:** prueba interactiva autenticada de edición de estado, sugerencias y cierre/reapertura desde el dashboard. No se asume superada por existir código y endpoints.
+- Regla adicional `6a19cf52`: el POST compara teléfonos normalizados con la base para impedir duplicar preinscripciones de una misma persona (HTTP 409). La vista de resumen considera únicos los registros asociados a un ID de inscripción.
