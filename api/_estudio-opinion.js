@@ -55,6 +55,27 @@ module.exports=async(req,res)=>{
    const [enabled,slots]=await Promise.all([readPublication(gauth()),management.availability()]);
    return res.status(200).json({publicEnabled:enabled,form:"ESTUDIO_OPINION_2026",slots});
   }
+  if(req.method==="POST"&&req.query?.check==="1"){
+   if(!String(req.headers["content-type"]||"").includes("application/json"))return res.status(415).json({error:"Formato no permitido"});
+   if(!(await readPublication(gauth())))return res.status(403).json({error:"La convocatoria no está habilitada"});
+   const cedula=String(req.body?.cedula??"").trim(),telefono=phone(req.body?.telefono);
+   if(!/^[0-9]{6,10}$/.test(cedula)||!/^3\\d{9}$/.test(telefono))return res.status(400).json({error:"Revisá la cédula y el número de celular antes de continuar"});
+   const auth=gauth();
+   // Rate-limit public lookups to reduce automated identification-number enumeration.
+   const ipHash=await checkPublicRate(auth,{id:"OPINION_DUPLICATE_CHECK",rateLimit:12},req);
+   await logSecurity(auth,{formId:"OPINION_DUPLICATE_CHECK",ipHash,event:"PUBLIC_SUBMIT",result:"CHECK",req});
+   const sheets=google.sheets({version:"v4",auth});
+   const [opinion,focus]=await Promise.all([
+     sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!B2:AH3000"}),
+     sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'RESP_FOCUS_GROUP_2026'!B2:F3000"})
+   ]);
+   const opinionRows=opinion.data.values||[],focusRows=focus.data.values||[];
+   const cedulaRegistrada=opinionRows.some(v=>String(v[0]||"").startsWith("EO-")&&String(v[32]||"").trim()===cedula);
+   const telefonoRegistrado=opinionRows.some(v=>String(v[0]||"").startsWith("EO-")&&phone(v[4])===telefono)||
+     focusRows.some(v=>String(v[0]||"").startsWith("FG-")&&phone(v[4])===telefono);
+   // Never send back the submitted identifier, stored data or any participant details.
+   return res.status(200).json({cedulaRegistrada,telefonoRegistrado});
+  }
   if(req.method==="POST"&&req.query?.manage==="1"){
    const actor=await verifyUser(req);
    if(!isBaseAdmin(actor.email))return res.status(403).json({error:"No autorizado"});
@@ -110,7 +131,12 @@ module.exports=async(req,res)=>{
   const samePhone=(values,prefix)=>String(values[0]||"").startsWith(prefix)&&phone(values[4])===t;
   const alreadyStudy=(studyRows.data.values||[]).some(values=>samePhone(values,"EO-")||(String(values[0]||"").startsWith("EO-")&&String(values[32]||"").trim()===cedula));
   const alreadyLegacy=(legacyRows.data.values||[]).some(values=>samePhone(values,"FG-"));
-  if(alreadyStudy||alreadyLegacy)return res.status(409).json({error:"Estos datos ya fueron cargados en una inscripción anterior. No es necesario volver a registrarse."});
+  const duplicateId=(studyRows.data.values||[]).some(values=>String(values[0]||"").startsWith("EO-")&&String(values[32]||"").trim()===cedula);
+  const duplicatePhone=(studyRows.data.values||[]).some(values=>samePhone(values,"EO-"))||alreadyLegacy;
+  if(duplicateId||duplicatePhone)return res.status(409).json({
+   error:duplicateId?"Este número de cédula ya se encuentra registrado. No es necesario volver a inscribirte.":"Este número de celular ya se encuentra registrado. Si necesitás actualizar tu contacto, comunicate con el equipo organizador.",
+   cedulaRegistrada:duplicateId,telefonoRegistrado:duplicatePhone
+  });
   const id="EO-"+Date.now().toString(36).toUpperCase()+"-"+Math.random().toString(36).slice(2,7).toUpperCase();
   const g=d.geo||{};const lat=Number(g.lat),lng=Number(g.lng),accuracy=Number(g.accuracy);const geoValid=g.status==="autorizado"&&Number.isFinite(lat)&&lat>=-90&&lat<=90&&Number.isFinite(lng)&&lng>=-180&&lng<=180&&Number.isFinite(accuracy)&&accuracy>=0&&accuracy<=100000;const geoStatus=geoValid?"Autorizado":g.status==="rechazado"?"Rechazado":g.status==="error"?"No disponible":"No solicitado";const row=[new Date().toISOString(),id,cell(d.nombre,100),cell(d.apellido,100),Number(d.edad),"+57"+t,cell(d.email,180),cell(d.barrio,120),cell(d.direccion,200),d.estrato,d.decision,d.operador==="No tengo internet fijo"?"No":"Sí",d.operador,cell(d.otroOperador,120),availability,cell(d.fuente,80),"SI","Preinscrito",geoValid?lat:"",geoValid?lng:"",geoValid?Math.round(accuracy):"",geoStatus,geoValid?cell(g.capturedAt,40):"","","",String(d.estratoVivienda),cell(d.tipoIngresos,20),selectedSlots,"","","",management.CAMPAIGN,chosen.join(","),cedula];
   if(row.length!==34)throw new Error("OPINION_ROW_SCHEMA_MISMATCH"); // AH is the final identity-check field.
