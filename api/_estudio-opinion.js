@@ -79,6 +79,8 @@ module.exports=async(req,res)=>{
   if(!Number(p.startedAt)||Date.now()-Number(p.startedAt)<2500||Date.now()-Number(p.startedAt)>7200000)return res.status(400).json({error:"Tiempo de formulario inválido"});
   const t=phone(d.telefono),tc=phone(d.telefonoConfirmacion);
   if(!/^3\d{9}$/.test(t)||t!==tc)return res.status(400).json({error:"Revisá el número de celular y su confirmación"});
+  const cedula=String(d.cedula??"").trim();
+  if(!/^[0-9]{6,10}$/.test(cedula))return res.status(400).json({error:"Ingresá un número de cédula válido, de 6 a 10 dígitos"});
   if(!d.nombre||!d.apellido||!d.barrio||!d.direccion)return res.status(400).json({error:"Completá los datos obligatorios"});
   if(d.nombre.length>100||d.apellido.length>100||d.barrio.length>120||d.direccion.length>200)return res.status(400).json({error:"Revisá la longitud de los datos"});
   if(!Number.isInteger(Number(d.edad))||Number(d.edad)<30||Number(d.edad)>55)return res.status(400).json({error:"Esta convocatoria está dirigida a personas entre 30 y 55 años"});
@@ -99,10 +101,18 @@ module.exports=async(req,res)=>{
   if(d.consentimiento!==true)return res.status(400).json({error:"Se requiere autorización de tratamiento de datos"});
   const auth=gauth();const hash=await checkPublicRate(auth,{id:"ESTUDIO_OPINION_2026",rateLimit:5},req);
   const s=await management.ensure();
-  const existing=await s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!B3:F3000"});
-  if((existing.data.values||[]).some(values=>String(values[0]||"").startsWith("EO-")&&phone(values[4])===t))return res.status(409).json({error:"Este celular ya tiene una preinscripción. Nuestro equipo se comunicará para confirmar su disponibilidad."});
+  // Cross-campaign guard: the older branded Focus Group contains phone, but no ID-number field.
+  // Current study keeps ID in AH. Never expose which identifier was matched.
+  const [studyRows,legacyRows]=await Promise.all([
+   s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!B2:AH3000"}),
+   s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'RESP_FOCUS_GROUP_2026'!B2:F3000"})
+  ]);
+  const samePhone=(values,prefix)=>String(values[0]||"").startsWith(prefix)&&phone(values[4])===t;
+  const alreadyStudy=(studyRows.data.values||[]).some(values=>samePhone(values,"EO-")||(String(values[0]||"").startsWith("EO-")&&String(values[32]||"").trim()===cedula));
+  const alreadyLegacy=(legacyRows.data.values||[]).some(values=>samePhone(values,"FG-"));
+  if(alreadyStudy||alreadyLegacy)return res.status(409).json({error:"Estos datos ya fueron cargados en una inscripción anterior. No es necesario volver a registrarse."});
   const id="EO-"+Date.now().toString(36).toUpperCase()+"-"+Math.random().toString(36).slice(2,7).toUpperCase();
-  const g=d.geo||{};const lat=Number(g.lat),lng=Number(g.lng),accuracy=Number(g.accuracy);const geoValid=g.status==="autorizado"&&Number.isFinite(lat)&&lat>=-90&&lat<=90&&Number.isFinite(lng)&&lng>=-180&&lng<=180&&Number.isFinite(accuracy)&&accuracy>=0&&accuracy<=100000;const geoStatus=geoValid?"Autorizado":g.status==="rechazado"?"Rechazado":g.status==="error"?"No disponible":"No solicitado";const row=[new Date().toISOString(),id,cell(d.nombre,100),cell(d.apellido,100),Number(d.edad),"+57"+t,cell(d.email,180),cell(d.barrio,120),cell(d.direccion,200),d.estrato,d.decision,d.operador==="No tengo internet fijo"?"No":"Sí",d.operador,cell(d.otroOperador,120),availability,cell(d.fuente,80),"SI","Preinscrito",geoValid?lat:"",geoValid?lng:"",geoValid?Math.round(accuracy):"",geoStatus,geoValid?cell(g.capturedAt,40):"","","",String(d.estratoVivienda),cell(d.tipoIngresos,20),selectedSlots,"","","",management.CAMPAIGN,chosen.join(",")];
+  const g=d.geo||{};const lat=Number(g.lat),lng=Number(g.lng),accuracy=Number(g.accuracy);const geoValid=g.status==="autorizado"&&Number.isFinite(lat)&&lat>=-90&&lat<=90&&Number.isFinite(lng)&&lng>=-180&&lng<=180&&Number.isFinite(accuracy)&&accuracy>=0&&accuracy<=100000;const geoStatus=geoValid?"Autorizado":g.status==="rechazado"?"Rechazado":g.status==="error"?"No disponible":"No solicitado";const row=[new Date().toISOString(),id,cell(d.nombre,100),cell(d.apellido,100),Number(d.edad),"+57"+t,cell(d.email,180),cell(d.barrio,120),cell(d.direccion,200),d.estrato,d.decision,d.operador==="No tengo internet fijo"?"No":"Sí",d.operador,cell(d.otroOperador,120),availability,cell(d.fuente,80),"SI","Preinscrito",geoValid?lat:"",geoValid?lng:"",geoValid?Math.round(accuracy):"",geoStatus,geoValid?cell(g.capturedAt,40):"","","",String(d.estratoVivienda),cell(d.tipoIngresos,20),selectedSlots,"","","",management.CAMPAIGN,chosen.join(","),cedula];
   // Sheets values.append inferred the first data column as Z because Y2 stores publication settings.
   // appendCells atomically creates a full new row starting in column A, preserving the Y2 flag.
   const sheetMeta=await s.spreadsheets.get({spreadsheetId:SHEET_ID,fields:"sheets(properties(title,sheetId))"});
