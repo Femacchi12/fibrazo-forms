@@ -186,3 +186,13 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - Pantalla de éxito: «¡Gracias por inscribirte!»; recuerda actividad **sábado 28 y domingo 29 de noviembre de 2026** y, **si su participación queda confirmada**, la obligación de presentarse el día y horario asignados con documento de identificación y una factura de servicio público.
 - No se modifican los estados, las asignaciones, el cierre manual de las cuatro sesiones ni la distribución de participantes ya registrados.
 - QA: validar extensión/encabezado AH, rechazo 409 por teléfono de ambos formularios, coincidencia por documento de nueva encuesta y un envío exitoso no duplicado; verificar que no se filtren valores personales en errores. La comprobación solo por lectura del código o despliegue READY no sustituye las pruebas POST.
+
+## FO-CHG-153 — Validación de duplicados antes de continuar (20/11/2026)
+- En el formulario público neutral, el paso 1 comprueba en el servidor el par **cédula + celular** contra la fuente de verdad **RESP_ESTUDIO_OPINION_2026**; además busca el celular en **RESP_FOCUS_GROUP_2026**. La cédula solo puede verificarse donde haya sido previamente recopilada.
+- Endpoint `POST /api/estudio-opinion?check=1`: requiere ambos valores sintácticamente válidos; únicamente devuelve booleanos `cedulaRegistrada` y `telefonoRegistrado`, sin identidades ni valores almacenados. Accesos limitados a 12 consultas por IP en 10 minutos mediante `SECURITY_LOG`, con errores genéricos en fallos operativos.
+- La comprobación se inicia cuando se completaron ambos campos y se sale de cédula o confirmación de celular, y se exige **siempre** al presionar «Continuar» desde el paso 1. Ante fallo de red/servidor, **no avanza**.
+- Mensaje de cédula duplicada: «Este número de cédula ya se encuentra registrado. No es necesario volver a inscribirte.»
+- Mensaje de celular duplicado: «Este número de celular ya se encuentra registrado. Si necesitás actualizar tu contacto, comunicate con el equipo organizador.» Se señalan los campos correspondientes y no se permite pasar al paso 2.
+- Se mantiene una segunda comprobación completa en el POST final para evitar guardar duplicados ante carreras de registro; con mensajes separados y HTTP 409.
+- Para seguridad se reutilizan las bases de convocatorias autorizadas, sin difundir información de otros registros. Registros de prueba **no eliminados** por indicación del usuario; la limpieza se realizará al terminar el desarrollo.
+- Pruebas de aceptación: primer paso no permite continuar con cédula duplicada ni celular duplicado; permite continuar con ambos nuevos; servidor no devuelve PII en verificación; POST final sigue rechazando duplicados; errores de red detienen el avance.
