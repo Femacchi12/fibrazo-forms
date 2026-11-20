@@ -203,3 +203,10 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - Prueba aislada del endpoint con respuestas de Google Sheets simuladas, sin exponer ni alterar datos reales: 4/4 casos correctos: teléfono duplicado en estudio neutral, cédula duplicada en estudio neutral, teléfono duplicado en Focus Group anterior, y combinación de ambos identificadores sin registro.
 - La simulación no sustituye un POST final real con cédula y teléfono repetidos. La segunda prueba visual con el número registrado estuvo restringida por el entorno de navegación; no se falsea un resultado exitoso. El formulario sigue **bloqueando el avance** cuando el servidor no completa la consulta.
 - Registros de prueba conservados según decisión del usuario; no se eliminan hasta cierre de desarrollo.
+
+## FO-CHG-154 — Contacto WhatsApp en mensajes de duplicado (20/11/2026)
+- Para intentos de avanzar con **cédula o celular registrado**, el paso 1 mantiene el bloqueo, mostrando la indicación «Si necesitás actualizar tus datos, escribinos por WhatsApp al **312 460 2853**».
+- El número es un enlace interactivo a `https://wa.me/573124602853`, que abre una conversación con el equipo organizador en una pestaña nueva, sin enviar mensajes automáticamente.
+- Si el servidor detecta el duplicado recién al enviar, la pantalla de error incorpora el mismo acceso por WhatsApp.
+- Mensajes de error del backend ajustados para recomendar contacto por WhatsApp; no devuelven documentos ni teléfonos de participantes.
+- No se modifican los registros de prueba, controles de cierre, criterios de participación ni asignaciones.
