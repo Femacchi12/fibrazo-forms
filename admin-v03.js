@@ -353,7 +353,7 @@
     container.dataset.formId="ESTUDIO_OPINION_2026";
     container.innerHTML=
       '<summary class="admin-accordion-head compact-head" style="list-style:none;cursor:pointer">'+
-        '<div><span>ESTUDIO_OPINION_2026</span><h3>Estudio de opinión · Convocatoria neutral</h3><div class="admin-summary-chips"><span class="form-status-chip" data-opinion-badge>Consultando…</span><span>Invitación pública · Cartagena</span></div></div>'+
+        '<div><span>ESTUDIO_OPINION_2026</span><h3>Focus Group · Estratos 2 y 3+</h3><div class="admin-summary-chips"><span class="form-status-chip" data-opinion-badge>Consultando…</span><span>Invitación pública · Cartagena</span></div></div>'+
         '<b class="accordion-chevron">⌄</b>'+
       '</summary>'+
       '<div class="admin-accordion-body compact-body" style="display:block">'+
