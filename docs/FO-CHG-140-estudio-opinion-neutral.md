@@ -157,3 +157,15 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - API privada `GET /api/estudio-opinion?summary=1` sin token: HTTP 401, comportamiento esperado.
 - **Pendiente:** prueba interactiva autenticada de edición de estado, sugerencias y cierre/reapertura desde el dashboard. No se asume superada por existir código y endpoints.
 - Regla adicional `6a19cf52`: el POST compara teléfonos normalizados con la base para impedir duplicar preinscripciones de una misma persona (HTTP 409). La vista de resumen considera únicos los registros asociados a un ID de inscripción.
+
+## FO-CHG-150 — Pulido visual y navegación del resumen de Focus Groups (20/11/2026)
+- Tarjeta neutral en el listado principal de formularios: nombre público interno abreviado a **Focus Group**. No se modifica el título genérico de la convocatoria pública ni se fusionan fuentes de datos.
+- El botón «Resumen de inscriptos» ahora abre **nueva pestaña** `/?resumen=focus-group` sin reemplazar el dashboard original; el acceso conserva autenticación Firebase y permisos del backend.
+- Título interno del resumen **Focus Groups** (plural), independiente de la denominación específica de la campaña.
+- Filtro **Encuesta** con opción «Todas las encuestas» y etiqueta **Focus Group** para la campaña actual. Las opciones se generan de las campañas autorizadas que devuelva la API; no se inventan campañas ni se mezclan respuestas de fuentes futuras hasta integrar sus APIs.
+- Botón superior simplificado: **Copiar enlace**.
+- Diseño consistente con tokens de `styles.css` corporativo: fondo negro, paneles verde oscuro, verde FIBRAZO `#00f29a`, bordes neutros; mantienen la gradación funcional por afluencia (blanco, verde, amarillo, naranja, rojo, rojo intenso).
+- Signos de ayuda convertidos de botones con contornos a **signos ? discretos** (sin caja ni globo permanente), con explicación breve flotante mediante hover y foco de teclado.
+- Compactadas tarjetas, tabla, dropdowns de asignación/estado y botones Ver inscriptos, Cerrar/Reabrir y Guardar. Preservadas funciones, restricciones y validación de servidor.
+- Actualizados los scripts en `index.html` y versión de caché del service worker para forzar la recarga de estilos.
+- QA: verificar despliegue READY y, con cuenta corporativa autenticada, apertura en pestaña nueva, filtros, visualización responsive y ayuda flotante. Sin cambios en filas de participantes ni cierres de sesiones.
