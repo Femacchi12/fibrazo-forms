@@ -134,7 +134,7 @@ for(const name of ["cedula","telefono","telefonoConfirmacion"]){
 for(const name of ["cedula","telefonoConfirmacion"]){
  form.elements[name].addEventListener("blur",async()=>{
   if(current!==0)return;
-  const d=values();if(!/^[0-9]{6,10}$/.test(String(d.cedula||"").trim())||!/^3\\d{9}$/.test(phone(d.telefono))||phone(d.telefono)!==phone(d.telefonoConfirmacion))return;
+  const d=values();if(!/^[0-9]{6,10}$/.test(String(d.cedula||"").trim())||!/^3\d{9}$/.test(phone(d.telefono))||phone(d.telefono)!==phone(d.telefonoConfirmacion))return;
   try{const result=await checkIdentity();if(checkKey===duplicateKey())showDuplicateError(result);}catch(_){/* Continue always performs a blocking check and shows connectivity errors. */}
  });
 }
