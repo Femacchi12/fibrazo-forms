@@ -100,7 +100,16 @@ module.exports=async(req,res)=>{
   const auth=gauth();const hash=await checkPublicRate(auth,{id:"ESTUDIO_OPINION_2026",rateLimit:5},req);
   const s=await management.ensure(),id="EO-"+Date.now().toString(36).toUpperCase()+"-"+Math.random().toString(36).slice(2,7).toUpperCase();
   const g=d.geo||{};const lat=Number(g.lat),lng=Number(g.lng),accuracy=Number(g.accuracy);const geoValid=g.status==="autorizado"&&Number.isFinite(lat)&&lat>=-90&&lat<=90&&Number.isFinite(lng)&&lng>=-180&&lng<=180&&Number.isFinite(accuracy)&&accuracy>=0&&accuracy<=100000;const geoStatus=geoValid?"Autorizado":g.status==="rechazado"?"Rechazado":g.status==="error"?"No disponible":"No solicitado";const row=[new Date().toISOString(),id,cell(d.nombre,100),cell(d.apellido,100),Number(d.edad),"+57"+t,cell(d.email,180),cell(d.barrio,120),cell(d.direccion,200),d.estrato,d.decision,d.operador==="No tengo internet fijo"?"No":"Sí",d.operador,cell(d.otroOperador,120),availability,cell(d.fuente,80),"SI","Preinscrito",geoValid?lat:"",geoValid?lng:"",geoValid?Math.round(accuracy):"",geoStatus,geoValid?cell(g.capturedAt,40):"","","",String(d.estratoVivienda),cell(d.tipoIngresos,20),selectedSlots,"","","",management.CAMPAIGN,chosen.join(",")];
-  await s.spreadsheets.values.append({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!A:AG",insertDataOption:"INSERT_ROWS",valueInputOption:"RAW",requestBody:{values:[row]}});
+  // Sheets values.append inferred the first data column as Z because Y2 stores publication settings.
+  // appendCells atomically creates a full new row starting in column A, preserving the Y2 flag.
+  const sheetMeta=await s.spreadsheets.get({spreadsheetId:SHEET_ID,fields:"sheets(properties(title,sheetId))"});
+  const responseSheet=sheetMeta.data.sheets?.find(x=>x.properties?.title===TAB);
+  if(!responseSheet)throw new Error("RESPONSE_SHEET_NOT_FOUND");
+  await s.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,requestBody:{requests:[{appendCells:{
+   sheetId:responseSheet.properties.sheetId,
+   rows:[{values:row.map(value=>({userEnteredValue:typeof value==="number"?{numberValue:value}:{stringValue:String(value??"")}}))}],
+   fields:"userEnteredValue"
+  }}]}});
   await logSecurity(auth,{formId:"ESTUDIO_OPINION_2026",ipHash:hash,req}).catch(()=>{});
   return res.status(201).json({ok:true,id});
  }catch(e){console.error("ESTUDIO_OPINION",e?.message);return res.status(e.status||500).json({error:e.status===429?"Demasiados intentos. Probá más tarde.":"No se pudo procesar la inscripción. Intentá nuevamente."});}
