@@ -210,3 +210,11 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - Si el servidor detecta el duplicado recién al enviar, la pantalla de error incorpora el mismo acceso por WhatsApp.
 - Mensajes de error del backend ajustados para recomendar contacto por WhatsApp; no devuelven documentos ni teléfonos de participantes.
 - No se modifican los registros de prueba, controles de cierre, criterios de participación ni asignaciones.
+
+
+## FO-CHG-155 — Contacto WhatsApp visible para cédula duplicada (20/11/2026)
+- Se refuerza la alerta de **número de identificación registrado**: el mensaje en el campo de cédula indica expresamente que **no es posible continuar** y remite al WhatsApp de asistencia **312 460 2853** (https://wa.me/573124602853). El número es clicable.
+- El resumen de errores del primer paso ahora incluye también el enlace clicable cuando la cédula ya existe; se conserva el enlace en el campo. Se muestra el mismo acceso desde el resumen cuando el teléfono está duplicado para mantener la experiencia consistente.
+- El backend devuelve un mensaje claro de bloqueo en el caso de cédula duplicada, con indicación de contactar al equipo organizador. Si la coincidencia se detecta durante el envío final, la interfaz mantiene el enlace WhatsApp del error de inscripción.
+- Sin cambios en las reglas de cotejo de cédulas/celulares, protección de datos, bloqueo de avance, administración ni registros almacenados; no se borran registros de prueba.
+- QA requerido: verificar en el navegador, contra un registro de prueba autorizado, que la cédula duplicada presenta el mensaje y enlace tanto junto al campo como en el aviso general, y que no permite pasar al paso 2. Repetir para teléfono y comprobar rechazo HTTP 409 al envío.
