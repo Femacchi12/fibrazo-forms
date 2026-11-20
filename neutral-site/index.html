@@ -99,7 +99,58 @@ function validate(){
  if(count){summary.textContent="Revisá los "+count+" campo(s) marcados en rojo para continuar.";first?.focus();return false;}
  summary.textContent="";return true;
 }
-document.getElementById("next").addEventListener("click",()=>{if(validate()&&current<3){current++;render();}});
+const DUPLICATE_ID_MESSAGE="Este número de cédula ya se encuentra registrado. No es necesario volver a inscribirte.";
+const DUPLICATE_PHONE_MESSAGE="Este número de celular ya se encuentra registrado. Si necesitás actualizar tu contacto, comunicate con el equipo organizador.";
+let checkKey="",checkResult=null,checkPromise=null;
+function duplicateKey(){
+ const d=values();return String(d.cedula||"").trim()+"|"+phone(d.telefono);
+}
+function showDuplicateError(result){
+ let first=null;
+ if(result.cedulaRegistrada){invalid(form.elements.cedula,DUPLICATE_ID_MESSAGE);first=form.elements.cedula;}
+ if(result.telefonoRegistrado){invalid(form.elements.telefono,DUPLICATE_PHONE_MESSAGE);invalid(form.elements.telefonoConfirmacion,"Este celular ya figura en una inscripción anterior.");if(!first)first=form.elements.telefono;}
+ if(first){summary.textContent="Ya encontramos una inscripción con los datos indicados. Revisá los campos marcados.";first.focus();return true;}
+ return false;
+}
+async function checkIdentity(){
+ const key=duplicateKey();
+ if(checkKey===key&&checkResult)return checkResult;
+ if(checkPromise&&checkPromise.key===key)return checkPromise.promise;
+ const d=values();
+ const promise=(async()=>{
+   const response=await fetch("/api/estudio-opinion?check=1",{method:"POST",cache:"no-store",headers:{"Content-Type":"application/json"},body:JSON.stringify({cedula:String(d.cedula||"").trim(),telefono:phone(d.telefono)})});
+   const result=await response.json().catch(()=>({}));
+   if(!response.ok)throw new Error(result.error||"No pudimos comprobar los datos. Intentá nuevamente.");
+   if(key===duplicateKey()){checkKey=key;checkResult=result;}
+   return result;
+ })();
+ checkPromise={key,promise};
+ try{return await promise;}finally{if(checkPromise?.promise===promise)checkPromise=null;}
+}
+function resetDuplicateCheck(){checkKey="";checkResult=null;}
+for(const name of ["cedula","telefono","telefonoConfirmacion"]){
+ form.elements[name].addEventListener("input",resetDuplicateCheck);
+}
+for(const name of ["cedula","telefonoConfirmacion"]){
+ form.elements[name].addEventListener("blur",async()=>{
+  if(current!==0)return;
+  const d=values();if(!/^[0-9]{6,10}$/.test(String(d.cedula||"").trim())||!/^3\\d{9}$/.test(phone(d.telefono))||phone(d.telefono)!==phone(d.telefonoConfirmacion))return;
+  try{const result=await checkIdentity();if(checkKey===duplicateKey())showDuplicateError(result);}catch(_){/* Continue always performs a blocking check and shows connectivity errors. */}
+ });
+}
+document.getElementById("next").addEventListener("click",async()=>{
+ if(!validate()||current>=3)return;
+ if(current===0){
+  const btn=document.getElementById("next");btn.disabled=true;btn.textContent="Verificando datos…";
+  try{
+   const key=duplicateKey(),result=await checkIdentity();
+   if(key!==duplicateKey()){summary.textContent="Los datos cambiaron durante la verificación. Volvé a presionar Continuar.";return;}
+   if(showDuplicateError(result))return;
+  }catch(error){summary.textContent=error.message||"No pudimos verificar tu cédula y celular. Intentá nuevamente.";return;}
+  finally{btn.disabled=false;btn.textContent="Continuar →";}
+ }
+ current++;render();
+});
 document.getElementById("back").addEventListener("click",()=>{if(current>0){current--;render();}});
 form.elements.operador.addEventListener("change",()=>{
  document.getElementById("otherOperator").style.display=["Proveedor local","Otro operador"].includes(form.elements.operador.value)?"block":"none";
