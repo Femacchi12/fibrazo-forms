@@ -85,10 +85,10 @@ module.exports=async(req,res)=>{
   if(!["Fijos","Variables","Mixtos","Prefiero no responder"].includes(d.tipoIngresos))return res.status(400).json({error:"Elegí tu tipo de ingresos o «Prefiero no responder»"});
   if(!["Decido","Compartimos"].includes(d.decision))return res.status(400).json({error:"Se requiere decidir o compartir las decisiones del hogar"});
   if(!["Claro","Tigo","Movistar","Otro operador","Proveedor local","No tengo internet fijo"].includes(d.operador))return res.status(400).json({error:"Seleccioná el servicio de internet"});
-  if(d.disponibilidad!=="Sábado 28")return res.status(400).json({error:"La única fecha habilitada es el sábado 28 de noviembre de 2026"});
+  if(!["Sábado 28","Domingo 29","Ambos días"].includes(d.disponibilidad))return res.status(400).json({error:"Seleccioná sábado 28, domingo 29 o ambos días"});
   const slots=d.horaSesion;
-  const validSlots=["09:00","14:00","17:00","Cualquiera"];
-  if(!Array.isArray(slots)||!slots.length||slots.length>3||slots.some(x=>!validSlots.includes(x))||new Set(slots).size!==slots.length||(slots.includes("Cualquiera")&&slots.length!==1))return res.status(400).json({error:"Seleccioná uno o varios horarios, o «Cualquiera»"});
+  const validSlots=["09:00","14:00","Cualquiera"];
+  if(!Array.isArray(slots)||!slots.length||slots.length>2||slots.some(x=>!validSlots.includes(x))||new Set(slots).size!==slots.length||(slots.includes("Cualquiera")&&slots.length!==1))return res.status(400).json({error:"Seleccioná uno o varios horarios, o «Cualquiera»"});
   const selectedSlots=slots.includes("Cualquiera")?"Cualquiera":validSlots.filter(x=>slots.includes(x)).join(", ");
   if(!validMail(String(d.email||"").trim()))return res.status(400).json({error:"Correo electrónico inválido"});
   if(d.consentimiento!==true)return res.status(400).json({error:"Se requiere autorización de tratamiento de datos"});
