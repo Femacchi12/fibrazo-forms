@@ -169,3 +169,10 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - Compactadas tarjetas, tabla, dropdowns de asignación/estado y botones Ver inscriptos, Cerrar/Reabrir y Guardar. Preservadas funciones, restricciones y validación de servidor.
 - Actualizados los scripts en `index.html` y versión de caché del service worker para forzar la recarga de estilos.
 - QA: verificar despliegue READY y, con cuenta corporativa autenticada, apertura en pestaña nueva, filtros, visualización responsive y ayuda flotante. Sin cambios en filas de participantes ni cierres de sesiones.
+
+## FO-CHG-151 — Legibilidad de indicadores, colores de controles y ayuda (20/11/2026)
+- Vista protegida `focus-resumen.js`: los indicadores por sesión «Asignados», «Confirmados», «Contactados a confirmar», «Preinscritos asignados» y «No asistirán» muestran ahora su cantidad **inmediatamente junto al título**, sin justificarla al extremo derecho; cifras tabulares en chips compactos.
+- Colores semánticos y consistentes con tokens de FIBRAZO: filtros de encuesta/búsqueda verdes, fecha/día verde agua, horario azul verdoso y estado ámbar; todos con texto claro de contraste. Selectores de sesión asignada verdes y de estado con indicación visual según Preinscrito (verde neutro), Contactado a confirmar (ámbar), Confirmado (verde intenso), No asistirá (rojo), actualizada al cambiar la opción.
+- Botones compactos con color de función: Ver inscriptos verde, Cerrar ámbar, Reabrir verde, Guardar verde. Se conserva el gradiente de cantidad de interesados 0–2 blanco, 3–7 verde, 8–11 amarillo, 12 naranja, 13–14 rojo, 15+ rojo intenso.
+- El botón «Sugerir distribución» suma un signo de ayuda flotante, que describe que propone asignaciones sin aplicarlas hasta la confirmación expresa.
+- Solo cambios de UI y PWA cache-busting: sin modificar inscripciones, datos, estados, permisos, asignaciones, servidores ni apertura/cierre de sesiones.
