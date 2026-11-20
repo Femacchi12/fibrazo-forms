@@ -118,3 +118,10 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - Horario de sábado 28/11: selección múltiple (09:00, 14:00, 17:00) y alternativa excluyente «Puedo en cualquiera de los horarios». Envío como array; servidor valida exclusivamente valores conocidos y normaliza a una única celda `AB` separada por coma o «Cualquiera».
 - Consentimiento de datos: se quita el hipervínculo a la política corporativa y la frase específica de permiso GPS solicitada; se conserva la identificación de FIBRAZO S.A.S. como responsable del tratamiento. **Revisar cumplimiento de transparencia para ubicación y datos personales antes de difusión masiva**.
 - En el chequeo del 20/11, la hoja `RESP_ESTUDIO_OPINION_2026` tenía encabezados A:AB pero ninguna respuesta con ID. La inscripción reportada por el usuario **no fue corroborada** en la base corporativa. Se requiere prueba de envío de extremo a extremo y revisar fallas por mensaje de interfaz/servidor si persiste.
+
+## QA del 20/11/2026 — resultado real
+- Vercel confirma READY en ambos proyectos (neutral `dpl_AQTpMUuSZLUUaT9oSJHmMPeEh6Rp` y corporativo `dpl_FUMVjETtLgB9sJtUzCNk4ALbeczt`), commit de código `92f89518`.
+- Navegador de prueba abrió `https://estudios-de-opinion.vercel.app/` y completó con datos sintéticos los 4 pasos hasta la acción «Enviar preinscripción». Comprobó edad, estratos, elección «Prefiero no responder» y dos horarios simultáneos (09:00 y 14:00).
+- El ensayo de navegador se agotó antes de pulsar Enviar. **No hubo solicitud de inscripción ni ID de referencia, por lo que no se afirma éxito E2E.**
+- Consulta a `RESP_ESTUDIO_OPINION_2026!A1:AB18`: encabezados presentes y **0 inscripciones con ID**, incluida la prueba declarada por usuario. Verificación posterior del primer POST real obligatoria.
+- No se insertaron registros de QA en la hoja corporativa, evitando datos falsos entre los posibles candidatos.
