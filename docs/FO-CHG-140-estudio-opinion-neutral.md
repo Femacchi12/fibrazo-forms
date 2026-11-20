@@ -105,3 +105,16 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - La API corporativa `/api/estudio-opinion` permanece activa porque **es la única fuente de persistencia** para la encuesta del nuevo proyecto neutral. No se eliminó la pestaña `RESP_ESTUDIO_OPINION_2026` ni ningún registro.
 - El sitio canónico se mantiene exclusivamente en `neutral-site/index.html` y el proyecto `estudios-de-opinion`.
 - Este bloque reemplaza como estado vigente las notas previas que proponían conservar el HTML heredado por compatibilidad.
+
+## FO-CHG-148 — Ajustes de preinscripción (20/11/2026)
+
+**Único formulario intervenido:** `neutral-site/index.html` y API corporativa `api/_estudio-opinion.js`. No modificar `/focus-group`.
+
+- Bloque «Lugar de encuentro»: cuatro líneas visibles (título, Institución Educativa Las Gaviotas, Sede Niño Jesús, Barrio Las Gaviotas), con botón de Google Maps a la derecha en escritorio y debajo en móviles. El enlace sigue usando las coordenadas exactas 10.40173, -75.49147, sin exponerlas en el texto del bloque.
+- Perfil admisible: **30 a 55 años inclusive**, validado por formulario y servidor.
+- Indicaciones del teléfono: solo los 10 dígitos colombianos, sin mencionar prefijo internacional +57 en etiquetas o mensajes. Backend conserva normalización de +57 para compatibilidad.
+- Etiqueta de barrio: «¿En qué barrio vivís?».
+- Tipo de ingresos: selector **obligatorio** con opción inicial «Seleccioná una opción» y respuestas Fijos / Variables / Mixtos / Prefiero no responder. Elegir «Prefiero no responder» cumple la obligación de responder sin revelar información financiera.
+- Horario de sábado 28/11: selección múltiple (09:00, 14:00, 17:00) y alternativa excluyente «Puedo en cualquiera de los horarios». Envío como array; servidor valida exclusivamente valores conocidos y normaliza a una única celda `AB` separada por coma o «Cualquiera».
+- Consentimiento de datos: se quita el hipervínculo a la política corporativa y la frase específica de permiso GPS solicitada; se conserva la identificación de FIBRAZO S.A.S. como responsable del tratamiento. **Revisar cumplimiento de transparencia para ubicación y datos personales antes de difusión masiva**.
+- En el chequeo del 20/11, la hoja `RESP_ESTUDIO_OPINION_2026` tenía encabezados A:AB pero ninguna respuesta con ID. La inscripción reportada por el usuario **no fue corroborada** en la base corporativa. Se requiere prueba de envío de extremo a extremo y revisar fallas por mensaje de interfaz/servidor si persiste.
