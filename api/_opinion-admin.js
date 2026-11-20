@@ -21,11 +21,11 @@ async function ensure(){
  const responses=tabs.find(t=>t.properties.title===TAB);
  if(!responses)throw Error("RESPONSES_TAB_NOT_FOUND");
  const columns=responses.properties.gridProperties.columnCount||26;
- if(columns<33)changes.push({appendDimension:{sheetId:responses.properties.sheetId,dimension:"COLUMNS",length:33-columns}});
+ if(columns<34)changes.push({appendDimension:{sheetId:responses.properties.sheetId,dimension:"COLUMNS",length:34-columns}});
  if(changes.length)await s.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,requestBody:{requests:changes}});
  const [cfg,headers]=await Promise.all([
  s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+CFG+"'!A1:E5"}),
- s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!AC1:AG1"})
+ s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!AC1:AH1"})
  ]);
  if(!(cfg.data.values||[]).length){
   await s.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:"'"+CFG+"'!A1:E5",valueInputOption:"RAW",requestBody:{values:[
@@ -33,8 +33,8 @@ async function ensure(){
    ...SLOTS.map(q=>[q.id,q.date,q.time,"TRUE","Sistema"])
   ]}});
  }
- const expected=["Sesión asignada","Actualizado el","Actualizado por","Convocatoria","Sesiones disponibles"];
- if(JSON.stringify(headers.data.values?.[0]||[])!==JSON.stringify(expected))await s.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!AC1:AG1",valueInputOption:"RAW",requestBody:{values:[expected]}});
+ const expected=["Sesión asignada","Actualizado el","Actualizado por","Convocatoria","Sesiones disponibles","Número de cédula"];
+ if(JSON.stringify(headers.data.values?.[0]||[])!==JSON.stringify(expected))await s.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!AC1:AH1",valueInputOption:"RAW",requestBody:{values:[expected]}});
  return s;
 }
 async function states(s){
