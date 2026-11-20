@@ -67,18 +67,42 @@ function summaryData(rs,slots){
  }),rows:visible,total:visible.length};
 }
 function suggest(rs,slots){
+ // Rebalance across all four sessions while keeping confirmed assignments fixed.
+ // Never overwrite anything: caller must inspect and explicitly approve suggestions.
  const active=rs.filter(r=>r.status!=="No asistirá");
- const counts=Object.fromEntries(SLOTS.map(s=>[s.id,active.filter(r=>r.assigned===s.id).length]));
- const free=active.filter(r=>!r.assigned).sort((a,b)=>a.availability.length-b.availability.length||a.registered.localeCompare(b.registered));
- const proposed=[];
- for(const r of free){
-  const choices=r.availability.filter(k=>slots.some(s=>s.id===k)); // closed sessions may still have interested candidates
-  const selectable=choices.filter(k=>counts[k]<12);
-  if(!selectable.length)continue;
-  selectable.sort((a,b)=>counts[a]-counts[b]||a.localeCompare(b));
-  const slot=selectable[0];counts[slot]++;proposed.push({id:r.id,assigned:slot,name:(r.first+" "+r.last).trim()});
+ const buckets=Object.fromEntries(SLOTS.map(s=>[s.id,[]]));
+ const fixed=new Set();
+ for(const r of active.filter(r=>r.status==="Confirmado"&&r.assigned&&buckets[r.assigned])){
+  buckets[r.assigned].push(r);fixed.add(r.id);
  }
- return {proposed,remaining:counts};
+ const movable=active.filter(r=>!fixed.has(r.id)).sort((a,b)=>
+   a.availability.length-b.availability.length || Number(!!b.assigned)-Number(!!a.assigned) || a.registered.localeCompare(b.registered));
+ const assignedById=new Map();
+ function place(r,visited=new Set()){
+  const choices=r.availability.filter(id=>buckets[id]&&!visited.has(id)).sort((a,b)=>
+    buckets[a].length-buckets[b].length || Number(b===r.assigned)-Number(a===r.assigned) || a.localeCompare(b));
+  for(const key of choices){
+   visited.add(key);
+   if(buckets[key].length<12){buckets[key].push(r);assignedById.set(r.id,key);return true;}
+   // Shift someone who has another available session before rejecting this candidate.
+   for(const current of buckets[key].filter(person=>!fixed.has(person.id)&&person.id!==r.id)){
+    const others=current.availability.filter(k=>k!==key&&!visited.has(k)&&buckets[k]);
+    for(const alt of others){
+     if(buckets[alt].length<12){
+      buckets[key]=buckets[key].filter(person=>person.id!==current.id);
+      buckets[alt].push(current);assignedById.set(current.id,alt);
+      buckets[key].push(r);assignedById.set(r.id,key);return true;
+     }
+    }
+   }
+  }
+  return false;
+ }
+ for(const r of movable)place(r);
+ const proposed=movable.filter(r=>assignedById.has(r.id)&&r.assigned!==assignedById.get(r.id))
+  .map(r=>({id:r.id,previous:r.assigned,assigned:assignedById.get(r.id),name:(r.first+" "+r.last).trim()}));
+ const remaining=Object.fromEntries(SLOTS.map(s=>[s.id,buckets[s.id].length]));
+ return {proposed,remaining,oversubscribed:SLOTS.filter(s=>buckets[s.id].length>12).map(s=>s.id)};
 }
 async function auth(req,edit=false){
  const actor=await verifyUser(req);
