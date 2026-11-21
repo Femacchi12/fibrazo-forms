@@ -243,3 +243,11 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - Las casillas de horarios se compactan con `min-height:42px`, padding `8px 11px`, casilla de verificación 18px y separación de 8px. Se conserva tamaño táctil razonable, contraste, fondo oscuro y estado visual de selección. La opción «Puedo asistir en cualquiera...» sigue disponible, ligeramente compactada.
 - No cambian fechas, horas, opciones disponibles, selección múltiple, validaciones, API, datos, controles de elegibilidad, permisos ni registros de prueba.
 - QA: comprobar que el JS inline conserva sintaxis, que solo se añadieron estilos de `#slotsList` y que siguen presentes los controles de selección por fecha, selección global y cambio de estado. Revisión visual en navegador y móvil pendiente de ejecución real.
+
+
+## FO-CHG-159 — Disponibilidad por día y controles compactos en la tabla de Focus Groups (20/11/2026)
+- **Disponibilidad:** la celda se representa en dos líneas cuando existen horarios de sábado y domingo: `Sáb 28: 9:00 · 14:00` y `Dom 29: 9:00 · 14:00`. Si solo hay un día, se muestra solo ese día; si faltan horarios, `Sin disponibilidad`. Se respeta el orden cronológico y la selección real de cada persona, sin afectar los datos guardados ni el valor exportado del CSV.
+- Se acota la celda a **185 px** y cada día queda en su propia línea, evitando que el texto toque la columna «Sesión asignada». Las columnas de sesión, estado y acciones usan anchos compactos y padding horizontal reducido; el desplazamiento lateral y la columna Participante fija permanecen operativos.
+- Los selectores de sesión y estado y el botón **Guardar** pasan a **26 px de altura**, con tipografía de 10 px, bordes redondeados y la misma altura de «No elegible» y «Revisión». El estado largo «Contactado a confirmar» dispone de más ancho para conservar la legibilidad; el color semántico sigue vigente.
+- Únicamente modifica presentación en `focus-resumen.js` y cache bust en `index.html`. No altera opciones, estados, validaciones, cupos, roles, API, almacenamientos, permisos, enlaces ni registros de prueba.
+- QA: comprobar sintaxis, horarios uno/dos días, orden, disponibilidad vacía y render con valores sintéticos; controles de 26 px y clases de columnas. Prueba visual autenticada en navegador pendiente por separado de Vercel READY.
