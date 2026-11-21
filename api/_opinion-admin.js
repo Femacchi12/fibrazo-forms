@@ -50,26 +50,27 @@ function prefs(row){
  const times=t==="Cualquiera"?["09:00","14:00"]:t.split(",").map(x);
  return SLOTS.filter(slot=>days.includes(slot.day)&&times.includes(slot.time)).map(q=>q.id);
 }
-function record(row,index){
- return {row:index+2,id:x(row[1]),registered:x(row[0]),first:x(row[2]),last:x(row[3]),age:x(row[4]),phone:x(row[5]),email:x(row[6]),barrio:x(row[7]),address:x(row[8]),stratum:x(row[25]||row[9]),income:x(row[26]),status:STATUSES.includes(x(row[17]))?x(row[17]):"Preinscrito",availability:prefs(row),assigned:x(row[28]),updated:x(row[29]),updatedBy:x(row[30]),campaign:x(row[31])||CAMPAIGN};
+function record(row,index,adminAccess=false){
+ const decision=x(row[10]),qualified=["Decido","Compartimos"].includes(decision);
+  return {row:index+2,id:x(row[1]),registered:x(row[0]),first:x(row[2]),last:x(row[3]),age:x(row[4]),phone:x(row[5]),email:adminAccess?x(row[6]):"",barrio:x(row[7]),address:adminAccess?x(row[8]):"",stratumBill:x(row[9]),decision,eligible:qualified,internet:x(row[11]),operator:x(row[12]),otherOperator:x(row[13]),source:x(row[15]),consent:x(row[16]),geoLat:adminAccess?x(row[18]):"",geoLng:adminAccess?x(row[19]):"",geoAccuracy:adminAccess?x(row[20]):"",geoStatus:x(row[21]),geoAt:adminAccess?x(row[22]):"",stratum:x(row[25]||row[9]),income:adminAccess?x(row[26]):"",status:STATUSES.includes(x(row[17]))?x(row[17]):"Preinscrito",availability:prefs(row),assigned:x(row[28]),updated:x(row[29]),updatedBy:adminAccess?x(row[30]):"",campaign:x(row[31])||CAMPAIGN,cedula:adminAccess?x(row[33]):""};
 }
-async function records(s){
- const r=await s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!A2:AG3000"});
- return (r.data.values||[]).map(record).filter(r=>r.id.startsWith("EO-"));
+async function records(s,adminAccess=false){
+ const r=await s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!A2:AH3000"});
+ return (r.data.values||[]).map((v,i)=>record(v,i,adminAccess)).filter(r=>r.id.startsWith("EO-"));
 }
 function summaryData(rs,slots){
  const visible=rs.map(r=>({...r,availability:[...r.availability]}));
  return {campaigns:[{id:"ESTUDIO_OPINION_2026",name:CAMPAIGN,dates:EVENT}],campaign:"ESTUDIO_OPINION_2026",statusOptions:STATUSES,slots:slots.map(slot=>{
-  const available=visible.filter(r=>r.status!=="No asistirá"&&r.availability.includes(slot.id));
-  const assigned=visible.filter(r=>r.status!=="No asistirá"&&r.assigned===slot.id);
+  const available=visible.filter(r=>r.eligible&&r.status!=="No asistirá"&&r.availability.includes(slot.id));
+  const assigned=visible.filter(r=>r.eligible&&r.status!=="No asistirá"&&r.assigned===slot.id);
   const confirmed=assigned.filter(r=>r.status==="Confirmado");
-  return {...slot,available:available.length,assigned:assigned.length,confirmed:confirmed.length,contacted:assigned.filter(r=>r.status==="Contactado a confirmar").length,pending:assigned.filter(r=>r.status==="Preinscrito").length,notAttending:visible.filter(r=>r.assigned===slot.id&&r.status==="No asistirá").length};
- }),rows:visible,total:visible.length};
+  return {...slot,available:available.length,assigned:assigned.length,confirmed:confirmed.length,contacted:assigned.filter(r=>r.status==="Contactado a confirmar").length,pending:assigned.filter(r=>r.status==="Preinscrito").length,notAttending:visible.filter(r=>r.eligible&&r.assigned===slot.id&&r.status==="No asistirá").length};
+ }),rows:visible,total:visible.filter(r=>r.eligible).length,ineligible:visible.filter(r=>!r.eligible).length};
 }
 function suggest(rs,slots){
  // Rebalance across all four sessions while keeping confirmed assignments fixed.
  // Never overwrite anything: caller must inspect and explicitly approve suggestions.
- const active=rs.filter(r=>r.status!=="No asistirá");
+ const active=rs.filter(r=>r.eligible&&r.status!=="No asistirá");
  const buckets=Object.fromEntries(SLOTS.map(s=>[s.id,[]]));
  const fixed=new Set();
  for(const r of active.filter(r=>r.status==="Confirmado"&&r.assigned&&buckets[r.assigned])){
@@ -118,7 +119,7 @@ async function handle(req,res){
   if(actor.error)return res.status(actor.error).json({error:"Acceso no autorizado"});
   const s=await ensure();
   if(req.method==="GET"){
-   const [all,slots]=await Promise.all([records(s),states(s)]);
+   const [all,slots]=await Promise.all([records(s,actor.admin),states(s)]);
    const data=summaryData(all,slots);
    return res.status(200).json({...data,canEdit:actor.admin,suggestions:suggest(all,slots)});
   }
@@ -130,13 +131,14 @@ async function handle(req,res){
    await s.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:"'"+CFG+"'!D"+(idx+2)+":E"+(idx+2),valueInputOption:"RAW",requestBody:{values:[[payload.open?"TRUE":"FALSE",actor.email]]}});
    return res.status(200).json({ok:true});
   }
-  const all=await records(s),byId=new Map(all.map(r=>[r.id,r]));
+  const all=await records(s,true),byId=new Map(all.map(r=>[r.id,r]));
   if(action==="update"){
    const r=byId.get(x(payload.id));
    if(!r)return res.status(404).json({error:"Inscripción no encontrada"});
    const status=x(payload.status),assigned=x(payload.assigned);
    if(!STATUSES.includes(status)||assigned&&!SLOTS.some(z=>z.id===assigned))return res.status(400).json({error:"Estado o sesión inválidos"});
-   if(assigned&&!r.availability.includes(assigned))return res.status(400).json({error:"Esta persona no indicó disponibilidad en esa sesión"});
+   if(!r.eligible)return res.status(409).json({error:"No elegible: esta persona no participa en las decisiones del hogar y no puede ser asignada."});
+    if(assigned&&!r.availability.includes(assigned))return res.status(400).json({error:"Esta persona no indicó disponibilidad en esa sesión"});
    if(status==="Confirmado"&&!assigned)return res.status(400).json({error:"Asigná una sesión antes de confirmar"});
    await s.spreadsheets.values.batchUpdate({spreadsheetId:SHEET_ID,requestBody:{valueInputOption:"RAW",data:[
     {range:"'"+TAB+"'!R"+r.row,values:[[status]]},

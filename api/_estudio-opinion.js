@@ -108,7 +108,7 @@ module.exports=async(req,res)=>{
   if(!["2","3","4","5","6"].includes(String(d.estrato)))return res.status(400).json({error:"Seleccioná el estrato de la factura de Afinia entre 2 y 6"});
   if(!["2","3","4","5","6"].includes(String(d.estratoVivienda)))return res.status(400).json({error:"Seleccioná el estrato de tu vivienda entre 2 y 6"});
   if(!["Fijos","Variables","Mixtos","Prefiero no responder"].includes(d.tipoIngresos))return res.status(400).json({error:"Elegí tu tipo de ingresos o «Prefiero no responder»"});
-  if(!["Decido","Compartimos"].includes(d.decision))return res.status(400).json({error:"Se requiere decidir o compartir las decisiones del hogar"});
+  if(!["Decido","Compartimos","No"].includes(d.decision))return res.status(400).json({error:"Selecciona una respuesta sobre quién toma las decisiones del hogar"});
   if(!["Claro","Tigo","Movistar","Otro operador","Proveedor local","No tengo internet fijo"].includes(d.operador))return res.status(400).json({error:"Seleccioná el servicio de internet"});
   const slots=await management.availability();
   const openIds=slots.filter(slot=>slot.open).map(slot=>slot.id);
