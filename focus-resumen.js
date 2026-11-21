@@ -15,14 +15,14 @@ const DEFAULT_COLUMNS=["participant","phone","barrio","stratum","operator","avai
 const COLUMNS=[
  ["participant","Participante"],["cedula","Cédula"],["phone","Celular"],["barrio","Barrio"],
  ["stratum","Estrato vivienda"],["operator","Operadores"],["availability","Disponibilidad"],["assigned","Sesión asignada"],
- ["status","Estado"],["coordinates","Coordenadas"],["actions","Acciones"],
+ ["status","Estado"],["coordinates","Coordenadas"],["observations","Observaciones"],["actions","Acciones"],
  ["email","Correo"],["address","Dirección"],["age","Edad"],["decision","Decisión del hogar"],
  ["stratumBill","Estrato factura"],["internet","Internet fijo"],["otherOperator","Otro operador"],
  ["income","Tipo de ingresos"],["source","Cómo se enteró"],["geoStatus","Estado GPS"],
  ["geoAccuracy","Precisión GPS"],["geoAt","Fecha GPS"],["registered","Fecha inscripción"],
  ["updated","Última actualización"],["updatedBy","Actualizado por"],["campaign","Encuesta"]
 ];
-const RESTRICTED=new Set(["cedula","email","address","coordinates","geoAccuracy","geoAt","income","updatedBy"]);
+const RESTRICTED=new Set(["cedula","email","address","coordinates","geoAccuracy","geoAt","income","updatedBy","observations"]);
 let tableQuery="",rowLimit=20,selectedColumns=new Set(DEFAULT_COLUMNS);
 const eligible=r=>r.eligible!==false;
 const styles=[
@@ -40,6 +40,7 @@ const styles=[
 ,"#fq-root #fq-campaign{border-color:#43FFA5!important;background:#0b0b0b!important}\n#fq-root .fq-table select.fq-status[data-current-status=\"Preinscrito\"]{border-color:#43FFA5!important;color:#fff!important}\n#fq-root .fq-table select.fq-status[data-current-status=\"Confirmado\"]{border-color:#43FFA5!important;color:#43FFA5!important}\n#fq-root .fq-table select.fq-status[data-current-status=\"Contactado a confirmar\"]{border-color:#FFCF40!important;color:#fff!important}\n#fq-root .fq-table select.fq-status[data-current-status=\"No asistirá\"]{border-color:#ff8080!important;color:#fff!important}\n"
 ,"\n/* FO-CHG-159 — Availability by day and compact, consistently sized row actions. */\n#fq-root .fq-table th.fq-col-availability,#fq-root .fq-table td.fq-col-availability{width:185px;min-width:185px;max-width:185px;white-space:normal}\n#fq-root .fq-table .fq-availability{display:flex;flex-direction:column;align-items:flex-start;gap:3px;line-height:1.4;font-size:11px}\n#fq-root .fq-table .fq-availability-line{display:block;white-space:nowrap}\n#fq-root .fq-table .fq-availability-line strong{font-weight:700;color:#fff}\n#fq-root .fq-table th.fq-col-assigned,#fq-root .fq-table td.fq-col-assigned{min-width:126px;max-width:135px;width:130px;padding-left:6px;padding-right:6px}\n#fq-root .fq-table th.fq-col-status,#fq-root .fq-table td.fq-col-status{min-width:116px;max-width:170px;width:116px;padding-left:6px;padding-right:6px}\n#fq-root .fq-table th.fq-col-actions,#fq-root .fq-table td.fq-col-actions{min-width:82px;max-width:90px;width:85px;padding-left:6px;padding-right:6px}\n#fq-root .fq-table select.fq-assign,#fq-root .fq-table select.fq-status{display:inline-block;box-sizing:border-box;min-height:26px!important;height:26px!important;padding:3px 18px 3px 8px!important;margin:0!important;font-size:10px!important;line-height:18px!important;vertical-align:middle;border-radius:999px!important;max-width:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\n#fq-root .fq-table select.fq-assign{width:122px!important;min-width:122px!important}\n#fq-root .fq-table select.fq-status{width:104px!important;min-width:104px!important}\n#fq-root .fq-table select.fq-status[data-current-status=\"Contactado a confirmar\"]{width:165px!important;min-width:165px!important}\n#fq-root .fq-table .fq-btn[data-save]{display:inline-flex;align-items:center;justify-content:center;min-height:26px!important;height:26px!important;min-width:0!important;padding:3px 9px!important;font-size:10px!important;line-height:18px!important;border-radius:999px!important;white-space:nowrap}\n#fq-root .fq-table .fq-eligibility{display:inline-flex;align-items:center;min-height:26px;padding:3px 8px;line-height:18px;font-size:10px}\n"
 ,"\n/* FO-CHG-160 — Compact instant-toggle column picker */\n#fq-root .fq-column-popover{padding:10px 11px;width:min(240px,85vw)}\n#fq-root .fq-column-popover>strong{display:block;font-size:11px;line-height:1.3;margin:0 0 7px}\n#fq-root .fq-column-list{display:grid;gap:1px;max-height:310px;overflow:auto;padding:1px 2px;align-content:start}\n#fq-root .fq-column-list label{display:flex;align-items:center;gap:7px;min-height:26px;margin:0;padding:3px 4px;border-radius:5px;line-height:1.2;font-size:11px;color:#fff;cursor:pointer}\n#fq-root .fq-column-list label:hover{background:#252525}\n#fq-root .fq-column-list input[type=\"checkbox\"]{appearance:auto;width:14px!important;height:14px!important;min-width:14px!important;min-height:14px!important;margin:0!important;padding:0!important;flex:0 0 14px;accent-color:#43FFA5;cursor:pointer}\n#fq-root .fq-column-actions{margin-top:8px;display:flex;justify-content:center}\n#fq-root .fq-column-actions .fq-btn{flex:1;min-height:30px;padding:5px 9px;font-size:11px}\n"
+,"\n/* FO-CHG-161 — private observation log on Focus Group participants. */\n#fq-root .fq-col-observations{min-width:138px;max-width:180px;width:150px}\n#fq-root .fq-note-trigger{min-height:26px!important;height:26px!important;padding:3px 9px!important;font-size:10px!important;line-height:18px!important;white-space:nowrap}\n#fq-root .fq-note-overlay{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.84)}\n#fq-root .fq-note-dialog{width:min(540px,100%);max-height:min(90vh,720px);overflow:auto;background:#171717;border:1px solid #757575;border-radius:15px;color:#fff;padding:18px;box-shadow:0 16px 50px #000b}\n#fq-root .fq-note-heading{display:flex;align-items:start;justify-content:space-between;gap:10px}\n#fq-root .fq-note-heading h3{font-size:16px;margin:0 0 5px}\n#fq-root .fq-note-participant{font-size:12px;color:#c9c9c9;margin:0 0 12px}\n#fq-root .fq-note-history{max-height:235px;overflow:auto;margin:7px 0 15px;padding:8px;background:#101010;border:1px solid #414141;border-radius:9px}\n#fq-root .fq-note-entry{padding:9px 8px;border-bottom:1px solid #363636}\n#fq-root .fq-note-entry:last-child{border-bottom:0}\n#fq-root .fq-note-meta{color:#bdbdbd;font-size:10px;margin-bottom:5px;overflow-wrap:anywhere}\n#fq-root .fq-note-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5;font-size:12px;color:#fff}\n#fq-root .fq-note-dialog label{display:block;font-size:12px;font-weight:700;margin-bottom:7px}\n#fq-root .fq-note-dialog textarea{width:100%;min-height:92px;background:#0b0b0b;color:#fff;border:1px solid #686868;border-radius:9px;resize:vertical;padding:10px;font:12px/1.5 Montserrat,system-ui,sans-serif}\n#fq-root .fq-note-dialog textarea:focus-visible{outline:2px solid #43FFA5;outline-offset:1px}\n#fq-root .fq-note-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;color:#bdbdbd;font-size:10px;min-height:17px}\n#fq-root .fq-note-error{color:#ff9aa1}\n#fq-root .fq-note-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:13px}\n#fq-root .fq-note-actions .fq-btn{min-height:31px}\n@media(max-width:550px){#fq-root .fq-note-dialog{padding:13px}#fq-root .fq-note-actions{flex-wrap:wrap}}\n"
 ].join("\n");
 function setup(){
  if(node)return;
@@ -57,6 +58,13 @@ function setup(){
  '<div id="fq-slots" class="fq-slots"></div><div id="fq-preview" hidden></div><section class="fq-table-panel"><div class="fq-table-toolbar"><h2 id="fq-count">Inscriptos</h2><input class="fq-table-search" id="fq-table-q" type="search" placeholder="Buscar en la tabla" aria-label="Buscar en la tabla"><div class="fq-table-actions"><button class="fq-btn" id="fq-export">Exportar CSV</button><div class="fq-column-anchor"><button class="fq-btn" id="fq-columns" type="button" aria-expanded="false" aria-controls="fq-columns-panel">Ver más columnas ▾</button><div id="fq-columns-panel" class="fq-column-popover" hidden></div></div></div></div>'+
  '<div class="fq-tablebox" id="fq-tablebox" role="region" aria-label="Tabla de inscritos desplazable" tabindex="0"><table class="fq-table"><thead id="fq-table-head"></thead><tbody id="fq-rows"></tbody></table></div><div class="fq-table-bottom"><button class="fq-btn" type="button" id="fq-more" hidden>Ver más</button><div class="fq-table-note">Desplázate para consultar más filas y columnas. La columna Participante permanece fija.</div></div></section></div>';
  document.body.appendChild(node);
+ node.insertAdjacentHTML("beforeend","<div class=\"fq-note-overlay\" id=\"fq-note-modal\" hidden><section class=\"fq-note-dialog\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"fq-note-title\"><div class=\"fq-note-heading\"><div><h3 id=\"fq-note-title\">Observaciones</h3><p class=\"fq-note-participant\" id=\"fq-note-participant\"></p></div><button type=\"button\" id=\"fq-note-close\" class=\"fq-btn\" aria-label=\"Cerrar observaciones\">Cerrar</button></div><div class=\"fq-note-history\" id=\"fq-note-history\" aria-live=\"polite\"></div><label for=\"fq-note-input\">Nueva observación</label><textarea id=\"fq-note-input\" rows=\"4\" maxlength=\"1500\" placeholder=\"Anota aquí lo que comentaron o lo que necesites recordar de este participante.\"></textarea><div class=\"fq-note-footer\"><span id=\"fq-note-counter\">0 / 1500</span><span class=\"fq-note-error\" id=\"fq-note-error\" role=\"alert\"></span></div><div class=\"fq-note-actions\"><button type=\"button\" class=\"fq-btn\" id=\"fq-note-cancel\">Cancelar</button><button type=\"button\" class=\"fq-btn green\" id=\"fq-note-save\">Guardar observación</button></div></section></div>");
+ node.querySelector("#fq-note-close").onclick=closeNotes;
+ node.querySelector("#fq-note-cancel").onclick=closeNotes;
+ node.querySelector("#fq-note-modal").onclick=e=>{if(e.target===e.currentTarget)closeNotes();};
+ node.querySelector("#fq-note-input").oninput=e=>{node.querySelector("#fq-note-counter").textContent=e.target.value.length+" / 1500";node.querySelector("#fq-note-error").textContent="";};
+ node.querySelector("#fq-note-save").onclick=saveObservation;
+ node.addEventListener("keydown",e=>{if(e.key==="Escape"&&!node.querySelector("#fq-note-modal").hidden){e.preventDefault();closeNotes();}});
  node.querySelector("#fq-exit").onclick=close;
  node.querySelector("#fq-refresh").onclick=load;
  node.querySelector("#fq-suggest").onclick=showSuggestions;
@@ -75,7 +83,43 @@ function setup(){
   const toggle=e.target.closest("[data-toggle]");if(toggle&&info?.canEdit){if(!confirm((toggle.dataset.open==="true"?"Cerrar":"Reabrir")+" sesión "+label(toggle.dataset.toggle)+"?"))return;await save({action:"setSlot",slot:toggle.dataset.toggle,open:toggle.dataset.open!=="true"});}
  };
  node.querySelector("#fq-rows").addEventListener("change",e=>{if(e.target.matches(".fq-status"))e.target.dataset.currentStatus=e.target.value;});
- node.querySelector("#fq-rows").onclick=async e=>{const saveBtn=e.target.closest("[data-save]");if(!saveBtn)return;const tr=saveBtn.closest("tr");await save({action:"update",id:saveBtn.dataset.save,status:tr.querySelector(".fq-status").value,assigned:tr.querySelector(".fq-assign").value});};
+ node.querySelector("#fq-rows").onclick=async e=>{
+  const noteBtn=e.target.closest("[data-note]");if(noteBtn){openNotes(noteBtn.dataset.note);return;}
+  const saveBtn=e.target.closest("[data-save]");if(!saveBtn)return;
+  const tr=saveBtn.closest("tr");await save({action:"update",id:saveBtn.dataset.save,status:tr.querySelector(".fq-status").value,assigned:tr.querySelector(".fq-assign").value});
+ };
+}
+let activeNoteId="",savingNote=false;
+function closeNotes(){
+ const modal=node?.querySelector("#fq-note-modal");if(modal)modal.hidden=true;
+ activeNoteId="";
+}
+function openNotes(id){
+ if(!info?.canEdit)return;
+ const row=(info.rows||[]).find(r=>r.id===id);if(!row)return;
+ activeNoteId=id;
+ node.querySelector("#fq-note-participant").textContent=(row.first+" "+row.last).trim();
+ const items=Array.isArray(row.notes)?[...row.notes].reverse():[];
+ const history=node.querySelector("#fq-note-history");
+ history.innerHTML=items.length?items.map(entry=>
+  '<div class="fq-note-entry"><div class="fq-note-meta">'+E(entry.at||"")+" · "+E(entry.author||"")+'</div><div class="fq-note-text">'+E(entry.text||"")+'</div></div>'
+ ).join(""):'<div class="fq-note-entry">Todavía no hay observaciones para este participante.</div>';
+ node.querySelector("#fq-note-input").value="";
+ node.querySelector("#fq-note-counter").textContent="0 / 1500";
+ node.querySelector("#fq-note-error").textContent="";
+ node.querySelector("#fq-note-modal").hidden=false;
+ node.querySelector("#fq-note-input").focus();
+}
+async function saveObservation(){
+ if(savingNote||!activeNoteId||!info?.canEdit)return;
+ const text=node.querySelector("#fq-note-input").value.trim();
+ if(!text||text.length>1500){node.querySelector("#fq-note-error").textContent="Escribe entre 1 y 1500 caracteres.";return;}
+ savingNote=true;node.querySelector("#fq-note-save").disabled=true;
+ try{
+  await request({action:"addObservation",id:activeNoteId,text});
+  closeNotes();await load();message("Observación guardada correctamente.");
+ }catch(error){node.querySelector("#fq-note-error").textContent=error.message||"No se pudo guardar la observación.";}
+ finally{savingNote=false;node.querySelector("#fq-note-save").disabled=false;}
 }
 function message(v,error=false){if(node){const el=node.querySelector("#fq-message");el.textContent=v;el.style.color=error?"#ff7989":"#eed08b";}}
 async function request(body){
@@ -87,7 +131,7 @@ async function request(body){
 async function load(){if(waiting)return;waiting=true;message("Actualizando…");try{info=await request();updateCampaignFilter();node.querySelector("#fq-suggest").disabled=!info.canEdit;message("Información actualizada.");render();}catch(e){message(e.message,true);}finally{waiting=false;}}
 async function save(body){try{await request(body);await load();}catch(e){message(e.message,true);}}
 function open(){setup();node.hidden=false;document.body.style.overflow="hidden";history.replaceState(null,"",SHARE);load();}
-function close(){if(!node)return;node.hidden=true;document.body.style.overflow="";history.replaceState(null,"","/");}
+function close(){if(!node)return;closeNotes();node.hidden=true;document.body.style.overflow="";history.replaceState(null,"","/");}
 function visible(){return (info?.rows||[]).filter(r=>{
  if(filters.campaign){const campaign=(info.campaigns||[]).find(c=>c.id===filters.campaign);if(!campaign||r.campaign!==campaign.name)return false;}
  const choices=[...r.availability,...(r.assigned?[r.assigned]:[])];
@@ -180,6 +224,11 @@ function dataCell(r,key){
   return '<select class="fq-status" data-current-status="'+E(r.status)+'" '+(info.canEdit?"":"disabled")+'>'+STATUSES.map(x=>'<option '+(r.status===x?"selected":"")+'>'+E(x)+'</option>').join("")+'</select>';
  }
  case "coordinates":return coordinates(r);
+ case "observations":{
+  if(!info?.canEdit)return "Restringido";
+  const count=Array.isArray(r.notes)?r.notes.length:0;
+  return '<button type="button" class="fq-btn fq-note-trigger" data-note="'+E(r.id)+'">'+(count?"Ver notas ("+count+")":"Agregar nota")+'</button>';
+ }
  case "actions":return !eligible(r)?'<span class="fq-eligibility">Revisión</span>':(info.canEdit?'<button class="fq-btn" data-save="'+E(r.id)+'">Guardar</button>':'Solo lectura');
  case "email":return E(r.email||"—");
  case "address":return E(r.address||"—");
@@ -203,7 +252,7 @@ function dataCell(r,key){
 function renderTable(){
  if(!node||!info)return;
  const cols=displayColumns(),all=visible(),q=tableQuery.trim();
- const rows=q?all.filter(r=>([r.first,r.last,r.phone,r.barrio,r.stratum,r.operator,r.cedula,r.email,r.address,r.decision,r.geoLat,r.geoLng,r.status,r.source].join(" ").toLocaleLowerCase("es").includes(q))):all;
+ const rows=q?all.filter(r=>([r.first,r.last,r.phone,r.barrio,r.stratum,r.operator,r.cedula,r.email,r.address,r.decision,r.geoLat,r.geoLng,r.status,r.source,...(Array.isArray(r.notes)?r.notes.map(n=>n.text):[])].join(" ").toLocaleLowerCase("es").includes(q))):all;
  node.querySelector("#fq-count").textContent="Inscriptos ("+rows.length+")";
  node.querySelector("#fq-table-head").innerHTML='<tr>'+cols.map(c=>'<th scope="col" class="fq-col-'+E(c[0])+'">'+E(c[1])+'</th>').join("")+'</tr>';
  const slice=rows.slice(0,rowLimit);
