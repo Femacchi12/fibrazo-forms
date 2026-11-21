@@ -11,17 +11,19 @@ const level=n=>n>=15?"strong-red":n>=13?"red":n>=12?"orange":n>=8?"yellow":n>=3?
 let node=null,info=null,waiting=false;
 const filters={campaign:"ESTUDIO_OPINION_2026",date:"",day:"",hour:"",status:"",q:""};
 const EXTRA_STATUS="No elegible";
-const DEFAULT_COLUMNS=["participant","phone","barrio","stratum","operator","availability","assigned","status","coordinates","actions"];
+const FIXED_COLUMNS=new Set(["participant","age","stratumBill","actions","observations","coordinates"]);
+const DEFAULT_COLUMNS=["participant","phone","barrio","age","stratum","stratumBill","operator","availability","assigned","status","actions","observations","coordinates"];
 const COLUMNS=[
- ["participant","Participante"],["cedula","Cédula"],["phone","Celular"],["barrio","Barrio"],
- ["stratum","Estrato vivienda"],["operator","Operadores"],["availability","Disponibilidad"],["assigned","Sesión asignada"],
- ["status","Estado"],["coordinates","Coordenadas"],["observations","Observaciones"],["actions","Acciones"],
- ["email","Correo"],["address","Dirección"],["age","Edad"],["decision","Decisión del hogar"],
- ["stratumBill","Estrato factura"],["internet","Internet fijo"],["otherOperator","Otro operador"],
+ ["participant","Participante"],["phone","Celular"],["barrio","Barrio"],["age","Edad"],
+ ["stratum","Estrato vivienda"],["stratumBill","Estrato factura"],
+ ["operator","Operadores"],["availability","Disponibilidad"],["assigned","Sesión asignada"],
+ ["status","Estado"],["actions","Acciones"],["observations","Observaciones"],["coordinates","Coordenadas"],
+ ["cedula","Cédula"],["email","Correo"],["address","Dirección"],
+ ["decision","Decisión del hogar"],["internet","Internet fijo"],["otherOperator","Otro operador"],
  ["income","Tipo de ingresos"],["source","Cómo se enteró"],["geoStatus","Estado GPS"],
  ["geoAccuracy","Precisión GPS"],["geoAt","Fecha GPS"],["registered","Fecha inscripción"],
  ["updated","Última actualización"],["updatedBy","Actualizado por"],["campaign","Encuesta"]
-];
+]
 const RESTRICTED=new Set(["cedula","email","address","coordinates","geoAccuracy","geoAt","income","updatedBy","observations"]);
 let tableQuery="",rowLimit=20,selectedColumns=new Set(DEFAULT_COLUMNS);
 const eligible=r=>r.eligible!==false;
@@ -165,15 +167,16 @@ function render(){
  renderTable();
 }
 function displayColumns(){
- return [...COLUMNS.filter(c=>c[0]==="participant"||(c[0]!=="actions"&&selectedColumns.has(c[0])&&(!RESTRICTED.has(c[0])||info?.canEdit))),["actions","Acciones"]];
+ return COLUMNS.filter(c=>(FIXED_COLUMNS.has(c[0])||selectedColumns.has(c[0]))&&(!RESTRICTED.has(c[0])||info?.canEdit));
 }
 function renderColumnPicker(){
  const panel=node.querySelector("#fq-columns-panel");if(!panel)return;
- const options=COLUMNS.filter(c=>c[0]!=="participant"&&c[0]!=="actions"&&(!RESTRICTED.has(c[0])||info?.canEdit));
+ const options=COLUMNS.filter(c=>!FIXED_COLUMNS.has(c[0])&&(!RESTRICTED.has(c[0])||info?.canEdit));
  panel.innerHTML='<strong>Selecciona las columnas</strong><div class="fq-column-list">'+options.map(c=>'<label><input type="checkbox" value="'+E(c[0])+'" '+(selectedColumns.has(c[0])?'checked':'')+'> '+E(c[1])+'</label>').join("")+'</div><div class="fq-column-actions"><button class="fq-btn" type="button" id="fq-cols-reset">Restablecer</button></div>';
  panel.querySelector(".fq-column-list").onchange=e=>{
   const input=e.target;
   if(!input.matches('input[type="checkbox"]'))return;
+  if(FIXED_COLUMNS.has(input.value))return;
   if(input.checked)selectedColumns.add(input.value);
   else selectedColumns.delete(input.value);
   renderTable();

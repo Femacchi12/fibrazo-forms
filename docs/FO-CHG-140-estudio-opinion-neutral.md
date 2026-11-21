@@ -274,3 +274,11 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - Al enfocar el campo se mantiene un borde y contorno verde FIBRAZO `#43FFA5` bien definido, conservando texto, tamaño, padding, contador y capacidad de cambiar la altura del textarea.
 - El selector CSS específico `#fq-root #fq-note-input` con `!important` evita que reglas generales para entradas/selectores impongan un radio de borde tipo píldora. No se modifican el editor funcional, notas, permisos, base, API ni inscripciones.
 - QA: sintaxis del JavaScript, comprobación del radio de 5 px en estado normal y foco, y verificación estática de alcance solo al textarea. Revisión visual autenticada en navegador pendiente.
+
+
+## FO-CHG-163 — Columnas permanentes y orden fijo de Focus Groups (21/11/2026)
+- En la tabla de inscritos quedan visibles de forma permanente (dentro de los permisos vigentes) **Edad** inmediatamente a la derecha de Barrio y **Estrato factura** inmediatamente a la derecha de Estrato vivienda. El encabezado Estrato vivienda y el de Estrato factura se alimentan de los campos originales de la base.
+- Después de **Estado** aparecen consecutivamente **Acciones**, **Observaciones** y **Coordenadas**, en ese orden. Las columnas Acciones y Participante continúan obligatorias. Observaciones y Coordenadas se muestran siempre al administrador, conservando las restricciones: los lectores sin permiso administrativo no reciben notas ni datos GPS exactos, por lo que esas columnas siguen ocultas para ellos.
+- Estas seis columnas (Participante, Edad, Estrato factura, Acciones, Observaciones y Coordenadas) ya no aparecen como opciones desmarcables en «Ver más columnas». Las demás permanecen configurables y Restablecer devuelve a la vista predeterminada.
+- El cambio fija **visibilidad y posición**, sin bloquear horizontalmente todas estas columnas durante el desplazamiento: se mantiene anclada a la izquierda únicamente Participante para conservar espacio útil en pantallas pequeñas. El resto se consulta mediante la barra horizontal existente.
+- No se modifican registros, notas, sesiones, estados, permisos, API ni fuentes. QA requerido: validación sintáctica, orden, selección predeterminada, restablecimiento, permisos de lectura y toggles de columnas opcionales. Revisión visual en navegador autenticado pendiente.
