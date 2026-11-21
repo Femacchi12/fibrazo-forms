@@ -209,11 +209,17 @@ function availabilityCell(availability){
  if(other.length)lines.push('<div class="fq-availability-line">'+E(other.join(" · "))+'</div>');
  return '<div class="fq-availability">'+lines.join("")+'</div>';
 }
+function displayPhone(value){
+ const original=String(value??"").trim();
+ const digits=original.replace(/\D/g,"");
+ // Show only Colombian mobile local digits; keep unexpected international numbers unchanged.
+ return digits.length===12&&/^573\d{9}$/.test(digits)?digits.slice(2):original;
+}
 function dataCell(r,key){
  switch(key){
  case "participant":return '<b>'+E((r.first+" "+r.last).trim())+'</b>';
  case "cedula":return E(r.cedula||"—");
- case "phone":return E(r.phone);
+ case "phone":return E(displayPhone(r.phone)||"—");
  case "barrio":return E(r.barrio);
  case "stratum":return E(r.stratum||"—");
  case "operator":return E((r.operator||"—")+(r.otherOperator?" · "+r.otherOperator:""));

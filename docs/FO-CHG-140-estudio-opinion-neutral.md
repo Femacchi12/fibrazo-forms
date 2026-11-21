@@ -282,3 +282,10 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - Estas seis columnas (Participante, Edad, Estrato factura, Acciones, Observaciones y Coordenadas) ya no aparecen como opciones desmarcables en «Ver más columnas». Las demás permanecen configurables y Restablecer devuelve a la vista predeterminada.
 - El cambio fija **visibilidad y posición**, sin bloquear horizontalmente todas estas columnas durante el desplazamiento: se mantiene anclada a la izquierda únicamente Participante para conservar espacio útil en pantallas pequeñas. El resto se consulta mediante la barra horizontal existente.
 - No se modifican registros, notas, sesiones, estados, permisos, API ni fuentes. QA requerido: validación sintáctica, orden, selección predeterminada, restablecimiento, permisos de lectura y toggles de columnas opcionales. Revisión visual en navegador autenticado pendiente.
+
+
+## FO-CHG-164 — Celular nacional sin prefijo +57 en la tabla (21/11/2026)
+- La celda **Celular** de la tabla de Focus Groups muestra únicamente los diez dígitos locales cuando el valor corresponde a un móvil colombiano válido almacenado con el prefijo de país (por ejemplo `+573001234567` → `3001234567`). Si el dato ya contiene diez dígitos se conserva; si tiene un formato desconocido o de otro país no se trunca indebidamente.
+- El ajuste es **solo de presentación del tablero**. En Google Sheets, la API, las validaciones de duplicados, el buscador de participantes y las exportaciones CSV se conserva el teléfono original. No cambia la posibilidad de contactar a los inscritos.
+- Se mantienen los cambios FO-CHG-163 en visibilidad y orden de columnas, con permisos y restricciones de datos sin variaciones. No se modifican inscripciones ni observaciones.
+- QA: sintaxis de JavaScript y casos simulados con `+57`, `57`, diez dígitos, otro país y cadena vacía. Prueba visual autenticada pendiente.
