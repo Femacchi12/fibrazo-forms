@@ -136,7 +136,9 @@ function coordinates(r){
  if(!info?.canEdit)return "Restringido";
  const a=Number(r.geoLat),b=Number(r.geoLng);
  if(r.geoStatus!=="Autorizado"||!String(r.geoLat||"").trim()||!String(r.geoLng||"").trim()||!Number.isFinite(a)||!Number.isFinite(b)||Math.abs(a)>90||Math.abs(b)>180)return "Sin coordenadas";
- return '<a href="https://www.google.com/maps/search/?api=1&amp;query='+encodeURIComponent(a+","+b)+'" target="_blank" rel="noopener noreferrer" aria-label="Ver coordenadas en Google Maps">'+E(a.toFixed(6)+", "+b.toFixed(6))+' ↗</a>';
+ const accuracy=Number(r.geoAccuracy),hasAccuracy=String(r.geoAccuracy??"").trim()!==""&&Number.isFinite(accuracy)&&accuracy>=0&&accuracy<=100000;
+ const label=a.toFixed(6)+", "+b.toFixed(6)+(hasAccuracy?" (± "+Math.round(accuracy)+" m)":"");
+ return '<a href="https://www.google.com/maps/search/?api=1&amp;query='+encodeURIComponent(a+","+b)+'" target="_blank" rel="noopener noreferrer" aria-label="Ver coordenadas en Google Maps">'+E(label)+' ↗</a>';
 }
 function dataCell(r,key){
  switch(key){
