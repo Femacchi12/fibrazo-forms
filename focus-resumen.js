@@ -50,15 +50,22 @@ function setup(){
  '<label>Estado<select id="fq-status"><option value="">Todos</option>'+STATUSES.map(v=>'<option>'+E(v)+'</option>').join("")+'<option>'+EXTRA_STATUS+'</option></select></label>'+
  '<label>Nombre o celular<input type="search" id="fq-q" placeholder="Buscar participante"></label></div>'+
  '<div id="fq-kpis" class="fq-kpis"></div><div class="fq-tools"><h2>Sesiones</h2><div class="fq-suggestion-action"><button id="fq-suggest" class="fq-btn" disabled>Sugerir distribución</button> '+hint("Propone repartir a los preinscritos entre los horarios disponibles. No aplica cambios hasta que lo confirmes.")+'</div><span class="fq-muted">Solo se cierran manualmente.</span></div>'+
- '<div id="fq-slots" class="fq-slots"></div><div id="fq-preview" hidden></div><div class="fq-tools"><h2 id="fq-count">Inscriptos</h2><button class="fq-btn" id="fq-export">Exportar CSV</button></div>'+
- '<div class="fq-tablebox"><table class="fq-table"><thead><tr><th>Participante</th><th>Celular</th><th>Barrio</th><th>Disponibilidad '+hint("Los horarios elegidos por la persona. Puede haber varios.")+'</th><th>Sesión asignada '+hint("Una sola sesión por persona. Solo horarios declarados.")+'</th><th>Estado '+hint("Preinscrito, Contactado a confirmar, Confirmado o No asistirá.")+'</th><th>Acciones</th></tr></thead><tbody id="fq-rows"></tbody></table></div></div>';
+ '<div id="fq-slots" class="fq-slots"></div><div id="fq-preview" hidden></div><section class="fq-table-panel"><div class="fq-table-toolbar"><h2 id="fq-count">Inscriptos</h2><input class="fq-table-search" id="fq-table-q" type="search" placeholder="Buscar en la tabla" aria-label="Buscar en la tabla"><div class="fq-table-actions"><button class="fq-btn" id="fq-export">Exportar CSV</button><div class="fq-column-anchor"><button class="fq-btn" id="fq-columns" type="button" aria-expanded="false" aria-controls="fq-columns-panel">Ver más columnas ▾</button><div id="fq-columns-panel" class="fq-column-popover" hidden></div></div></div></div>'+
+ '<div class="fq-tablebox" id="fq-tablebox" role="region" aria-label="Tabla de inscritos desplazable" tabindex="0"><table class="fq-table"><thead id="fq-table-head"></thead><tbody id="fq-rows"></tbody></table></div><div class="fq-table-bottom"><button class="fq-btn" type="button" id="fq-more" hidden>Ver más</button><div class="fq-table-note">Desplázate para consultar más filas y columnas. La columna Participante permanece fija.</div></div></section></div>';
  document.body.appendChild(node);
  node.querySelector("#fq-exit").onclick=close;
  node.querySelector("#fq-refresh").onclick=load;
  node.querySelector("#fq-suggest").onclick=showSuggestions;
  node.querySelector("#fq-export").onclick=exportCsv;
  node.querySelector("#fq-copy").onclick=()=>navigator.clipboard.writeText(SHARE).then(()=>message("Enlace copiado. Requiere acceso corporativo."),()=>message("Copiá: "+SHARE));
- for(const f of Object.keys(filters)){node.querySelector("#fq-"+f).addEventListener(f==="q"?"input":"change",e=>{filters[f]=e.target.value;render();});}
+ for(const f of Object.keys(filters)){node.querySelector("#fq-"+f).addEventListener(f==="q"?"input":"change",e=>{filters[f]=e.target.value;rowLimit=20;render();});}
+ node.querySelector("#fq-table-q").addEventListener("input",e=>{tableQuery=e.target.value.toLocaleLowerCase("es");rowLimit=20;renderTable();});
+ node.querySelector("#fq-more").addEventListener("click",()=>{rowLimit+=20;renderTable();});
+ node.querySelector("#fq-columns").addEventListener("click",()=>{
+  const panel=node.querySelector("#fq-columns-panel");panel.hidden=!panel.hidden;
+  node.querySelector("#fq-columns").setAttribute("aria-expanded",String(!panel.hidden));
+  if(!panel.hidden)renderColumnPicker();
+ });
  node.querySelector("#fq-slots").onclick=async e=>{
   const view=e.target.closest("[data-view]");if(view){const key=view.dataset.view;filters.date=key.slice(0,10);filters.day="";filters.hour=key.slice(-5);node.querySelector("#fq-date").value=filters.date;node.querySelector("#fq-day").value="";node.querySelector("#fq-hour").value=filters.hour;render();return;}
   const toggle=e.target.closest("[data-toggle]");if(toggle&&info?.canEdit){if(!confirm((toggle.dataset.open==="true"?"Cerrar":"Reabrir")+" sesión "+label(toggle.dataset.toggle)+"?"))return;await save({action:"setSlot",slot:toggle.dataset.toggle,open:toggle.dataset.open!=="true"});}
@@ -106,12 +113,79 @@ function render(){
   lines.map((a,i)=>'<div class="fq-metric fq-metric-'+i+'"><span>'+E(a[0])+' '+hint(a[2])+'</span><b>'+a[1]+'</b></div>').join("")+
   '<button class="fq-btn" data-view="'+E(s.id)+'">Ver inscriptos</button> '+(info.canEdit?'<button class="fq-btn" data-toggle="'+E(s.id)+'" data-open="'+s.open+'">'+(s.open?"Cerrar":"Reabrir")+'</button>':'')+'<div class="fq-muted">'+(s.open?"Abierto":"Cerrado manualmente")+'</div></article>';
  }).join("");
- node.querySelector("#fq-count").textContent="Inscriptos ("+rows.length+")";
- node.querySelector("#fq-rows").innerHTML=rows.length?rows.map(r=>{
- const assign='<option value="">Sin asignar</option>'+OPTIONS.filter(s=>r.availability.includes(s[0])).map(s=>'<option value="'+s[0]+'" '+(r.assigned===s[0]?"selected":"")+'>'+E(s[1])+'</option>').join("");
- return '<tr><td><b>'+E(r.first+" "+r.last)+'</b><div class="fq-muted">'+E(r.id)+'</div></td><td>'+E(r.phone)+'</td><td>'+E(r.barrio)+'</td><td>'+E(r.availability.map(label).join("; ")||"Sin disponibilidad")+'</td><td><select class="fq-assign" '+(info.canEdit?"":"disabled")+'>'+assign+'</select></td><td><select class="fq-status" data-current-status="'+E(r.status)+'" '+(info.canEdit?"":"disabled")+'>'+STATUSES.map(v=>'<option '+(r.status===v?"selected":"")+'>'+E(v)+'</option>').join("")+'</select></td><td>'+(info.canEdit?'<button class="fq-btn" data-save="'+E(r.id)+'">Guardar</button>':'Solo lectura')+'</td></tr>';
- }).join(""):'<tr><td colspan="7" style="padding:24px">No hay inscriptos que coincidan con los filtros.</td></tr>';
+ renderTable();
 }
+function displayColumns(){
+ return [...COLUMNS.filter(c=>c[0]==="participant"||(c[0]!=="actions"&&selectedColumns.has(c[0])&&(!RESTRICTED.has(c[0])||info?.canEdit))),["actions","Acciones"]];
+}
+function renderColumnPicker(){
+ const panel=node.querySelector("#fq-columns-panel");if(!panel)return;
+ const options=COLUMNS.filter(c=>c[0]!=="participant"&&c[0]!=="actions"&&(!RESTRICTED.has(c[0])||info?.canEdit));
+ panel.innerHTML='<strong>Selecciona las columnas</strong><div class="fq-column-list">'+options.map(c=>'<label><input type="checkbox" value="'+E(c[0])+'" '+(selectedColumns.has(c[0])?'checked':'')+'> '+E(c[1])+'</label>').join("")+'</div><div class="fq-column-actions"><button class="fq-btn green" type="button" id="fq-cols-apply">Aplicar</button><button class="fq-btn" type="button" id="fq-cols-reset">Restablecer</button></div>';
+ panel.querySelector("#fq-cols-apply").onclick=()=>{
+  selectedColumns=new Set(["participant","actions",...Array.from(panel.querySelectorAll('input[type="checkbox"]:checked'),x=>x.value)]);
+  panel.hidden=true;node.querySelector("#fq-columns").setAttribute("aria-expanded","false");renderTable();
+ };
+ panel.querySelector("#fq-cols-reset").onclick=()=>{
+  selectedColumns=new Set(DEFAULT_COLUMNS);panel.hidden=true;node.querySelector("#fq-columns").setAttribute("aria-expanded","false");renderTable();
+ };
+}
+function coordinates(r){
+ if(!info?.canEdit)return "Restringido";
+ const a=Number(r.geoLat),b=Number(r.geoLng);
+ if(r.geoStatus!=="Autorizado"||!String(r.geoLat||"").trim()||!String(r.geoLng||"").trim()||!Number.isFinite(a)||!Number.isFinite(b)||Math.abs(a)>90||Math.abs(b)>180)return "Sin coordenadas";
+ return '<a href="https://www.google.com/maps/search/?api=1&amp;query='+encodeURIComponent(a+","+b)+'" target="_blank" rel="noopener noreferrer" aria-label="Ver coordenadas en Google Maps">'+E(a.toFixed(6)+", "+b.toFixed(6))+' ↗</a>';
+}
+function dataCell(r,key){
+ switch(key){
+ case "participant":return '<b>'+E((r.first+" "+r.last).trim())+'</b>';
+ case "cedula":return E(r.cedula||"—");
+ case "phone":return E(r.phone);
+ case "barrio":return E(r.barrio);
+ case "stratum":return E(r.stratum||"—");
+ case "operator":return E((r.operator||"—")+(r.otherOperator?" · "+r.otherOperator:""));
+ case "availability":return E(r.availability.map(label).join("; ")||"Sin disponibilidad");
+ case "assigned":{
+  if(!eligible(r))return '<span class="fq-eligibility">No elegible</span>';
+  const options='<option value="">Sin asignar</option>'+OPTIONS.filter(x=>r.availability.includes(x[0])).map(x=>'<option value="'+E(x[0])+'" '+(r.assigned===x[0]?"selected":"")+'>'+E(x[1])+'</option>').join("");
+  return '<select class="fq-assign" '+(info.canEdit?"":"disabled")+'>'+options+'</select>';
+ }
+ case "status":{
+  if(!eligible(r))return '<span class="fq-eligibility">No elegible</span>';
+  return '<select class="fq-status" data-current-status="'+E(r.status)+'" '+(info.canEdit?"":"disabled")+'>'+STATUSES.map(x=>'<option '+(r.status===x?"selected":"")+'>'+E(x)+'</option>').join("")+'</select>';
+ }
+ case "coordinates":return coordinates(r);
+ case "actions":return !eligible(r)?'<span class="fq-eligibility">Revisión</span>':(info.canEdit?'<button class="fq-btn" data-save="'+E(r.id)+'">Guardar</button>':'Solo lectura');
+ case "email":return E(r.email||"—");
+ case "address":return E(r.address||"—");
+ case "age":return E(r.age||"—");
+ case "decision":return E(r.decision==="No"?"No, otra persona decide":r.decision==="Decido"?"Decide":r.decision==="Compartimos"?"Comparte decisión":r.decision||"—");
+ case "stratumBill":return E(r.stratumBill||"—");
+ case "internet":return E(r.internet||"—");
+ case "otherOperator":return E(r.otherOperator||"—");
+ case "income":return E(r.income||"—");
+ case "source":return E(r.source||"—");
+ case "geoStatus":return E(r.geoStatus||"—");
+ case "geoAccuracy":return E(r.geoAccuracy?String(r.geoAccuracy)+" m":"—");
+ case "geoAt":return E(r.geoAt||"—");
+ case "registered":return E(r.registered||"—");
+ case "updated":return E(r.updated||"—");
+ case "updatedBy":return E(r.updatedBy||"—");
+ case "campaign":return E("Estratos 2 y 3+");
+ default:return "—";
+ }
+}
+function renderTable(){
+ if(!node||!info)return;
+ const cols=displayColumns(),all=visible(),q=tableQuery.trim();
+ const rows=q?all.filter(r=>([r.first,r.last,r.phone,r.barrio,r.stratum,r.operator,r.cedula,r.email,r.address,r.decision,r.geoLat,r.geoLng,r.status,r.source].join(" ").toLocaleLowerCase("es").includes(q))):all;
+ node.querySelector("#fq-count").textContent="Inscriptos ("+rows.length+")";
+ node.querySelector("#fq-table-head").innerHTML='<tr>'+cols.map(c=>'<th scope="col">'+E(c[1])+'</th>').join("")+'</tr>';
+ const slice=rows.slice(0,rowLimit);
+ node.querySelector("#fq-rows").innerHTML=slice.length?slice.map(r=>'<tr data-id="'+E(r.id)+'">'+cols.map(c=>'<td>'+dataCell(r,c[0])+'</td>').join("")+'</tr>').join(""):'<tr><td colspan="'+cols.length+'" style="padding:24px">No hay inscriptos que coincidan con los filtros.</td></tr>';
+ const remain=Math.min(20,Math.max(0,rows.length-rowLimit)),more=node.querySelector("#fq-more");more.hidden=!remain;more.textContent="Ver más ("+remain+")";
+}
+
 function showSuggestions(){
  if(!info?.canEdit)return;
  const proposals=info.suggestions?.proposed||[],panel=node.querySelector("#fq-preview");panel.hidden=false;panel.className="fq-preview";
