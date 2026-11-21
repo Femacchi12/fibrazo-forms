@@ -55,7 +55,7 @@ function record(row,index,adminAccess=false){
   return {row:index+2,id:x(row[1]),registered:x(row[0]),first:x(row[2]),last:x(row[3]),age:x(row[4]),phone:x(row[5]),email:adminAccess?x(row[6]):"",barrio:x(row[7]),address:adminAccess?x(row[8]):"",stratumBill:x(row[9]),decision,eligible:qualified,internet:x(row[11]),operator:x(row[12]),otherOperator:x(row[13]),source:x(row[15]),consent:x(row[16]),geoLat:adminAccess?x(row[18]):"",geoLng:adminAccess?x(row[19]):"",geoAccuracy:adminAccess?x(row[20]):"",geoStatus:x(row[21]),geoAt:adminAccess?x(row[22]):"",stratum:x(row[25]||row[9]),income:adminAccess?x(row[26]):"",status:STATUSES.includes(x(row[17]))?x(row[17]):"Preinscrito",availability:prefs(row),assigned:x(row[28]),updated:x(row[29]),updatedBy:adminAccess?x(row[30]):"",campaign:x(row[31])||CAMPAIGN,cedula:adminAccess?x(row[33]):""};
 }
 async function records(s,adminAccess=false){
- const r=await s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!A2:AH3000"});
+ const r=await s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!A2:AH3000",valueRenderOption:"UNFORMATTED_VALUE"});
  return (r.data.values||[]).map((v,i)=>record(v,i,adminAccess)).filter(r=>r.id.startsWith("EO-"));
 }
 function summaryData(rs,slots){
