@@ -9,7 +9,22 @@ const label=id=>OPTIONS.find(o=>o[0]===id)?.[1]||"Sin asignar";
 const hint=s=>'<span class="fq-tip" tabindex="0" role="note" data-tip="'+E(s)+'" aria-label="'+E(s)+'">?</span>';
 const level=n=>n>=15?"strong-red":n>=13?"red":n>=12?"orange":n>=8?"yellow":n>=3?"green":"white";
 let node=null,info=null,waiting=false;
-const filters={campaign:"",date:"",day:"",hour:"",status:"",q:""};
+const filters={campaign:"ESTUDIO_OPINION_2026",date:"",day:"",hour:"",status:"",q:""};
+const EXTRA_STATUS="No elegible";
+const DEFAULT_COLUMNS=["participant","phone","barrio","stratum","operator","availability","assigned","status","coordinates","actions"];
+const COLUMNS=[
+ ["participant","Participante"],["cedula","Cédula"],["phone","Celular"],["barrio","Barrio"],
+ ["stratum","Estrato vivienda"],["operator","Operadores"],["availability","Disponibilidad"],["assigned","Sesión asignada"],
+ ["status","Estado"],["coordinates","Coordenadas"],["actions","Acciones"],
+ ["email","Correo"],["address","Dirección"],["age","Edad"],["decision","Decisión del hogar"],
+ ["stratumBill","Estrato factura"],["internet","Internet fijo"],["otherOperator","Otro operador"],
+ ["income","Tipo de ingresos"],["source","Cómo se enteró"],["geoStatus","Estado GPS"],
+ ["geoAccuracy","Precisión GPS"],["geoAt","Fecha GPS"],["registered","Fecha inscripción"],
+ ["updated","Última actualización"],["updatedBy","Actualizado por"],["campaign","Encuesta"]
+];
+const RESTRICTED=new Set(["cedula","email","address","coordinates","geoAccuracy","geoAt","income","updatedBy"]);
+let tableQuery="",rowLimit=20,selectedColumns=new Set(DEFAULT_COLUMNS);
+const eligible=r=>r.eligible!==false;
 const styles=[
 "#fq-root{position:fixed;inset:0;z-index:99999;background:#0b0b0f;color:#faf9fd;overflow-y:auto;padding:22px 2vw;font:13px Arial,sans-serif}#fq-root *{box-sizing:border-box}#fq-root [hidden]{display:none!important}.fq-wrap{max-width:1550px;margin:auto}",
 "#fq-root button,#fq-root select,#fq-root input{font:inherit}#fq-root button{cursor:pointer}.fq-top,.fq-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.fq-top{padding-bottom:15px;border-bottom:1px solid #393640}.fq-top h1{font-size:25px;margin:6px 0}.fq-muted{color:#aaa9ba;font-size:11px}.fq-btn{border:1px solid #676075;background:#282431;color:#fff;padding:9px 12px;border-radius:8px}.fq-btn.green{background:#49eb91;border-color:#49eb91;color:#06150c;font-weight:bold}.fq-btn:disabled{opacity:.5;cursor:default}",
@@ -32,7 +47,7 @@ function setup(){
  '<label>Fecha evento<select id="fq-date"><option value="">Ambos días</option><option value="2026-11-28">28/11/2026</option><option value="2026-11-29">29/11/2026</option></select></label>'+
  '<label>Día<select id="fq-day"><option value="">Todos</option><option value="2026-11-28">Sábado</option><option value="2026-11-29">Domingo</option></select></label>'+
  '<label>Horario<select id="fq-hour"><option value="">Todos</option><option value="09:00">9:00 a. m.</option><option value="14:00">2:00 p. m.</option></select></label>'+
- '<label>Estado<select id="fq-status"><option value="">Todos</option>'+STATUSES.map(v=>'<option>'+E(v)+'</option>').join("")+'</select></label>'+
+ '<label>Estado<select id="fq-status"><option value="">Todos</option>'+STATUSES.map(v=>'<option>'+E(v)+'</option>').join("")+'<option>'+EXTRA_STATUS+'</option></select></label>'+
  '<label>Nombre o celular<input type="search" id="fq-q" placeholder="Buscar participante"></label></div>'+
  '<div id="fq-kpis" class="fq-kpis"></div><div class="fq-tools"><h2>Sesiones</h2><div class="fq-suggestion-action"><button id="fq-suggest" class="fq-btn" disabled>Sugerir distribución</button> '+hint("Propone repartir a los preinscritos entre los horarios disponibles. No aplica cambios hasta que lo confirmes.")+'</div><span class="fq-muted">Solo se cierran manualmente.</span></div>'+
  '<div id="fq-slots" class="fq-slots"></div><div id="fq-preview" hidden></div><div class="fq-tools"><h2 id="fq-count">Inscriptos</h2><button class="fq-btn" id="fq-export">Exportar CSV</button></div>'+
@@ -68,7 +83,7 @@ function visible(){return (info?.rows||[]).filter(r=>{
  if(filters.date&&!choices.some(q=>q.startsWith(filters.date)))return false;
  if(filters.day&&!choices.some(q=>q.startsWith(filters.day)))return false;
  if(filters.hour&&!choices.some(q=>q.endsWith(filters.hour)&&(filters.date?q.startsWith(filters.date):true)&&(filters.day?q.startsWith(filters.day):true)))return false;
- if(filters.status&&r.status!==filters.status)return false;
+ if(filters.status===EXTRA_STATUS?eligible(r):filters.status&&(!eligible(r)||r.status!==filters.status))return false;
  if(filters.q&&!((r.first+" "+r.last+" "+r.phone+" "+r.barrio).toLowerCase().includes(filters.q.toLowerCase())))return false;
  return true;
 });}
@@ -76,13 +91,14 @@ function updateCampaignFilter(){
  const select=node.querySelector("#fq-campaign");
  const campaigns=Array.isArray(info?.campaigns)?info.campaigns:[];
  const previous=filters.campaign;
- select.innerHTML='<option value="">Todas las encuestas</option>'+campaigns.map(c=>'<option value="'+E(c.id)+'">'+E(c.id==="ESTUDIO_OPINION_2026"?"Focus Group":c.name)+'</option>').join("");
+ select.innerHTML='<option value="">Todas las encuestas</option>'+campaigns.map(c=>'<option value="'+E(c.id)+'">'+E(c.id==="ESTUDIO_OPINION_2026"?"Estratos 2 y 3+":c.name)+'</option>').join("");
  if(previous&&!campaigns.some(c=>c.id===previous))filters.campaign="";
  select.value=filters.campaign;
 }
 function render(){
  if(!info)return;const rows=visible();
- const metrics=[["Inscriptos únicos",rows.length,"Cada persona se cuenta una sola vez."],["Confirmados",rows.filter(r=>r.status==="Confirmado").length,"Personas confirmadas para una sesión."],["Contactados a confirmar",rows.filter(r=>r.status==="Contactado a confirmar").length,"Personas contactadas pendientes de confirmación."],["Preinscritos",rows.filter(r=>r.status==="Preinscrito").length,"Personas que todavía requieren gestión."],["No asistirán",rows.filter(r=>r.status==="No asistirá").length,"No se contabilizan como candidatos activos."]];
+ const candidates=rows.filter(eligible);
+ const metrics=[["Inscriptos únicos",candidates.length,"Solo personas que deciden o comparten decisiones del hogar."],["Confirmados",candidates.filter(r=>r.status==="Confirmado").length,"Candidatos elegibles confirmados."],["Contactados a confirmar",candidates.filter(r=>r.status==="Contactado a confirmar").length,"Candidatos elegibles pendientes."],["Preinscritos",candidates.filter(r=>r.status==="Preinscrito").length,"Candidatos elegibles pendientes de gestión."],["No asistirán",candidates.filter(r=>r.status==="No asistirá").length,"Candidatos elegibles que no asistirán."],["No elegibles",rows.filter(r=>!eligible(r)).length,"Registrados que no deciden ni comparten decisiones, excluidos de los cupos."]];
  node.querySelector("#fq-kpis").innerHTML=metrics.map(a=>'<article>'+E(a[0])+' '+hint(a[2])+'<strong>'+a[1]+'</strong></article>').join("");
  node.querySelector("#fq-slots").innerHTML=info.slots.map(s=>{
   const lines=[["Asignados",s.assigned,"Participantes ubicados en esta sesión."],["Confirmados",s.confirmed,"Asignados que confirmaron."],["Contactados a confirmar",s.contacted,"Asignados pendientes de confirmación."],["Preinscritos asignados",s.pending,"Asignados todavía sin gestionar."],["No asistirán",s.notAttending,"Asignados que no asistirán."]];
