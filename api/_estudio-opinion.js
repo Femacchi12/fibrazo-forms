@@ -59,7 +59,7 @@ module.exports=async(req,res)=>{
    if(!String(req.headers["content-type"]||"").includes("application/json"))return res.status(415).json({error:"Formato no permitido"});
    if(!(await readPublication(gauth())))return res.status(403).json({error:"La convocatoria no está habilitada"});
    const cedula=String(req.body?.cedula??"").trim(),telefono=phone(req.body?.telefono);
-   if(!/^[0-9]{6,10}$/.test(cedula)||!/^3\d{9}$/.test(telefono))return res.status(400).json({error:"Revisá la cédula y el número de celular antes de continuar"});
+   if(!/^[0-9]{6,10}$/.test(cedula)||!/^3\d{9}$/.test(telefono))return res.status(400).json({error:"Revisa la cédula y el número de celular antes de continuar"});
    const auth=gauth();
    // Rate-limit public lookups to reduce automated identification-number enumeration.
    const ipHash=await checkPublicRate(auth,{id:"OPINION_DUPLICATE_CHECK",rateLimit:12},req);
@@ -99,11 +99,11 @@ module.exports=async(req,res)=>{
   if(p.website)return res.status(400).json({error:"Solicitud inválida"});
   if(!Number(p.startedAt)||Date.now()-Number(p.startedAt)<2500||Date.now()-Number(p.startedAt)>7200000)return res.status(400).json({error:"Tiempo de formulario inválido"});
   const t=phone(d.telefono),tc=phone(d.telefonoConfirmacion);
-  if(!/^3\d{9}$/.test(t)||t!==tc)return res.status(400).json({error:"Revisá el número de celular y su confirmación"});
+  if(!/^3\d{9}$/.test(t)||t!==tc)return res.status(400).json({error:"Revisa el número de celular y su confirmación"});
   const cedula=String(d.cedula??"").trim();
-  if(!/^[0-9]{6,10}$/.test(cedula))return res.status(400).json({error:"Ingresá un número de cédula válido, de 6 a 10 dígitos"});
+  if(!/^[0-9]{6,10}$/.test(cedula))return res.status(400).json({error:"Ingresa un número de cédula válido, de 6 a 10 dígitos"});
   if(!d.nombre||!d.apellido||!d.barrio||!d.direccion)return res.status(400).json({error:"Completá los datos obligatorios"});
-  if(d.nombre.length>100||d.apellido.length>100||d.barrio.length>120||d.direccion.length>200)return res.status(400).json({error:"Revisá la longitud de los datos"});
+  if(d.nombre.length>100||d.apellido.length>100||d.barrio.length>120||d.direccion.length>200)return res.status(400).json({error:"Revisa la longitud de los datos"});
   if(!Number.isInteger(Number(d.edad))||Number(d.edad)<30||Number(d.edad)>55)return res.status(400).json({error:"Esta convocatoria está dirigida a personas entre 30 y 55 años"});
   if(!["2","3","4","5","6"].includes(String(d.estrato)))return res.status(400).json({error:"Seleccioná el estrato de la factura de Afinia entre 2 y 6"});
   if(!["2","3","4","5","6"].includes(String(d.estratoVivienda)))return res.status(400).json({error:"Seleccioná el estrato de tu vivienda entre 2 y 6"});
@@ -114,7 +114,7 @@ module.exports=async(req,res)=>{
   const openIds=slots.filter(slot=>slot.open).map(slot=>slot.id);
   const submitted=Array.isArray(d.sesionesDisponibles)?d.sesionesDisponibles:[];
   const chosen=[...new Set(submitted.map(String))];
-  if(!chosen.length||chosen.length>4||chosen.some(id=>!openIds.includes(id)))return res.status(409).json({error:"Los días u horarios seleccionados ya no están disponibles. Actualizá el formulario."});
+  if(!chosen.length||chosen.length>4||chosen.some(id=>!openIds.includes(id)))return res.status(409).json({error:"Los días u horarios seleccionados ya no están disponibles. Actualiza el formulario."});
   const dates=[...new Set(chosen.map(v=>v.slice(0,10)))];
   const availability=dates.length===2?"Ambos días":dates[0]==="2026-11-28"?"Sábado 28":"Domingo 29";
   const selectedSlots=[...new Set(chosen.map(v=>v.slice(-5)))].sort().join(", ");
@@ -132,7 +132,7 @@ module.exports=async(req,res)=>{
   const duplicateId=(studyRows.data.values||[]).some(values=>String(values[0]||"").startsWith("EO-")&&String(values[32]||"").trim()===cedula);
   const duplicatePhone=(studyRows.data.values||[]).some(values=>samePhone(values,"EO-"))||(legacyRows.data.values||[]).some(values=>samePhone(values,"FG-"));
   if(duplicateId||duplicatePhone)return res.status(409).json({
-   error:duplicateId?"Este número de identificación ya se encuentra registrado. No podés continuar con la inscripción. Si necesitás ayuda o actualizar tus datos, comunicate con el equipo organizador por WhatsApp.":"Este número de celular ya se encuentra registrado. Si necesitás actualizar tus datos, escribinos por WhatsApp.",
+   error:duplicateId?"Este número de identificación ya se encuentra registrado. No puedes continuar con la inscripción. Si necesitas ayuda o actualizar tus datos, comunícate con el equipo organizador por WhatsApp.":"Este número de celular ya se encuentra registrado. Si necesitas actualizar tus datos, escríbenos por WhatsApp.",
    cedulaRegistrada:duplicateId,telefonoRegistrado:duplicatePhone
   });
   const id="EO-"+Date.now().toString(36).toUpperCase()+"-"+Math.random().toString(36).slice(2,7).toUpperCase();
@@ -150,5 +150,5 @@ module.exports=async(req,res)=>{
   }}]}});
   await logSecurity(auth,{formId:"ESTUDIO_OPINION_2026",ipHash:hash,req}).catch(()=>{});
   return res.status(201).json({ok:true,id});
- }catch(e){console.error("ESTUDIO_OPINION",e?.message);return res.status(e.status||500).json({error:e.status===429?"Demasiados intentos. Probá más tarde.":"No se pudo procesar la inscripción. Intentá nuevamente."});}
+ }catch(e){console.error("ESTUDIO_OPINION",e?.message);return res.status(e.status||500).json({error:e.status===429?"Demasiados intentos. Prueba más tarde.":"No se pudo procesar la inscripción. Intenta nuevamente."});}
 };

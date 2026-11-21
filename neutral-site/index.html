@@ -97,7 +97,7 @@ function validate(){
  if(count){summary.textContent="Revisa los "+count+" campo(s) marcados en rojo para continuar.";first?.focus();return false;}
  summary.textContent="";return true;
 }
-const DUPLICATE_ID_MESSAGE="Este número de identificación ya se encuentra registrado. No podés continuar con la inscripción. Si necesitas ayuda o actualizar tus datos, comunícate con el equipo organizador por WhatsApp al ";
+const DUPLICATE_ID_MESSAGE="Este número de identificación ya se encuentra registrado. No puedes continuar con la inscripción. Si necesitas ayuda o actualizar tus datos, comunícate con el equipo organizador por WhatsApp al ";
 const DUPLICATE_PHONE_MESSAGE="Este número de celular ya se encuentra registrado. Si necesitas actualizar tus datos, escríbenos por WhatsApp al ";
 const WHATSAPP_URL="https://wa.me/573124602853";
 function appendWhatsAppContact(element){
@@ -126,8 +126,8 @@ function showDuplicateError(result){
  if(result.telefonoRegistrado){showDuplicateContactOnField(form.elements.telefono,DUPLICATE_PHONE_MESSAGE);invalid(form.elements.telefonoConfirmacion,"Este celular ya figura en una inscripción anterior.");if(!first)first=form.elements.telefono;}
  if(first){
   summary.textContent=result.cedulaRegistrada
-   ?"No podés continuar: este número de identificación ya se encuentra registrado. Si necesitas ayuda o actualizar tus datos, comunícate por WhatsApp al "
-   :"No podés continuar: este número de celular ya se encuentra registrado. Si necesitas ayuda o actualizar tus datos, comunícate por WhatsApp al ";
+   ?"No puedes continuar: este número de identificación ya se encuentra registrado. Si necesitas ayuda o actualizar tus datos, comunícate por WhatsApp al "
+   :"No puedes continuar: este número de celular ya se encuentra registrado. Si necesitas ayuda o actualizar tus datos, comunícate por WhatsApp al ";
   appendWhatsAppContact(summary);
   first.focus();return true;
  }
