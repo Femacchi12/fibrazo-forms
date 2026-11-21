@@ -296,3 +296,9 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - En cada tarjeta de sesión, se añadió un ícono vectorial de calendario de trazo verde FIBRAZO (`#43FFA5`) y se destacó su título **Sáb 28 - 9:00**, **Sáb 28 - 14:00**, **Dom 29 - 9:00**, **Dom 29 - 14:00** en blanco/negrita adaptativa 15–18 px. El ícono es decorativo y no modifica accesibilidad de los datos ni comportamiento del tooltip.
 - La estructura y datos de los KPI, cantidad disponible, cupos, barras, botones, sugerencia de distribución y sesiones permanecen inalterados. Cambio únicamente visual en `focus-resumen.js` y versión de caché en `index.html`.
 - QA: sintaxis de JS, render de seis KPIs con títulos diferenciados, cuatro sesiones con ícono, preservación de textos de ayuda y cifras, y ausencia de cambios en datos/funciones. Revisión visual con navegador corporativo pendiente después de confirmar Vercel READY.
+
+
+## FO-CHG-166 — Resaltar mensaje de agradecimiento (21/11/2026)
+- En la pantalla final de la encuesta pública «Estudio de opinión / Estratos 2 y 3+», el texto **«Tu voz puede ayudarnos a mejorar los servicios del hogar.»** pasa a negrita (peso 700) y tamaño 17 px, conservando el color vigente `#b9afcf` y su posición actual.
+- Modificación exclusivamente visual de un elemento `<p>` en `neutral-site/index.html`; no se altera ningún otro texto, contenido, campo, validación, botón, formulario, API, base o inscripción.
+- QA: comprobación de reemplazo único, integridad del JavaScript inline y comparación del HTML restante. Revisión visual real en navegador pendiente.
