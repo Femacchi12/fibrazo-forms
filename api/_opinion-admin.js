@@ -1,7 +1,8 @@
 // FO-CHG-149 — protected Focus Group management and manual session availability.
 const {google}=require("googleapis");
 const {gauth,verifyUser,isBaseAdmin,SHEET_ID,DEFAULT_DOMAIN}=require("./_core");
-const TAB="RESP_ESTUDIO_OPINION_2026",CFG="CONFIG_ESTUDIO_OPINION_2026";
+const TAB="RESP_ESTUDIO_OPINION_2026",CFG="CONFIG_ESTUDIO_OPINION_2026",NOTES_TAB="OBS_ESTUDIO_OPINION_2026";
+const NOTE_HEADERS=["Creado el","ID inscripción","Autor","Observación"];
 const CAMPAIGN="Focus Group · Estratos 2 y 3+",EVENT="2026-11-28/2026-11-29";
 const SLOTS=[
  {id:"2026-11-28@09:00",day:"Sábado 28",date:"2026-11-28",time:"09:00"},
@@ -18,14 +19,16 @@ async function ensure(){
  let tabs=meta.data.sheets||[];
  const changes=[];
  if(!tabs.some(t=>t.properties.title===CFG))changes.push({addSheet:{properties:{title:CFG,gridProperties:{frozenRowCount:1}}}});
+  if(!tabs.some(t=>t.properties.title===NOTES_TAB))changes.push({addSheet:{properties:{title:NOTES_TAB,gridProperties:{frozenRowCount:1}}}});
  const responses=tabs.find(t=>t.properties.title===TAB);
  if(!responses)throw Error("RESPONSES_TAB_NOT_FOUND");
  const columns=responses.properties.gridProperties.columnCount||26;
  if(columns<34)changes.push({appendDimension:{sheetId:responses.properties.sheetId,dimension:"COLUMNS",length:34-columns}});
  if(changes.length)await s.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,requestBody:{requests:changes}});
- const [cfg,headers]=await Promise.all([
+ const [cfg,headers,noteHeaders]=await Promise.all([
  s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+CFG+"'!A1:E5"}),
- s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!AC1:AH1"})
+ s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!AC1:AH1"}),
+  s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+NOTES_TAB+"'!A1:D1"})
  ]);
  if(!(cfg.data.values||[]).length){
   await s.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:"'"+CFG+"'!A1:E5",valueInputOption:"RAW",requestBody:{values:[
@@ -35,6 +38,7 @@ async function ensure(){
  }
  const expected=["Sesión asignada","Actualizado el","Actualizado por","Convocatoria","Sesiones disponibles","Número de cédula"];
  if(JSON.stringify(headers.data.values?.[0]||[])!==JSON.stringify(expected))await s.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!AC1:AH1",valueInputOption:"RAW",requestBody:{values:[expected]}});
+  if(!(noteHeaders.data.values||[]).length)await s.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:"'"+NOTES_TAB+"'!A1:D1",valueInputOption:"RAW",requestBody:{values:[NOTE_HEADERS]}});
  return s;
 }
 async function states(s){
@@ -53,6 +57,18 @@ function prefs(row){
 function record(row,index,adminAccess=false){
  const decision=x(row[10]),qualified=["Decido","Compartimos"].includes(decision);
   return {row:index+2,id:x(row[1]),registered:x(row[0]),first:x(row[2]),last:x(row[3]),age:x(row[4]),phone:x(row[5]),email:adminAccess?x(row[6]):"",barrio:x(row[7]),address:adminAccess?x(row[8]):"",stratumBill:x(row[9]),decision,eligible:qualified,internet:x(row[11]),operator:x(row[12]),otherOperator:x(row[13]),source:x(row[15]),consent:x(row[16]),geoLat:adminAccess?x(row[18]):"",geoLng:adminAccess?x(row[19]):"",geoAccuracy:adminAccess?x(row[20]):"",geoStatus:x(row[21]),geoAt:adminAccess?x(row[22]):"",stratum:x(row[25]||row[9]),income:adminAccess?x(row[26]):"",status:STATUSES.includes(x(row[17]))?x(row[17]):"Preinscrito",availability:prefs(row),assigned:x(row[28]),updated:x(row[29]),updatedBy:adminAccess?x(row[30]):"",campaign:x(row[31])||CAMPAIGN,cedula:adminAccess?x(row[33]):""};
+}
+async function notes(s){
+ const r=await s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+NOTES_TAB+"'!A2:D3000",valueRenderOption:"UNFORMATTED_VALUE"});
+ const byId=new Map();
+ for(const row of r.data.values||[]){
+  const id=x(row[1]);if(!id.startsWith("EO-"))continue;
+  const entry={at:x(row[0]),author:x(row[2]),text:x(row[3])};
+  if(!entry.text)continue;
+  if(!byId.has(id))byId.set(id,[]);
+  byId.get(id).push(entry);
+ }
+ return byId;
 }
 async function records(s,adminAccess=false){
  const r=await s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!A2:AH3000",valueRenderOption:"UNFORMATTED_VALUE"});
@@ -119,7 +135,8 @@ async function handle(req,res){
   if(actor.error)return res.status(actor.error).json({error:"Acceso no autorizado"});
   const s=await ensure();
   if(req.method==="GET"){
-   const [all,slots]=await Promise.all([records(s,actor.admin),states(s)]);
+   const [all,slots,noteMap]=await Promise.all([records(s,actor.admin),states(s),actor.admin?notes(s):Promise.resolve(null)]);
+   if(noteMap)for(const row of all)row.notes=noteMap.get(row.id)||[];
    const data=summaryData(all,slots);
    return res.status(200).json({...data,canEdit:actor.admin,suggestions:suggest(all,slots)});
   }
@@ -132,6 +149,19 @@ async function handle(req,res){
    return res.status(200).json({ok:true});
   }
   const all=await records(s,true),byId=new Map(all.map(r=>[r.id,r]));
+   if(action==="addObservation"){
+    const row=byId.get(x(payload.id));
+    if(!row)return res.status(404).json({error:"Inscripción no encontrada"});
+    if(typeof payload.text!=="string")return res.status(400).json({error:"Escribe una observación válida"});
+    const note=payload.text.trim();
+    if(!note||note.length>1500||/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(note))return res.status(400).json({error:"La observación debe contener entre 1 y 1500 caracteres"});
+    // Validate the current row identity to prevent editing another participant after a reorder.
+    const now=await s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!B"+row.row});
+    if(x(now.data.values?.[0]?.[0])!==row.id)return res.status(409).json({error:"La inscripción cambió de posición. Actualiza el tablero e intenta nuevamente."});
+    const at=new Date().toISOString();
+    await s.spreadsheets.values.append({spreadsheetId:SHEET_ID,range:"'"+NOTES_TAB+"'!A:D",valueInputOption:"RAW",insertDataOption:"INSERT_ROWS",requestBody:{values:[[at,row.id,actor.email,note]]}});
+    return res.status(200).json({ok:true,at,author:actor.email});
+   }
   if(action==="update"){
    const r=byId.get(x(payload.id));
    if(!r)return res.status(404).json({error:"Inscripción no encontrada"});
