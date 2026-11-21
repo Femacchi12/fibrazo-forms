@@ -251,3 +251,11 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - Los selectores de sesión y estado y el botón **Guardar** pasan a **26 px de altura**, con tipografía de 10 px, bordes redondeados y la misma altura de «No elegible» y «Revisión». El estado largo «Contactado a confirmar» dispone de más ancho para conservar la legibilidad; el color semántico sigue vigente.
 - Únicamente modifica presentación en `focus-resumen.js` y cache bust en `index.html`. No altera opciones, estados, validaciones, cupos, roles, API, almacenamientos, permisos, enlaces ni registros de prueba.
 - QA: comprobar sintaxis, horarios uno/dos días, orden, disponibilidad vacía y render con valores sintéticos; controles de 26 px y clases de columnas. Prueba visual autenticada en navegador pendiente por separado de Vercel READY.
+
+
+## FO-CHG-160 — Selector compacto de columnas con aplicación inmediata (20/11/2026)
+- El desplegable «Ver más columnas» utiliza casillas de 14 px y filas compactas de mínimo 26 px, con 1 px de separación, tipografía 11 px y esquema negro/gris carbón con verde FIBRAZO.
+- Marcar o desmarcar una columna actualiza su visibilidad de inmediato, sin confirmar ni cerrar el menú. Se elimina solamente el botón «Aplicar» de este selector; «Aplicar sugerencias» sigue disponible para la distribución de participantes.
+- «Restablecer» es el único botón del selector; vuelve de inmediato a las columnas preseleccionadas y sincroniza las casillas, manteniendo el desplegable abierto.
+- Las columnas «Participante» y «Acciones» permanecen fijas, se conservan permisos, restricciones sobre datos sensibles, paginación, búsqueda, filtros, exportación y registros de prueba; sin cambios en API ni datos.
+- QA: verificación de sintaxis JS, marcado/desmarcado instantáneo, restablecimiento, estado visual de casillas y respeto de permisos con casos simulados. Validación visual autenticada en navegador por separado.
