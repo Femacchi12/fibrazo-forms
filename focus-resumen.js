@@ -20,7 +20,7 @@ const COLUMNS=[
  ["operator","Operadores"],["availability","Disponibilidad"],["assigned","Sesión asignada"],
  ["status","Estado"],["actions","Acciones"],["observations","Observaciones"],["coordinates","Coordenadas"],
  ["cedula","Cédula"],["email","Correo"],["address","Dirección"],
- ["decision","Decisión del hogar"],["internet","Internet fijo"],["otherOperator","Otro operador"],
+ ["decision","Decisión del hogar"],["telecomFamily","Vínculo laboral telecom"],["eligibilityReason","Motivo no elegible"],["internet","Internet fijo"],["otherOperator","Otro operador"],
  ["income","Tipo de ingresos"],["source","Cómo se enteró"],["geoStatus","Estado GPS"],
  ["geoAccuracy","Precisión GPS"],["geoAt","Fecha GPS"],["registered","Fecha inscripción"],
  ["updated","Última actualización"],["updatedBy","Actualizado por"],["campaign","Encuesta"]
@@ -158,7 +158,7 @@ function updateCampaignFilter(){
 function render(){
  if(!info)return;const rows=visible();
  const candidates=rows.filter(eligible);
- const metrics=[["Inscriptos únicos",candidates.length,"Solo personas que deciden o comparten decisiones del hogar."],["Confirmados",candidates.filter(r=>r.status==="Confirmado").length,"Candidatos elegibles confirmados."],["Contactados a confirmar",candidates.filter(r=>r.status==="Contactado a confirmar").length,"Candidatos elegibles pendientes."],["Preinscritos",candidates.filter(r=>r.status==="Preinscrito").length,"Candidatos elegibles pendientes de gestión."],["No asistirán",candidates.filter(r=>r.status==="No asistirá").length,"Candidatos elegibles que no asistirán."],["No elegibles",rows.filter(r=>!eligible(r)).length,"Registrados que no deciden ni comparten decisiones, excluidos de los cupos."]];
+ const metrics=[["Inscriptos únicos",candidates.length,"Solo personas que deciden o comparten decisiones del hogar."],["Confirmados",candidates.filter(r=>r.status==="Confirmado").length,"Candidatos elegibles confirmados."],["Contactados a confirmar",candidates.filter(r=>r.status==="Contactado a confirmar").length,"Candidatos elegibles pendientes."],["Preinscritos",candidates.filter(r=>r.status==="Preinscrito").length,"Candidatos elegibles pendientes de gestión."],["No asistirán",candidates.filter(r=>r.status==="No asistirá").length,"Candidatos elegibles que no asistirán."],["No elegibles",rows.filter(r=>!eligible(r)).length,"Personas que no toman o comparten decisiones del hogar, tienen vínculo laboral con telecomunicaciones o no han respondido ese requisito. No se consideran para cupos."]];
  node.querySelector("#fq-kpis").innerHTML=metrics.map(a=>'<article><div class="fq-kpi-heading"><span class="fq-kpi-title">'+E(a[0])+'</span>'+hint(a[2])+'</div><strong>'+a[1]+'</strong></article>').join("");
  node.querySelector("#fq-slots").innerHTML=info.slots.map(s=>{
   const lines=[["Asignados",s.assigned,"Participantes ubicados en esta sesión."],["Confirmados",s.confirmed,"Asignados que confirmaron."],["Contactados a confirmar",s.contacted,"Asignados pendientes de confirmación."],["Preinscritos asignados",s.pending,"Asignados todavía sin gestionar."],["No asistirán",s.notAttending,"Asignados que no asistirán."]];
@@ -246,6 +246,8 @@ function dataCell(r,key){
  case "address":return E(r.address||"—");
  case "age":return E(r.age||"—");
  case "decision":return E(r.decision==="No"?"No, otra persona decide":r.decision==="Decido"?"Decide":r.decision==="Compartimos"?"Comparte decisión":r.decision||"—");
+ case "telecomFamily":return E(r.telecomFamily||"Sin respuesta");
+ case "eligibilityReason":return E(r.eligible?"—":r.eligibilityReason||"No elegible");
  case "stratumBill":return E(r.stratumBill||"—");
  case "internet":return E(r.internet||"—");
  case "otherOperator":return E(r.otherOperator||"—");
@@ -264,7 +266,7 @@ function dataCell(r,key){
 function renderTable(){
  if(!node||!info)return;
  const cols=displayColumns(),all=visible(),q=tableQuery.trim();
- const rows=q?all.filter(r=>([r.first,r.last,r.phone,r.barrio,r.stratum,r.operator,r.cedula,r.email,r.address,r.decision,r.geoLat,r.geoLng,r.status,r.source,...(Array.isArray(r.notes)?r.notes.map(n=>n.text):[])].join(" ").toLocaleLowerCase("es").includes(q))):all;
+ const rows=q?all.filter(r=>([r.first,r.last,r.phone,r.barrio,r.stratum,r.operator,r.cedula,r.email,r.address,r.decision,r.geoLat,r.geoLng,r.status,r.source,r.telecomFamily,r.eligibilityReason,...(Array.isArray(r.notes)?r.notes.map(n=>n.text):[])].join(" ").toLocaleLowerCase("es").includes(q))):all;
  node.querySelector("#fq-count").textContent="Inscriptos ("+rows.length+")";
  node.querySelector("#fq-table-head").innerHTML='<tr>'+cols.map(c=>'<th scope="col" class="fq-col-'+E(c[0])+'">'+E(c[1])+'</th>').join("")+'</tr>';
  const slice=rows.slice(0,rowLimit);

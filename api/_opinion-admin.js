@@ -23,12 +23,13 @@ async function ensure(){
  const responses=tabs.find(t=>t.properties.title===TAB);
  if(!responses)throw Error("RESPONSES_TAB_NOT_FOUND");
  const columns=responses.properties.gridProperties.columnCount||26;
- if(columns<34)changes.push({appendDimension:{sheetId:responses.properties.sheetId,dimension:"COLUMNS",length:34-columns}});
+ if(columns<35)changes.push({appendDimension:{sheetId:responses.properties.sheetId,dimension:"COLUMNS",length:35-columns}});
  if(changes.length)await s.spreadsheets.batchUpdate({spreadsheetId:SHEET_ID,requestBody:{requests:changes}});
- const [cfg,headers,noteHeaders]=await Promise.all([
+ const [cfg,headers,noteHeaders,telecomHeader]=await Promise.all([
  s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+CFG+"'!A1:E5"}),
  s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!AC1:AH1"}),
-  s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+NOTES_TAB+"'!A1:D1"})
+  s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+NOTES_TAB+"'!A1:D1"}),
+  s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!AI1"})
  ]);
  if(!(cfg.data.values||[]).length){
   await s.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:"'"+CFG+"'!A1:E5",valueInputOption:"RAW",requestBody:{values:[
@@ -39,6 +40,7 @@ async function ensure(){
  const expected=["Sesión asignada","Actualizado el","Actualizado por","Convocatoria","Sesiones disponibles","Número de cédula"];
  if(JSON.stringify(headers.data.values?.[0]||[])!==JSON.stringify(expected))await s.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!AC1:AH1",valueInputOption:"RAW",requestBody:{values:[expected]}});
   if(!(noteHeaders.data.values||[]).length)await s.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:"'"+NOTES_TAB+"'!A1:D1",valueInputOption:"RAW",requestBody:{values:[NOTE_HEADERS]}});
+  if(x(telecomHeader.data.values?.[0]?.[0])!=="Vínculo laboral telecomunicaciones")await s.spreadsheets.values.update({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!AI1",valueInputOption:"RAW",requestBody:{values:[["Vínculo laboral telecomunicaciones"]]}});
  return s;
 }
 async function states(s){
@@ -55,8 +57,10 @@ function prefs(row){
  return SLOTS.filter(slot=>days.includes(slot.day)&&times.includes(slot.time)).map(q=>q.id);
 }
 function record(row,index,adminAccess=false){
- const decision=x(row[10]),qualified=["Decido","Compartimos"].includes(decision);
-  return {row:index+2,id:x(row[1]),registered:x(row[0]),first:x(row[2]),last:x(row[3]),age:x(row[4]),phone:x(row[5]),email:adminAccess?x(row[6]):"",barrio:x(row[7]),address:adminAccess?x(row[8]):"",stratumBill:x(row[9]),decision,eligible:qualified,internet:x(row[11]),operator:x(row[12]),otherOperator:x(row[13]),source:x(row[15]),consent:x(row[16]),geoLat:adminAccess?x(row[18]):"",geoLng:adminAccess?x(row[19]):"",geoAccuracy:adminAccess?x(row[20]):"",geoStatus:x(row[21]),geoAt:adminAccess?x(row[22]):"",stratum:x(row[25]||row[9]),income:adminAccess?x(row[26]):"",status:STATUSES.includes(x(row[17]))?x(row[17]):"Preinscrito",availability:prefs(row),assigned:x(row[28]),updated:x(row[29]),updatedBy:adminAccess?x(row[30]):"",campaign:x(row[31])||CAMPAIGN,cedula:adminAccess?x(row[33]):""};
+ const decision=x(row[10]),telecomFamily=x(row[34]);
+ const qualified=["Decido","Compartimos"].includes(decision)&&telecomFamily==="No";
+ const eligibilityReason=!["Decido","Compartimos"].includes(decision)?"No participa en las decisiones del hogar":telecomFamily==="Sí"?"Vínculo laboral con telecomunicaciones":telecomFamily!=="No"?"Pendiente de verificar vínculo con telecomunicaciones":"";
+  return {row:index+2,id:x(row[1]),registered:x(row[0]),first:x(row[2]),last:x(row[3]),age:x(row[4]),phone:x(row[5]),email:adminAccess?x(row[6]):"",barrio:x(row[7]),address:adminAccess?x(row[8]):"",stratumBill:x(row[9]),decision,telecomFamily,eligibilityReason,eligible:qualified,internet:x(row[11]),operator:x(row[12]),otherOperator:x(row[13]),source:x(row[15]),consent:x(row[16]),geoLat:adminAccess?x(row[18]):"",geoLng:adminAccess?x(row[19]):"",geoAccuracy:adminAccess?x(row[20]):"",geoStatus:x(row[21]),geoAt:adminAccess?x(row[22]):"",stratum:x(row[25]||row[9]),income:adminAccess?x(row[26]):"",status:STATUSES.includes(x(row[17]))?x(row[17]):"Preinscrito",availability:prefs(row),assigned:x(row[28]),updated:x(row[29]),updatedBy:adminAccess?x(row[30]):"",campaign:x(row[31])||CAMPAIGN,cedula:adminAccess?x(row[33]):""};
 }
 async function notes(s){
  const r=await s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+NOTES_TAB+"'!A2:D3000",valueRenderOption:"UNFORMATTED_VALUE"});
@@ -71,7 +75,7 @@ async function notes(s){
  return byId;
 }
 async function records(s,adminAccess=false){
- const r=await s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!A2:AH3000",valueRenderOption:"UNFORMATTED_VALUE"});
+ const r=await s.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'"+TAB+"'!A2:AI3000",valueRenderOption:"UNFORMATTED_VALUE"});
  return (r.data.values||[]).map((v,i)=>record(v,i,adminAccess)).filter(r=>r.id.startsWith("EO-"));
 }
 function summaryData(rs,slots){
@@ -167,7 +171,7 @@ async function handle(req,res){
    if(!r)return res.status(404).json({error:"Inscripción no encontrada"});
    const status=x(payload.status),assigned=x(payload.assigned);
    if(!STATUSES.includes(status)||assigned&&!SLOTS.some(z=>z.id===assigned))return res.status(400).json({error:"Estado o sesión inválidos"});
-   if(!r.eligible)return res.status(409).json({error:"No elegible: esta persona no participa en las decisiones del hogar y no puede ser asignada."});
+   if(!r.eligible)return res.status(409).json({error:"No elegible: "+(r.eligibilityReason||"no cumple los requisitos de selección")+". No se puede asignar ni confirmar."});
     if(assigned&&!r.availability.includes(assigned))return res.status(400).json({error:"Esta persona no indicó disponibilidad en esa sesión"});
    if(status==="Confirmado"&&!assigned)return res.status(400).json({error:"Asigná una sesión antes de confirmar"});
    await s.spreadsheets.values.batchUpdate({spreadsheetId:SHEET_ID,requestBody:{valueInputOption:"RAW",data:[
