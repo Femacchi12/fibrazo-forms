@@ -289,3 +289,10 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - El ajuste es **solo de presentación del tablero**. En Google Sheets, la API, las validaciones de duplicados, el buscador de participantes y las exportaciones CSV se conserva el teléfono original. No cambia la posibilidad de contactar a los inscritos.
 - Se mantienen los cambios FO-CHG-163 en visibilidad y orden de columnas, con permisos y restricciones de datos sin variaciones. No se modifican inscripciones ni observaciones.
 - QA: sintaxis de JavaScript y casos simulados con `+57`, `57`, diez dígitos, otro país y cadena vacía. Prueba visual autenticada pendiente.
+
+
+## FO-CHG-165 — Jerarquía visual de tarjetas KPI y sesiones (21/11/2026)
+- Se aplicó la vista previa aprobada a los títulos de **Inscritos únicos**, **Confirmados**, **Contactados a confirmar**, **Preinscritos**, **No asistirán** y **No elegibles**: tipografía Montserrat en blanco, peso 750 y tamaño adaptativo de 12–15 px (14 px en anchos intermedios y 13 px en móviles), con separaciones compactas. El número y las ayudas informativas originales permanecen.
+- En cada tarjeta de sesión, se añadió un ícono vectorial de calendario de trazo verde FIBRAZO (`#43FFA5`) y se destacó su título **Sáb 28 - 9:00**, **Sáb 28 - 14:00**, **Dom 29 - 9:00**, **Dom 29 - 14:00** en blanco/negrita adaptativa 15–18 px. El ícono es decorativo y no modifica accesibilidad de los datos ni comportamiento del tooltip.
+- La estructura y datos de los KPI, cantidad disponible, cupos, barras, botones, sugerencia de distribución y sesiones permanecen inalterados. Cambio únicamente visual en `focus-resumen.js` y versión de caché en `index.html`.
+- QA: sintaxis de JS, render de seis KPIs con títulos diferenciados, cuatro sesiones con ícono, preservación de textos de ayuda y cifras, y ausencia de cambios en datos/funciones. Revisión visual con navegador corporativo pendiente después de confirmar Vercel READY.
