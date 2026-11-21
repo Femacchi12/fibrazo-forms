@@ -236,3 +236,10 @@ Fecha: 2026-11-18. Estado: implementación en repo (producción requiere verific
 - El valor procede exclusivamente de `geoAccuracy` del registro, se presenta redondeado a metros enteros y permanece dentro del hipervínculo a Google Maps. Se muestra únicamente cuando es un valor finito entre 0 y 100.000 metros; no se inventa una precisión si el dato falta o es inválido.
 - Si no hay coordenadas autorizadas se mantiene **Sin coordenadas**; si el usuario no tiene autorización administrativa se mantiene **Restringido**. No se alteran registros, lecturas de la hoja, permisos, API, filtros, enlaces ni cálculos.
 - QA: validar ubicación autorizada con precisión, ubicación autorizada sin precisión, estado GPS rechazado, rol lector no administrador, y validación sintáctica JS. Prueba visual autenticada en producción permanece separada del estado de despliegue.
+
+
+## FO-CHG-158 — Jerarquía visual de fechas y horarios en encuesta (20/11/2026)
+- En el **paso 4**, cada fecha (Sábado 28 / Domingo 29 de noviembre) se destaca como encabezado de 17px, blanco, negrita y con un ícono de calendario 📅 antes del texto. Los horarios quedan visualmente subordinados debajo de su fecha.
+- Las casillas de horarios se compactan con `min-height:42px`, padding `8px 11px`, casilla de verificación 18px y separación de 8px. Se conserva tamaño táctil razonable, contraste, fondo oscuro y estado visual de selección. La opción «Puedo asistir en cualquiera...» sigue disponible, ligeramente compactada.
+- No cambian fechas, horas, opciones disponibles, selección múltiple, validaciones, API, datos, controles de elegibilidad, permisos ni registros de prueba.
+- QA: comprobar que el JS inline conserva sintaxis, que solo se añadieron estilos de `#slotsList` y que siguen presentes los controles de selección por fecha, selección global y cambio de estado. Revisión visual en navegador y móvil pendiente de ejecución real.
