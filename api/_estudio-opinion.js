@@ -111,7 +111,7 @@ module.exports=async(req,res)=>{
   if(!["Fijos","Variables","Mixtos","Prefiero no responder"].includes(d.tipoIngresos))return res.status(400).json({error:"Elegí tu tipo de ingresos o «Prefiero no responder»"});
   if(!["Decido","Compartimos","No"].includes(d.decision))return res.status(400).json({error:"Selecciona una respuesta sobre quién toma las decisiones del hogar"});
   if(!["Sí","No"].includes(d.vinculoTelecom))return res.status(400).json({error:"Responde si tú o un familiar cercano trabajan en telecomunicaciones"});
-  if(!["Claro","Tigo","Movistar","Otro operador","Proveedor local","No tengo internet fijo"].includes(d.operador))return res.status(400).json({error:"Seleccioná el servicio de internet"});
+  if(!["Claro","Tigo","Movistar","Fibrazo","Otro operador","Proveedor local","No tengo internet fijo"].includes(d.operador))return res.status(400).json({error:"Seleccioná el servicio de internet"});
   const slots=await management.availability();
   const openIds=slots.filter(slot=>slot.open).map(slot=>slot.id);
   const submitted=Array.isArray(d.sesionesDisponibles)?d.sesionesDisponibles:[];
