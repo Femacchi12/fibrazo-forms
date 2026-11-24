@@ -2437,3 +2437,10 @@ body.form-mode #formWorkspace .gps-one-field.gps-executive>.geo-enrichment{order
 /* FO-CHG-142 · Impacto Social form card and read-only information panel */
 .form-card-app-icon{display:inline-block;width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:9px;flex:none}
 .social-info-text{white-space:pre-line;line-height:1.6;color:#e6f4ed;padding:12px 14px;background:#101b15;border:1px solid #254132;border-radius:12px;max-width:100%;overflow-wrap:anywhere}
+
+/* FO-CHG-170 — selector QA solo propietario, mismo formulario operativo */
+.social-qa-bar{display:flex;flex-wrap:wrap;align-items:center;gap:9px 18px;margin:12px 0 18px;padding:13px 16px;border:1px solid #17b67f;border-radius:12px;background:#0b2119;color:#e9fff5}
+.social-qa-bar[hidden]{display:none!important}
+.social-qa-bar .social-qa-label{display:flex;align-items:center;gap:9px;font-size:15px;white-space:nowrap;cursor:pointer}
+.social-qa-bar input{accent-color:#28f4ab;width:20px;height:20px}
+.social-qa-bar #impactoSocialQaHelp{font-size:12px;color:#a7d5bd;line-height:1.5}
