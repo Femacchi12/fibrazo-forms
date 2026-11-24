@@ -33,6 +33,26 @@
   function mayIdentifyTest(){
     return !publicMode&&String(currentUser()?.email||"").trim().toLowerCase()==="eduardo@fibrazo.com";
   }
+  function socialQaActive(){return state.form?.id==="IMPACTO_SOCIAL"&&mayIdentifyTest()&&state.isTest===true;}
+  function renderSocialQaToggle(){
+    let bar=$("impactoSocialQaToggle");
+    const anchor=$("sectionStepper");
+    if(!anchor)return;
+    if(!bar){
+      bar=document.createElement("div");bar.id="impactoSocialQaToggle";bar.className="social-qa-bar";
+      bar.innerHTML='<label class="social-qa-label"><input type="checkbox" id="impactoSocialQaSwitch"> <strong>Modo test</strong></label><span id="impactoSocialQaHelp">Activar para navegar sin completar campos obligatorios. Los envíos se marcarán como PRUEBA y se excluirán de métricas.</span>';
+      anchor.parentElement.insertBefore(bar,anchor);
+      bar.querySelector("input").addEventListener("change",ev=>{
+        if(state.form?.id!=="IMPACTO_SOCIAL"||!mayIdentifyTest()){ev.target.checked=false;return;}
+        state.isTest=ev.target.checked;
+        state.maxSectionReached=ev.target.checked?activeSections().length-1:Math.max(0,state.sectionIndex);
+        if(!ev.target.checked)state.maxSectionReached=state.sectionIndex;
+        clearValidation();renderSection();
+      });
+    }
+    bar.hidden=!(state.form?.id==="IMPACTO_SOCIAL"&&mayIdentifyTest()&&!publicMode);
+    const input=bar.querySelector("input");if(input)input.checked=socialQaActive();
+  }
   function updateTestReview(){
     const permitted=mayIdentifyTest();
     // No default selection: real and QA are an explicit decision.
@@ -40,7 +60,7 @@
     if(!box)return;
     const sections=activeSections();
     const isLastSection=!!state.form&&sections.length>0&&state.sectionIndex===sections.length-1;
-    box.hidden=!(permitted&&isLastSection);
+    box.hidden=!(permitted&&isLastSection&&state.form?.id!=="IMPACTO_SOCIAL");
     box.querySelectorAll('input[type="radio"]').forEach(input=>{
       input.checked=state.isTest!==null&&input.value===(state.isTest?"Sí":"No");
     });
@@ -131,7 +151,7 @@
     if(!publicMode&&window.FIBRAZO_ACCESS&&window.FIBRAZO_ACCESS[id]===false)return;
     const policy=policyFor(id);
     state.cancelGpsCapture?.();state.cancelGpsCapture=null;
-    state.queuedCompletionId="";state.submissionQueued=false;state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.isTest=null;state.qaReference=null;state.territorialProgress=null;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.gpsCapturePending=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
+    state.queuedCompletionId="";state.submissionQueued=false;state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.isTest=id==="IMPACTO_SOCIAL"?false:null;state.qaReference=null;state.territorialProgress=null;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.gpsCapturePending=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
     document.body.classList.add("form-mode");
     $("formTitle").textContent=form.name;
     $("formDescription").textContent=form.description||"";
@@ -1058,6 +1078,7 @@
   }
   function renderSection(){
     const sections=activeSections();if(!sections.length)return;
+    renderSocialQaToggle();
     if(state.sectionIndex>=sections.length)state.sectionIndex=sections.length-1;
     const section=sections[state.sectionIndex];
     const sectionInfo=$("sectionDescriptionDetails");
@@ -1072,9 +1093,9 @@
       x.type="button";
       x.className="step"+(i===state.sectionIndex?" active":i<state.sectionIndex?" complete":" future");
       x.innerHTML="<span>"+(i+1)+"</span><small>"+esc(s.title)+"</small>";
-      x.disabled=i>state.maxSectionReached;
+      x.disabled=i>state.maxSectionReached&&!socialQaActive();
       x.setAttribute("aria-current",i===state.sectionIndex?"step":"false");
-      if(i!==state.sectionIndex&&i<=state.maxSectionReached){
+      if(i!==state.sectionIndex&&(i<=state.maxSectionReached||socialQaActive())){
         x.title="Ir a "+s.title;
         x.addEventListener("click",()=>{state.sectionIndex=i;renderSection();});
       }
@@ -1221,7 +1242,7 @@
       }
     }
     if(state.form?.id==="INTELIGENCIA_OPERADOR"&&currentSection()?.id==="calidad")saveLastOperatorTendidoQuality();
-    const errors=validateSection(state.sectionIndex,true);
+    const errors=socialQaActive()?[]:validateSection(state.sectionIndex,true);
     if(errors.length)return showValidation(errors);
     if(state.form?.id==="EXPLORACION_PRESENCIAL"){
       if(currentSection()?.id==="infraestructura")saveLastInfrastructure();
@@ -1286,6 +1307,7 @@
 
   function requireTestChoice(){
     if(!mayIdentifyTest())return true;
+    if(state.form?.id==="IMPACTO_SOCIAL")return true;
     if(state.isTest===true||state.isTest===false){
       $("formTestChoiceError")?.setAttribute("hidden","");
       return true;
@@ -1317,7 +1339,7 @@
     }
     if(isExplorationForm()&&state.gps&&!state.locationValidated){setStatus("Validando datos territoriales antes del resumen…","");try{state.geoPromise=resolveExplorationMunicipality(state.gps.lat,state.gps.lng,"coordenadas");await state.geoPromise;}catch(_){}finally{state.geoPromise=null;}}
     }
-    const errors=validateAll();if(errors.length){const sections=activeSections(),idx=sections.findIndex(s=>s.id===errors[0].field.section);state.maxSectionReached=Math.max(state.maxSectionReached,sections.length-1);if(idx>=0&&idx!==state.sectionIndex){state.sectionIndex=idx;renderSection();}showValidation(errors.filter(x=>x.field.section===currentSection().id));return;}
+    const errors=socialQaActive()?[]:validateAll();if(errors.length){const sections=activeSections(),idx=sections.findIndex(s=>s.id===errors[0].field.section);state.maxSectionReached=Math.max(state.maxSectionReached,sections.length-1);if(idx>=0&&idx!==state.sectionIndex){state.sectionIndex=idx;renderSection();}showValidation(errors.filter(x=>x.field.section===currentSection().id));return;}
     $("formWorkspace").hidden=true;$("reviewWorkspace").hidden=false;$("successWorkspace").hidden=true;buildReview();setStatus("","");window.scrollTo({top:0,behavior:"smooth"});
   }
   function edit(){$("reviewWorkspace").hidden=true;$("formWorkspace").hidden=false;renderSection();}
