@@ -17,7 +17,7 @@ function validate(payload){
   const d=payload?.data;
   if(!d||typeof d!=="object"||Array.isArray(d))throw error("INVALID_SOCIAL_DATA");
   for(const field of answerFields){
-    if(!visible(field,d))continue;
+    if(!payload.isTest&&!visible(field,d))continue;
     const value=d[field.key];
     if(!payload.isTest&&field.required&&empty(value))throw error("REQUIRED_FIELD_"+field.key);
     if(empty(value))continue;
@@ -52,7 +52,7 @@ function buildRow(payload,id,links,email){
     new Date().toISOString(),id,email||"",payload.isTest?"Sí":"No","FIBRAZO Forms · Impacto Social",
     ...formFields.map(field=>{
       if(field.type==="photo-single")return photoLinks.get(field.key)||"";
-      if(!visible(field,d))return"";
+      if(!payload.isTest&&!visible(field,d))return"";
       const value=d[field.key];
       return Array.isArray(value)?value.join(" | "):String(value??"");
     })
