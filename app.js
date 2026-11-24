@@ -388,7 +388,7 @@
         ?'<a class="secondary-button compact form-db-link" href="'+escapeHtml(policy.databaseUrl)+'" target="_blank" rel="noopener">↗ Base de datos</a>'
         :"";
       card.innerHTML =
-        '<h3 class="form-card-title">' + escapeHtml(form.name) + '</h3>' +
+        '<h3 class="form-card-title">' + (form.icon?'<img class="form-card-app-icon" src="'+escapeHtml(form.icon)+'" alt="" width="24" height="24">':'') + escapeHtml(form.name) + '</h3>' +
         '<button class="primary-button form-open-button" type="button" aria-label="Abrir '+escapeHtml(form.name)+'">Abrir →</button>' +
         '<details class="form-card-details">' +
           '<summary>Ver detalles</summary>' +
