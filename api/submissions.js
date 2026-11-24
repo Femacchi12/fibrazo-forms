@@ -134,6 +134,7 @@ function photoStatus(links){return Array.isArray(links)&&links.some(link=>Boolea
 
 function buildRow(form,p,id,links,email){
   const d=p.data||{},l=p.location||{},now=new Date().toISOString();
+  if(form.id==="IMPACTO_SOCIAL")return require("./_impacto-social").buildRow(p,id,links,email);
   if(form.id==="INTELIGENCIA_OPERADOR"){
     return [now,id,d.operador||"",d.modelo_caja||"",d.nomenclatura_caja||"",d.marquilla||"",d.tipo_tensor||"",d.calidad_tendido||"",d.observaciones||"",l.lat||"",l.lng||"",l.accuracy||"",links[0]||"",links[1]||"",links[2]||"",links[3]||"",d.municipio||l.cityDetected||"",d.sector_barrio||"",d.estrato||"",email||"ANONIMO",d.calidad_servicio_percibida||"",d.precio_solo_internet||"",d.precio_internet_tv||"",d.incluye_tv||"",d.grilla_tv||"",d.marquilla_drop||"",links[4]||"",d.tensor_acometida||"",links[5]||"",d.estrato_observado||"",photoStatus(links)];
   }
@@ -395,7 +396,7 @@ async function readRows(auth,forms,requested,limit,user,caps){
   for(const form of allowed){
     const r=await sheets.spreadsheets.values.get({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!A2:${isExploration(form.id)?"CE":form.id==="INTELIGENCIA_OPERADOR"?"AF":"AC"}`,
+      range:`${form.sheet}!A2:${isExploration(form.id)?"CE":form.id==="INTELIGENCIA_OPERADOR"?"AF":form.id==="IMPACTO_SOCIAL"?"BZ":"AC"}`,
       valueRenderOption:"UNFORMATTED_VALUE"
     });
     let sourceRows=r.data.values||[];
@@ -407,12 +408,14 @@ async function readRows(auth,forms,requested,limit,user,caps){
     for(const row of sourceRows.slice(-limit).reverse()){
       const operational=require("./_operational-reference").reference(row,form.id==="INTELIGENCIA_OPERADOR");
       // Toda respuesta de prueba queda excluida de resultados y análisis.
-      const testIndex=form.id==="CHURN"?28:form.id==="INTELIGENCIA_OPERADOR"?31:82;
+      const testIndex=form.id==="IMPACTO_SOCIAL"?3:form.id==="CHURN"?28:form.id==="INTELIGENCIA_OPERADOR"?31:82;
       if(String(row[testIndex]||"").trim().toLowerCase()==="sí")continue;
-      const emailIndex=form.id==="CHURN"?25:form.id==="INTELIGENCIA_OPERADOR"?19:24;
+      const emailIndex=form.id==="IMPACTO_SOCIAL"?2:form.id==="CHURN"?25:form.id==="INTELIGENCIA_OPERADOR"?19:24;
       const rowEmail=String(row[emailIndex]||"").trim().toLowerCase();
       if(!caps.adminActive&&rowEmail!==email)continue;
-      if(form.id==="CHURN"){
+      if(form.id==="IMPACTO_SOCIAL"){
+        out.push(require("./_impacto-social").resultData(row));
+      }else if(form.id==="CHURN"){
         out.push({
           formId:form.id,timestamp:row[0],id:row[1],
           data:{ciudad:row[2],cliente_id:row[3],motivo_principal:row[5]},
