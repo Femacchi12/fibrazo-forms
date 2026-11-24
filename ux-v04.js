@@ -1069,12 +1069,12 @@
     return Array.isArray(v)?v.includes(field.showWhen.equals):v===field.showWhen.equals;
   }
   function activeSections(){
-    if(!state.form)return[];return (state.form.sections||[]).filter(section=>state.form.fields.some(field=>field.section===section.id&&conditionMet(field)));
+    if(!state.form)return[];return (state.form.sections||[]).filter(section=>socialQaActive()||state.form.fields.some(field=>field.section===section.id&&conditionMet(field)));
   }
   function currentSection(){return activeSections()[state.sectionIndex]||null;}
   function updateVisibility(){
     const section=currentSection(),map=Object.fromEntries((state.form?.fields||[]).map(f=>[f.key,f]));
-    document.querySelectorAll("#dynamicFields .field").forEach(el=>{const f=map[el.dataset.key];el.hidden=!(f&&section&&f.section===section.id&&conditionMet(f));});
+    document.querySelectorAll("#dynamicFields .field").forEach(el=>{const f=map[el.dataset.key];el.hidden=!(f&&section&&f.section===section.id&&(socialQaActive()||conditionMet(f)));});
   }
   function renderSection(){
     const sections=activeSections();if(!sections.length)return;
@@ -1575,7 +1575,7 @@
     return map[String(reason||"")]||String(reason||"pendiente");
   }
 
-  function collectData(){const d={};state.form.fields.forEach(f=>{if(f.type==="gps"||f.type==="coordinates"||f.type==="photos"||f.type==="photo-single"||!conditionMet(f))return;d[f.key]=fieldValue(f.key);});return d;}
+  function collectData(){const d={};state.form.fields.forEach(f=>{if(f.type==="gps"||f.type==="coordinates"||f.type==="photos"||f.type==="photo-single"||f.type==="info"||(!socialQaActive()&&!conditionMet(f)))return;d[f.key]=fieldValue(f.key);});return d;}
   function operatorSnapshot(){
     const keys=["tigo_hfc","tigo_ftth","claro_hfc","claro_ftth","movistar","isp_1","isp_1_calidad","isp_2","isp_2_calidad","isp_3","isp_3_calidad","isp_4","isp_4_calidad"];
     return Object.fromEntries(keys.map(k=>[k,fieldValue(k)]).filter(([,v])=>v!==undefined&&v!==null&&v!==""));
