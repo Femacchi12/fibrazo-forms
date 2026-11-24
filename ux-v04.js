@@ -375,6 +375,7 @@
     else if(field.type==="isp-autocomplete"){wrap.appendChild(ispAutocompleteInput(field));}
     else if(field.type==="photos"){wrap.appendChild(photoInput(field));}
     else if(field.type==="photo-single"){wrap.appendChild(singlePhotoInput(field));}
+    else if(field.type==="info"){const info=document.createElement("div");info.className="social-info-text";info.textContent=field.help||"";wrap.appendChild(info);}
 
     if(["municipio","sector_barrio","estrato"].includes(field.key)){
       const tools=document.createElement("div");tools.className="field-quick-tools";
@@ -431,7 +432,9 @@
     holder.append(input,arrow,menu);return holder;
   }
   function textInput(field){
-    const i=document.createElement("input");i.type="text";i.name=field.key;
+    const i=document.createElement("input");i.type=field.format==="email"?"email":field.format==="celular-co"?"tel":"text";i.name=field.key;
+    if(field.format==="celular-co"){i.inputMode="numeric";i.maxLength=10;i.autocomplete="tel-national";i.placeholder="3XXXXXXXXX";i.pattern="3[0-9]{9}";}
+    if(field.format==="email"){i.inputMode="email";i.maxLength=254;i.autocomplete="email";i.autocapitalize="off";i.spellcheck=false;i.placeholder="nombre@institucion.edu.co";}
     i.addEventListener("input",()=>{
       if(field.autoGeo&&i.dataset.geoWriting!=="1")i.dataset.geoManual="1";
       if((state.form?.id==="EXPLORACION_PRESENCIAL"||state.form?.id==="INTELIGENCIA_OPERADOR")&&field.key==="municipio"){
@@ -1248,11 +1251,15 @@
       return field.required&&!window.FIBRAZO_BACKGROUND_TERRITORY.validPoint(state.gps)?"Ingresa una coordenada válida o utiliza el GPS.":"";
     }
     if(field.type==="coordinates")return field.required&&!window.FIBRAZO_BACKGROUND_TERRITORY.validPoint(state.gps)?"Pega una coordenada válida en formato latitud, longitud.":"";
-    if(field.type==="photos"||field.type==="photo-single")return"";
+    if(field.type==="info")return"";
+    if(field.type==="photos"||field.type==="photo-single")return field.required&&!state.photos.some(photo=>photo.fieldKey===field.key)?"Esta fotografía es obligatoria.":"";
     const v=fieldValue(field.key),empty=Array.isArray(v)?v.length===0:String(v||"").trim()==="";
     if(field.key.endsWith("_calidad")&&/^isp_[1-4]_calidad$/.test(field.key)&&isExplorationForm()){const isp=String(fieldValue(field.key.replace("_calidad",""))||"").trim();if(isp&&isp!=="Sin ISP"&&empty)return"Selecciona la calidad del tendido de este ISP.";}
     if(field.key==="municipio"&&field.autoCity&&empty&&pendingTerritory()&&window.FIBRAZO_BACKGROUND_TERRITORY.validPoint(state.gps)&&territorialCityHint())return"";
     if(field.required&&empty)return"Este campo es obligatorio.";
+    if(!empty&&field.format==="celular-co"&&!/^3[0-9]{9}$/.test(String(v)))return"Ingresa un celular colombiano de 10 dígitos, empezando con 3 y sin +57.";
+    if(!empty&&field.format==="email"&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v)))return"Ingresa un correo electrónico válido.";
+    if(!empty&&field.type==="text"&&String(v).length>2500)return"El texto es demasiado largo.";
     if(!empty&&(field.type==="numeric"||field.type==="currency")&&!/^\d+$/.test(String(v)))return"Ingresa únicamente números.";
     if(!empty&&field.max!==undefined&&Number(v)>Number(field.max))return"No puede ser mayor a "+field.max+".";
     if(field.type==="date-flex"&&!empty&&!/^\d{4}-\d{2}-\d{2}$/.test(String(v)))return"Ingresa una fecha válida.";
