@@ -18,7 +18,7 @@ const check=(ok,msg)=>{if(!ok)errors.push(msg);};
 const norm=(v)=>JSON.parse(JSON.stringify(v??null));
 const own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
 const pageNames=new Set();
-const expectedPages=["Churn","Exploración virtual","Exploración presencial","Inteligencia de operadores","Seguridad y publicación","Convenciones","Modo offline"];
+const expectedPages=["Churn","Exploración virtual","Exploración presencial","Inteligencia de operadores","Impacto Social","Seguridad y publicación","Convenciones","Modo offline"];
 const diagrams=[...xml.matchAll(/<diagram\b([^>]*)>([\s\S]*?)<\/diagram>/g)];
 for(const m of diagrams){
   const name=m[1].match(/\bname="([^"]+)"/)?.[1]||"SIN_NOMBRE";

@@ -241,6 +241,8 @@ function validateSubmission(formId,payload){
   const one=(v,allowed,code)=>{if(v!==""&&v!=null&&!allowed.includes(v))throw httpError(code,400);};
   const short=(v,max,code)=>{if(String(v??"").length>max)throw httpError(code,400);};
 
+  if(formId==="IMPACTO_SOCIAL"){require("./_impacto-social").validate(payload);return;}
+
   if(formId==="CHURN"){
     const motivos=["Inconformidad con el servicio","Precio","Se pasó a otro operador","TV","Mudanza","No usa / no necesita el servicio","Problemas de recarga / pago","Otro"];
     const configuredCities=["Sincelejo","Montería"];

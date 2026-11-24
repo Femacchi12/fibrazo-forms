@@ -485,3 +485,7 @@ Verificación técnica estática: orden de ciudades probado en siete transicione
 - Probar un punto con 3 incumbentes y 4 ISPs, donde el cuarto sea `Sin identificar`; probar orden mezclado, solo desconocidos, `Sin ISP` y ausencia de operadores.
 - Comprobar que todas las ciudades usan la misma función de filas, que los enlaces y fotos siguen funcionando y que los espacios continúan idénticos en escritorio y móvil.
 - Las pruebas unitarias de la función no reemplazan la comprobación visual autenticada ni el despliegue de producción `READY`.
+
+## FO-CHG-142 · Nuevo formulario Impacto Social (24/11/2026)
+
+Formulario \`IMPACTO_SOCIAL\`, solo instituciones educativas públicas, basado en la exportación exacta de Google Forms. 8 etapas, 63 campos UI incluidos 6 espacios para fotos, validación colombiana de celulares y validación de correos también en el servidor. Respuestas aisladas en \`RESP_IMPACTO_SOCIAL\`. Sin importar respuestas históricas. Ícono igual al favicon de Impacto Social. Definición \`forms-config.js\`, esquema \`impacto-social-schema.json\`, mapa \`docs/FIBRAZO_Forms_Flujos.drawio\`. Detalle y QA: [docs/IMPACTO_SOCIAL_INSTITUCIONES_20261124.md](docs/IMPACTO_SOCIAL_INSTITUCIONES_20261124.md).

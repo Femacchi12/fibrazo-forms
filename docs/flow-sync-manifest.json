@@ -1477,6 +1477,925 @@
           "Mostrar pruebas autorizado"
         ]
       }
+    },
+    "IMPACTO_SOCIAL": {
+      "page": "Impacto Social",
+      "name": "Impacto Social",
+      "sections": [
+        {
+          "id": "inicio",
+          "title": "Ubicación",
+          "description": "Registra el territorio correspondiente a la sede visitada."
+        },
+        {
+          "id": "institucion",
+          "title": "Institución educativa pública",
+          "description": "📄En esta sección registra la información de las instituciones educativas públicas que se encuentran dentro de la zona de cobertura de Fibrazo.\n👨‍🏫👩‍🏫  Estos datos se utilizarán para avanzar con el Programa de Conexión Digital para la Educación, que brinda un punto gratuito de internet a cada institución.\n\n📣Puntos claves para mencionar a la institución:\nEl servicio es totalmente gratuito. La institución nunca deberá realizar ningún pago bajo ningún concepto.\nReportes de novedades: cualquier inconveniente debe ser informado al WhatsApp oficial 3143460060, identificándose siempre con el código DANE de la institución.\nTiempo de respuesta: una vez realizado el reporte, la novedad será atendida en un máximo de 48 horas.\nCanales de apoyo: ante dudas adicionales pueden contactar al socializador que gestionó la instalación o con:\nFernando Eduardo Macchi – Jefe de Desarrollo Comercial\nCel: 3143460060 – Correo: eduardo@fibrazo.com\nPlaca de identificación: junto con la instalación se colocará una placa acrílica con la leyenda “Mi escuela conectada”, como símbolo visible del servicio que la institución recibe."
+        },
+        {
+          "id": "contactos",
+          "title": "Información de contacto institucional",
+          "description": "Mantener una comunicación fluida y directa entre FIBRAZO y la institución es fundamental para garantizar el buen funcionamiento del servicio, así como para compartir futuras capacitaciones, actualizaciones y beneficios del programa.\n\nPor eso, te solicitamos los datos de contacto del rector(a), del(a) coordinador(a) académico(a), así como el correo institucional oficial y uno alternativo, en caso de necesitar comunicación urgente o complementaria."
+        },
+        {
+          "id": "caracterizacion",
+          "title": "Caracterización de la institución",
+          "description": "👉En esta sección recopilamos información general sobre el funcionamiento académico de la institución: actividades que se realizan, cantidad de estudiantes y sus rangos de edad.\n\nEsta información nos ayuda a entender el contexto educativo y dimensionar el impacto que puede tener el servicio en la comunidad escolar."
+        },
+        {
+          "id": "infraestructura",
+          "title": "Infraestructura y conectividad",
+          "description": "Conocer el estado actual de los recursos tecnológicos y la conectividad en la institución nos permite:\n👉Planificar mejor la implementación del servicio.\n👉Identificar oportunidades de mejora.\n👉Garantizar un mayor aprovechamiento del internet gratuito por parte de estudiantes y docentes.  "
+        },
+        {
+          "id": "internet_anterior",
+          "title": "Servicio de internet existente",
+          "description": "📄Esta sección busca tener información sobre el servicio de internet actual de la institución (empresa proveedora, costos y quién los asume). \n✏️Los datos se utilizan únicamente con fines de diagnóstico para conocer la situación actual, medir el impacto de la conectividad que aportamos y evaluar posibles beneficios adicionales a futuro. \n👉No implica ningún compromiso ni costo por parte de la institución."
+        },
+        {
+          "id": "fotografias",
+          "title": "Registro fotográfico",
+          "description": "Por favor, sube las siguientes imágenes para dejar constancia visual del lugar donde se brinda el servicio de internet gratuito. Estas fotos nos ayudan a mantener un registro ordenado y a facilitar futuras visitas técnicas o de acompañamiento.\n\nPuedes subir una imagen principal (obligatoria) y, si lo deseas, una imagen adicional por cada punto.  "
+        },
+        {
+          "id": "informacion_final",
+          "title": "Información para comunicar a la institución",
+          "description": "El servicio es totalmente gratuito. La institución nunca deberá realizar ningún pago bajo ningún concepto.\nReportes de novedades: cualquier inconveniente debe ser informado al WhatsApp oficial 3143460060, identificándose siempre con el código DANE de la institución.\nTiempo de respuesta: una vez realizado el reporte, la novedad será atendida en un máximo de 48 horas.\nCanales de apoyo: ante dudas adicionales pueden contactar al socializador que gestionó la instalación o con:\nFernando Eduardo Macchi – Jefe de Desarrollo Comercial\nCel: 3143460060 – Correo: eduardo@fibrazo.com\nPlaca de identificación: junto con la instalación se colocará una placa acrílica con la leyenda “Mi escuela conectada”, como símbolo visible del servicio que la institución recibe.\n⚠️Aviso para el socializador:\nAsegúrate de explicar muy claramente toda esta información al responsable de la institución. Renvía la información por WhatsApp al responsable: puedes copiar y pegar el texto o enviar una captura de pantalla. Esto ayudará a que quede un registro y a que la institución tenga siempre presentes los pasos a seguir.\n\n✨✨Deseamos que este servicio sea de gran utilidad tanto para docentes como para alumnos, contribuyendo a fortalecer los procesos educativos y a reducir la brecha digital. Desde Fibrazo seguimos comprometidos en acompañar a las instituciones en su misión de educar y transformar comunidades.✨\n\n"
+        }
+      ],
+      "fields": [
+        {
+          "key": "soc_1197213728",
+          "section": "inicio",
+          "label": "Departamento",
+          "type": "select",
+          "required": true,
+          "originalItemId": 1197213728,
+          "options": [
+            "Atlántico",
+            "Bolivar",
+            "Cordoba",
+            "Magdalena",
+            "Sucre"
+          ]
+        },
+        {
+          "key": "soc_1797344950",
+          "section": "inicio",
+          "label": "Ciudad/Pueblo/Localidad",
+          "type": "select",
+          "required": true,
+          "originalItemId": 1797344950,
+          "options": [
+            "Barranquilla",
+            "Cartagena",
+            "Monteria",
+            "Santa Marta",
+            "Sincelejo",
+            "Turbaco"
+          ]
+        },
+        {
+          "key": "soc_1219605481",
+          "section": "inicio",
+          "label": "Barrio",
+          "type": "text",
+          "required": true,
+          "originalItemId": 1219605481,
+          "help": "Colocar el nombre del barrio."
+        },
+        {
+          "key": "soc_1438094776",
+          "section": "inicio",
+          "label": "Sector",
+          "type": "text",
+          "required": true,
+          "originalItemId": 1438094776,
+          "help": "En caso de no contar con división en sectores colocar el barrio nuevamente."
+        },
+        {
+          "key": "soc_262157483",
+          "section": "institucion",
+          "label": "Ejemplo de placa \"Mi escuela Conectada\"",
+          "type": "info",
+          "required": false,
+          "originalItemId": 262157483,
+          "help": "Imagen de referencia de la placa «Mi escuela conectada». La ilustración original no está incluida en la exportación JSON."
+        },
+        {
+          "key": "soc_669630741",
+          "section": "institucion",
+          "label": "¿Se autoriza la colocación de la placa?",
+          "type": "radio",
+          "required": true,
+          "originalItemId": 669630741,
+          "help": "Como primera opción, nos gustaría ubicar la placa identificatoria en el acceso principal de la institución educativa. En caso de que esto no sea posible, o si por recomendación del colegio se considera más adecuado, la placa podrá ser instalada en el lugar que la institución determine como más oportuno. ",
+          "options": [
+            "Sí",
+            "No",
+            "A confirmar"
+          ]
+        },
+        {
+          "key": "soc_645189067",
+          "section": "institucion",
+          "label": "Nombre completo de la institución",
+          "type": "text",
+          "required": true,
+          "originalItemId": 645189067,
+          "help": "Si es una sede colocar el nombre de la principal y en el siguiente campo colocar el nombre de la sede."
+        },
+        {
+          "key": "soc_1913690212",
+          "section": "institucion",
+          "label": "Cuantas sedes tiene la institucion?",
+          "type": "select",
+          "required": true,
+          "originalItemId": 1913690212,
+          "help": "En caso que la institución no cuenta con sedes adicionales a la principal seleccionar \"Única\"",
+          "options": [
+            "1 (UNICA)",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10"
+          ]
+        },
+        {
+          "key": "soc_27544894",
+          "section": "institucion",
+          "label": "Nombre completo de la SEDE encuestada",
+          "type": "text",
+          "required": true,
+          "originalItemId": 27544894,
+          "help": "En caso que la institución no cuenta con sedes adicionales a la principal colocar \"Única\"\n\n⚠️  Atención:\nCOMPLETAR EL FORMULARIO CON LA INFORMACION DE LA SEDE ENCUESTADA SEA PRINCIPAL U OTRA."
+        },
+        {
+          "key": "soc_485729503",
+          "section": "institucion",
+          "label": "¿Cómo está conformada la administración de la institución?",
+          "type": "radio",
+          "required": true,
+          "originalItemId": 485729503,
+          "help": "Conocer la naturaleza administrativa nos permite identificar el modelo de gestión educativa, lo cual puede influir en los procesos de decisión, coordinación y seguimiento dentro del programa.",
+          "options": [
+            "Pública (100% oficial)",
+            "Pública con administración privada (convenio u operador)",
+            "Institución en convenio – Plan Becario",
+            "Religiosa con convenio oficial",
+            "Privada sin ánimo de lucro",
+            "Otro"
+          ],
+          "allowOther": true
+        },
+        {
+          "key": "soc_485729503_otro",
+          "section": "institucion",
+          "label": "Especifica otra opción: ¿Cómo está conformada la administración de la institución?",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_485729503",
+            "equals": "Otro"
+          },
+          "derivedFrom": "soc_485729503"
+        },
+        {
+          "key": "soc_2093360889",
+          "section": "institucion",
+          "label": "¿Los alumnos deben realizar algún tipo de pago para estudiar en la institución?",
+          "type": "radio",
+          "required": true,
+          "originalItemId": 2093360889,
+          "help": "Esta información nos permite entender si la institución es completamente gratuita o si existen aportes económicos por parte de las familias, lo cual puede influir en el nivel de accesibilidad a herramientas digitales.  ",
+          "options": [
+            "No, es completamente gratuita.",
+            "Otro"
+          ],
+          "allowOther": true
+        },
+        {
+          "key": "soc_2093360889_otro",
+          "section": "institucion",
+          "label": "Especifica otra opción: ¿Los alumnos deben realizar algún tipo de pago para estudiar en la institución?",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_2093360889",
+            "equals": "Otro"
+          },
+          "derivedFrom": "soc_2093360889"
+        },
+        {
+          "key": "soc_1488187177",
+          "section": "institucion",
+          "label": "N.I.T",
+          "type": "text",
+          "required": true,
+          "originalItemId": 1488187177,
+          "help": "Colocar el NIT completo con guion y código de verificación.\nEjemplo: 123456-7"
+        },
+        {
+          "key": "soc_950119148",
+          "section": "institucion",
+          "label": "DANE",
+          "type": "text",
+          "required": true,
+          "originalItemId": 950119148
+        },
+        {
+          "key": "soc_426195018",
+          "section": "institucion",
+          "label": "Dirección",
+          "type": "textarea",
+          "required": true,
+          "originalItemId": 426195018,
+          "full": true
+        },
+        {
+          "key": "soc_1492169961",
+          "section": "institucion",
+          "label": "Coordenadas de ubicación",
+          "type": "text",
+          "required": true,
+          "originalItemId": 1492169961,
+          "help": "📍Por favor, ingresa las coordenadas geográficas correspondientes a esta institucion (ya sea la principal o una sede).\nEsta información es clave para registrar correctamente su ubicación, planificar instalaciones y realizar futuras visitas técnicas.\n\nSi no sabes cómo obtener las coordenadas, puedes ver este breve video explicativo:\n🎥 Toca aquí para ver el tutorial\n\nFormato esperado: 11.240234, -74.206781"
+        },
+        {
+          "key": "soc_704426938",
+          "section": "contactos",
+          "label": "Correo oficial institucional",
+          "type": "text",
+          "required": true,
+          "originalItemId": 704426938,
+          "format": "email",
+          "help": "Ingresa una dirección de correo válida, por ejemplo nombre@institucion.edu.co."
+        },
+        {
+          "key": "soc_1260802208",
+          "section": "contactos",
+          "label": "Correo alternativo institucional",
+          "type": "text",
+          "required": false,
+          "originalItemId": 1260802208,
+          "help": "Completar en caso que la institución cuente con un segundo correo electrónico.\nIngresa una dirección de correo válida, por ejemplo nombre@institucion.edu.co.",
+          "format": "email"
+        },
+        {
+          "key": "soc_1728220199",
+          "section": "contactos",
+          "label": "Nombre completo del rector(a)",
+          "type": "text",
+          "required": true,
+          "originalItemId": 1728220199
+        },
+        {
+          "key": "soc_933945474",
+          "section": "contactos",
+          "label": "Número de contacto del rector(a)",
+          "type": "text",
+          "required": true,
+          "originalItemId": 933945474,
+          "format": "celular-co",
+          "help": "Celular colombiano de 10 dígitos: empieza con 3, sin +57 ni espacios."
+        },
+        {
+          "key": "soc_1142394737",
+          "section": "contactos",
+          "label": "Correo electrónico del rector(a)",
+          "type": "text",
+          "required": true,
+          "originalItemId": 1142394737,
+          "format": "email",
+          "help": "Ingresa una dirección de correo válida, por ejemplo nombre@institucion.edu.co."
+        },
+        {
+          "key": "soc_1392733935",
+          "section": "contactos",
+          "label": "Nombre completo del(a) coordinador(a) académico(a)",
+          "type": "text",
+          "required": true,
+          "originalItemId": 1392733935
+        },
+        {
+          "key": "soc_1504839451",
+          "section": "contactos",
+          "label": "Número de contacto del(a) coordinador(a) académico(a)",
+          "type": "text",
+          "required": true,
+          "originalItemId": 1504839451,
+          "format": "celular-co",
+          "help": "Celular colombiano de 10 dígitos: empieza con 3, sin +57 ni espacios."
+        },
+        {
+          "key": "soc_2128944618",
+          "section": "contactos",
+          "label": "Correo electrónico del(a) coordinador(a) académico(a)",
+          "type": "text",
+          "required": true,
+          "originalItemId": 2128944618,
+          "format": "email",
+          "help": "Ingresa una dirección de correo válida, por ejemplo nombre@institucion.edu.co."
+        },
+        {
+          "key": "soc_1817506735",
+          "section": "caracterizacion",
+          "label": "Cursos dictados",
+          "type": "checkbox",
+          "required": true,
+          "originalItemId": 1817506735,
+          "help": "En caso de necesitar otra opción, seleccionar \"otra\" y completar manualmente",
+          "options": [
+            "Pre-Escolar",
+            "Pirmaria",
+            "Secundaria",
+            "Bachilleraro",
+            "Media tecnica",
+            "Otro"
+          ],
+          "allowOther": true
+        },
+        {
+          "key": "soc_1817506735_otro",
+          "section": "caracterizacion",
+          "label": "Especifica otra opción: Cursos dictados",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_1817506735",
+            "equals": "Otro"
+          },
+          "derivedFrom": "soc_1817506735"
+        },
+        {
+          "key": "soc_1764175460",
+          "section": "caracterizacion",
+          "label": "Talleres u otras actividades, aclarar cuales?",
+          "type": "checkbox",
+          "required": true,
+          "originalItemId": 1764175460,
+          "help": "En caso de necesitar otra opción, seleccionar \"otra\" y completar manualmente",
+          "options": [
+            "Baile/Danza",
+            "Talleres",
+            "Escuela de futbol",
+            "Cursos del SENA",
+            "Cursos flexible (Inclusión de Niños fuera de edad)",
+            "Comedor",
+            "No realiza actividades extra curriculares",
+            "Otro"
+          ],
+          "allowOther": true
+        },
+        {
+          "key": "soc_1764175460_otro",
+          "section": "caracterizacion",
+          "label": "Especifica otra opción: Talleres u otras actividades, aclarar cuales?",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_1764175460",
+            "equals": "Otro"
+          },
+          "derivedFrom": "soc_1764175460"
+        },
+        {
+          "key": "soc_1654181993",
+          "section": "caracterizacion",
+          "label": "Turnos de actividades en la institución",
+          "type": "checkbox",
+          "required": true,
+          "originalItemId": 1654181993,
+          "options": [
+            "Mañana",
+            "Tarde",
+            "Noche",
+            "Sabado por la mañana",
+            "Sabado por la tarde",
+            "Sabado por la noche",
+            "Domingos"
+          ]
+        },
+        {
+          "key": "soc_2087540928",
+          "section": "caracterizacion",
+          "label": "Rango de edades de los alumnos",
+          "type": "text",
+          "required": true,
+          "originalItemId": 2087540928,
+          "help": "Desde y hasta que edad asisten alumnos a la institución.\nEjemplo: De 4 a 14 años"
+        },
+        {
+          "key": "soc_1032732572",
+          "section": "caracterizacion",
+          "label": "Total de alumnos que asisten a la institución",
+          "type": "text",
+          "required": true,
+          "originalItemId": 1032732572,
+          "help": "Colocar el total de alumno solo de la institución encuestada, NO incluir sus sedes, eso va por aparte."
+        },
+        {
+          "key": "soc_737288592",
+          "section": "infraestructura",
+          "label": "Cuenta con sala de informática/computación?",
+          "type": "radio",
+          "required": true,
+          "originalItemId": 737288592,
+          "options": [
+            "SI",
+            "NO"
+          ]
+        },
+        {
+          "key": "soc_161839292",
+          "section": "infraestructura",
+          "label": "¿Con cuáles de los siguientes recursos cuenta tu institución?",
+          "type": "checkbox",
+          "required": true,
+          "originalItemId": 161839292,
+          "options": [
+            "Computadoras disponibles para cada alumno",
+            "Computadoras disponibles para cada docente",
+            "Tablets disponibles para cada alumno",
+            "Tablets disponibles para cada docente",
+            "Proyector o pantalla en todos los salones",
+            "Proyector o pantalla en al menos un salón",
+            "Sala de cómputo",
+            "Acceso a internet en todos los salones",
+            "Acceso a internet en un salón",
+            "Acceso a internet en la sala de cómputo",
+            "Ninguna de las anteriores"
+          ]
+        },
+        {
+          "key": "soc_1421433623",
+          "section": "infraestructura",
+          "label": "Cuantos computadores tiene la institución?",
+          "type": "radio",
+          "required": true,
+          "originalItemId": 1421433623,
+          "help": "Solo considerar computadores en  funcionamiento.",
+          "options": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "Otro"
+          ],
+          "allowOther": true
+        },
+        {
+          "key": "soc_1421433623_otro",
+          "section": "infraestructura",
+          "label": "Especifica otra opción: Cuantos computadores tiene la institución?",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_1421433623",
+            "equals": "Otro"
+          },
+          "derivedFrom": "soc_1421433623"
+        },
+        {
+          "key": "soc_829626452",
+          "section": "infraestructura",
+          "label": "Cuantas TABLETs tiene la institución?",
+          "type": "radio",
+          "required": true,
+          "originalItemId": 829626452,
+          "help": "Solo considerar  TABLETs   en funcionamiento.",
+          "options": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "Otro"
+          ],
+          "allowOther": true
+        },
+        {
+          "key": "soc_829626452_otro",
+          "section": "infraestructura",
+          "label": "Especifica otra opción: Cuantas TABLETs tiene la institución?",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_829626452",
+            "equals": "Otro"
+          },
+          "derivedFrom": "soc_829626452"
+        },
+        {
+          "key": "soc_1504662116",
+          "section": "infraestructura",
+          "label": "¿En qué espacios se necesita prioritariamente conexión a internet?",
+          "type": "checkbox",
+          "required": true,
+          "originalItemId": 1504662116,
+          "help": "En caso de necesitar otra opción, seleccionar \"otra\" y completar manualmente",
+          "options": [
+            "Sala de Informática/Computo",
+            "Sala de audiovisuales / Actos / Reuniones",
+            "Sala de Idiomas",
+            "Sala de profesores",
+            "Laboratorio / Talleres",
+            "Aula de clases",
+            "Biblioteca",
+            "Administración / Secretaría / Rectoría",
+            "Lugares comunes (pasillos, patios, entrada)",
+            "Otro"
+          ],
+          "allowOther": true
+        },
+        {
+          "key": "soc_1504662116_otro",
+          "section": "infraestructura",
+          "label": "Especifica otra opción: ¿En qué espacios se necesita prioritariamente conexión a internet?",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_1504662116",
+            "equals": "Otro"
+          },
+          "derivedFrom": "soc_1504662116"
+        },
+        {
+          "key": "soc_1617028229",
+          "section": "infraestructura",
+          "label": "¿En qué lugar de la institución se instalará el servicio de FIBRAZO?",
+          "type": "radio",
+          "required": true,
+          "originalItemId": 1617028229,
+          "help": "Esta información nos ayuda a ubicar el punto de conexión en el espacio más estratégico para beneficiar al mayor número de estudiantes y docentes, garantizando un mayor impacto del programa.  ",
+          "options": [
+            "Sala de Informática/Computo (Recomendado)",
+            "Sala de audiovisuales / Actos / Reuniones",
+            "Sala de Idiomas",
+            "Sala de profesores",
+            "Laboratorio / Talleres",
+            "Aula de clases",
+            "Biblioteca",
+            "Administración / Secretaría / Rectoría",
+            "Lugares comunes (pasillos, patios, entrada)",
+            "Otro"
+          ],
+          "allowOther": true
+        },
+        {
+          "key": "soc_1617028229_otro",
+          "section": "infraestructura",
+          "label": "Especifica otra opción: ¿En qué lugar de la institución se instalará el servicio de FIBRAZO?",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_1617028229",
+            "equals": "Otro"
+          },
+          "derivedFrom": "soc_1617028229"
+        },
+        {
+          "key": "soc_1588036715",
+          "section": "infraestructura",
+          "label": "Actualmente cuentan con algún servicio de internet?",
+          "type": "radio",
+          "required": true,
+          "originalItemId": 1588036715,
+          "help": "Esta pregunta esta direccionada a entender la necesidad de la institución y analizar posibles acciones que implementar.",
+          "options": [
+            "SI",
+            "NO"
+          ]
+        },
+        {
+          "key": "soc_658669168",
+          "section": "internet_anterior",
+          "label": "¿Luego de instalar FIBRAZO continuara con el servicio de internet existente?",
+          "type": "radio",
+          "required": true,
+          "originalItemId": 658669168,
+          "options": [
+            "SI",
+            "NO"
+          ],
+          "showWhen": {
+            "field": "soc_1588036715",
+            "equals": "SI"
+          }
+        },
+        {
+          "key": "soc_2067482992",
+          "section": "internet_anterior",
+          "label": "¿En que lugares cuenta con internet actualmente?",
+          "type": "checkbox",
+          "required": true,
+          "originalItemId": 2067482992,
+          "options": [
+            "Sala de Informática/Computo",
+            "Sala de audiovisuales / Actos / Reuniones",
+            "Sala de Idiomas",
+            "Sala de profesores",
+            "Laboratorio / Talleres",
+            "Aula de clases",
+            "Biblioteca",
+            "Administración / Secretaría / Rectoría",
+            "Lugares comunes (pasillos, patios, entrada)",
+            "Otro"
+          ],
+          "allowOther": true,
+          "showWhen": {
+            "field": "soc_1588036715",
+            "equals": "SI"
+          }
+        },
+        {
+          "key": "soc_2067482992_otro",
+          "section": "internet_anterior",
+          "label": "Especifica otra opción: ¿En que lugares cuenta con internet actualmente?",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_2067482992",
+            "equals": "Otro"
+          },
+          "derivedFrom": "soc_2067482992"
+        },
+        {
+          "key": "soc_445182421",
+          "section": "internet_anterior",
+          "label": "¿Qué empresa provee actualmente el servicio de internet?",
+          "type": "radio",
+          "required": true,
+          "originalItemId": 445182421,
+          "help": "En caso que la empresa que provee el servicio no esta en la lista seleccionar \"otros\" y completar",
+          "options": [
+            "TIGO",
+            "Claro",
+            "Movistar",
+            "No sabe",
+            "Otro"
+          ],
+          "allowOther": true,
+          "showWhen": {
+            "field": "soc_1588036715",
+            "equals": "SI"
+          }
+        },
+        {
+          "key": "soc_445182421_otro",
+          "section": "internet_anterior",
+          "label": "Especifica otra opción: ¿Qué empresa provee actualmente el servicio de internet?",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_445182421",
+            "equals": "Otro"
+          },
+          "derivedFrom": "soc_445182421"
+        },
+        {
+          "key": "soc_731822327",
+          "section": "internet_anterior",
+          "label": "¿De cuantos megas de velocidad es el servicio actual?",
+          "type": "radio",
+          "required": true,
+          "originalItemId": 731822327,
+          "help": "En caso que la opción no esta en la lista seleccionar \"otros\" y completar",
+          "options": [
+            "Menos de 50 Megas",
+            "Entre 51y 100 Megas",
+            "Entre 101 y 200 Megas",
+            "Entre 201 y 500 Megas",
+            "Entre 501 y 900 Megas",
+            "Otro"
+          ],
+          "allowOther": true,
+          "showWhen": {
+            "field": "soc_1588036715",
+            "equals": "SI"
+          }
+        },
+        {
+          "key": "soc_731822327_otro",
+          "section": "internet_anterior",
+          "label": "Especifica otra opción: ¿De cuantos megas de velocidad es el servicio actual?",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_731822327",
+            "equals": "Otro"
+          },
+          "derivedFrom": "soc_731822327"
+        },
+        {
+          "key": "soc_551673741",
+          "section": "internet_anterior",
+          "label": "¿Qué opinan sobre el funcionamiento del servicio actual?",
+          "type": "radio",
+          "required": true,
+          "originalItemId": 551673741,
+          "options": [
+            "Malo",
+            "Regular",
+            "Bueno"
+          ],
+          "showWhen": {
+            "field": "soc_1588036715",
+            "equals": "SI"
+          }
+        },
+        {
+          "key": "soc_2113362171",
+          "section": "internet_anterior",
+          "label": "¿Cuánto se paga por el servicio actual?",
+          "type": "radio",
+          "required": true,
+          "originalItemId": 2113362171,
+          "help": "En caso que la opción no esta en la lista seleccionar \"otros\" y completar",
+          "options": [
+            "Entre $0 y $50.000",
+            "Entre $51.000 y $100.000",
+            "Entre $101.000 y $150.000",
+            "Entre $151.000 y $200.000",
+            "Entre $201.000 y $300.000",
+            "No sabe",
+            "Otro"
+          ],
+          "allowOther": true,
+          "showWhen": {
+            "field": "soc_1588036715",
+            "equals": "SI"
+          }
+        },
+        {
+          "key": "soc_2113362171_otro",
+          "section": "internet_anterior",
+          "label": "Especifica otra opción: ¿Cuánto se paga por el servicio actual?",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_2113362171",
+            "equals": "Otro"
+          },
+          "derivedFrom": "soc_2113362171"
+        },
+        {
+          "key": "soc_1572001748",
+          "section": "internet_anterior",
+          "label": "¿Quién paga por el servicio de internet?",
+          "type": "radio",
+          "required": true,
+          "originalItemId": 1572001748,
+          "options": [
+            "la escuela de su presupuesto",
+            "Secretaria de Educación",
+            "Alcaldia de la ciudad",
+            "Administracion Privada",
+            "Otro"
+          ],
+          "allowOther": true,
+          "showWhen": {
+            "field": "soc_1588036715",
+            "equals": "SI"
+          }
+        },
+        {
+          "key": "soc_1572001748_otro",
+          "section": "internet_anterior",
+          "label": "Especifica otra opción: ¿Quién paga por el servicio de internet?",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_1572001748",
+            "equals": "Otro"
+          },
+          "derivedFrom": "soc_1572001748"
+        },
+        {
+          "key": "soc_1204796375",
+          "section": "internet_anterior",
+          "label": "📝Si lo considera necesario agregar una nota o comentario general sobre la socialización de la institucion educativa.",
+          "type": "textarea",
+          "required": false,
+          "originalItemId": 1204796375,
+          "help": "Completar solo en caso de considerar necesario colocar alguna nota adicional.",
+          "full": true,
+          "showWhen": {
+            "field": "soc_1588036715",
+            "equals": "SI"
+          }
+        },
+        {
+          "key": "soc_1889260179",
+          "section": "fotografias",
+          "label": "Foto de la fachada de la institución",
+          "type": "photo-single",
+          "required": true,
+          "originalItemId": 1889260179,
+          "help": "Sube una imagen clara de la fachada principal del colegio, en lo posible se vea el nombre o alguna referencia que permita identificar fácilmente la institución.",
+          "full": true
+        },
+        {
+          "key": "soc_874347778",
+          "section": "fotografias",
+          "label": "Imagen adicional de la fachada (opcional)",
+          "type": "photo-single",
+          "required": false,
+          "originalItemId": 874347778,
+          "help": "Puedes subir una segunda imagen si crees que aporta mayor claridad del frente o acceso a la institución.  ",
+          "full": true
+        },
+        {
+          "key": "soc_399955700",
+          "section": "fotografias",
+          "label": "Foto de la sala de informatica/computo.",
+          "type": "photo-single",
+          "required": false,
+          "originalItemId": 399955700,
+          "full": true
+        },
+        {
+          "key": "soc_219756265",
+          "section": "fotografias",
+          "label": "Foto del lugar donde o estará instalado quipo de red (Modem - ONU).",
+          "type": "photo-single",
+          "required": false,
+          "originalItemId": 219756265,
+          "help": "Sube una imagen del espacio físico donde se encuentra instalado (o se instalará) el equipo de red. Esto nos permite validar las condiciones del lugar (acceso a energía, seguridad, etc.).  ",
+          "full": true
+        },
+        {
+          "key": "soc_801180412",
+          "section": "fotografias",
+          "label": "Imagen adicional del lugar de instalación (opcional)",
+          "type": "photo-single",
+          "required": false,
+          "originalItemId": 801180412,
+          "help": "Puedes subir una segunda imagen desde otro ángulo o distancia, si consideras que ayuda a visualizar mejor el espacio.",
+          "full": true
+        },
+        {
+          "key": "soc_1987775204",
+          "section": "fotografias",
+          "label": "Imagen adicional (opcional)",
+          "type": "photo-single",
+          "required": false,
+          "originalItemId": 1987775204,
+          "help": "Si deseas compartir otra imagen relevante puedes hacerlo aquí ",
+          "full": true
+        },
+        {
+          "key": "soc_info_final",
+          "section": "informacion_final",
+          "label": "Puntos claves para mencionar a la institución",
+          "type": "info",
+          "help": "El servicio es totalmente gratuito. La institución nunca deberá realizar ningún pago bajo ningún concepto.\nReportes de novedades: cualquier inconveniente debe ser informado al WhatsApp oficial 3143460060, identificándose siempre con el código DANE de la institución.\nTiempo de respuesta: una vez realizado el reporte, la novedad será atendida en un máximo de 48 horas.\nCanales de apoyo: ante dudas adicionales pueden contactar al socializador que gestionó la instalación o con:\nFernando Eduardo Macchi – Jefe de Desarrollo Comercial\nCel: 3143460060 – Correo: eduardo@fibrazo.com\nPlaca de identificación: junto con la instalación se colocará una placa acrílica con la leyenda “Mi escuela conectada”, como símbolo visible del servicio que la institución recibe.\n⚠️Aviso para el socializador:\nAsegúrate de explicar muy claramente toda esta información al responsable de la institución. Renvía la información por WhatsApp al responsable: puedes copiar y pegar el texto o enviar una captura de pantalla. Esto ayudará a que quede un registro y a que la institución tenga siempre presentes los pasos a seguir.\n\n✨✨Deseamos que este servicio sea de gran utilidad tanto para docentes como para alumnos, contribuyendo a fortalecer los procesos educativos y a reducir la brecha digital. Desde Fibrazo seguimos comprometidos en acompañar a las instituciones en su misión de educar y transformar comunidades.✨\n\n",
+          "originalItemId": 1319040955
+        }
+      ],
+      "qaTestFlow": {
+        "type": "submissionMetadata",
+        "key": "Es_Prueba",
+        "visibleOnlyFor": "eduardo@fibrazo.com",
+        "default": "No",
+        "options": [
+          "No",
+          "Sí"
+        ],
+        "reviewStep": "Última pregunta del último paso, antes de Revisar respuestas",
+        "backendPolicy": "Validar email autenticado; rechazar flag de usuarios no autorizados",
+        "storageColumn": "RESP_CHURN!AC",
+        "no": "Guardar y procesar normalmente",
+        "yes": "Guardar para QA sin sincronización maestra; excluir de resultados y estadísticas. Solo puntos con coordenadas visibles mediante Mostrar pruebas en mapa, para cuenta autorizada.",
+        "drawioMarker": "[decision:es_prueba]",
+        "regression": [
+          "default No",
+          "servidor rechaza no autorizado",
+          "offline conserva flag",
+          "solo QA no sincroniza master",
+          "resultados no muestran QA",
+          "mapa no muestra QA por defecto",
+          "Mostrar pruebas autorizado"
+        ]
+      }
     }
   },
   "offline": {
@@ -1583,9 +2502,9 @@
     "reference": "FO-CHG-017",
     "date": "2026-10-11",
     "baseCommit": "fc369fa8182408d3254e95394146fe61b8310d27",
-    "forms": 4,
-    "declaredFields": 94,
-    "fieldsWithReachableSection": 94,
+    "forms": 5,
+    "declaredFields": 157,
+    "fieldsWithReachableSection": 157,
     "counts": {
       "CHURN": {
         "sections": 5,
@@ -1606,10 +2525,15 @@
         "sections": 5,
         "fields": 25,
         "conditionalFields": 1
+      },
+      "IMPACTO_SOCIAL": {
+        "sections": 8,
+        "fields": 63,
+        "conditionalFields": 21
       }
     },
     "issues": [],
-    "note": "Documentación del código tal como está; inspección visual de diagrams.net y defecto de coordenadas requieren validación separada",
+    "note": "FO-CHG-142: incorporado Impacto Social · escuelas públicas; 8 etapas; 63 campos incluyendo ayudas y opciones 'Otro'; etiquetas [field] y [section] mantenidas. QA real pendiente.",
     "qaTestControl": {
       "ticket": "FO-PEN-011",
       "status": "IMPLEMENTED_IN_FEATURE_BRANCH_NOT_DEPLOYED",
@@ -1618,7 +2542,8 @@
         "CHURN",
         "EXPLORACION",
         "EXPLORACION_PRESENCIAL",
-        "INTELIGENCIA_OPERADOR"
+        "INTELIGENCIA_OPERADOR",
+        "IMPACTO_SOCIAL"
       ],
       "noChangeToFieldInventory": true
     }
