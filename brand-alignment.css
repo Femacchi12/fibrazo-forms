@@ -2433,3 +2433,7 @@ body.form-mode #formWorkspace .gps-one-field.gps-executive>.gps-exec-actions{dis
 body.form-mode #formWorkspace .gps-one-field.gps-executive>.gps-exec-actions>button{display:flex!important;justify-content:center!important;align-items:center!important;width:100%!important;min-height:39px!important;}
 body.form-mode #formWorkspace .gps-one-field.gps-executive>.geo-enrichment{order:4!important;}
 @media(max-width:390px){body.form-mode #formWorkspace .gps-one-field.gps-executive>.gps-exec-top{gap:3px!important;}body.form-mode #formWorkspace .gps-one-field.gps-executive>.gps-exec-top>.gps-exec-quick>button{padding:4px!important;font-size:9px!important;}}
+
+/* FO-CHG-142 · Impacto Social form card and read-only information panel */
+.form-card-app-icon{display:inline-block;width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:9px;flex:none}
+.social-info-text{white-space:pre-line;line-height:1.6;color:#e6f4ed;padding:12px 14px;background:#101b15;border:1px solid #254132;border-radius:12px;max-width:100%;overflow-wrap:anywhere}
