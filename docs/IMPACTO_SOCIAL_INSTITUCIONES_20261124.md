@@ -32,3 +32,16 @@
 ## QA
 Pruebas técnicas de esquema: 63 campos declarados, 8 secciones, 6 fotos, 4 emails, 2 teléfonos. Sintaxis de archivos JS válida; concordancia entre esquema de servidor y UI; aceptación de celular `3001234567`, rechazo de `573001234567`, `300123456`, `4001234567`; rechazo de correos inválidos; prueba de foto principal obligatoria; encabezados y filas de 66 columnas.
 **Pendientes antes de abrir el acceso al equipo:** prueba de navegador autenticado móvil/escritorio, envío QA controlado y verificación de fotos en Drive, reintentos offline, destino de respuesta, no duplicidad, permisos y despliegue Vercel READY.
+
+## FO-CHG-170 · Acceso administrativo y modo test (24/11/2026)
+
+- Acceso explícito confirmado en `PERMISOS_FORMULARIO` para `eduardo@fibrazo.com` / `IMPACTO_SOCIAL` con los cuatro permisos de lectura/edición/administración/base activados. El acceso se mantiene `PRIVADO` y el formulario `Activo`; no se habilita el dominio completo.
+- `Modo test` es un selector visible **únicamente** para `eduardo@fibrazo.com` con sesión autenticada, dentro del mismo formulario Impacto Social (no hay formulario paralelo).
+- Por defecto el selector está apagado, el formulario exige todos los campos, y el envío queda como operativo.
+- Al activar el modo test permite navegar por los pasos hacia adelante o atrás y por la barra de etapas sin diligenciar obligatorios. En esta modalidad se muestran también las secciones condicionales para revisión rápida.
+- En la pantalla de revisión se identifica **PRUEBA QA** y el backend autoriza el indicador únicamente si el email verificado es `eduardo@fibrazo.com`. La aplicación nunca permite a otro usuario activar pruebas mediante un parámetro del cliente.
+- Los envíos de prueba se guardan en la misma pestaña `RESP_IMPACTO_SOCIAL` con columna D `Prueba QA` = `Sí`; se excluyen de los resultados y métricas operativas, y no sincronizan ninguna base maestra de instituciones educativas. No se eliminan automáticamente: quedan trazables para revisar y pueden limpiarse separadamente más adelante.
+- Para las pruebas se permiten campos y fotografías incompletos; cualquier teléfono, email u opción que sí se complete sigue pasando las validaciones habituales, tanto en cliente como en servidor. En modo normal se preservan todos los obligatorios.
+- El control para otros formularios se mantiene sin cambios; allí continúa el mecanismo de clasificación QA preexistente.
+- Tras cambios en la matriz, refrescar la sesión permite volver a consultar los permisos desde `/api/access`; si el navegador conserva un permiso antiguo, forzar recarga de la página.
+- Verificaciones ejecutadas: sintaxis JS de UI y API, aceptación de prueba vacía, rechazo de teléfonos y emails mal formados, bloqueo de envío real incompleto, marcador de QA y longitud de 66 columnas. **Pendiente:** prueba navegador real con la cuenta corporativa, verificación de permiso en sesión, despliegue Vercel READY y un envío real controlado para confirmar persistencia y exclusión de métricas.
