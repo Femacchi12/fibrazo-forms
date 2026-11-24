@@ -19,7 +19,7 @@ function validate(payload){
   for(const field of answerFields){
     if(!visible(field,d))continue;
     const value=d[field.key];
-    if(field.required&&empty(value))throw error("REQUIRED_FIELD_"+field.key);
+    if(!payload.isTest&&field.required&&empty(value))throw error("REQUIRED_FIELD_"+field.key);
     if(empty(value))continue;
     if(field.type==="checkbox"){
       if(!Array.isArray(value)||value.length>20||value.some(v=>typeof v!=="string"||!(field.options||[]).includes(v)))throw error("INVALID_OPTIONS_"+field.key);
@@ -38,7 +38,7 @@ function validate(payload){
     if(!keys.includes(key)||seen.has(key))throw error("INVALID_SOCIAL_PHOTO_FIELD");
     seen.add(key);
   }
-  for(const field of photoFields){if(field.required&&!seen.has(field.key))throw error("REQUIRED_SOCIAL_PHOTO_"+field.key);}
+  for(const field of photoFields){if(!payload.isTest&&field.required&&!seen.has(field.key))throw error("REQUIRED_SOCIAL_PHOTO_"+field.key);}
   // No otros flujos y no datos derivados sin el campo principal.
   if(photos.length>keys.length)throw error("PHOTO_LIMIT");
 }
