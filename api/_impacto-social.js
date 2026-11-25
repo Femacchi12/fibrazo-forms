@@ -11,6 +11,8 @@ function error(code){const e=new Error(code);e.status=400;return e;}
 function empty(value){return value==null||(Array.isArray(value)?value.length===0:String(value).trim()==="");}
 function matches(cond,d){
   if(!cond)return true;
+  if(Array.isArray(cond.all))return cond.all.every(x=>matches(x,d));
+  if(Array.isArray(cond.any))return cond.any.some(x=>matches(x,d));
   const value=d[cond.field];
   if(cond.notEmpty===true)return !empty(value);
   if(cond.notEquals!==undefined)return String(value??"")!==cond.notEquals;
