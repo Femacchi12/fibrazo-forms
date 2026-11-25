@@ -2714,3 +2714,98 @@ body.form-mode.impacto-social-mode #successWorkspace .success-status-card{
     border-radius:13px!important;
   }
 }
+
+/* FO-CHG-176 · Impacto Social: gestión múltiple, lectura clara y QA discreto. */
+body.form-mode.impacto-social-mode #formWorkspace .workspace-topbar{
+  display:flex!important;flex-wrap:wrap!important;gap:8px!important;align-items:center!important;
+}
+body.form-mode.impacto-social-mode #formWorkspace .workspace-topbar .social-qa-bar{
+  order:-1!important;flex:0 0 auto!important;display:flex!important;
+  margin:0!important;padding:4px 7px!important;
+  border:1px solid #30513d!important;border-radius:7px!important;
+  background:#101b14!important;box-shadow:none!important;
+}
+body.form-mode.impacto-social-mode #formWorkspace .workspace-topbar .social-qa-bar[hidden]{display:none!important}
+body.form-mode.impacto-social-mode #formWorkspace .social-qa-label{
+  gap:5px!important;font-size:10px!important;color:#b1cfc0!important;
+  line-height:1!important;margin:0!important;letter-spacing:0!important;
+}
+body.form-mode.impacto-social-mode #formWorkspace .social-qa-label input{
+  width:14px!important;height:14px!important;margin:0!important;
+}
+body.form-mode.impacto-social-mode #formWorkspace .form-history{
+  display:none!important;
+}
+body.form-mode.impacto-social-mode #formWorkspace .section-heading .fbz-section-help,
+body.form-mode.impacto-social-mode #formWorkspace .section-heading #sectionDescriptionDetails{
+  display:block!important;
+  margin:12px 0 16px!important;
+  padding:16px 18px!important;
+  background:#141b17!important;
+  border:1px solid #2f5140!important;
+  border-left:3px solid #29e69c!important;
+  border-radius:12px!important;
+}
+body.form-mode.impacto-social-mode #formWorkspace #sectionDescriptionDetails summary{
+  display:none!important;
+}
+body.form-mode.impacto-social-mode #formWorkspace #sectionDescription{
+  color:#d6e5d9!important;
+  font-size:clamp(12px,2.5vw,14px)!important;
+  line-height:1.8!important;
+  white-space:pre-line!important;
+  margin:0!important;
+}
+body.form-mode.impacto-social-mode #formWorkspace .social-info-text{
+  white-space:pre-line!important;
+  background:#111915!important;
+  border:1px solid #2f4739!important;
+  border-radius:9px!important;
+  padding:13px 15px!important;
+  line-height:1.7!important;
+  color:#e1f3e7!important;
+}
+body.form-mode.impacto-social-mode #formWorkspace .required,
+body.form-mode.impacto-social-mode #formWorkspace .field-label .required{
+  color:#ff6b74!important;
+}
+body.form-mode.impacto-social-mode #formWorkspace .social-current-value{
+  background:#101915!important;
+  border-left:3px solid #29e69c!important;
+  color:#cee5d5!important;
+  font-size:12px!important;
+  padding:9px 11px!important;
+  margin-bottom:10px!important;
+  border-radius:7px!important;
+  overflow-wrap:anywhere!important;
+}
+body.form-mode.impacto-social-mode #formWorkspace .social-school-directory{
+  display:flex!important;flex-direction:column!important;gap:9px!important;
+}
+body.form-mode.impacto-social-mode #formWorkspace .social-school-directory small{
+  color:#aac7b6!important;font-size:11px!important;line-height:1.6!important;
+}
+body.form-mode.impacto-social-mode #formWorkspace .social-school-directory select{
+  min-height:50px!important;
+}
+body.form-mode.impacto-social-mode #formWorkspace .social-coordinate-control :is(input,small,div)[hidden]{
+  display:none!important;
+}
+body.form-mode.impacto-social-mode #formWorkspace .social-coordinate-actions{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;
+}
+body.form-mode.impacto-social-mode #formWorkspace .social-coordinate-actions button{
+  width:100%!important;min-height:44px!important;font-size:12px!important;
+  border-radius:10px!important;
+}
+.form-card-details .social-history-open{margin:8px 0!important}
+.social-history-panel{margin:9px 0!important;padding:12px!important;background:#101713!important;border:1px solid #284336!important;border-radius:9px!important}
+.social-history-panel p{line-height:1.5!important;color:#b7ccbe!important}
+.social-history-row{display:grid!important;gap:5px!important;padding:11px 5px!important;border-bottom:1px solid #2d3b33!important}
+.social-history-row strong{color:#d9f9e6!important}
+.social-history-row span,.social-history-row small{font-size:11px!important;color:#a6c5b3!important}
+@media(max-width:550px){
+ body.form-mode.impacto-social-mode #formWorkspace .social-coordinate-actions{grid-template-columns:1fr!important}
+ body.form-mode.impacto-social-mode #formWorkspace .workspace-topbar .social-qa-bar{padding:3px 5px!important}
+ body.form-mode.impacto-social-mode #formWorkspace .section-heading #sectionDescriptionDetails{padding:12px 13px!important}
+}
