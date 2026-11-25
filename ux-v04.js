@@ -153,6 +153,7 @@
     state.cancelGpsCapture?.();state.cancelGpsCapture=null;
     state.queuedCompletionId="";state.submissionQueued=false;state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.isTest=id==="IMPACTO_SOCIAL"?false:null;state.qaReference=null;state.territorialProgress=null;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.gpsCapturePending=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
     document.body.classList.add("form-mode");
+    document.body.classList.toggle("impacto-social-mode",form.id==="IMPACTO_SOCIAL");
     $("formTitle").textContent=form.name;
     $("formDescription").textContent=form.description||"";
     $("formEyebrow").textContent=form.eyebrow||"FORMULARIO";
@@ -370,7 +371,7 @@
     collapseFormHistory();
     if(publicMode){location.reload();return;}
     if(/^\/form\//i.test(location.pathname))history.replaceState({},"","/");
-    document.body.classList.remove("form-mode");
+    document.body.classList.remove("form-mode","impacto-social-mode");
     $("formWorkspace").hidden=true;$("reviewWorkspace").hidden=true;$("successWorkspace").hidden=true;
     state.cancelGpsCapture?.();state.cancelGpsCapture=null;
     state.geoController?.abort();state.geoController=null;state.form=null;window.FIBRAZO_ACTIVE_FORM_ID="";state.policy=null;state.territorialProgress=null;updateTerritorialProgress();state.gps=null;state.photos=[];state.detectedCity="";state.citySource="";state.ispOptions=[];window.scrollTo({top:0,behavior:"smooth"});
