@@ -12,8 +12,8 @@ const level=n=>n>=15?"strong-red":n>=13?"red":n>=12?"orange":n>=8?"yellow":n>=3?
 let node=null,info=null,waiting=false;
 const filters={campaign:"ESTUDIO_OPINION_2026",date:"",day:"",hour:"",status:"",q:""};
 const EXTRA_STATUS="No elegible";
-const FIXED_COLUMNS=new Set(["participant","age","stratumBill","actions","observations","coordinates"]);
-const DEFAULT_COLUMNS=["participant","phone","barrio","age","stratum","stratumBill","operator","availability","assigned","status","actions","observations","coordinates"];
+const FIXED_COLUMNS=new Set(["participant","age","stratumBill","actions","observations","coordinates","eligibilityReason"]);
+const DEFAULT_COLUMNS=["participant","phone","barrio","age","stratum","stratumBill","operator","availability","assigned","status","actions","observations","coordinates","eligibilityReason"];
 const COLUMNS=[
  ["participant","Participante"],["phone","Celular"],["barrio","Barrio"],["age","Edad"],
  ["stratum","Estrato vivienda"],["stratumBill","Estrato factura"],
@@ -169,7 +169,10 @@ function render(){
  renderTable();
 }
 function displayColumns(){
- return COLUMNS.filter(c=>(FIXED_COLUMNS.has(c[0])||selectedColumns.has(c[0]))&&(!RESTRICTED.has(c[0])||info?.canEdit));
+ const columns=COLUMNS.filter(c=>(FIXED_COLUMNS.has(c[0])||selectedColumns.has(c[0]))&&(!RESTRICTED.has(c[0])||info?.canEdit));
+ // Keep Coordinates and Motivo no elegible at the far right, even if extra columns are selected.
+ const trailing=["coordinates","eligibilityReason"];
+ return columns.filter(c=>!trailing.includes(c[0])).concat(trailing.map(key=>columns.find(c=>c[0]===key)).filter(Boolean));
 }
 function renderColumnPicker(){
  const panel=node.querySelector("#fq-columns-panel");if(!panel)return;
