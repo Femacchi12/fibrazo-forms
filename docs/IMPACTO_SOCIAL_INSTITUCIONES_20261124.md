@@ -73,3 +73,15 @@ Pruebas técnicas de esquema: 63 campos declarados, 8 secciones, 6 fotos, 4 emai
 - Teléfonos colombianos `^3[0-9]{9}$` y correos se verifican al abandonar el campo, con error rojo en el contenedor; el botón Continuar no supera una sección con errores en modo normal. En modo QA se omiten obligatorios vacíos pero los formatos introducidos incorrectamente impiden continuar. API conserva la validación de correo, teléfono y coordenada.
 - Cambios en `ux-v04.js`, `forms-config.js`, `impacto-social-schema.json`, `api/_impacto-social.js`, `brand-alignment.css`, versiones de `index.html` y `service-worker.js`, `docs/flow-sync-manifest.json` y `docs/FIBRAZO_Forms_Flujos.drawio`.
 - **Pruebas técnicas ejecutadas:** sintaxis de módulos JS, paridad de 63 campos UI/API, esquema de coordenadas en manifiesto, QA vacío válido, coordenada válida aceptada, latitud >90 rechazada, teléfono colombiano válido aceptado, `+57` e incompleto rechazados, correo inválido rechazado y registro real incompleto rechazado. Quedan pendientes prueba visual móvil, permisos de geolocalización, consulta geográfica con coordenadas de troncales conocidas y envíos de prueba desde una sesión autenticada.
+
+## FO-CHG-175 · Diseño visual Núcleo para Impacto Social (25/11/2026)
+
+**Referencia visual aprobada:** captura de acceso móvil a Núcleo, Gerencia de Ventas FIBRAZO; fondo negro, tarjetas gris carbón, tipografía redondeada/limpia y botón verde esmeralda. Complementa FO-CHG-173 sin modificar la estructura del formulario.
+
+- Se introduce la clase de interfaz `body.impacto-social-mode` **únicamente al abrir `IMPACTO_SOCIAL`**, y se retira al salir del formulario. El alcance no afecta Churn, Inteligencia, Exploración ni Focus Group.
+- Paleta CSS: fondo `#08090a`, superficies `#111213`, tarjetas `#1a1b1c` / `#1e1f20`, borde discreto `#343738`, texto claro, descripción secundaria gris, acento `#29e69c`.
+- Tipografía `Poppins` (ya cargada por el HTML), con `Montserrat` / sistema como respaldo; jerarquía específica para títulos, preguntas, campos de respuesta, opciones y botones.
+- Una sola columna de preguntas y **18 px de separación vertical en escritorio / 16 px en móvil**, sin añadir márgenes externos a las tarjetas. Bordes redondeados y contraste en foco, selección y validación.
+- La identidad se extiende al encabezado, tarjetas, opciones, controles y navegación del formulario (y sus estados de revisión); no se alteran textos, opciones, obligatoriedades, GPS, lógica de cobertura, foto, permisos ni envío QA.
+- Archivos modificados: `ux-v04.js`, `brand-alignment.css`, `index.html` (actualización forzada de recursos) y `service-worker.js` (nuevo identificador PWA).
+- **Verificación técnica:** sintaxis JS correcta; clase activada solo para Impacto Social y eliminada al salir; reglas CSS nuevas todas bajo `body.form-mode.impacto-social-mode`; fuente Poppins ya enlazada; diferencia 18/16 px y paleta de colores presente. La comprobación visual final en teléfono y la publicación Vercel READY requieren verificación posterior.
