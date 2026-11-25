@@ -20,8 +20,8 @@ function entry(entry){
   const school=value(r,0),site=value(r,1),city=value(r,14);
   return {id:String(id),label:[school,site,city].filter(Boolean).join(" · "),school,site,city};
 }
-function detail(entry){
-  const r=entry.r;
+function detail(record){
+  const r=record.r;
   const data={
     nombre:value(r,0),sede:value(r,1),nit:value(r,22)||value(r,24),dane:value(r,25)||value(r,26),
     ciudad:value(r,14),barrio:value(r,20),sector:value(r,21),direccion:value(r,27),
@@ -33,7 +33,7 @@ function detail(entry){
     rector:{nombre:value(r,31),celular:value(r,32),correo:value(r,33)},
     coordinador:{nombre:value(r,34),celular:value(r,35),correo:value(r,36)}
   };
-  return {...entry,fields:data,contacts};
+  return {...entry(record),fields:data,contacts};
 }
 module.exports=async(req,res)=>{
   res.setHeader("Cache-Control","private, no-store");
@@ -50,7 +50,7 @@ module.exports=async(req,res)=>{
       if(!/^\d{1,5}$/.test(id))throw httpError("INVALID_SCHOOL_REF",400);
       const match=rows.find(x=>String(x.row)===id);
       if(!match)throw httpError("SCHOOL_NOT_FOUND",404);
-      return res.status(200).json({ok:true,school:detail(entry(match))});
+      return res.status(200).json({ok:true,school:detail(match)});
     }
     const q=String(req.query.q||"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").slice(0,90);
     const list=rows.map(entry).filter(x=>!q||x.label.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").includes(q));
