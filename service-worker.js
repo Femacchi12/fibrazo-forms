@@ -1,4 +1,4 @@
-const CACHE="fibrazo-forms-v0.8.203-20261125-social176";
+const CACHE="fibrazo-forms-v0.8.204-20261125-social177";
 const SYNC_TAG="fibrazo-queue-v1";
 // Local, pinned SDK files avoid a CDN dependency during startup and worker wakeup.
 importScripts('/vendor/firebase-app-compat-12.19.0.js','/vendor/firebase-auth-compat-12.19.0.js','/firebase-config.js','/background-territory.js','/qa-stratum-policy.js','/offline-v04.js');
