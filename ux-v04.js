@@ -494,6 +494,7 @@
         if(!response.ok)throw Error("SCHOOL_READ_UNAVAILABLE");
         const result=await response.json();const school=result.school;
         state.socialSchool=school;
+        window.dispatchEvent(new CustomEvent("social:school-selected",{detail:school}));
         const values={
           soc_identificacion_nombre:school.school,
           soc_identificacion_sede:school.site,
@@ -517,6 +518,70 @@
     box.append(search,selection,status);return box;
   }
 
+
+  // FO-CHG-176 · Comparador compacto de todos los datos institucionales excepto contactos.
+  function institutionCompareInput(field){
+    const host=document.createElement("div");host.className="social-institution-compare";
+    const hidden=document.createElement("input");hidden.type="hidden";hidden.name=field.key;
+    const summary=document.createElement("p");summary.className="social-compare-summary";summary.textContent="Selecciona una institución y sede en el paso anterior para consultar sus datos actuales.";
+    const panels=document.createElement("div");panels.className="social-compare-panels";
+    const chosen=new Map();
+    function sync(){
+      const data=Object.fromEntries(chosen);
+      hidden.value=chosen.size?JSON.stringify(data):"";
+      summary.textContent=chosen.size+" dato"+(chosen.size===1?"":"s")+" revisado"+(chosen.size===1?"":"s")+". Los cambios no sobrescriben la fuente original.";
+      clearError(field.key);
+    }
+    function renderSchool(school){
+      panels.innerHTML="";chosen.clear();hidden.value="";
+      const entries=school?.allFields||[];
+      if(!entries.length){summary.textContent="No se encontraron datos actuales de la institución; vuelve a consultar la base.";return;}
+      summary.textContent="Revisa los datos de "+school.school+" · "+school.site+". Selecciona Confirmar o Modificar en cada dato necesario.";
+      const groups=[
+        {name:"Identificación, sede y estado",predicate:x=>Number(x.key.slice(7))<=20},
+        {name:"Territorio, contactos institucionales y ubicación",predicate:x=>Number(x.key.slice(7))>20&&Number(x.key.slice(7))<=37},
+        {name:"Educación, infraestructura y conectividad",predicate:x=>Number(x.key.slice(7))>37}
+      ];
+      for(const group of groups){
+        const items=entries.filter(group.predicate);if(!items.length)continue;
+        const details=document.createElement("details");details.className="social-compare-group";details.open=group===groups[0];
+        const title=document.createElement("summary");title.textContent=group.name+" · "+items.length+" campos";details.appendChild(title);
+        for(const item of items){
+          const card=document.createElement("div");card.className="social-compare-row";
+          const label=document.createElement("strong");label.textContent=item.label;
+          const current=document.createElement("div");current.className="social-current-value";current.textContent="Valor actual: "+(item.value||"Sin información");
+          const controls=document.createElement("div");controls.className="social-compare-actions";
+          const confirm=document.createElement("button");confirm.type="button";confirm.textContent="✓ Confirmar";confirm.className="secondary-button compact";
+          const modify=document.createElement("button");modify.type="button";modify.textContent="✎ Modificar";modify.className="secondary-button compact";
+          const editor=document.createElement("textarea");editor.rows=2;editor.placeholder="Escribe el valor actualizado";editor.hidden=true;
+          const note=document.createElement("small");note.className="social-compare-note";note.textContent="Pendiente de revisión";
+          const select=(mode)=>{
+            confirm.classList.toggle("selected",mode==="Confirmar");
+            modify.classList.toggle("selected",mode==="Modificar");
+            editor.hidden=mode!=="Modificar";
+            chosen.set(item.key,{label:item.label,actual:item.value||"",decision:mode,propuesto:mode==="Modificar"?editor.value.trim():""});
+            note.textContent=mode==="Confirmar"?"Confirmado para revisión":"Escribe el nuevo dato para solicitar su modificación.";
+            sync();
+          };
+          confirm.addEventListener("click",()=>select("Confirmar"));
+          modify.addEventListener("click",()=>{select("Modificar");editor.focus()});
+          editor.addEventListener("input",()=>{
+            chosen.set(item.key,{label:item.label,actual:item.value||"",decision:"Modificar",propuesto:editor.value.trim()});
+            sync();
+          });
+          controls.append(confirm,modify);card.append(label,current,controls,editor,note);details.append(card);
+        }
+        panels.append(details);
+      }
+    }
+    window.addEventListener("social:school-selected",e=>{
+      if(state.form?.id==="IMPACTO_SOCIAL"&&host.isConnected)renderSchool(e.detail);
+    });
+    host.append(summary,panels,hidden);
+    if(state.socialSchool)queueMicrotask(()=>renderSchool(state.socialSchool));
+    return host;
+  }
+
   function renderField(field){
     const wrap=document.createElement("div");wrap.className="field"+(field.full?" full":"");wrap.dataset.key=field.key;wrap.dataset.section=field.section||"default";if(state.form?.id==="IMPACTO_SOCIAL")wrap.classList.add("social-field-card");
     const label=document.createElement("label");label.className="field-label";const simpleGps=field.key==="coordenadas"&&field.type==="gps"&&isExplorationForm();label.innerHTML=esc(simpleGps?"Coordenadas · ingresa manualmente o utiliza el GPS":field.label)+(field.required?'<span class="required">*</span>':"");wrap.appendChild(label);
@@ -535,6 +600,7 @@
     else if(field.type==="coordinates"){wrap.appendChild(coordinatesInput(field));}
     else if(field.type==="coordinates-social"){wrap.appendChild(socialCoordinatesInput(field));}
     else if(field.type==="school-directory"){wrap.appendChild(schoolDirectoryInput(field));}
+    else if(field.type==="institution-compare"){wrap.appendChild(institutionCompareInput(field));}
     else if(field.type==="isp-autocomplete"){wrap.appendChild(ispAutocompleteInput(field));}
     else if(field.type==="photos"){wrap.appendChild(photoInput(field));}
     else if(field.type==="photo-single"){wrap.appendChild(singlePhotoInput(field));}
@@ -1438,6 +1504,17 @@
     if(field.type==="coordinates")return field.required&&!window.FIBRAZO_BACKGROUND_TERRITORY.validPoint(state.gps)?"Pega una coordenada válida en formato latitud, longitud.":"";
     if(field.type==="coordinates-social")return field.required&&!window.FIBRAZO_BACKGROUND_TERRITORY.validPoint(state.gps)?"Toma tu ubicación o pega una coordenada válida y pulsa Usar coordenada pegada.":"";
     if(field.type==="info")return"";
+    if(field.type==="institution-compare"){
+      const value=String(fieldValue(field.key)||"").trim();
+      if(!value)return field.required?"Confirma o modifica al menos un dato institucional.":"";
+      try{
+        const data=JSON.parse(value),items=Object.values(data);
+        if(!items.length)return"Confirma o modifica al menos un dato.";
+        if(items.some(x=>x.decision==="Modificar"&&!String(x.propuesto||"").trim()))return"Completa todos los valores que marcaste como Modificar.";
+        if(value.length>30000)return"La solicitud de actualización es demasiado extensa.";
+      }catch(_){return"Los datos de actualización no tienen un formato válido.";}
+      return"";
+    }
     if(field.key==="soc_correo_confirmado")return Array.isArray(fieldValue(field.key))&&fieldValue(field.key).length?"":"Confirma el correo de la sesión para continuar.";
     if(field.type==="photos"||field.type==="photo-single")return field.required&&!state.photos.some(photo=>photo.fieldKey===field.key)?"Esta fotografía es obligatoria.":"";
     const v=fieldValue(field.key),empty=Array.isArray(v)?v.length===0:String(v||"").trim()==="";
@@ -1587,6 +1664,9 @@
         if(geoState==="SIN_CAPA_CANONICA")return base+" · sin capa canónica disponible";
         if(geoState==="SIN_CAPA")return base+" · sin capa disponible";
       }
+    }
+    if(field.type==="institution-compare"){
+      try{const x=JSON.parse(fieldValue(field.key)||"{}");return Object.keys(x).length+" dato(s) revisado(s) · "+Object.values(x).filter(v=>v.decision==="Modificar").length+" modificación(es) propuesta(s)";}catch(_){return"Sin datos revisados";}
     }
     if(field.type==="photos")return state.photos.length?state.photos.length+" foto"+(state.photos.length===1?"":"s"):"—";
     if(field.type==="photo-single")return state.photos.some(p=>p.fieldKey===field.key)?"1 foto":"—";
