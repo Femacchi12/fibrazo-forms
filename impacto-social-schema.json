@@ -1033,6 +1033,18 @@
       "originalItemId": 1319040955
     },
     {
+      "key": "soc_directorio_sede",
+      "section": "gestion_identificacion",
+      "label": "Selecciona la institución y sede registrada",
+      "type": "school-directory",
+      "required": true,
+      "showWhen": {
+        "field": "soc_gestion",
+        "equals": "Actualización de datos de institución educativa"
+      },
+      "help": "La información se lee de Base_Esc-Fund., sin modificar la ficha actual. Busca por escuela, sede o ciudad."
+    },
+    {
       "key": "soc_identificacion_nombre",
       "section": "gestion_identificacion",
       "label": "Nombre de la institución educativa",
