@@ -422,7 +422,11 @@
       let best=null,completed=false,timer=null;
       const finish=()=>{
         if(completed||id!==fixId)return;completed=true;stop();clearTimeout(timer);gps.disabled=improve.disabled=false;
-        if(best)store(best,"gps");else{accuracy.textContent="Sin lectura GPS; revisa permisos o pega las coordenadas.";setError(field.key,"No se pudo obtener la ubicación.");}
+        if(!box.isConnected||state.form?.id!=="IMPACTO_SOCIAL")return;
+        if(best){
+          if(refine&&state.gps?.accuracy!=null&&Number(state.gps.accuracy)<=Number(best.accuracy))accuracy.textContent="No se obtuvo una lectura mejor; se conserva la precisión anterior de ±"+Math.round(state.gps.accuracy)+" m.";
+          else store(best,"gps");
+        }else{accuracy.textContent="Sin lectura GPS; revisa permisos o pega las coordenadas.";setError(field.key,"No se pudo obtener la ubicación.");}
       };
       watch=navigator.geolocation.watchPosition(pos=>{
         if(id!==fixId||!box.isConnected){stop();return;}
