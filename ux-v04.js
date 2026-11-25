@@ -1564,14 +1564,6 @@
         if(paint)setError(field.key,errors[errors.length-1].message);
       }
     }
-    if(state.form?.id==="IMPACTO_SOCIAL"&&section.id==="actualizacion_institucion"){
-      const chosen=state.form.fields.filter(f=>f.key.startsWith("soc_confirmar_")).some(f=>String(fieldValue(f.key)||"").trim());
-      if(!chosen){
-        const field=state.form.fields.find(f=>f.key==="soc_confirmar_nombre");
-        errors.push({field,message:"Confirma o modifica al menos un dato para registrar una actualización."});
-        if(paint)setError(field.key,errors[errors.length-1].message);
-      }
-    }
     return errors;
   }
   function validateAll(){return activeSections().flatMap((s,i)=>validateSection(i,false));}
