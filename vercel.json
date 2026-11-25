@@ -61,6 +61,9 @@
     },
     "api/map.js": {
       "maxDuration": 30
+    },
+    "api/social-schools.js": {
+      "maxDuration": 30
     }
   },
   "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':(exclude)docs/**' ':(exclude)README.md' || exit 1",
