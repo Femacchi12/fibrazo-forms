@@ -396,7 +396,7 @@ async function readRows(auth,forms,requested,limit,user,caps){
   for(const form of allowed){
     const r=await sheets.spreadsheets.values.get({
       spreadsheetId:SHEET_ID,
-      range:`${form.sheet}!A2:${isExploration(form.id)?"CE":form.id==="INTELIGENCIA_OPERADOR"?"AF":form.id==="IMPACTO_SOCIAL"?"BN":"AC"}`,
+      range:`${form.sheet}!A2:${isExploration(form.id)?"CE":form.id==="INTELIGENCIA_OPERADOR"?"AF":form.id==="IMPACTO_SOCIAL"?"DW":"AC"}`,
       valueRenderOption:"UNFORMATTED_VALUE"
     });
     let sourceRows=r.data.values||[];
