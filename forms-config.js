@@ -179,8 +179,8 @@ window.FIBRAZO_FORMS = {
 // FO-CHG-142 · Impacto Social · Solo instituciones educativas públicas.
 // Fuente: exportación JSON Socialización FIBRAZO, 24/11/2026.
 // La misma definición se refleja en impacto-social-schema.json para validación de servidor.
-// FO-CHG-176 · Tres gestiones dentro del formulario Impacto Social.
-// FO-CHG-176 · Inscripción, novedades y actualización institucional/contactos.
+// FO-CHG-177 · Tres gestiones dentro del formulario Impacto Social.
+// FO-CHG-177 · Inscripción, novedades y actualización institucional/contactos.
 window.FIBRAZO_FORMS.IMPACTO_SOCIAL = {
   "id": "IMPACTO_SOCIAL",
   "name": "Impacto Social",
