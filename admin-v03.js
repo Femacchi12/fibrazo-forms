@@ -231,7 +231,9 @@
       const publicUrl=location.origin+"/form/"+f.slug;
       const databaseHtml=f.canViewDatabase&&f.databaseUrl?'<a class="secondary-button compact admin-db-link" href="'+esc(f.databaseUrl)+'" target="_blank" rel="noopener">↗ Base de datos</a>':"";
       const isActive=String(f.status).toLowerCase()==="activo";
+      const photoCap=f.id==="IMPACTO_SOCIAL"?6:f.id==="INTELIGENCIA_OPERADOR"?5:3;
       card.dataset.savedStatus=isActive?"activo":"inactivo";
+      card.dataset.photoCap=String(photoCap);
       card.innerHTML=
         '<button type="button" class="admin-accordion-head compact-head" data-toggle>'+
           '<div><span>'+esc(f.id)+'</span><h3>'+esc(f.name)+'</h3><div class="admin-summary-chips"><span class="form-status-chip '+(isActive?"active":"inactive")+'">'+(isActive?"Activo":"Inactivo")+'</span><span>'+esc(accessSummary(f))+'</span><span>'+esc(experienceSummary(f))+'</span></div></div>'+
@@ -271,7 +273,7 @@
 
           '<details class="admin-compact-section" data-admin-scope="edit">'+
             '<summary><div><span>EVIDENCIA</span><strong>Fotos y archivos</strong></div><b data-evidence-summary>'+photoSummary(f.maxPhotos,f.maxPhotoMb)+'</b></summary>'+
-            '<div class="compact-section-body evidence-row"><label><span>Máximo de fotos</span><input data-field="maxPhotos" type="number" min="0" max="3" value="'+esc(Number.isFinite(f.maxPhotos)?f.maxPhotos:3)+'"><small data-photo-state></small></label><label data-photo-size><span>Máximo por foto (MB)</span><input data-field="maxPhotoMb" type="number" min=".25" max="2" step=".25" value="'+esc(f.maxPhotoMb)+'"></label></div>'+
+            '<div class="compact-section-body evidence-row"><label><span>Máximo de fotos</span><input data-field="maxPhotos" type="number" min="0" max='+photoCap+'" value="'+esc(Number.isFinite(f.maxPhotos)?f.maxPhotos:3)+'"><small data-photo-state></small></label><label data-photo-size><span>Máximo por foto (MB)</span><input data-field="maxPhotoMb" type="number" min=".25" max="2" step=".25" value="'+esc(f.maxPhotoMb)+'"></label></div>'+
           '</details>'+
 
           '<div class="admin-card-actions compact-actions"><small>Última actualización: '+esc(f.updatedAt||"—")+(f.updatedBy?" · "+esc(f.updatedBy):"")+'</small>'+databaseHtml+'<button type="button" class="primary-button compact-save" data-save>Guardar cambios</button></div>'+
@@ -494,7 +496,7 @@
     const photoSize=card.querySelector("[data-photo-size]");
     const photoState=card.querySelector("[data-photo-state]");
     const evidence=card.querySelector("[data-evidence-summary]");
-    const count=Math.max(0,Math.min(3,Number(photoInput?.value||0)));
+    const count=Math.max(0,Math.min(Number(card.dataset.photoCap||3),Number(photoInput?.value||0)));
     const mb=card.querySelector('[data-field="maxPhotoMb"]')?.value||1.5;
     if(photoSize)photoSize.hidden=count===0;
     if(photoState)photoState.textContent=count===0?"Fotos desactivadas.":"Hasta "+count+" foto"+(count===1?"":"s")+".";
