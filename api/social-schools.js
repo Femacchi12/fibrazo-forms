@@ -4,15 +4,16 @@
 const {google}=require("googleapis");
 const {gauth,verifyUser,loadForms,userCapabilities,permissionFor,canAccess,httpError}=require("./_core");
 const MASTER="1symwDNHvlE6cL4wPivai-Hc12uC5ZturLFHRlHw5QaY";
-let cache={until:0,rows:[]};
+let cache={until:0,rows:[],headers:[]};
 function value(r,i){const x=String(r[i]??"").trim();return /^(sin (informaci[oó]n|confirmar)|#n\/a)$/i.test(x)?"":x;}
 async function schoolRows(auth){
   if(cache.until>Date.now())return cache.rows;
   const result=await google.sheets({version:"v4",auth}).spreadsheets.values.get({
-    spreadsheetId:MASTER,range:"'Base_Esc-Fund.'!A2:BL5000",valueRenderOption:"FORMATTED_VALUE"
+    spreadsheetId:MASTER,range:"'Base_Esc-Fund.'!A1:BL5000",valueRenderOption:"FORMATTED_VALUE"
   });
-  const rows=(result.data.values||[]).map((r,i)=>({r,row:i+2})).filter(({r})=>value(r,5)==="Institución Educativa"&&value(r,9)==="Instalado");
-  cache={until:Date.now()+300000,rows};
+  const values=result.data.values||[],headers=values[0]||[];
+  const rows=values.slice(1).map((r,i)=>({r,row:i+2})).filter(({r})=>value(r,5)==="Institución Educativa"&&value(r,9)==="Instalado");
+  cache={until:Date.now()+300000,rows,headers};
   return rows;
 }
 function entry(entry){
@@ -33,7 +34,9 @@ function detail(record){
     rector:{nombre:value(r,31),celular:value(r,32),correo:value(r,33)},
     coordinador:{nombre:value(r,34),celular:value(r,35),correo:value(r,36)}
   };
-  return {...entry(record),fields:data,contacts};
+  const allFields=(cache.headers||[]).map((title,i)=>({key:"column_"+(i+1),label:String(title||"Campo "+(i+1)),value:value(r,i)}))
+    .filter(field=>!/(rector|coordinador|n[uú]mero de contacto|celular|tel[eé]fono)/i.test(field.label));
+  return {...entry(record),fields:data,contacts,allFields};
 }
 module.exports=async(req,res)=>{
   res.setHeader("Cache-Control","private, no-store");
