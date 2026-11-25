@@ -253,17 +253,17 @@ window.FIBRAZO_FORMS.IMPACTO_SOCIAL = {
       "title": "Servicio de internet existente",
       "description": "📄Esta sección busca tener información sobre el servicio de internet actual de la institución (empresa proveedora, costos y quién los asume). \n✏️Los datos se utilizan únicamente con fines de diagnóstico para conocer la situación actual, medir el impacto de la conectividad que aportamos y evaluar posibles beneficios adicionales a futuro. \n👉No implica ningún compromiso ni costo por parte de la institución.",
       "when": {
-      "all": [
-            {
-                  "field": "soc_gestion",
-                  "equals": "Inscripción de nueva institución educativa"
-            },
-            {
-                  "field": "soc_1588036715",
-                  "equals": "SI"
-            }
-      ]
-}
+        "all": [
+          {
+            "field": "soc_gestion",
+            "equals": "Inscripción de nueva institución educativa"
+          },
+          {
+            "field": "soc_1588036715",
+            "equals": "SI"
+          }
+        ]
+      }
     },
     {
       "id": "fotografias",
@@ -1214,6 +1214,18 @@ window.FIBRAZO_FORMS.IMPACTO_SOCIAL = {
       "type": "info",
       "help": "El servicio es totalmente gratuito. La institución nunca deberá realizar ningún pago bajo ningún concepto.\nReportes de novedades: cualquier inconveniente debe ser informado al WhatsApp oficial 3143460060, identificándose siempre con el código DANE de la institución.\nTiempo de respuesta: una vez realizado el reporte, la novedad será atendida en un máximo de 48 horas.\nCanales de apoyo: ante dudas adicionales pueden contactar al socializador que gestionó la instalación o con:\nFernando Eduardo Macchi – Jefe de Desarrollo Comercial\nCel: 3143460060 – Correo: eduardo@fibrazo.com\nPlaca de identificación: junto con la instalación se colocará una placa acrílica con la leyenda “Mi escuela conectada”, como símbolo visible del servicio que la institución recibe.\n⚠️Aviso para el socializador:\nAsegúrate de explicar muy claramente toda esta información al responsable de la institución. Renvía la información por WhatsApp al responsable: puedes copiar y pegar el texto o enviar una captura de pantalla. Esto ayudará a que quede un registro y a que la institución tenga siempre presentes los pasos a seguir.\n\n✨✨Deseamos que este servicio sea de gran utilidad tanto para docentes como para alumnos, contribuyendo a fortalecer los procesos educativos y a reducir la brecha digital. Desde Fibrazo seguimos comprometidos en acompañar a las instituciones en su misión de educar y transformar comunidades.✨\n\n",
       "originalItemId": 1319040955
+    },
+    {
+      "key": "soc_directorio_sede",
+      "section": "gestion_identificacion",
+      "label": "Selecciona la institución y sede registrada",
+      "type": "school-directory",
+      "required": true,
+      "showWhen": {
+        "field": "soc_gestion",
+        "equals": "Actualización de datos de institución educativa"
+      },
+      "help": "La información se lee de Base_Esc-Fund., sin modificar la ficha actual. Busca por escuela, sede o ciudad."
     },
     {
       "key": "soc_identificacion_nombre",
