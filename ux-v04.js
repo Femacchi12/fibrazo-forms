@@ -151,7 +151,7 @@
     if(!publicMode&&window.FIBRAZO_ACCESS&&window.FIBRAZO_ACCESS[id]===false)return;
     const policy=policyFor(id);
     state.cancelGpsCapture?.();state.cancelGpsCapture=null;
-    state.queuedCompletionId="";state.submissionQueued=false;state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.isTest=id==="IMPACTO_SOCIAL"?false:null;state.qaReference=null;state.territorialProgress=null;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.gpsCapturePending=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
+    state.socialSchool=null;state.queuedCompletionId="";state.submissionQueued=false;state.form=form;window.FIBRAZO_ACTIVE_FORM_ID=form.id;state.policy=policy;state.sectionIndex=0;state.isTest=id==="IMPACTO_SOCIAL"?false:null;state.qaReference=null;state.territorialProgress=null;state.gps=null;state.photos=[];state.editId="";state.existingPhotoFields={};state.startedAt=Date.now();state.detectedCity="";state.citySource="";state.ispOptions=[];state.geoController?.abort();state.geoController=null;state.geoLookupId=0;state.geoLookupCancelled=false;state.locationBusy=false;state.gpsCapturePending=false;state.maxSectionReached=0;state.locationValidated=false;state.geoPromise=null;
     document.body.classList.add("form-mode");
     document.body.classList.toggle("impacto-social-mode",form.id==="IMPACTO_SOCIAL");
     $("formTitle").textContent=form.name;
@@ -446,6 +446,74 @@
     actions.append(gps,improve,paste);box.append(input,actions,accuracy,coverage);return box;
   }
 
+
+  // FO-CHG-176 · Escuelas/sedes consultadas desde la base maestra, sin escritura.
+  function schoolDirectoryInput(field){
+    const box=document.createElement("div");box.className="social-school-directory";
+    const search=document.createElement("input");search.type="search";search.placeholder="Buscar escuela o sede…";search.autocomplete="off";search.setAttribute("aria-label","Buscar institución y sede");
+    const selection=document.createElement("select");selection.name=field.key;
+    selection.innerHTML='<option value="">Selecciona una sede registrada</option>';
+    const status=document.createElement("small");status.textContent="Conectando con la base de instituciones…";status.setAttribute("role","status");
+    let list=[],fetched=false;
+    const notice=text=>status.textContent=text;
+    async function getToken(){const u=currentUser();if(!u)throw Error("LOGIN_REQUIRED");return u.getIdToken();}
+    async function listSchools(){
+      if(fetched)return;
+      fetched=true;
+      try{
+        const token=await getToken(),response=await fetch("/api/social-schools",{headers:{Authorization:"Bearer "+token},cache:"no-store"});
+        if(!response.ok)throw Error("SCHOOL_LIST_UNAVAILABLE");
+        const result=await response.json();list=result.schools||[];
+        showResults();notice("Fuente: Base_Esc-Fund. · "+list.length+" sedes disponibles");
+      }catch(_){fetched=false;notice("No fue posible consultar la base operativa. Comprueba la conexión y vuelve a tocar el campo.");}
+    }
+    function showResults(){
+      const q=search.value.trim().toLocaleLowerCase("es"),previous=selection.value;
+      const matches=list.filter(item=>item.label.toLocaleLowerCase("es").includes(q));
+      selection.innerHTML='<option value="">Selecciona una sede registrada</option>';
+      for(const item of matches){
+        const option=document.createElement("option");option.value=item.id;option.textContent=item.label;selection.append(option);
+      }
+      if(matches.some(x=>x.id===previous))selection.value=previous;
+      notice(matches.length+" sedes coincidentes · Fuente: Base_Esc-Fund.");
+    }
+    search.addEventListener("focus",listSchools);
+    search.addEventListener("input",showResults);
+    selection.addEventListener("focus",listSchools);
+    selection.addEventListener("change",async()=>{
+      const id=selection.value;
+      state.socialSchool=null;
+      if(!id){clearError(field.key);return;}
+      notice("Cargando datos actuales de la sede seleccionada…");
+      try{
+        const token=await getToken();
+        const response=await fetch("/api/social-schools?row="+encodeURIComponent(id),{headers:{Authorization:"Bearer "+token},cache:"no-store"});
+        if(!response.ok)throw Error("SCHOOL_READ_UNAVAILABLE");
+        const result=await response.json();const school=result.school;
+        state.socialSchool=school;
+        const values={
+          soc_identificacion_nombre:school.school,
+          soc_identificacion_sede:school.site,
+          soc_identificacion_nit:school.fields.nit,
+          soc_identificacion_dane:school.fields.dane
+        };
+        for(const [key,value] of Object.entries(values)){
+          const control=document.querySelector('[name="'+css(key)+'"]');if(control)control.value=value||"";
+        }
+        document.querySelectorAll("[data-school-current]").forEach(el=>{
+          const key=el.dataset.schoolCurrent;el.textContent="Dato actual: "+String(school.fields[key]||"No registrado en la base");
+        });
+        for(const role of ["rector","coordinador"]){
+          const el=document.querySelector('[data-school-contact="'+role+'"]');
+          if(el){const contact=school.contacts[role]||{};el.textContent="Registro actual: "+[contact.nombre,contact.celular,contact.correo].filter(Boolean).join(" · ")||"Sin registro";}
+        }
+        document.querySelectorAll('[name^="soc_confirmar_"]').forEach(n=>{n.checked=false;});
+        clearError(field.key);notice("Institución: "+school.school+" · Sede: "+school.site+" · Consulta de solo lectura");
+      }catch(_){state.socialSchool=null;selection.value="";setError(field.key,"No se pudo consultar la sede seleccionada.");notice("No fue posible cargar los datos actuales; no se pueden confirmar valores sin referencia.");}
+    });
+    box.append(search,selection,status);return box;
+  }
+
   function renderField(field){
     const wrap=document.createElement("div");wrap.className="field"+(field.full?" full":"");wrap.dataset.key=field.key;wrap.dataset.section=field.section||"default";if(state.form?.id==="IMPACTO_SOCIAL")wrap.classList.add("social-field-card");
     const label=document.createElement("label");label.className="field-label";const simpleGps=field.key==="coordenadas"&&field.type==="gps"&&isExplorationForm();label.innerHTML=esc(simpleGps?"Coordenadas · ingresa manualmente o utiliza el GPS":field.label)+(field.required?'<span class="required">*</span>':"");wrap.appendChild(label);
@@ -463,6 +531,7 @@
     else if(field.type==="gps"){wrap.appendChild(gpsInput(field));}
     else if(field.type==="coordinates"){wrap.appendChild(coordinatesInput(field));}
     else if(field.type==="coordinates-social"){wrap.appendChild(socialCoordinatesInput(field));}
+    else if(field.type==="school-directory"){wrap.appendChild(schoolDirectoryInput(field));}
     else if(field.type==="isp-autocomplete"){wrap.appendChild(ispAutocompleteInput(field));}
     else if(field.type==="photos"){wrap.appendChild(photoInput(field));}
     else if(field.type==="photo-single"){wrap.appendChild(singlePhotoInput(field));}
@@ -482,6 +551,15 @@
       }
     }
     const err=document.createElement("div");err.className="field-error";err.dataset.errorFor=field.key;err.hidden=true;wrap.appendChild(err);
+    if(field.key.startsWith("soc_confirmar_")){
+      const current=document.createElement("div");current.className="social-current-value";current.dataset.schoolCurrent=field.sourceKey||field.key.replace("soc_confirmar_","");
+      current.textContent="Dato actual: selecciona primero una institución y sede.";wrap.querySelector(".field-label")?.after(current);
+    }
+    if(/^soc_contacto_(rector|coordinador)_nombre$/.test(field.key)){
+      const current=document.createElement("div");current.className="social-current-value";
+      current.dataset.schoolContact=field.key.includes("rector")?"rector":"coordinador";
+      current.textContent="Contacto actual: selecciona primero la institución.";wrap.querySelector(".field-label")?.after(current);
+    }
     if(field.key==="coordenadas"&&field.type==="gps")wrap.classList.add("gps-unified-field");
     if(field.default!==undefined)queueMicrotask(()=>{const n=document.querySelector('[name="'+css(field.key)+'"]');if(n&&!n.value)n.value=String(field.default);});
     return wrap;
