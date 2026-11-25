@@ -1,5 +1,5 @@
 "use strict";
-// FO-CHG-176 · Tres gestiones en Impacto Social, con validación por flujo.
+// FO-CHG-177 · Tres gestiones en Impacto Social, con validación por flujo.
 const schema=require("../impacto-social-schema.json");
 const formFields=schema.fields.filter(f=>f.type!=="info");
 const photoFields=formFields.filter(f=>f.type==="photo-single");
