@@ -86,7 +86,7 @@ Pruebas técnicas de esquema: 63 campos declarados, 8 secciones, 6 fotos, 4 emai
 - Archivos modificados: `ux-v04.js`, `brand-alignment.css`, `index.html` (actualización forzada de recursos) y `service-worker.js` (nuevo identificador PWA).
 - **Verificación técnica:** sintaxis JS correcta; clase activada solo para Impacto Social y eliminada al salir; reglas CSS nuevas todas bajo `body.form-mode.impacto-social-mode`; fuente Poppins ya enlazada; diferencia 18/16 px y paleta de colores presente. La comprobación visual final en teléfono y la publicación Vercel READY requieren verificación posterior.
 
-## FO-CHG-176 · Tres recorridos e integración con Socializadores (25/11/2026)
+## FO-CHG-177 · Tres recorridos e integración con Socializadores (25/11/2026)
 
 **Origen de requerimientos:** instrucciones del usuario del 25/11/2026; nueva visual en Dashboard Impacto Social; fuente motivacional de Google Docs «Presentación Socializadores de Fibrazo», ID `18gdoFjrbglN2UFnXB5azTGk6kSwjWX7jFl-R2P0SAIM`.
 
