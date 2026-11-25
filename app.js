@@ -420,6 +420,7 @@
               '<button class="copy-private-link" type="button" aria-label="Copiar acceso directo">Copiar</button>' +
             '</div>' +
             databaseHtml +
+            (form.id==="IMPACTO_SOCIAL"?'<button class="secondary-button compact social-history-open" type="button" aria-expanded="false">📋 Ver historial</button><div class="social-history-panel" hidden><p>Consulta los registros operativos guardados. Las pruebas QA no se incluyen.</p><div class="social-history-results" role="status">Abrir para consultar.</div></div>':'') +
           '</div>' +
         '</details>';
       card.querySelector(".form-open-button").addEventListener("click", () => openForm(form.id));
@@ -439,6 +440,24 @@
         button.classList.add("copied");
         setTimeout(()=>{button.textContent=previous;button.classList.remove("copied");},1600);
       });
+      if(form.id==="IMPACTO_SOCIAL"){
+        const button=card.querySelector(".social-history-open"),panel=card.querySelector(".social-history-panel");
+        button?.addEventListener("click",async()=>{
+          panel.hidden=!panel.hidden;button.setAttribute("aria-expanded",String(!panel.hidden));
+          if(panel.hidden)return;
+          const host=panel.querySelector(".social-history-results");
+          host.textContent="Consultando historial…";
+          try{
+            const token=await firebase.auth().currentUser?.getIdToken();
+            if(!token)throw Error("AUTH_REQUIRED");
+            const response=await fetch("/api/submissions?form=IMPACTO_SOCIAL&limit=100",{headers:{Authorization:"Bearer "+token},cache:"no-store"});
+            if(!response.ok)throw Error("HISTORY_UNAVAILABLE");
+            const result=await response.json(),rows=result.rows||[];
+            if(!rows.length){host.textContent="Todavía no hay registros operativos para mostrar.";return;}
+            host.innerHTML=rows.map(item=>'<article class="social-history-row"><strong>'+escapeHtml(item.data?.gestion||"Inscripción")+'</strong><span>'+escapeHtml(item.data?.institucion||"Institución sin registrar")+' · '+escapeHtml(item.data?.sede||"Sede no indicada")+'</span><small>'+escapeHtml(new Date(item.timestamp).toLocaleString("es-CO"))+'</small></article>').join("");
+          }catch(_){host.textContent="No se pudo consultar el historial. Verifica la sesión y vuelve a intentarlo.";}
+        });
+      }
       host.appendChild(card);
     });
     // FO-CHG-137: public research form follows the same card / icon / actions pattern.
