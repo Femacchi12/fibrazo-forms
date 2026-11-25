@@ -35,7 +35,17 @@ function validate(payload){
     if(field.type==="checkbox"){
       if(!Array.isArray(value)||value.length>20||value.some(v=>typeof v!=="string"||!(field.options||[]).includes(v)))throw error("INVALID_OPTIONS_"+field.key);
     }else{
-      if(typeof value!=="string"||value.length>2500)throw error("INVALID_FIELD_"+field.key);
+      if(typeof value!=="string"||value.length>(field.type==="institution-compare"?30000:2500))throw error("INVALID_FIELD_"+field.key);
+      if(field.type==="school-directory"&&!/^\d{1,5}$/.test(value))throw error("INVALID_SCHOOL_REFERENCE");
+      if(field.type==="institution-compare"){
+        let entries;try{entries=Object.entries(JSON.parse(value));}catch(_){throw error("INVALID_SCHOOL_UPDATE_JSON");}
+        if(!entries.length||entries.length>64)throw error("INVALID_SCHOOL_UPDATE_COUNT");
+        for(const [key,item] of entries){
+          if(!/^column_\d{1,2}$/.test(key)||!item||typeof item!=="object"||!["Confirmar","Modificar"].includes(item.decision))throw error("INVALID_SCHOOL_UPDATE_ENTRY");
+          if(item.decision==="Modificar"&&(!String(item.propuesto||"").trim()||String(item.propuesto).length>1500))throw error("MISSING_SCHOOL_UPDATE_VALUE");
+          if(/(?:^column_33$|^column_36$)/.test(key))throw error("CONTACT_PHONE_UPDATE_NOT_ALLOWED");
+        }
+      }
       if((field.type==="radio"||field.type==="select")&&!(field.options||[]).includes(value))throw error("INVALID_OPTION_"+field.key);
       if(field.format==="celular-co"&&!mobilePattern.test(value))throw error("INVALID_COLOMBIAN_MOBILE_"+field.key);
       if(field.format==="email"&&(value.length>254||!emailPattern.test(value)))throw error("INVALID_EMAIL_"+field.key);
@@ -48,8 +58,7 @@ function validate(payload){
   }
   if(!payload.isTest&&d.soc_gestion==="Actualización de datos de institución educativa"){
     if(d.soc_actualizacion_tipo==="Datos de la institución"){
-      const decisions=answerFields.filter(f=>f.key.startsWith("soc_confirmar_")).map(f=>d[f.key]).filter(Boolean);
-      if(!decisions.length)throw error("SOCIAL_UPDATE_MUST_CONFIRM_OR_MODIFY_FIELD");
+      if(empty(d.soc_actualizacion_institucional_detalle))throw error("SOCIAL_UPDATE_MUST_CONFIRM_OR_MODIFY_FIELD");
     }else if(d.soc_actualizacion_tipo==="Datos de contacto"){
       let complete=0;
       for(const role of ["rector","coordinador","otro"]){
