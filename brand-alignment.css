@@ -2444,3 +2444,72 @@ body.form-mode #formWorkspace .gps-one-field.gps-executive>.geo-enrichment{order
 .social-qa-bar .social-qa-label{display:flex;align-items:center;gap:9px;font-size:15px;white-space:nowrap;cursor:pointer}
 .social-qa-bar input{accent-color:#28f4ab;width:20px;height:20px}
 .social-qa-bar #impactoSocialQaHelp{font-size:12px;color:#a7d5bd;line-height:1.5}
+
+/* FO-CHG-173 · Preguntas tipo Google Forms, exclusivamente Impacto Social.
+   Una sola tarjeta por pregunta, con bordes y espacios muy discretos. */
+body.form-mode #formWorkspace .form-grid>.field.social-field-card{
+  box-sizing:border-box!important;
+  min-width:0!important;margin:0!important;
+  padding:12px 13px 14px!important;
+  border:1px solid rgba(159,193,175,.30)!important;
+  border-radius:10px!important;
+  background:#19221d!important;
+  box-shadow:none!important;
+}
+body.form-mode #formWorkspace .form-grid>.field.social-field-card:nth-child(even){
+  background:#202b24!important;
+}
+body.form-mode #formWorkspace .form-grid>.field.social-field-card::before{display:none!important}
+body.form-mode #formWorkspace .form-grid>.field.social-field-card:focus-within{
+  border-color:rgba(67,255,165,.65)!important;box-shadow:0 0 0 1px rgba(67,255,165,.14)!important;
+}
+body.form-mode #formWorkspace .form-grid>.field.social-field-card.invalid,
+body.form-mode #formWorkspace .form-grid>.field.social-field-card.invalid:focus-within{
+  border-color:#ff586e!important;box-shadow:0 0 0 1px rgba(255,88,110,.24)!important;
+}
+body.form-mode #formWorkspace .form-grid>.field.social-field-card :is(input[type="text"],input[type="email"],input[type="tel"],input[type="number"],textarea,select){
+  box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+  background:transparent!important;color:#f2fff7!important;
+  border:0!important;border-bottom:1px solid rgba(180,212,191,.40)!important;
+  border-radius:0!important;box-shadow:none!important;
+  padding:8px 2px!important;outline:0!important;
+}
+body.form-mode #formWorkspace .form-grid>.field.social-field-card :is(input,textarea,select):focus-visible{
+  border-bottom-color:#43ffa5!important;box-shadow:none!important;
+}
+body.form-mode #formWorkspace .form-grid>.field.social-field-card.invalid :is(input,textarea,select){
+  border-bottom-color:#ff586e!important;
+}
+body.form-mode #formWorkspace .form-grid>.field.social-field-card .field-error{
+  color:#ff8795!important;font-size:12px!important;font-weight:600!important;
+}
+body.form-mode #formWorkspace .form-grid>.field.social-field-card .field-help-top{
+  color:#b7c9be!important;font-size:12px!important;line-height:1.45!important;
+}
+body.form-mode #formWorkspace .social-coordinate-control{display:flex;flex-direction:column;gap:9px;min-width:0}
+body.form-mode #formWorkspace .social-coordinate-actions{display:flex;flex-wrap:wrap;gap:7px}
+body.form-mode #formWorkspace .social-coordinate-actions button{
+  flex:1 1 140px;min-width:0;padding:8px!important;min-height:38px!important;
+  white-space:normal;line-height:1.3;
+}
+body.form-mode #formWorkspace .social-coordinate-actions button[hidden]{display:none!important}
+body.form-mode #formWorkspace .social-coordinate-accuracy{
+  color:#c3e0cd;font-size:12px;font-weight:500;
+}
+body.form-mode #formWorkspace .social-troncal-result{
+  border-left:3px solid #7c9988;background:rgba(10,20,15,.42);
+  color:#d4e8d9;border-radius:4px;padding:9px 11px;
+  font-size:12px;line-height:1.5;overflow-wrap:anywhere;
+}
+body.form-mode #formWorkspace .social-troncal-result[data-status="inside"]{
+  border-left-color:#43ffa5;color:#d8ffea;
+}
+body.form-mode #formWorkspace .social-troncal-result[data-status="outside"]{
+  border-left-color:#ffc36e;color:#ffe6bf;
+}
+@media(max-width:430px){
+  body.form-mode #formWorkspace .form-grid>.field.social-field-card{
+    padding:11px 11px 13px!important;border-radius:8px!important;
+  }
+  body.form-mode #formWorkspace .social-coordinate-actions button{flex:1 1 100%}
+}
