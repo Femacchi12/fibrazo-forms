@@ -253,9 +253,17 @@ window.FIBRAZO_FORMS.IMPACTO_SOCIAL = {
       "title": "Servicio de internet existente",
       "description": "📄Esta sección busca tener información sobre el servicio de internet actual de la institución (empresa proveedora, costos y quién los asume). \n✏️Los datos se utilizan únicamente con fines de diagnóstico para conocer la situación actual, medir el impacto de la conectividad que aportamos y evaluar posibles beneficios adicionales a futuro. \n👉No implica ningún compromiso ni costo por parte de la institución.",
       "when": {
-        "field": "soc_gestion",
-        "equals": "Inscripción de nueva institución educativa"
-      }
+      "all": [
+            {
+                  "field": "soc_gestion",
+                  "equals": "Inscripción de nueva institución educativa"
+            },
+            {
+                  "field": "soc_1588036715",
+                  "equals": "SI"
+            }
+      ]
+}
     },
     {
       "id": "fotografias",
