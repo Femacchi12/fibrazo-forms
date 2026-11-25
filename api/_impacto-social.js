@@ -28,6 +28,10 @@ function validate(payload){
       if((field.type==="radio"||field.type==="select")&&!(field.options||[]).includes(value))throw error("INVALID_OPTION_"+field.key);
       if(field.format==="celular-co"&&!mobilePattern.test(value))throw error("INVALID_COLOMBIAN_MOBILE_"+field.key);
       if(field.format==="email"&&(value.length>254||!emailPattern.test(value)))throw error("INVALID_EMAIL_"+field.key);
+      if(field.type==="coordinates-social"){
+        const parts=value.trim().split(/\s*[,;]\s*/);
+        if(parts.length!==2||!parts.every(part=>/^[+-]?\d+(?:\.\d+)?$/.test(part))||Number(parts[0])<-90||Number(parts[0])>90||Number(parts[1])<-180||Number(parts[1])>180)throw error("INVALID_SOCIAL_COORDINATES_"+field.key);
+      }
     }
   }
   const photos=Array.isArray(payload.photos)?payload.photos:[];
