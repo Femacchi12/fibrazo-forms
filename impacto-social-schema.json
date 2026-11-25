@@ -249,7 +249,7 @@
       "key": "soc_1492169961",
       "section": "institucion",
       "label": "Coordenadas de ubicación",
-      "type": "text",
+      "type": "coordinates-social",
       "required": true,
       "originalItemId": 1492169961,
       "help": "📍Por favor, ingresa las coordenadas geográficas correspondientes a esta institucion (ya sea la principal o una sede).\nEsta información es clave para registrar correctamente su ubicación, planificar instalaciones y realizar futuras visitas técnicas.\n\nSi no sabes cómo obtener las coordenadas, puedes ver este breve video explicativo:\n🎥 Toca aquí para ver el tutorial\n\nFormato esperado: 11.240234, -74.206781"
