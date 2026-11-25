@@ -450,7 +450,7 @@
   }
 
 
-  // FO-CHG-176 · Escuelas/sedes consultadas desde la base maestra, sin escritura.
+  // FO-CHG-177 · Escuelas/sedes consultadas desde la base maestra, sin escritura.
   function schoolDirectoryInput(field){
     const box=document.createElement("div");box.className="social-school-directory";
     const search=document.createElement("input");search.type="search";search.placeholder="Buscar escuela o sede…";search.autocomplete="off";search.setAttribute("aria-label","Buscar institución y sede");
@@ -519,7 +519,7 @@
   }
 
 
-  // FO-CHG-176 · Comparador compacto de todos los datos institucionales excepto contactos.
+  // FO-CHG-177 · Comparador compacto de todos los datos institucionales excepto contactos.
   function institutionCompareInput(field){
     const host=document.createElement("div");host.className="social-institution-compare";
     const hidden=document.createElement("input");hidden.type="hidden";hidden.name=field.key;
