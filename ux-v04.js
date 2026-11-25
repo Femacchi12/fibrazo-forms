@@ -1463,6 +1463,38 @@
         if(paint)setError(target.key,message);
       }
     }
+    if(state.form?.id==="IMPACTO_SOCIAL"&&section.id==="actualizacion_contactos"){
+      let complete=0;
+      for(const role of ["rector","coordinador","otro"]){
+        const names=["nombre","celular","correo"].map(part=>"soc_contacto_"+role+"_"+part);
+        const values=names.map(key=>String(fieldValue(key)||"").trim());
+        if(values.every(Boolean))complete++;
+        if(values.some(Boolean)&&!values.every(Boolean)){
+          for(let i=0;i<3;i++)if(!values[i]){
+            const field=state.form.fields.find(f=>f.key===names[i]);
+            if(field){errors.push({field,message:"Completa nombre, celular y correo de este contacto."});if(paint)setError(field.key,"Completa los tres datos del contacto.");}
+          }
+        }
+      }
+      if(!complete&&!errors.length){
+        const field=state.form.fields.find(f=>f.key==="soc_contacto_rector_nombre");
+        errors.push({field,message:"Registra los tres datos de al menos un contacto: nombre, celular y correo."});
+        if(paint)setError(field.key,errors[errors.length-1].message);
+      }
+      if(String(fieldValue("soc_contacto_otro_nombre")||"").trim()&&!String(fieldValue("soc_contacto_otro_cargo")||"").trim()){
+        const field=state.form.fields.find(f=>f.key==="soc_contacto_otro_cargo");
+        errors.push({field,message:"Selecciona el tipo de otro cargo."});
+        if(paint)setError(field.key,errors[errors.length-1].message);
+      }
+    }
+    if(state.form?.id==="IMPACTO_SOCIAL"&&section.id==="actualizacion_institucion"){
+      const chosen=state.form.fields.filter(f=>f.key.startsWith("soc_confirmar_")).some(f=>String(fieldValue(f.key)||"").trim());
+      if(!chosen){
+        const field=state.form.fields.find(f=>f.key==="soc_confirmar_nombre");
+        errors.push({field,message:"Confirma o modifica al menos un dato para registrar una actualización."});
+        if(paint)setError(field.key,errors[errors.length-1].message);
+      }
+    }
     return errors;
   }
   function validateAll(){return activeSections().flatMap((s,i)=>validateSection(i,false));}
