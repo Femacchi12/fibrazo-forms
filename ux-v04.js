@@ -376,8 +376,73 @@
     state.geoController?.abort();state.geoController=null;state.form=null;window.FIBRAZO_ACTIVE_FORM_ID="";state.policy=null;state.territorialProgress=null;updateTerritorialProgress();state.gps=null;state.photos=[];state.detectedCity="";state.citySource="";state.ispOptions=[];window.scrollTo({top:0,behavior:"smooth"});
   }
 
+
+  // FO-CHG-173 · Impacto Social: GPS y consulta territorial canónica.
+  function socialCoordinatesInput(field){
+    const box=document.createElement("div");box.className="social-coordinate-control";
+    const input=document.createElement("input");input.name=field.key;input.type="text";input.inputMode="decimal";input.autocomplete="off";input.placeholder="11.240234, -74.206781";
+    const actions=document.createElement("div");actions.className="social-coordinate-actions";
+    const gps=document.createElement("button");gps.type="button";gps.textContent="⌖ Tomar mi ubicación";gps.className="primary-button compact";
+    const improve=document.createElement("button");improve.type="button";improve.textContent="◎ Mejorar precisión";improve.className="secondary-button compact";improve.hidden=true;
+    const paste=document.createElement("button");paste.type="button";paste.textContent="Usar coordenada pegada";paste.className="secondary-button compact";
+    const accuracy=document.createElement("small");accuracy.className="social-coordinate-accuracy";accuracy.textContent="Sin ubicación capturada";
+    const coverage=document.createElement("div");coverage.className="social-troncal-result";coverage.setAttribute("role","status");coverage.setAttribute("aria-live","polite");coverage.textContent="La cobertura se consultará al registrar una coordenada.";
+    let requestId=0,fixId=0,watch=null;
+    const paint=(text,status="pending")=>{coverage.textContent=text;coverage.dataset.status=status};
+    const parse=()=>{const parts=input.value.trim().split(/\s*[,;]\s*/);if(parts.length!==2||!parts.every(v=>/^[+-]?\d+(?:\.\d+)?$/.test(v)))return null;const [lat,lng]=parts.map(Number);return lat>=-90&&lat<=90&&lng>=-180&&lng<=180?{lat,lng}:null};
+    async function assess(point){
+      const id=++requestId,session=state.startedAt,form=state.form;
+      paint("Consultando troncales de FIBRAZO…");
+      if(!navigator.onLine){paint("Cobertura no verificable sin conexión.","unknown");return;}
+      try{
+        const user=currentUser();if(!user)throw Error("AUTH_REQUIRED");
+        const token=await user.getIdToken();
+        const response=await fetch("/api/exploration?lat="+encodeURIComponent(point.lat)+"&lng="+encodeURIComponent(point.lng),{cache:"no-store",headers:{Authorization:"Bearer "+token}});
+        if(!response.ok)throw Error("TERRITORY_UNAVAILABLE");
+        const data=await response.json();
+        if(id!==requestId||state.form!==form||state.startedAt!==session||state.gps?.lat!==point.lat||state.gps?.lng!==point.lng)return;
+        const status=String(data.troncalStatus||""),name=String(data.troncal||"").trim(),nearest=String(data.troncalNearby||"").trim(),meters=data.troncalDistanceM==null?NaN:Number(data.troncalDistanceM);
+        Object.assign(state.gps,{troncalStatus:status,troncal:status==="DENTRO"?name:"",troncalNearby:nearest,troncalDistanceM:Number.isFinite(meters)&&meters>=0?meters:null,troncalSource:data.troncalSource||""});
+        if(status==="DENTRO"&&name)paint("Dentro de cobertura · Troncal "+name,"inside");
+        else if(status==="FUERA"&&nearest&&Number.isFinite(meters)&&meters>=0)paint("Fuera de cobertura · a "+Math.round(meters).toLocaleString("es-CO")+" m de Troncal "+nearest,"outside");
+        else if(status==="FUERA")paint("Fuera de los polígonos registrados · troncal o distancia no disponible.","outside");
+        else paint("Cobertura no verificable: no existe una capa de troncales disponible para esta ubicación.","unknown");
+      }catch(_){if(id===requestId&&state.form===form)paint("No se pudo consultar la cobertura. La coordenada sigue registrada; reintenta con conexión.","unknown");}
+    }
+    function store(p,source){
+      state.gps={lat:p.lat,lng:p.lng,accuracy:source==="gps"?p.accuracy:null,citySource:source==="gps"?"social-gps":"manual-coordinate"};
+      input.value=p.lat.toFixed(6)+", "+p.lng.toFixed(6);
+      accuracy.textContent=source==="gps"?"Precisión estimada GPS: ±"+Math.round(p.accuracy)+" m":"Coordenada manual · sin precisión GPS";
+      improve.hidden=source!=="gps";clearError(field.key);assess(state.gps);
+    }
+    function stop(){if(watch!==null){navigator.geolocation.clearWatch(watch);watch=null}}
+    function locate(refine){
+      if(!navigator.geolocation){setError(field.key,"GPS no disponible. Puedes pegar las coordenadas.");return;}
+      const id=++fixId;stop();gps.disabled=improve.disabled=true;accuracy.textContent=refine?"Buscando una lectura más precisa…":"Buscando ubicación…";
+      let best=null,completed=false,timer=null;
+      const finish=()=>{
+        if(completed||id!==fixId)return;completed=true;stop();clearTimeout(timer);gps.disabled=improve.disabled=false;
+        if(best)store(best,"gps");else{accuracy.textContent="Sin lectura GPS; revisa permisos o pega las coordenadas.";setError(field.key,"No se pudo obtener la ubicación.");}
+      };
+      watch=navigator.geolocation.watchPosition(pos=>{
+        if(id!==fixId||!box.isConnected){stop();return;}
+        const point={lat:pos.coords.latitude,lng:pos.coords.longitude,accuracy:pos.coords.accuracy};
+        if(!Number.isFinite(point.lat)||!Number.isFinite(point.lng))return;
+        if(!best||point.accuracy<best.accuracy)best=point;
+        if(best.accuracy<=(refine?10:35))finish();
+      },finish,{enableHighAccuracy:true,maximumAge:0,timeout:18000});
+      timer=setTimeout(finish,refine?20000:14000);
+    }
+    gps.addEventListener("click",()=>locate(false));improve.addEventListener("click",()=>locate(true));
+    paste.addEventListener("click",()=>{const point=parse();if(!point){setError(field.key,"Pega una latitud y longitud válidas, separadas por coma.");paint("Coordenada inválida.","unknown");return;}store(point,"manual")});
+    input.addEventListener("input",()=>{++requestId;state.gps=null;improve.hidden=true;accuracy.textContent="Coordenada editada · pulsa «Usar coordenada pegada»";paint("Cobertura pendiente de verificación.");clearError(field.key)});
+    input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();paste.click()}});
+    input.addEventListener("blur",()=>{if(input.value.trim()&&parse()&&!state.gps)paste.click()});
+    actions.append(gps,improve,paste);box.append(input,actions,accuracy,coverage);return box;
+  }
+
   function renderField(field){
-    const wrap=document.createElement("div");wrap.className="field"+(field.full?" full":"");wrap.dataset.key=field.key;wrap.dataset.section=field.section||"default";
+    const wrap=document.createElement("div");wrap.className="field"+(field.full?" full":"");wrap.dataset.key=field.key;wrap.dataset.section=field.section||"default";if(state.form?.id==="IMPACTO_SOCIAL")wrap.classList.add("social-field-card");
     const label=document.createElement("label");label.className="field-label";const simpleGps=field.key==="coordenadas"&&field.type==="gps"&&isExplorationForm();label.innerHTML=esc(simpleGps?"Coordenadas · ingresa manualmente o utiliza el GPS":field.label)+(field.required?'<span class="required">*</span>':"");wrap.appendChild(label);
     if(field.help&&!simpleGps&&field.section!=="operadores"&&!(state.form?.id==="INTELIGENCIA_OPERADOR"&&["identificacion","elementos","calidad","validacion"].includes(field.section))){const h=document.createElement("span");h.className="field-help field-help-top";h.textContent=field.help;wrap.appendChild(h);}
 
@@ -392,6 +457,7 @@
     else if(field.type==="radio"||field.type==="checkbox"){wrap.appendChild(choiceInput(field));}
     else if(field.type==="gps"){wrap.appendChild(gpsInput(field));}
     else if(field.type==="coordinates"){wrap.appendChild(coordinatesInput(field));}
+    else if(field.type==="coordinates-social"){wrap.appendChild(socialCoordinatesInput(field));}
     else if(field.type==="isp-autocomplete"){wrap.appendChild(ispAutocompleteInput(field));}
     else if(field.type==="photos"){wrap.appendChild(photoInput(field));}
     else if(field.type==="photo-single"){wrap.appendChild(singlePhotoInput(field));}
@@ -453,6 +519,7 @@
   }
   function textInput(field){
     const i=document.createElement("input");i.type=field.format==="email"?"email":field.format==="celular-co"?"tel":"text";i.name=field.key;
+    if(field.format==="celular-co"||field.format==="email")i.addEventListener("blur",()=>{const v=String(i.value||"").trim();if(!v)return;const invalid=field.format==="celular-co"?!/^3[0-9]{9}$/.test(v):!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);if(invalid)setError(field.key,field.format==="celular-co"?"Celular inválido: debe tener 10 dígitos, comenzar en 3 y no incluir +57.":"Correo electrónico inválido.");else clearError(field.key);});
     if(field.format==="celular-co"){i.inputMode="numeric";i.maxLength=10;i.autocomplete="tel-national";i.placeholder="3XXXXXXXXX";i.pattern="3[0-9]{9}";}
     if(field.format==="email"){i.inputMode="email";i.maxLength=254;i.autocomplete="email";i.autocapitalize="off";i.spellcheck=false;i.placeholder="nombre@institucion.edu.co";}
     i.addEventListener("input",()=>{
@@ -1242,7 +1309,7 @@
       }
     }
     if(state.form?.id==="INTELIGENCIA_OPERADOR"&&currentSection()?.id==="calidad")saveLastOperatorTendidoQuality();
-    const errors=socialQaActive()?[]:validateSection(state.sectionIndex,true);
+    const errors=socialQaActive()?state.form.fields.filter(f=>f.section===currentSection()?.id&&f.format&&String(fieldValue(f.key)||"").trim()).map(f=>({field:f,message:validateField({...f,required:false})})).filter(x=>x.message):validateSection(state.sectionIndex,true);
     if(errors.length)return showValidation(errors);
     if(state.form?.id==="EXPLORACION_PRESENCIAL"){
       if(currentSection()?.id==="infraestructura")saveLastInfrastructure();
@@ -1272,6 +1339,7 @@
       return field.required&&!window.FIBRAZO_BACKGROUND_TERRITORY.validPoint(state.gps)?"Ingresa una coordenada válida o utiliza el GPS.":"";
     }
     if(field.type==="coordinates")return field.required&&!window.FIBRAZO_BACKGROUND_TERRITORY.validPoint(state.gps)?"Pega una coordenada válida en formato latitud, longitud.":"";
+    if(field.type==="coordinates-social")return field.required&&!window.FIBRAZO_BACKGROUND_TERRITORY.validPoint(state.gps)?"Toma tu ubicación o pega una coordenada válida y pulsa Usar coordenada pegada.":"";
     if(field.type==="info")return"";
     if(field.type==="photos"||field.type==="photo-single")return field.required&&!state.photos.some(photo=>photo.fieldKey===field.key)?"Esta fotografía es obligatoria.":"";
     const v=fieldValue(field.key),empty=Array.isArray(v)?v.length===0:String(v||"").trim()==="";
@@ -1361,7 +1429,7 @@
     activeSections().forEach(section=>{const visible=state.form.fields.filter(f=>f.section===section.id&&conditionMet(f));if(!visible.length)return;const card=document.createElement("section");card.className="review-section";const rows=visible.map(f=>'<div class="review-row"><span>'+esc(f.label)+'</span><strong>'+esc(reviewValue(f))+'</strong></div>').join("");card.innerHTML='<div class="review-section-head"><span>SECCIÓN</span><h2>'+esc(section.title)+"</h2></div>"+rows;host.appendChild(card);});
   }
   function reviewValue(field){
-    if(field.type==="gps"||field.type==="coordinates"){
+    if(field.type==="gps"||field.type==="coordinates"||field.type==="coordinates-social"){
       if(!state.gps)return"—";
       const accuracy=Number.isFinite(Number(state.gps.accuracy))?" · ±"+Math.round(Number(state.gps.accuracy))+" m":"";
       return state.gps.lat.toFixed(6)+", "+state.gps.lng.toFixed(6)+accuracy+(state.gps.cityDetected?" · "+state.gps.cityDetected:"");
