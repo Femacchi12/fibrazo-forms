@@ -212,3 +212,13 @@ module.exports=async(req,res)=>{
     return res.status(status).json({error:status===500?"No se pudo cargar el mapa.":error.message});
   }
 };
+
+// Shared map entry point; existing handlers retain their own auth and validation.
+const mapDataHandler=module.exports;
+module.exports=async(req,res)=>{
+  const route=req.query?.__map_route;
+  if(route===undefined)return mapDataHandler(req,res);
+  if(route==="map-search")return require("./_map-search")(req,res);
+  if(route==="map-city-catalog")return require("./_map-city-catalog")(req,res);
+  return res.status(404).json({error:"UNKNOWN_MAP_ROUTE"});
+};
