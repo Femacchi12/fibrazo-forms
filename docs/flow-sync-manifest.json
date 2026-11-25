@@ -2957,7 +2957,7 @@
       }
     },
     "issues": [],
-    "note": "FO-CHG-176: selector de tres gestiones, reporte de novedades, actualización integral con comparador institucional y rol de contactos, directorio autorizado de sedes; nuevos registros separados de la base maestra. QA E2E pendiente.",
+    "note": "FO-CHG-177: selector de tres gestiones, reporte de novedades, actualización integral con comparador institucional y rol de contactos, directorio autorizado de sedes; nuevos registros separados de la base maestra. QA E2E pendiente.",
     "qaTestControl": {
       "ticket": "FO-PEN-011",
       "status": "IMPLEMENTED_IN_FEATURE_BRANCH_NOT_DEPLOYED",
