@@ -383,11 +383,13 @@
     const box=document.createElement("div");box.className="social-coordinate-control";
     const input=document.createElement("input");input.name=field.key;input.type="text";input.inputMode="decimal";input.autocomplete="off";input.placeholder="11.240234, -74.206781";
     const actions=document.createElement("div");actions.className="social-coordinate-actions";
-    const gps=document.createElement("button");gps.type="button";gps.textContent="⌖ Tomar mi ubicación";gps.className="primary-button compact";
+    const gps=document.createElement("button");gps.type="button";gps.textContent="⌖ Tomar mis coordenadas actuales";gps.className="primary-button compact";
+    const manual=document.createElement("button");manual.type="button";manual.textContent="⌨ Cargar coordenadas manualmente";manual.className="secondary-button compact";
+    input.hidden=true;
     const improve=document.createElement("button");improve.type="button";improve.textContent="◎ Mejorar precisión";improve.className="secondary-button compact";improve.hidden=true;
-    const paste=document.createElement("button");paste.type="button";paste.textContent="Usar coordenada pegada";paste.className="secondary-button compact";
-    const accuracy=document.createElement("small");accuracy.className="social-coordinate-accuracy";accuracy.textContent="Sin ubicación capturada";
-    const coverage=document.createElement("div");coverage.className="social-troncal-result";coverage.setAttribute("role","status");coverage.setAttribute("aria-live","polite");coverage.textContent="La cobertura se consultará al registrar una coordenada.";
+    const paste=document.createElement("button");paste.type="button";paste.textContent="Validar coordenada manual";paste.className="secondary-button compact";paste.hidden=true;
+    const accuracy=document.createElement("small");accuracy.className="social-coordinate-accuracy";accuracy.textContent="Sin ubicación capturada";accuracy.hidden=true;
+    const coverage=document.createElement("div");coverage.className="social-troncal-result";coverage.setAttribute("role","status");coverage.setAttribute("aria-live","polite");coverage.textContent="La cobertura se consultará al registrar una coordenada.";coverage.hidden=true;
     let requestId=0,fixId=0,watch=null;
     const paint=(text,status="pending")=>{coverage.textContent=text;coverage.dataset.status=status};
     const parse=()=>{const parts=input.value.trim().split(/\s*[,;]\s*/);if(parts.length!==2||!parts.every(v=>/^[+-]?\d+(?:\.\d+)?$/.test(v)))return null;const [lat,lng]=parts.map(Number);return lat>=-90&&lat<=90&&lng>=-180&&lng<=180?{lat,lng}:null};
@@ -412,7 +414,7 @@
     }
     function store(p,source){
       state.gps={lat:p.lat,lng:p.lng,accuracy:source==="gps"?p.accuracy:null,citySource:source==="gps"?"social-gps":"manual-coordinate"};
-      input.value=p.lat.toFixed(6)+", "+p.lng.toFixed(6);
+      input.value=p.lat.toFixed(6)+", "+p.lng.toFixed(6);input.hidden=false;accuracy.hidden=false;coverage.hidden=false;
       accuracy.textContent=source==="gps"?"Precisión estimada GPS: ±"+Math.round(p.accuracy)+" m":"Coordenada manual · sin precisión GPS";
       improve.hidden=source!=="gps";clearError(field.key);assess(state.gps);
     }
@@ -438,12 +440,13 @@
       },finish,{enableHighAccuracy:true,maximumAge:0,timeout:18000});
       timer=setTimeout(finish,refine?20000:14000);
     }
-    gps.addEventListener("click",()=>locate(false));improve.addEventListener("click",()=>locate(true));
+    gps.addEventListener("click",()=>{accuracy.hidden=false;coverage.hidden=false;locate(false)});improve.addEventListener("click",()=>locate(true));
+    manual.addEventListener("click",()=>{input.hidden=false;paste.hidden=false;accuracy.hidden=false;coverage.hidden=false;improve.hidden=true;input.focus();});
     paste.addEventListener("click",()=>{const point=parse();if(!point){setError(field.key,"Pega una latitud y longitud válidas, separadas por coma.");paint("Coordenada inválida.","unknown");return;}store(point,"manual")});
     input.addEventListener("input",()=>{++requestId;state.gps=null;improve.hidden=true;accuracy.textContent="Coordenada editada · pulsa «Usar coordenada pegada»";paint("Cobertura pendiente de verificación.");clearError(field.key)});
     input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();paste.click()}});
     input.addEventListener("blur",()=>{if(input.value.trim()&&parse()&&!state.gps)paste.click()});
-    actions.append(gps,improve,paste);box.append(input,actions,accuracy,coverage);return box;
+    actions.append(gps,manual,improve,paste);box.append(actions,input,accuracy,coverage);return box;
   }
 
 
