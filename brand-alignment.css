@@ -2809,3 +2809,50 @@ body.form-mode.impacto-social-mode #formWorkspace .social-coordinate-actions but
  body.form-mode.impacto-social-mode #formWorkspace .workspace-topbar .social-qa-bar{padding:3px 5px!important}
  body.form-mode.impacto-social-mode #formWorkspace .section-heading #sectionDescriptionDetails{padding:12px 13px!important}
 }
+
+/* FO-CHG-177 · Actualización institucional: comparador de datos actuales */
+body.form-mode.impacto-social-mode #formWorkspace .social-institution-compare {
+ display:grid;gap:12px;min-width:0;
+}
+body.form-mode.impacto-social-mode #formWorkspace .social-compare-summary {
+ margin:0;padding:10px 13px;border-radius:10px;background:#12231b;color:#d6f9e5;
+ font-size:12px;line-height:1.65;border-left:3px solid #29e69c;
+}
+body.form-mode.impacto-social-mode #formWorkspace .social-compare-panels {display:grid;gap:10px;min-width:0}
+body.form-mode.impacto-social-mode #formWorkspace .social-compare-group {
+ padding:0;border:1px solid #34443a;border-radius:12px;background:#101612;min-width:0;overflow:hidden;
+}
+body.form-mode.impacto-social-mode #formWorkspace .social-compare-group>summary {
+ padding:13px 15px;cursor:pointer;color:#e8fff1;font-weight:700;font-size:13px;
+ background:#18231c;line-height:1.5;
+}
+body.form-mode.impacto-social-mode #formWorkspace .social-compare-row {
+ padding:13px 14px;border-top:1px solid #29362d;display:grid;gap:9px;
+}
+body.form-mode.impacto-social-mode #formWorkspace .social-compare-row>strong {
+ color:#effaf2;font-weight:600;font-size:13px;overflow-wrap:anywhere;
+}
+body.form-mode.impacto-social-mode #formWorkspace .social-compare-row .social-current-value{
+ margin:0!important;font-size:12px!important;
+}
+body.form-mode.impacto-social-mode #formWorkspace .social-compare-actions {
+ display:flex;flex-wrap:wrap;gap:8px;
+}
+body.form-mode.impacto-social-mode #formWorkspace .social-compare-actions button {
+ flex:1 1 135px;min-height:37px;padding:8px 12px;
+ border-radius:9px;font-size:12px;
+}
+body.form-mode.impacto-social-mode #formWorkspace .social-compare-actions button.selected {
+ border-color:#29e69c!important;background:#153428!important;color:#eafff1!important;
+}
+body.form-mode.impacto-social-mode #formWorkspace .social-compare-row textarea[hidden] {display:none!important}
+body.form-mode.impacto-social-mode #formWorkspace .social-compare-note {
+ font-size:11px;color:#aac5b5;line-height:1.5;
+}
+body.form-mode.impacto-social-mode #formWorkspace .form-grid>.social-field-card :is(.field-help,.field-help-top) {
+ white-space:pre-line!important;
+}
+@media(max-width:530px){
+ body.form-mode.impacto-social-mode #formWorkspace .social-compare-row {padding:11px}
+ body.form-mode.impacto-social-mode #formWorkspace .social-compare-group>summary{padding:12px}
+}
