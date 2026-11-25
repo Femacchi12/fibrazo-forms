@@ -74,7 +74,7 @@
       "maxDuration": 30
     }
   },
-  "ignoreCommand": "exit 0",
+  "ignoreCommand": "exit 1",
   "redirects": [
     {
       "source": "/estudio-opinion",
