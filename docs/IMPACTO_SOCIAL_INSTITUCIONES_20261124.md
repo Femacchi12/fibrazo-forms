@@ -45,3 +45,18 @@ Pruebas técnicas de esquema: 63 campos declarados, 8 secciones, 6 fotos, 4 emai
 - El control para otros formularios se mantiene sin cambios; allí continúa el mecanismo de clasificación QA preexistente.
 - Tras cambios en la matriz, refrescar la sesión permite volver a consultar los permisos desde `/api/access`; si el navegador conserva un permiso antiguo, forzar recarga de la página.
 - Verificaciones ejecutadas: sintaxis JS de UI y API, aceptación de prueba vacía, rechazo de teléfonos y emails mal formados, bloqueo de envío real incompleto, marcador de QA y longitud de 66 columnas. **Pendiente:** prueba navegador real con la cuenta corporativa, verificación de permiso en sesión, despliegue Vercel READY y un envío real controlado para confirmar persistencia y exclusión de métricas.
+
+## FO-CHG-172 · Corrección de base operativa y administración (25/11/2026)
+
+**Causa raíz confirmada:** la variable `GOOGLE_SHEET_ID` de producción de Vercel apunta a `1E66QjQVPT61j-2MdyL3V6s9iXKaX15wBKOujga8p4SY` (`FIBRAZO Forms - Base de datos operativa`), mientras la alta inicial de Impacto Social y sus permisos se habían escrito en una copia independiente `1eBp7jwvRbY76z0Sfo-fi45PgyP91aGM4wn7L0w_Za7g`. Esta última **no es la fuente de verdad de producción**. El servidor solo veía 4 registros en `FORMULARIOS`, de ahí «Sin acceso» y ausencia de Impacto Social en Administrar.
+
+**Corrección realizada en la fuente de verdad operativa**, manteniendo el mismo `GOOGLE_SHEET_ID` de producción:
+- Alta de `IMPACTO_SOCIAL` en `FORMULARIOS` fila 6; estado Activo, acceso Privado, sin autorización de dominio ni pública; máximo 6 fotos; pestaña `RESP_IMPACTO_SOCIAL`.
+- Alta de permiso explícito de administrador `eduardo@fibrazo.com` en `PERMISOS_FORMULARIO`, con cuatro permisos `TRUE`. El usuario ya figura `ADMIN / ACTIVO` en `USUARIOS`.
+- Creación de `RESP_IMPACTO_SOCIAL` en la base de producción con 66 columnas idénticas al esquema de la aplicación; datos iniciales vacíos. Los registros y pestañas anteriores no se editaron.
+- `api/admin.js` y `admin-v03.js`: los máximos de fotos reflejan el contrato actual: `CHURN / EXPLORACION / EXPLORACION_PRESENCIAL` 3, `INTELIGENCIA_OPERADOR` 5, `IMPACTO_SOCIAL` 6. Evita que guardar desde Administrar reduzca de forma involuntaria las fotos a 3.
+- Versión de `admin-v03.js` y caché de la PWA actualizadas. Se mantiene el control del servidor; no se añadieron reglas de acceso general ni se alteró la documentación de otros formularios.
+- Los dos formularios públicos de Focus Group tienen controles especializados separados de la matriz `FORMULARIOS`; no forman parte de esta alta de permisos.
+
+**Verificado en Google Sheets:** cinco IDs `CHURN`, `EXPLORACION`, `EXPLORACION_PRESENCIAL`, `INTELIGENCIA_OPERADOR`, `IMPACTO_SOCIAL`; hoja de 66 encabezados sin respuestas; permisos corporativos 4/4.
+**Pendiente:** verificar despliegue Vercel READY, confirmación de lista completa en sesión autenticada y navegación del modo test, un envío QA y comprobación de exclusión de métricas. No dar por finalizado ese QA por la sola modificación de Sheets.
