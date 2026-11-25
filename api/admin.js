@@ -189,7 +189,8 @@ module.exports=async(req,res)=>{
       const showProgress=toBool(body.showProgress,form.showProgress);
       const allowMultipleResponses=toBool(body.allowMultipleResponses,form.allowMultipleResponses);
       const rateLimit=clampInt(body.rateLimit,1,100,form.rateLimit||5);
-      const maxPhotos=clampInt(body.maxPhotos,0,3,Number.isFinite(form.maxPhotos)?form.maxPhotos:3);
+      const photoCap=form.id==="IMPACTO_SOCIAL"?6:form.id==="INTELIGENCIA_OPERADOR"?5:3;
+      const maxPhotos=clampInt(body.maxPhotos,0,photoCap,Number.isFinite(form.maxPhotos)?form.maxPhotos:photoCap);
       const maxPhotoMb=clampNum(body.maxPhotoMb,0.25,2,form.maxPhotoMb||1.5);
       data.push(
         {range:`FORMULARIOS!D${form.row}`,values:[[status]]},
