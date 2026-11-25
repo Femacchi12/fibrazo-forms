@@ -1483,47 +1483,181 @@
       "name": "Impacto Social",
       "sections": [
         {
+          "id": "social_intro",
+          "title": "Antes de comenzar",
+          "description": "📘 Propósito del formulario\n\nEl Programa de Conexión Digital para la Educación acompaña a las instituciones educativas públicas dentro de la cobertura de FIBRAZO.\n\n✅ Verifica que ingresaste con tu cuenta autorizada.\n✅ Elige la gestión que necesitas realizar.\n✅ Registra información precisa, fotografías y datos de contacto para facilitar el seguimiento.\n\n🔒 No compartas códigos de acceso ni contraseñas."
+        },
+        {
+          "id": "social_ruta",
+          "title": "¿Qué gestión necesitas realizar?",
+          "description": "Selecciona una de las tres gestiones disponibles. Verás únicamente las preguntas correspondientes a la opción elegida."
+        },
+        {
           "id": "inicio",
           "title": "Ubicación",
-          "description": "Registra el territorio correspondiente a la sede visitada."
+          "description": "Registra el territorio correspondiente a la sede visitada.",
+          "when": {
+            "field": "soc_gestion",
+            "equals": "Inscripción de nueva institución educativa"
+          }
         },
         {
           "id": "institucion",
           "title": "Institución educativa pública",
-          "description": "📄En esta sección registra la información de las instituciones educativas públicas que se encuentran dentro de la zona de cobertura de Fibrazo.\n👨‍🏫👩‍🏫  Estos datos se utilizarán para avanzar con el Programa de Conexión Digital para la Educación, que brinda un punto gratuito de internet a cada institución.\n\n📣Puntos claves para mencionar a la institución:\nEl servicio es totalmente gratuito. La institución nunca deberá realizar ningún pago bajo ningún concepto.\nReportes de novedades: cualquier inconveniente debe ser informado al WhatsApp oficial 3143460060, identificándose siempre con el código DANE de la institución.\nTiempo de respuesta: una vez realizado el reporte, la novedad será atendida en un máximo de 48 horas.\nCanales de apoyo: ante dudas adicionales pueden contactar al socializador que gestionó la instalación o con:\nFernando Eduardo Macchi – Jefe de Desarrollo Comercial\nCel: 3143460060 – Correo: eduardo@fibrazo.com\nPlaca de identificación: junto con la instalación se colocará una placa acrílica con la leyenda “Mi escuela conectada”, como símbolo visible del servicio que la institución recibe."
+          "description": "📄En esta sección registra la información de las instituciones educativas públicas que se encuentran dentro de la zona de cobertura de Fibrazo.\n👨‍🏫👩‍🏫  Estos datos se utilizarán para avanzar con el Programa de Conexión Digital para la Educación, que brinda un punto gratuito de internet a cada institución.\n\n📣Puntos claves para mencionar a la institución:\nEl servicio es totalmente gratuito. La institución nunca deberá realizar ningún pago bajo ningún concepto.\nReportes de novedades: cualquier inconveniente debe ser informado al WhatsApp oficial 3143460060, identificándose siempre con el código DANE de la institución.\nTiempo de respuesta: una vez realizado el reporte, la novedad será atendida en un máximo de 48 horas.\nCanales de apoyo: ante dudas adicionales pueden contactar al socializador que gestionó la instalación o con:\nFernando Eduardo Macchi – Jefe de Desarrollo Comercial\nCel: 3143460060 – Correo: eduardo@fibrazo.com\nPlaca de identificación: junto con la instalación se colocará una placa acrílica con la leyenda “Mi escuela conectada”, como símbolo visible del servicio que la institución recibe.",
+          "when": {
+            "field": "soc_gestion",
+            "equals": "Inscripción de nueva institución educativa"
+          }
         },
         {
           "id": "contactos",
           "title": "Información de contacto institucional",
-          "description": "Mantener una comunicación fluida y directa entre FIBRAZO y la institución es fundamental para garantizar el buen funcionamiento del servicio, así como para compartir futuras capacitaciones, actualizaciones y beneficios del programa.\n\nPor eso, te solicitamos los datos de contacto del rector(a), del(a) coordinador(a) académico(a), así como el correo institucional oficial y uno alternativo, en caso de necesitar comunicación urgente o complementaria."
+          "description": "Mantener una comunicación fluida y directa entre FIBRAZO y la institución es fundamental para garantizar el buen funcionamiento del servicio, así como para compartir futuras capacitaciones, actualizaciones y beneficios del programa.\n\nPor eso, te solicitamos los datos de contacto del rector(a), del(a) coordinador(a) académico(a), así como el correo institucional oficial y uno alternativo, en caso de necesitar comunicación urgente o complementaria.",
+          "when": {
+            "field": "soc_gestion",
+            "equals": "Inscripción de nueva institución educativa"
+          }
         },
         {
           "id": "caracterizacion",
           "title": "Caracterización de la institución",
-          "description": "👉En esta sección recopilamos información general sobre el funcionamiento académico de la institución: actividades que se realizan, cantidad de estudiantes y sus rangos de edad.\n\nEsta información nos ayuda a entender el contexto educativo y dimensionar el impacto que puede tener el servicio en la comunidad escolar."
+          "description": "👉En esta sección recopilamos información general sobre el funcionamiento académico de la institución: actividades que se realizan, cantidad de estudiantes y sus rangos de edad.\n\nEsta información nos ayuda a entender el contexto educativo y dimensionar el impacto que puede tener el servicio en la comunidad escolar.",
+          "when": {
+            "field": "soc_gestion",
+            "equals": "Inscripción de nueva institución educativa"
+          }
         },
         {
           "id": "infraestructura",
           "title": "Infraestructura y conectividad",
-          "description": "Conocer el estado actual de los recursos tecnológicos y la conectividad en la institución nos permite:\n👉Planificar mejor la implementación del servicio.\n👉Identificar oportunidades de mejora.\n👉Garantizar un mayor aprovechamiento del internet gratuito por parte de estudiantes y docentes.  "
+          "description": "Conocer el estado actual de los recursos tecnológicos y la conectividad en la institución nos permite:\n👉Planificar mejor la implementación del servicio.\n👉Identificar oportunidades de mejora.\n👉Garantizar un mayor aprovechamiento del internet gratuito por parte de estudiantes y docentes.  ",
+          "when": {
+            "field": "soc_gestion",
+            "equals": "Inscripción de nueva institución educativa"
+          }
         },
         {
           "id": "internet_anterior",
           "title": "Servicio de internet existente",
-          "description": "📄Esta sección busca tener información sobre el servicio de internet actual de la institución (empresa proveedora, costos y quién los asume). \n✏️Los datos se utilizan únicamente con fines de diagnóstico para conocer la situación actual, medir el impacto de la conectividad que aportamos y evaluar posibles beneficios adicionales a futuro. \n👉No implica ningún compromiso ni costo por parte de la institución."
+          "description": "📄Esta sección busca tener información sobre el servicio de internet actual de la institución (empresa proveedora, costos y quién los asume). \n✏️Los datos se utilizan únicamente con fines de diagnóstico para conocer la situación actual, medir el impacto de la conectividad que aportamos y evaluar posibles beneficios adicionales a futuro. \n👉No implica ningún compromiso ni costo por parte de la institución.",
+          "when": {
+            "all": [
+              {
+                "field": "soc_gestion",
+                "equals": "Inscripción de nueva institución educativa"
+              },
+              {
+                "field": "soc_1588036715",
+                "equals": "SI"
+              }
+            ]
+          }
         },
         {
           "id": "fotografias",
           "title": "Registro fotográfico",
-          "description": "Por favor, sube las siguientes imágenes para dejar constancia visual del lugar donde se brinda el servicio de internet gratuito. Estas fotos nos ayudan a mantener un registro ordenado y a facilitar futuras visitas técnicas o de acompañamiento.\n\nPuedes subir una imagen principal (obligatoria) y, si lo deseas, una imagen adicional por cada punto.  "
+          "description": "Por favor, sube las siguientes imágenes para dejar constancia visual del lugar donde se brinda el servicio de internet gratuito. Estas fotos nos ayudan a mantener un registro ordenado y a facilitar futuras visitas técnicas o de acompañamiento.\n\nPuedes subir una imagen principal (obligatoria) y, si lo deseas, una imagen adicional por cada punto.  ",
+          "when": {
+            "field": "soc_gestion",
+            "equals": "Inscripción de nueva institución educativa"
+          }
         },
         {
           "id": "informacion_final",
           "title": "Información para comunicar a la institución",
-          "description": "El servicio es totalmente gratuito. La institución nunca deberá realizar ningún pago bajo ningún concepto.\nReportes de novedades: cualquier inconveniente debe ser informado al WhatsApp oficial 3143460060, identificándose siempre con el código DANE de la institución.\nTiempo de respuesta: una vez realizado el reporte, la novedad será atendida en un máximo de 48 horas.\nCanales de apoyo: ante dudas adicionales pueden contactar al socializador que gestionó la instalación o con:\nFernando Eduardo Macchi – Jefe de Desarrollo Comercial\nCel: 3143460060 – Correo: eduardo@fibrazo.com\nPlaca de identificación: junto con la instalación se colocará una placa acrílica con la leyenda “Mi escuela conectada”, como símbolo visible del servicio que la institución recibe.\n⚠️Aviso para el socializador:\nAsegúrate de explicar muy claramente toda esta información al responsable de la institución. Renvía la información por WhatsApp al responsable: puedes copiar y pegar el texto o enviar una captura de pantalla. Esto ayudará a que quede un registro y a que la institución tenga siempre presentes los pasos a seguir.\n\n✨✨Deseamos que este servicio sea de gran utilidad tanto para docentes como para alumnos, contribuyendo a fortalecer los procesos educativos y a reducir la brecha digital. Desde Fibrazo seguimos comprometidos en acompañar a las instituciones en su misión de educar y transformar comunidades.✨\n\n"
+          "description": "El servicio es totalmente gratuito. La institución nunca deberá realizar ningún pago bajo ningún concepto.\nReportes de novedades: cualquier inconveniente debe ser informado al WhatsApp oficial 3143460060, identificándose siempre con el código DANE de la institución.\nTiempo de respuesta: una vez realizado el reporte, la novedad será atendida en un máximo de 48 horas.\nCanales de apoyo: ante dudas adicionales pueden contactar al socializador que gestionó la instalación o con:\nFernando Eduardo Macchi – Jefe de Desarrollo Comercial\nCel: 3143460060 – Correo: eduardo@fibrazo.com\nPlaca de identificación: junto con la instalación se colocará una placa acrílica con la leyenda “Mi escuela conectada”, como símbolo visible del servicio que la institución recibe.\n⚠️Aviso para el socializador:\nAsegúrate de explicar muy claramente toda esta información al responsable de la institución. Renvía la información por WhatsApp al responsable: puedes copiar y pegar el texto o enviar una captura de pantalla. Esto ayudará a que quede un registro y a que la institución tenga siempre presentes los pasos a seguir.\n\n✨✨Deseamos que este servicio sea de gran utilidad tanto para docentes como para alumnos, contribuyendo a fortalecer los procesos educativos y a reducir la brecha digital. Desde Fibrazo seguimos comprometidos en acompañar a las instituciones en su misión de educar y transformar comunidades.✨\n\n",
+          "when": {
+            "field": "soc_gestion",
+            "equals": "Inscripción de nueva institución educativa"
+          }
+        },
+        {
+          "id": "gestion_identificacion",
+          "title": "Identificación de la institución y sede",
+          "description": "🏫 Identifica la institución y la sede específica. Una institución puede compartir el NIT entre varias sedes; el reporte debe indicar cuál necesita atención.",
+          "when": {
+            "field": "soc_gestion",
+            "notEquals": "Inscripción de nueva institución educativa"
+          }
+        },
+        {
+          "id": "gestion_novedad",
+          "title": "Detalle de la novedad",
+          "description": "🔧 Describe el inconveniente y registra las fotografías solicitadas. Las imágenes deben permitir evaluar el equipo o la placa sin exponer datos personales innecesarios.",
+          "when": {
+            "field": "soc_gestion",
+            "equals": "Reporte de novedades"
+          }
+        },
+        {
+          "id": "gestion_contacto",
+          "title": "Persona responsable del seguimiento",
+          "description": "📞 Indica quién podrá atender las comunicaciones sobre esta novedad.",
+          "when": {
+            "field": "soc_gestion",
+            "equals": "Reporte de novedades"
+          }
+        },
+        {
+          "id": "actualizacion_tipo",
+          "title": "¿Qué información deseas actualizar?",
+          "description": "Selecciona si necesitas actualizar datos de la institución o datos de contacto. Las modificaciones se registran como solicitudes de revisión y no reemplazan automáticamente la base maestra.",
+          "when": {
+            "field": "soc_gestion",
+            "equals": "Actualización de datos de institución educativa"
+          }
+        },
+        {
+          "id": "actualizacion_institucion",
+          "title": "Datos actuales de la institución",
+          "description": "🔎 Selecciona la institución y la sede; confirma cada dato o indica el valor propuesto. Los cambios se guardan como solicitud para revisión, sin sobrescribir la ficha original.",
+          "when": {
+            "field": "soc_actualizacion_tipo",
+            "equals": "Datos de la institución"
+          }
+        },
+        {
+          "id": "actualizacion_contactos",
+          "title": "Actualización de datos de contacto",
+          "description": "👤 Puedes actualizar Rector, Coordinador u Otro cargo. Ninguno de los campos es obligatorio de forma individual, pero para enviar debes completar nombre y apellido, celular y correo de al menos un contacto.",
+          "when": {
+            "field": "soc_actualizacion_tipo",
+            "equals": "Datos de contacto"
+          }
         }
       ],
       "fields": [
+        {
+          "key": "soc_correo_identificado",
+          "section": "social_intro",
+          "label": "Correo de la sesión",
+          "type": "info",
+          "required": false,
+          "help": "La gestión quedará vinculada al correo de tu cuenta verificada."
+        },
+        {
+          "key": "soc_correo_confirmado",
+          "section": "social_intro",
+          "label": "Confirmación del correo",
+          "type": "checkbox",
+          "required": true,
+          "options": [
+            "Confirmo que este es el correo con el que completaré el formulario"
+          ]
+        },
+        {
+          "key": "soc_gestion",
+          "section": "social_ruta",
+          "label": "Selecciona el tipo de gestión",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Inscripción de nueva institución educativa",
+            "Reporte de novedades",
+            "Actualización de datos de institución educativa"
+          ]
+        },
         {
           "key": "soc_1197213728",
           "section": "inicio",
@@ -2369,6 +2503,672 @@
           "type": "info",
           "help": "El servicio es totalmente gratuito. La institución nunca deberá realizar ningún pago bajo ningún concepto.\nReportes de novedades: cualquier inconveniente debe ser informado al WhatsApp oficial 3143460060, identificándose siempre con el código DANE de la institución.\nTiempo de respuesta: una vez realizado el reporte, la novedad será atendida en un máximo de 48 horas.\nCanales de apoyo: ante dudas adicionales pueden contactar al socializador que gestionó la instalación o con:\nFernando Eduardo Macchi – Jefe de Desarrollo Comercial\nCel: 3143460060 – Correo: eduardo@fibrazo.com\nPlaca de identificación: junto con la instalación se colocará una placa acrílica con la leyenda “Mi escuela conectada”, como símbolo visible del servicio que la institución recibe.\n⚠️Aviso para el socializador:\nAsegúrate de explicar muy claramente toda esta información al responsable de la institución. Renvía la información por WhatsApp al responsable: puedes copiar y pegar el texto o enviar una captura de pantalla. Esto ayudará a que quede un registro y a que la institución tenga siempre presentes los pasos a seguir.\n\n✨✨Deseamos que este servicio sea de gran utilidad tanto para docentes como para alumnos, contribuyendo a fortalecer los procesos educativos y a reducir la brecha digital. Desde Fibrazo seguimos comprometidos en acompañar a las instituciones en su misión de educar y transformar comunidades.✨\n\n",
           "originalItemId": 1319040955
+        },
+        {
+          "key": "soc_directorio_sede",
+          "section": "gestion_identificacion",
+          "label": "Selecciona la institución y sede registrada",
+          "type": "school-directory",
+          "required": true,
+          "showWhen": {
+            "field": "soc_gestion",
+            "equals": "Actualización de datos de institución educativa"
+          },
+          "help": "La información se lee de Base_Esc-Fund., sin modificar la ficha actual. Busca por escuela, sede o ciudad."
+        },
+        {
+          "key": "soc_identificacion_nombre",
+          "section": "gestion_identificacion",
+          "label": "Nombre de la institución educativa",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "soc_identificacion_sede",
+          "section": "gestion_identificacion",
+          "label": "Nombre de la sede afectada",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "soc_identificacion_nit",
+          "section": "gestion_identificacion",
+          "label": "NIT de la institución (si lo conoces)",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "soc_identificacion_dane",
+          "section": "gestion_identificacion",
+          "label": "Código DANE de la sede (si lo conoces)",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "soc_novedad_tipo",
+          "section": "gestion_novedad",
+          "label": "¿Qué novedad deseas reportar?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sin internet",
+            "Internet lento o intermitente",
+            "ONU dañada",
+            "ONU perdida",
+            "Placa Mi Escuela Conectada",
+            "Otros"
+          ]
+        },
+        {
+          "key": "soc_novedad_placa_tipo",
+          "section": "gestion_novedad",
+          "label": "¿Qué pasó con la placa Mi Escuela Conectada?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Ausencia de placa",
+            "Daño de placa"
+          ],
+          "showWhen": {
+            "field": "soc_novedad_tipo",
+            "equals": "Placa Mi Escuela Conectada"
+          }
+        },
+        {
+          "key": "soc_novedad_nota",
+          "section": "gestion_novedad",
+          "label": "Describe la novedad",
+          "type": "textarea",
+          "required": true,
+          "help": "Explica qué ocurrió, cuándo se detectó y cualquier detalle útil para gestionar la solución."
+        },
+        {
+          "key": "soc_novedad_foto_lugar",
+          "section": "gestion_novedad",
+          "label": "Foto del espacio donde está o estaba instalada la ONU",
+          "type": "photo-single",
+          "required": true,
+          "showWhen": {
+            "field": "soc_novedad_tipo",
+            "in": [
+              "Sin internet",
+              "Internet lento o intermitente",
+              "ONU dañada",
+              "ONU perdida"
+            ]
+          }
+        },
+        {
+          "key": "soc_novedad_foto_luces",
+          "section": "gestion_novedad",
+          "label": "Foto de las luces de la ONU",
+          "type": "photo-single",
+          "required": true,
+          "showWhen": {
+            "field": "soc_novedad_tipo",
+            "in": [
+              "Sin internet",
+              "Internet lento o intermitente",
+              "ONU dañada"
+            ]
+          },
+          "help": "Las luces deben verse claramente, cuando corresponda."
+        },
+        {
+          "key": "soc_novedad_foto_etiqueta",
+          "section": "gestion_novedad",
+          "label": "Foto de la etiqueta inferior de la ONU",
+          "type": "photo-single",
+          "required": true,
+          "showWhen": {
+            "field": "soc_novedad_tipo",
+            "in": [
+              "Sin internet",
+              "Internet lento o intermitente",
+              "ONU dañada"
+            ]
+          },
+          "help": "Procura que modelo y datos del equipo sean legibles."
+        },
+        {
+          "key": "soc_novedad_foto_placa",
+          "section": "gestion_novedad",
+          "label": "Fotografía obligatoria de la placa o del sitio donde estaba",
+          "type": "photo-single",
+          "required": true,
+          "showWhen": {
+            "field": "soc_novedad_tipo",
+            "equals": "Placa Mi Escuela Conectada"
+          },
+          "help": "Ausencia: fotografía del lugar donde estaba. Daño: fotografía del estado actual."
+        },
+        {
+          "key": "soc_novedad_encargado_nombre",
+          "section": "gestion_contacto",
+          "label": "Nombre",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "soc_novedad_encargado_apellido",
+          "section": "gestion_contacto",
+          "label": "Apellido",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "soc_novedad_encargado_cargo",
+          "section": "gestion_contacto",
+          "label": "Cargo",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "soc_novedad_encargado_celular",
+          "section": "gestion_contacto",
+          "label": "Celular colombiano de contacto",
+          "type": "text",
+          "required": true,
+          "format": "celular-co"
+        },
+        {
+          "key": "soc_actualizacion_tipo",
+          "section": "actualizacion_tipo",
+          "label": "Información que deseas actualizar",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Datos de la institución",
+            "Datos de contacto"
+          ]
+        },
+        {
+          "key": "soc_actualizacion_referencia",
+          "section": "actualizacion_institucion",
+          "label": "Institución y sede seleccionada",
+          "type": "info",
+          "required": false,
+          "help": "La selección de una institución existente y la visualización de los valores actuales se realizará desde la fuente operativa autorizada."
+        },
+        {
+          "key": "soc_confirmar_nombre",
+          "section": "actualizacion_institucion",
+          "label": "Nombre de la institución · ¿Confirmas el dato actual?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Confirmar",
+            "Modificar"
+          ],
+          "sourceKey": "nombre"
+        },
+        {
+          "key": "soc_nuevo_nombre",
+          "section": "actualizacion_institucion",
+          "label": "Nombre de la institución · valor actualizado",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_confirmar_nombre",
+            "equals": "Modificar"
+          },
+          "sourceKey": "nombre"
+        },
+        {
+          "key": "soc_confirmar_sede",
+          "section": "actualizacion_institucion",
+          "label": "Nombre de la sede · ¿Confirmas el dato actual?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Confirmar",
+            "Modificar"
+          ],
+          "sourceKey": "sede"
+        },
+        {
+          "key": "soc_nuevo_sede",
+          "section": "actualizacion_institucion",
+          "label": "Nombre de la sede · valor actualizado",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_confirmar_sede",
+            "equals": "Modificar"
+          },
+          "sourceKey": "sede"
+        },
+        {
+          "key": "soc_confirmar_nit",
+          "section": "actualizacion_institucion",
+          "label": "NIT · ¿Confirmas el dato actual?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Confirmar",
+            "Modificar"
+          ],
+          "sourceKey": "nit"
+        },
+        {
+          "key": "soc_nuevo_nit",
+          "section": "actualizacion_institucion",
+          "label": "NIT · valor actualizado",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_confirmar_nit",
+            "equals": "Modificar"
+          },
+          "sourceKey": "nit"
+        },
+        {
+          "key": "soc_confirmar_dane",
+          "section": "actualizacion_institucion",
+          "label": "Código DANE · ¿Confirmas el dato actual?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Confirmar",
+            "Modificar"
+          ],
+          "sourceKey": "dane"
+        },
+        {
+          "key": "soc_nuevo_dane",
+          "section": "actualizacion_institucion",
+          "label": "Código DANE · valor actualizado",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_confirmar_dane",
+            "equals": "Modificar"
+          },
+          "sourceKey": "dane"
+        },
+        {
+          "key": "soc_confirmar_ciudad",
+          "section": "actualizacion_institucion",
+          "label": "Ciudad · ¿Confirmas el dato actual?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Confirmar",
+            "Modificar"
+          ],
+          "sourceKey": "ciudad"
+        },
+        {
+          "key": "soc_nuevo_ciudad",
+          "section": "actualizacion_institucion",
+          "label": "Ciudad · valor actualizado",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_confirmar_ciudad",
+            "equals": "Modificar"
+          },
+          "sourceKey": "ciudad"
+        },
+        {
+          "key": "soc_confirmar_barrio",
+          "section": "actualizacion_institucion",
+          "label": "Barrio · ¿Confirmas el dato actual?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Confirmar",
+            "Modificar"
+          ],
+          "sourceKey": "barrio"
+        },
+        {
+          "key": "soc_nuevo_barrio",
+          "section": "actualizacion_institucion",
+          "label": "Barrio · valor actualizado",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_confirmar_barrio",
+            "equals": "Modificar"
+          },
+          "sourceKey": "barrio"
+        },
+        {
+          "key": "soc_confirmar_sector",
+          "section": "actualizacion_institucion",
+          "label": "Sector · ¿Confirmas el dato actual?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Confirmar",
+            "Modificar"
+          ],
+          "sourceKey": "sector"
+        },
+        {
+          "key": "soc_nuevo_sector",
+          "section": "actualizacion_institucion",
+          "label": "Sector · valor actualizado",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_confirmar_sector",
+            "equals": "Modificar"
+          },
+          "sourceKey": "sector"
+        },
+        {
+          "key": "soc_confirmar_direccion",
+          "section": "actualizacion_institucion",
+          "label": "Dirección · ¿Confirmas el dato actual?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Confirmar",
+            "Modificar"
+          ],
+          "sourceKey": "direccion"
+        },
+        {
+          "key": "soc_nuevo_direccion",
+          "section": "actualizacion_institucion",
+          "label": "Dirección · valor actualizado",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_confirmar_direccion",
+            "equals": "Modificar"
+          },
+          "sourceKey": "direccion"
+        },
+        {
+          "key": "soc_confirmar_email",
+          "section": "actualizacion_institucion",
+          "label": "Correo institucional · ¿Confirmas el dato actual?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Confirmar",
+            "Modificar"
+          ],
+          "sourceKey": "email"
+        },
+        {
+          "key": "soc_nuevo_email",
+          "section": "actualizacion_institucion",
+          "label": "Correo institucional · valor actualizado",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_confirmar_email",
+            "equals": "Modificar"
+          },
+          "sourceKey": "email"
+        },
+        {
+          "key": "soc_confirmar_email_alt",
+          "section": "actualizacion_institucion",
+          "label": "Correo institucional alternativo · ¿Confirmas el dato actual?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Confirmar",
+            "Modificar"
+          ],
+          "sourceKey": "email_alt"
+        },
+        {
+          "key": "soc_nuevo_email_alt",
+          "section": "actualizacion_institucion",
+          "label": "Correo institucional alternativo · valor actualizado",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_confirmar_email_alt",
+            "equals": "Modificar"
+          },
+          "sourceKey": "email_alt"
+        },
+        {
+          "key": "soc_confirmar_administracion",
+          "section": "actualizacion_institucion",
+          "label": "Tipo de administración · ¿Confirmas el dato actual?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Confirmar",
+            "Modificar"
+          ],
+          "sourceKey": "administracion"
+        },
+        {
+          "key": "soc_nuevo_administracion",
+          "section": "actualizacion_institucion",
+          "label": "Tipo de administración · valor actualizado",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_confirmar_administracion",
+            "equals": "Modificar"
+          },
+          "sourceKey": "administracion"
+        },
+        {
+          "key": "soc_confirmar_alumnos",
+          "section": "actualizacion_institucion",
+          "label": "Alumnos / beneficiarios · ¿Confirmas el dato actual?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Confirmar",
+            "Modificar"
+          ],
+          "sourceKey": "alumnos"
+        },
+        {
+          "key": "soc_nuevo_alumnos",
+          "section": "actualizacion_institucion",
+          "label": "Alumnos / beneficiarios · valor actualizado",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_confirmar_alumnos",
+            "equals": "Modificar"
+          },
+          "sourceKey": "alumnos"
+        },
+        {
+          "key": "soc_confirmar_internet",
+          "section": "actualizacion_institucion",
+          "label": "Servicio de internet previo · ¿Confirmas el dato actual?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Confirmar",
+            "Modificar"
+          ],
+          "sourceKey": "internet"
+        },
+        {
+          "key": "soc_nuevo_internet",
+          "section": "actualizacion_institucion",
+          "label": "Servicio de internet previo · valor actualizado",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_confirmar_internet",
+            "equals": "Modificar"
+          },
+          "sourceKey": "internet"
+        },
+        {
+          "key": "soc_confirmar_aula",
+          "section": "actualizacion_institucion",
+          "label": "Sala de informática · ¿Confirmas el dato actual?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Confirmar",
+            "Modificar"
+          ],
+          "sourceKey": "aula"
+        },
+        {
+          "key": "soc_nuevo_aula",
+          "section": "actualizacion_institucion",
+          "label": "Sala de informática · valor actualizado",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_confirmar_aula",
+            "equals": "Modificar"
+          },
+          "sourceKey": "aula"
+        },
+        {
+          "key": "soc_confirmar_computadores",
+          "section": "actualizacion_institucion",
+          "label": "Computadores · ¿Confirmas el dato actual?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Confirmar",
+            "Modificar"
+          ],
+          "sourceKey": "computadores"
+        },
+        {
+          "key": "soc_nuevo_computadores",
+          "section": "actualizacion_institucion",
+          "label": "Computadores · valor actualizado",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_confirmar_computadores",
+            "equals": "Modificar"
+          },
+          "sourceKey": "computadores"
+        },
+        {
+          "key": "soc_confirmar_tabletas",
+          "section": "actualizacion_institucion",
+          "label": "Tabletas · ¿Confirmas el dato actual?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Confirmar",
+            "Modificar"
+          ],
+          "sourceKey": "tabletas"
+        },
+        {
+          "key": "soc_nuevo_tabletas",
+          "section": "actualizacion_institucion",
+          "label": "Tabletas · valor actualizado",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_confirmar_tabletas",
+            "equals": "Modificar"
+          },
+          "sourceKey": "tabletas"
+        },
+        {
+          "key": "soc_contacto_rector_nombre",
+          "section": "actualizacion_contactos",
+          "label": "Rector(a) · Nombre y apellido",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "soc_contacto_rector_celular",
+          "section": "actualizacion_contactos",
+          "label": "Rector(a) · Celular",
+          "type": "text",
+          "required": false,
+          "format": "celular-co"
+        },
+        {
+          "key": "soc_contacto_rector_correo",
+          "section": "actualizacion_contactos",
+          "label": "Rector(a) · Correo electrónico",
+          "type": "text",
+          "required": false,
+          "format": "email"
+        },
+        {
+          "key": "soc_contacto_coordinador_nombre",
+          "section": "actualizacion_contactos",
+          "label": "Coordinador(a) · Nombre y apellido",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "soc_contacto_coordinador_celular",
+          "section": "actualizacion_contactos",
+          "label": "Coordinador(a) · Celular",
+          "type": "text",
+          "required": false,
+          "format": "celular-co"
+        },
+        {
+          "key": "soc_contacto_coordinador_correo",
+          "section": "actualizacion_contactos",
+          "label": "Coordinador(a) · Correo electrónico",
+          "type": "text",
+          "required": false,
+          "format": "email"
+        },
+        {
+          "key": "soc_contacto_otro_nombre",
+          "section": "actualizacion_contactos",
+          "label": "Otro cargo · Nombre y apellido",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "soc_contacto_otro_celular",
+          "section": "actualizacion_contactos",
+          "label": "Otro cargo · Celular",
+          "type": "text",
+          "required": false,
+          "format": "celular-co"
+        },
+        {
+          "key": "soc_contacto_otro_correo",
+          "section": "actualizacion_contactos",
+          "label": "Otro cargo · Correo electrónico",
+          "type": "text",
+          "required": false,
+          "format": "email"
+        },
+        {
+          "key": "soc_contacto_otro_cargo",
+          "section": "actualizacion_contactos",
+          "label": "Tipo de otro cargo",
+          "type": "select",
+          "required": false,
+          "options": [
+            "Docente encargado",
+            "Docente informática",
+            "Otros"
+          ],
+          "showWhen": {
+            "field": "soc_contacto_otro_nombre",
+            "notEmpty": true
+          }
+        },
+        {
+          "key": "soc_contacto_otro_especificar",
+          "section": "actualizacion_contactos",
+          "label": "Especifica el otro cargo",
+          "type": "text",
+          "required": true,
+          "showWhen": {
+            "field": "soc_contacto_otro_cargo",
+            "equals": "Otros"
+          }
         }
       ],
       "qaTestFlow": {
@@ -2503,8 +3303,8 @@
     "date": "2026-10-11",
     "baseCommit": "fc369fa8182408d3254e95394146fe61b8310d27",
     "forms": 5,
-    "declaredFields": 157,
-    "fieldsWithReachableSection": 157,
+    "declaredFields": 221,
+    "fieldsWithReachableSection": 221,
     "counts": {
       "CHURN": {
         "sections": 5,
@@ -2527,13 +3327,13 @@
         "conditionalFields": 1
       },
       "IMPACTO_SOCIAL": {
-        "sections": 8,
-        "fields": 63,
-        "conditionalFields": 21
+        "sections": 16,
+        "fields": 127,
+        "conditionalFields": 45
       }
     },
     "issues": [],
-    "note": "FO-CHG-142: incorporado Impacto Social · escuelas públicas; 8 etapas; 63 campos incluyendo ayudas y opciones 'Otro'; etiquetas [field] y [section] mantenidas. QA real pendiente. FO-CHG-173: GPS/manual y lectura de troncal canónica sin inferencia.",
+    "note": "FO-CHG-176 · Impacto Social ampliado a inscripción, novedades y actualización institucional/contactos, con selección canónica de sede, validaciones por flujo y protección del histórico. Las decisiones de actualización no sobrescriben automáticamente la base maestra.",
     "qaTestControl": {
       "ticket": "FO-PEN-011",
       "status": "IMPLEMENTED_IN_FEATURE_BRANCH_NOT_DEPLOYED",
