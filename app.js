@@ -141,9 +141,9 @@
     }catch(_){return null;}
   }
 
-  function usableCachedAccess(email,maxAgeMs=7*24*60*60*1000){
+  function usableCachedAccess(email,maxAgeMs=5*60*1000){
     const cached=cachedAccessFor(email);
-    if(!cached)return null;
+    if(!cached||!Object.values(forms).every(form=>Object.prototype.hasOwnProperty.call(cached.access,form.id)))return null;
     const updatedAt=Number(cached.updatedAt||0);
     if(!updatedAt||Date.now()-updatedAt>maxAgeMs)return null;
     return cached;
@@ -172,6 +172,7 @@
       window.FIBRAZO_FORM_POLICIES=policies;
       window.FIBRAZO_ACCESS_META={admin:!!result.admin,baseAdmin:!!result.baseAdmin,canCreateForms:!!result.canCreateForms,canManageUsers:!!result.canManageUsers,email};
       window.FIBRAZO_ACCESS_BOOTSTRAPPED_EMAIL=email;
+      window.FIBRAZO_ACCESS_VERIFIED_AT=Date.now();
       try{localStorage.setItem("fibrazoFormsAccessCache",JSON.stringify({email,access,policies,meta:window.FIBRAZO_ACCESS_META,updatedAt:Date.now()}));}catch(_){}
       return {ok:true};
     }catch(_){
@@ -367,6 +368,22 @@
     if(!restored)showDashboard(user);
     else if(!authorization.cached){renderCards();window.dispatchEvent(new CustomEvent("fibrazo:access-ready"));}
   });
+
+  // Revalidación de permisos de formulario al volver a la pestaña; la matriz
+  // corporativa y /api/access son las fuentes de verdad, nunca el caché permanente.
+  let lastAccessRefresh=0;
+  async function refreshFormAccess(){
+    const user=auth.currentUser;
+    if(!user||!navigator.onLine||document.hidden||Date.now()-lastAccessRefresh<30000)return;
+    lastAccessRefresh=Date.now();
+    const refreshed=await authorizeDashboard(user);
+    if(refreshed.ok&&!refreshed.cached&&auth.currentUser?.uid===user.uid){
+      renderCards();window.dispatchEvent(new CustomEvent("fibrazo:access-ready"));
+    }
+  }
+  window.addEventListener("focus",refreshFormAccess);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)refreshFormAccess();});
+  window.addEventListener("online",refreshFormAccess);
 
   document.querySelectorAll("[data-view]").forEach((button) => {
     button.addEventListener("click", () => setView(button.dataset.view));
