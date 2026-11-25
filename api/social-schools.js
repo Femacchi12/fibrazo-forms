@@ -1,5 +1,5 @@
 "use strict";
-/* FO-CHG-176: lectura administrativa, no destructiva, de escuelas/sedes oficiales.
+/* FO-CHG-177: lectura administrativa, no destructiva, de escuelas/sedes oficiales.
    Fuente: Base_Esc-Fund. de Impacto Social. No edita la base maestra. */
 const {google}=require("googleapis");
 const {gauth,verifyUser,loadForms,userCapabilities,permissionFor,canAccess,httpError}=require("./_core");
