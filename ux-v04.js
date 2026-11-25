@@ -40,8 +40,8 @@
     if(!anchor)return;
     if(!bar){
       bar=document.createElement("div");bar.id="impactoSocialQaToggle";bar.className="social-qa-bar";
-      bar.innerHTML='<label class="social-qa-label"><input type="checkbox" id="impactoSocialQaSwitch"> <strong>Modo test</strong></label><span id="impactoSocialQaHelp">Activar para navegar sin completar campos obligatorios. Los envíos se marcarán como PRUEBA y se excluirán de métricas.</span>';
-      anchor.parentElement.insertBefore(bar,anchor);
+      bar.innerHTML='<label class="social-qa-label"><input type="checkbox" id="impactoSocialQaSwitch"> <strong>Test</strong></label>';
+      const topbar=$("formWorkspace")?.querySelector(".workspace-topbar");if(topbar)topbar.prepend(bar);else anchor.parentElement.insertBefore(bar,anchor);
       bar.querySelector("input").addEventListener("change",ev=>{
         if(state.form?.id!=="IMPACTO_SOCIAL"||!mayIdentifyTest()){ev.target.checked=false;return;}
         state.isTest=ev.target.checked;
@@ -466,7 +466,7 @@
     else if(field.type==="isp-autocomplete"){wrap.appendChild(ispAutocompleteInput(field));}
     else if(field.type==="photos"){wrap.appendChild(photoInput(field));}
     else if(field.type==="photo-single"){wrap.appendChild(singlePhotoInput(field));}
-    else if(field.type==="info"){const info=document.createElement("div");info.className="social-info-text";info.textContent=field.help||"";wrap.appendChild(info);}
+    else if(field.type==="info"){const info=document.createElement("div");info.className="social-info-text";info.textContent=field.help||"";if(field.key==="soc_correo_identificado")info.textContent="✉ "+(currentUser()?.email||"Sesión no verificada");wrap.appendChild(info);}
 
     if(["municipio","sector_barrio","estrato"].includes(field.key)){
       const tools=document.createElement("div");tools.className="field-quick-tools";
@@ -803,7 +803,7 @@
   }
   function choiceInput(field){
     const grid=document.createElement("div");grid.className="choice-grid";
-    (field.options||[]).forEach(o=>{const l=document.createElement("label");l.className="choice";const i=document.createElement("input");i.type=field.type;i.name=field.key;i.value=o;i.addEventListener("change",()=>{clearError(field.key);updateVisibility();});l.append(i,document.createTextNode(o));grid.appendChild(l);});return grid;
+    (field.options||[]).forEach(o=>{const l=document.createElement("label");l.className="choice";const i=document.createElement("input");i.type=field.type;i.name=field.key;i.value=o;i.addEventListener("change",()=>{clearError(field.key);updateVisibility();if(state.form?.id==="IMPACTO_SOCIAL"&&["soc_gestion","soc_actualizacion_tipo","soc_1588036715"].includes(field.key))renderSection();});l.append(i,document.createTextNode(o));grid.appendChild(l);});return grid;
   }
   function showCoordinateModeChoice(value,btn){
     const box=value?.closest(".gps-box");if(!box||box.classList.contains("gps-executive")||box.querySelector(".coordinate-mode-choice"))return;
@@ -1133,15 +1133,26 @@
     if(nodes[0].type==="checkbox")return nodes.filter(n=>n.checked).map(n=>n.value);
     return nodes[0].value;
   }
+  function socialCondition(rule){
+    if(!rule)return true;
+    if(Array.isArray(rule.all))return rule.all.every(socialCondition);
+    if(Array.isArray(rule.any))return rule.any.some(socialCondition);
+    const v=fieldValue(rule.field),txt=String(v||"");
+    if(rule.notEmpty===true)return Array.isArray(v)?v.length>0:txt.trim()!=="";
+    if(Array.isArray(rule.notValues))return !rule.notValues.includes(txt.trim());
+    if(rule.notEquals!==undefined)return txt!==rule.notEquals;
+    if(Array.isArray(rule.in))return rule.in.includes(txt);
+    return rule.equals!==undefined?(Array.isArray(v)?v.includes(rule.equals):txt===rule.equals):true;
+  }
   function conditionMet(field){
-    if(!field.showWhen)return true;
-    const v=fieldValue(field.showWhen.field);
-    if(field.showWhen.notEmpty===true)return Array.isArray(v)?v.length>0:String(v||"").trim()!=="";
-    if(Array.isArray(field.showWhen.notValues))return !field.showWhen.notValues.includes(String(v||"").trim());
-    return Array.isArray(v)?v.includes(field.showWhen.equals):v===field.showWhen.equals;
+    const section=(state.form?.sections||[]).find(s=>s.id===field.section);
+    return socialCondition(section?.when)&&socialCondition(field.showWhen);
   }
   function activeSections(){
-    if(!state.form)return[];return (state.form.sections||[]).filter(section=>socialQaActive()||state.form.fields.some(field=>field.section===section.id&&conditionMet(field)));
+    if(!state.form)return[];
+    return (state.form.sections||[]).filter(section=>socialQaActive()||(
+      socialCondition(section.when)&&state.form.fields.some(field=>field.section===section.id&&conditionMet(field))
+    ));
   }
   function currentSection(){return activeSections()[state.sectionIndex]||null;}
   function updateVisibility(){
@@ -1155,7 +1166,7 @@
     const section=sections[state.sectionIndex];
     const sectionInfo=$("sectionDescriptionDetails");
     const sectionInfoText=(section.id==="coordenada"&&isExplorationForm())?"":(section.description||"");
-    if(sectionInfo){sectionInfo.open=false;sectionInfo.hidden=!sectionInfoText.trim();}
+    if(sectionInfo){sectionInfo.open=state.form?.id==="IMPACTO_SOCIAL";sectionInfo.hidden=!sectionInfoText.trim();}
     $("sectionTitle").textContent=section.title;$("sectionDescription").textContent=sectionInfoText;$("sectionEyebrow").textContent="SECCIÓN "+(state.sectionIndex+1);$("formStepCounter").textContent=(state.sectionIndex+1)+" de "+sections.length;
     const stepper=$("sectionStepper");stepper.innerHTML="";
     stepper.style.gridTemplateColumns="repeat("+sections.length+",minmax(0,1fr))";
@@ -1314,7 +1325,7 @@
       }
     }
     if(state.form?.id==="INTELIGENCIA_OPERADOR"&&currentSection()?.id==="calidad")saveLastOperatorTendidoQuality();
-    const errors=socialQaActive()?state.form.fields.filter(f=>f.section===currentSection()?.id&&f.format&&String(fieldValue(f.key)||"").trim()).map(f=>({field:f,message:validateField({...f,required:false})})).filter(x=>x.message):validateSection(state.sectionIndex,true);
+    const errors=socialQaActive()?state.form.fields.filter(f=>f.section===currentSection()?.id&&(f.format||f.key==="soc_correo_confirmado")&&String(fieldValue(f.key)||"").trim()).map(f=>({field:f,message:validateField({...f,required:false})})).filter(x=>x.message):validateSection(state.sectionIndex,true);
     if(errors.length)return showValidation(errors);
     if(state.form?.id==="EXPLORACION_PRESENCIAL"){
       if(currentSection()?.id==="infraestructura")saveLastInfrastructure();
@@ -1346,6 +1357,7 @@
     if(field.type==="coordinates")return field.required&&!window.FIBRAZO_BACKGROUND_TERRITORY.validPoint(state.gps)?"Pega una coordenada válida en formato latitud, longitud.":"";
     if(field.type==="coordinates-social")return field.required&&!window.FIBRAZO_BACKGROUND_TERRITORY.validPoint(state.gps)?"Toma tu ubicación o pega una coordenada válida y pulsa Usar coordenada pegada.":"";
     if(field.type==="info")return"";
+    if(field.key==="soc_correo_confirmado")return Array.isArray(fieldValue(field.key))&&fieldValue(field.key).length?"":"Confirma el correo de la sesión para continuar.";
     if(field.type==="photos"||field.type==="photo-single")return field.required&&!state.photos.some(photo=>photo.fieldKey===field.key)?"Esta fotografía es obligatoria.":"";
     const v=fieldValue(field.key),empty=Array.isArray(v)?v.length===0:String(v||"").trim()==="";
     if(field.key.endsWith("_calidad")&&/^isp_[1-4]_calidad$/.test(field.key)&&isExplorationForm()){const isp=String(fieldValue(field.key.replace("_calidad",""))||"").trim();if(isp&&isp!=="Sin ISP"&&empty)return"Selecciona la calidad del tendido de este ISP.";}
@@ -1412,7 +1424,7 @@
     }
     if(isExplorationForm()&&state.gps&&!state.locationValidated){setStatus("Validando datos territoriales antes del resumen…","");try{state.geoPromise=resolveExplorationMunicipality(state.gps.lat,state.gps.lng,"coordenadas");await state.geoPromise;}catch(_){}finally{state.geoPromise=null;}}
     }
-    const errors=socialQaActive()?[]:validateAll();if(errors.length){const sections=activeSections(),idx=sections.findIndex(s=>s.id===errors[0].field.section);state.maxSectionReached=Math.max(state.maxSectionReached,sections.length-1);if(idx>=0&&idx!==state.sectionIndex){state.sectionIndex=idx;renderSection();}showValidation(errors.filter(x=>x.field.section===currentSection().id));return;}
+    const errors=socialQaActive()?validateSection(0,true):validateAll();if(errors.length){const sections=activeSections(),idx=sections.findIndex(s=>s.id===errors[0].field.section);state.maxSectionReached=Math.max(state.maxSectionReached,sections.length-1);if(idx>=0&&idx!==state.sectionIndex){state.sectionIndex=idx;renderSection();}showValidation(errors.filter(x=>x.field.section===currentSection().id));return;}
     $("formWorkspace").hidden=true;$("reviewWorkspace").hidden=false;$("successWorkspace").hidden=true;buildReview();setStatus("","");window.scrollTo({top:0,behavior:"smooth"});
   }
   function edit(){$("reviewWorkspace").hidden=true;$("formWorkspace").hidden=false;renderSection();}
