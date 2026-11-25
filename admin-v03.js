@@ -273,7 +273,7 @@
 
           '<details class="admin-compact-section" data-admin-scope="edit">'+
             '<summary><div><span>EVIDENCIA</span><strong>Fotos y archivos</strong></div><b data-evidence-summary>'+photoSummary(f.maxPhotos,f.maxPhotoMb)+'</b></summary>'+
-            '<div class="compact-section-body evidence-row"><label><span>Máximo de fotos</span><input data-field="maxPhotos" type="number" min="0" max='+photoCap+'" value="'+esc(Number.isFinite(f.maxPhotos)?f.maxPhotos:3)+'"><small data-photo-state></small></label><label data-photo-size><span>Máximo por foto (MB)</span><input data-field="maxPhotoMb" type="number" min=".25" max="2" step=".25" value="'+esc(f.maxPhotoMb)+'"></label></div>'+
+            '<div class="compact-section-body evidence-row"><label><span>Máximo de fotos</span><input data-field="maxPhotos" type="number" min="0" max="'+photoCap+'" value="'+esc(Number.isFinite(f.maxPhotos)?f.maxPhotos:3)+'"><small data-photo-state></small></label><label data-photo-size><span>Máximo por foto (MB)</span><input data-field="maxPhotoMb" type="number" min=".25" max="2" step=".25" value="'+esc(f.maxPhotoMb)+'"></label></div>'+
           '</details>'+
 
           '<div class="admin-card-actions compact-actions"><small>Última actualización: '+esc(f.updatedAt||"—")+(f.updatedBy?" · "+esc(f.updatedBy):"")+'</small>'+databaseHtml+'<button type="button" class="primary-button compact-save" data-save>Guardar cambios</button></div>'+
