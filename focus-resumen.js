@@ -27,6 +27,9 @@ const COLUMNS=[
 ]
 const RESTRICTED=new Set(["cedula","email","address","coordinates","geoAccuracy","geoAt","income","updatedBy","observations"]);
 let tableQuery="",rowLimit=20,selectedColumns=new Set(DEFAULT_COLUMNS);
+let tableSort={key:"",direction:"asc"};
+const SORT_COLLATOR=new Intl.Collator("es",{sensitivity:"base",numeric:true});
+const SORT_NUMERIC=new Set(["age","stratum","stratumBill","geoAccuracy","observations"]);
 const eligible=r=>r.eligible!==false;
 const styles=[
 "#fq-root{position:fixed;inset:0;z-index:99999;background:#0b0b0f;color:#faf9fd;overflow-y:auto;padding:22px 2vw;font:13px Arial,sans-serif}#fq-root *{box-sizing:border-box}#fq-root [hidden]{display:none!important}.fq-wrap{max-width:1550px;margin:auto}",
@@ -46,6 +49,7 @@ const styles=[
 ,"\n/* FO-CHG-161 — private observation log on Focus Group participants. */\n#fq-root .fq-col-observations{min-width:138px;max-width:180px;width:150px}\n#fq-root .fq-note-trigger{min-height:26px!important;height:26px!important;padding:3px 9px!important;font-size:10px!important;line-height:18px!important;white-space:nowrap}\n#fq-root .fq-note-overlay{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.84)}\n#fq-root .fq-note-dialog{width:min(540px,100%);max-height:min(90vh,720px);overflow:auto;background:#171717;border:1px solid #757575;border-radius:15px;color:#fff;padding:18px;box-shadow:0 16px 50px #000b}\n#fq-root .fq-note-heading{display:flex;align-items:start;justify-content:space-between;gap:10px}\n#fq-root .fq-note-heading h3{font-size:16px;margin:0 0 5px}\n#fq-root .fq-note-participant{font-size:12px;color:#c9c9c9;margin:0 0 12px}\n#fq-root .fq-note-history{max-height:235px;overflow:auto;margin:7px 0 15px;padding:8px;background:#101010;border:1px solid #414141;border-radius:9px}\n#fq-root .fq-note-entry{padding:9px 8px;border-bottom:1px solid #363636}\n#fq-root .fq-note-entry:last-child{border-bottom:0}\n#fq-root .fq-note-meta{color:#bdbdbd;font-size:10px;margin-bottom:5px;overflow-wrap:anywhere}\n#fq-root .fq-note-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5;font-size:12px;color:#fff}\n#fq-root .fq-note-dialog label{display:block;font-size:12px;font-weight:700;margin-bottom:7px}\n#fq-root .fq-note-dialog textarea{width:100%;min-height:92px;background:#0b0b0b;color:#fff;border:1px solid #686868;border-radius:9px;resize:vertical;padding:10px;font:12px/1.5 Montserrat,system-ui,sans-serif}\n#fq-root .fq-note-dialog textarea:focus-visible{outline:2px solid #43FFA5;outline-offset:1px}\n#fq-root .fq-note-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;color:#bdbdbd;font-size:10px;min-height:17px}\n#fq-root .fq-note-error{color:#ff9aa1}\n#fq-root .fq-note-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:13px}\n#fq-root .fq-note-actions .fq-btn{min-height:31px}\n@media(max-width:550px){#fq-root .fq-note-dialog{padding:13px}#fq-root .fq-note-actions{flex-wrap:wrap}}\n"
 ,"\n/* FO-CHG-162 — Observations textarea: rectangular input and crisp green focus. */\n#fq-root #fq-note-input{border-radius:5px!important;appearance:none!important;-webkit-appearance:none!important;box-shadow:none!important;outline:none!important}\n#fq-root #fq-note-input:focus,#fq-root #fq-note-input:focus-visible{border-radius:5px!important;border-color:#43FFA5!important;outline:2px solid #43FFA5!important;outline-offset:1px;box-shadow:none!important}\n"
 ,"\n/* FO-CHG-165: clear title hierarchy for KPIs and sessions, approved green calendar icon. */\n#fq-root .fq-kpis article{min-width:0}\n#fq-root .fq-kpi-heading{display:flex;align-items:baseline;flex-wrap:wrap;gap:5px;min-height:21px;color:#fff}\n#fq-root .fq-kpi-heading .fq-kpi-title{font-family:Montserrat,system-ui,Arial,sans-serif;font-size:clamp(12px,1.02vw,15px);line-height:1.25;font-weight:750;letter-spacing:-.015em;color:#fff;overflow-wrap:break-word}\n#fq-root .fq-kpi-heading .fq-tip{font-size:12px;color:#43FFA5;margin-left:1px}\n#fq-root .fq-kpis article>strong{margin:8px 0 0;line-height:1.1}\n#fq-root .fq-slot-heading{display:flex;align-items:center;flex-wrap:wrap;gap:7px;min-height:26px;margin:0 0 6px;color:#fff}\n#fq-root .fq-slot-heading .fq-calendar-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 20px;width:20px;height:20px;color:#43FFA5}\n#fq-root .fq-slot-heading .fq-calendar-svg{display:block;width:20px;height:20px}\n#fq-root .fq-slot-heading .fq-slot-title{font-family:Montserrat,system-ui,Arial,sans-serif;font-size:clamp(15px,1.22vw,18px);font-weight:780;line-height:1.25;letter-spacing:-.01em;color:#fff}\n#fq-root .fq-slot-heading .fq-tip{font-size:12px;margin-left:2px;color:#43FFA5}\n#fq-root .fq-slot .big{margin:9px 0 8px}\n@media(max-width:1050px){#fq-root .fq-kpi-heading .fq-kpi-title{font-size:14px}#fq-root .fq-slot-heading .fq-slot-title{font-size:17px}}\n@media(max-width:600px){#fq-root .fq-kpi-heading .fq-kpi-title{font-size:13px}#fq-root .fq-slot-heading .fq-slot-title{font-size:16px}}\n"
+,"\n/* FO-CHG-176 — Accessible two-way sorting from Focus Groups table headers. */\n#fq-root .fq-table th .fq-sort-btn{display:inline-flex;align-items:center;justify-content:space-between;gap:7px;width:100%;min-height:22px;margin:0;padding:0;border:0;border-radius:3px;background:transparent!important;color:inherit!important;text-align:left;text-transform:inherit;letter-spacing:inherit;font:inherit;font-weight:750;cursor:pointer}\n#fq-root .fq-table th .fq-sort-btn:hover{color:#43FFA5!important}\n#fq-root .fq-table th .fq-sort-btn:focus-visible{outline:2px solid #43FFA5;outline-offset:3px}\n#fq-root .fq-table th .fq-sort-icon{flex:none;color:#9ca6a0;font-size:11px;line-height:1}\n#fq-root .fq-table th[aria-sort=\"ascending\"] .fq-sort-icon,#fq-root .fq-table th[aria-sort=\"descending\"] .fq-sort-icon{color:#43FFA5}\n"
 ].join("\n");
 function setup(){
  if(node)return;
@@ -77,6 +81,17 @@ function setup(){
  node.querySelector("#fq-copy").onclick=()=>navigator.clipboard.writeText(SHARE).then(()=>message("Enlace copiado. Requiere acceso corporativo."),()=>message("Copiá: "+SHARE));
  for(const f of Object.keys(filters)){node.querySelector("#fq-"+f).addEventListener(f==="q"?"input":"change",e=>{filters[f]=e.target.value;rowLimit=20;render();});}
  node.querySelector("#fq-table-q").addEventListener("input",e=>{tableQuery=e.target.value.toLocaleLowerCase("es");rowLimit=20;renderTable();});
+ node.querySelector("#fq-table-head").addEventListener("click",e=>{
+  const button=e.target.closest("button[data-fq-sort]");if(!button)return;
+  const key=button.dataset.fqSort;
+  if(!displayColumns().some(c=>c[0]===key))return;
+  tableSort=tableSort.key===key?{key,direction:tableSort.direction==="asc"?"desc":"asc"}:{key,direction:"asc"};
+  rowLimit=20; // Sort the entire filtered dataset before showing its first page.
+  const scroller=node.querySelector("#fq-tablebox"),left=scroller.scrollLeft,top=scroller.scrollTop;
+  renderTable();
+  scroller.scrollLeft=left;scroller.scrollTop=top;
+  node.querySelector('#fq-table-head button[data-fq-sort="'+key+'"]')?.focus({preventScroll:true});
+ });
  node.querySelector("#fq-more").addEventListener("click",()=>{rowLimit+=20;renderTable();});
  node.querySelector("#fq-columns").addEventListener("click",()=>{
   const panel=node.querySelector("#fq-columns-panel");panel.hidden=!panel.hidden;
@@ -183,11 +198,12 @@ function renderColumnPicker(){
   if(!input.matches('input[type="checkbox"]'))return;
   if(FIXED_COLUMNS.has(input.value))return;
   if(input.checked)selectedColumns.add(input.value);
-  else selectedColumns.delete(input.value);
+  else{selectedColumns.delete(input.value);if(tableSort.key===input.value)tableSort={key:"",direction:"asc"};}
   renderTable();
  };
  panel.querySelector("#fq-cols-reset").onclick=()=>{
   selectedColumns=new Set(DEFAULT_COLUMNS);
+  if(tableSort.key&&!DEFAULT_COLUMNS.includes(tableSort.key))tableSort={key:"",direction:"asc"};
   panel.querySelectorAll('.fq-column-list input[type="checkbox"]').forEach(input=>{input.checked=selectedColumns.has(input.value);});
   renderTable();
  };
@@ -266,12 +282,48 @@ function dataCell(r,key){
  default:return "—";
  }
 }
+
+function tableSortValue(r,key){
+ switch(key){
+ case "participant":return (String(r.first||"")+" "+String(r.last||"")).trim();
+ case "phone":return displayPhone(r.phone);
+ case "operator":return (r.operator||"")+(r.otherOperator?" · "+r.otherOperator:"");
+ case "availability":return Array.isArray(r.availability)?[...r.availability].sort()[0]||"":"";
+ case "assigned":return r.assigned||(!eligible(r)?"No elegible":"");
+ case "status":return eligible(r)?r.status:"No elegible";
+ case "actions":return eligible(r)?"Guardar":"Revisión";
+ case "observations":return Array.isArray(r.notes)?r.notes.length:0;
+ case "coordinates":return r.geoStatus==="Autorizado"&&String(r.geoLat||"").trim()?String(r.geoLat)+","+String(r.geoLng||""):"";
+ case "decision":return r.decision==="Decido"?"Decide":r.decision==="Compartimos"?"Comparte decisión":r.decision==="No"?"No, otra persona decide":r.decision;
+ case "eligibilityReason":return eligible(r)?"":r.eligibilityReason||"No elegible";
+ case "campaign":return "Estratos 2 y 3+";
+ default:return r[key];
+ }
+}
+function sortedTableRows(rows){
+ if(!tableSort.key)return rows;
+ const key=tableSort.key,reverse=tableSort.direction==="desc"?-1:1,asNumber=SORT_NUMERIC.has(key);
+ const missing=value=>value==null||String(value).trim()===""||String(value)==="—";
+ return rows.map((row,index)=>({row,index,value:tableSortValue(row,key)})).sort((a,b)=>{
+  const am=missing(a.value),bm=missing(b.value);
+  if(am!==bm)return am?1:-1; // Missing values always at the end.
+  if(am)return a.index-b.index;
+  const an=Number(a.value),bn=Number(b.value);
+  const comparison=asNumber&&Number.isFinite(an)&&Number.isFinite(bn)?an-bn:SORT_COLLATOR.compare(String(a.value),String(b.value));
+  return comparison?comparison*reverse:a.index-b.index; // Stable order for ties.
+ }).map(item=>item.row);
+}
 function renderTable(){
  if(!node||!info)return;
  const cols=displayColumns(),all=visible(),q=tableQuery.trim();
- const rows=q?all.filter(r=>([r.first,r.last,r.phone,r.barrio,r.stratum,r.operator,r.cedula,r.email,r.address,r.decision,r.geoLat,r.geoLng,r.status,r.source,r.telecomFamily,r.eligibilityReason,...(Array.isArray(r.notes)?r.notes.map(n=>n.text):[])].join(" ").toLocaleLowerCase("es").includes(q))):all;
+ const filtered=q?all.filter(r=>([r.first,r.last,r.phone,r.barrio,r.stratum,r.operator,r.cedula,r.email,r.address,r.decision,r.geoLat,r.geoLng,r.status,r.source,r.telecomFamily,r.eligibilityReason,...(Array.isArray(r.notes)?r.notes.map(n=>n.text):[])].join(" ").toLocaleLowerCase("es").includes(q))):all;
+ const rows=sortedTableRows(filtered);
  node.querySelector("#fq-count").textContent="Inscriptos ("+rows.length+")";
- node.querySelector("#fq-table-head").innerHTML='<tr>'+cols.map(c=>'<th scope="col" class="fq-col-'+E(c[0])+'">'+E(c[1])+'</th>').join("")+'</tr>';
+ node.querySelector("#fq-table-head").innerHTML='<tr>'+cols.map(c=>{
+  const active=tableSort.key===c[0],direction=active?tableSort.direction:"";
+  const next=active&&direction==="asc"?"descendentemente":"ascendentemente";
+  return '<th scope="col" class="fq-col-'+E(c[0])+'" aria-sort="'+(active?(direction==="asc"?"ascending":"descending"):"none")+'"><button type="button" class="fq-sort-btn" data-fq-sort="'+E(c[0])+'" aria-label="'+E("Ordenar "+c[1]+" "+next)+'" title="'+E("Ordenar "+c[1]+" "+next)+'"><span>'+E(c[1])+'</span><span class="fq-sort-icon" aria-hidden="true">'+(active?(direction==="asc"?"▲":"▼"):"↕")+'</span></button></th>';
+ }).join("")+'</tr>';
  const slice=rows.slice(0,rowLimit);
  node.querySelector("#fq-rows").innerHTML=slice.length?slice.map(r=>'<tr data-id="'+E(r.id)+'">'+cols.map(c=>'<td class="fq-col-'+E(c[0])+'">'+dataCell(r,c[0])+'</td>').join("")+'</tr>').join(""):'<tr><td colspan="'+cols.length+'" style="padding:24px">No hay inscriptos que coincidan con los filtros.</td></tr>';
  const remain=Math.min(20,Math.max(0,rows.length-rowLimit)),more=node.querySelector("#fq-more");more.hidden=!remain;more.textContent="Ver más ("+remain+")";
