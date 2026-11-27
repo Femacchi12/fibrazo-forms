@@ -27,7 +27,7 @@ const COLUMNS=[
  ["updated","Última actualización"],["updatedBy","Actualizado por"],["campaign","Encuesta"]
 ]
 const RESTRICTED=new Set(["cedula","email","address","coordinates","geoAccuracy","geoAt","income","updatedBy","observations"]);
-let tableQuery="",rowLimit=20,selectedColumns=new Set(DEFAULT_COLUMNS);
+let tableQuery="",rowLimit=20,selectedColumns=new Set(DEFAULT_COLUMNS),availabilityFilter="";
 let tableSort={key:"",direction:"asc"};
 const SORT_COLLATOR=new Intl.Collator("es",{sensitivity:"base",numeric:true});
 const SORT_NUMERIC=new Set(["age","stratum","stratumBill","geoAccuracy","observations"]);
@@ -82,6 +82,13 @@ function setup(){
  node.querySelector("#fq-copy").onclick=()=>navigator.clipboard.writeText(SHARE).then(()=>message("Enlace copiado. Requiere acceso corporativo."),()=>message("Copiá: "+SHARE));
  for(const f of Object.keys(filters)){node.querySelector("#fq-"+f).addEventListener(f==="q"?"input":"change",e=>{filters[f]=e.target.value;rowLimit=20;render();});}
  node.querySelector("#fq-table-q").addEventListener("input",e=>{tableQuery=e.target.value.toLocaleLowerCase("es");rowLimit=20;renderTable();});
+ node.querySelector("#fq-table-head").addEventListener("change",e=>{
+  if(e.target.id!=="fq-avail-filter")return;
+  availabilityFilter=e.target.value;
+  filters.date=filters.day=filters.hour="";
+  for(const key of ["date","day","hour"])node.querySelector("#fq-"+key).value="";
+  rowLimit=20;render();node.querySelector("#fq-avail-filter")?.focus();
+ });
  node.querySelector("#fq-table-head").addEventListener("click",e=>{
   const button=e.target.closest("button[data-fq-sort]");if(!button)return;
   const key=button.dataset.fqSort;
@@ -100,7 +107,7 @@ function setup(){
   if(!panel.hidden)renderColumnPicker();
  });
  node.querySelector("#fq-slots").onclick=async e=>{
-  const view=e.target.closest("[data-view]");if(view){const key=view.dataset.view;filters.date=key.slice(0,10);filters.day="";filters.hour=key.slice(-5);node.querySelector("#fq-date").value=filters.date;node.querySelector("#fq-day").value="";node.querySelector("#fq-hour").value=filters.hour;render();return;}
+  const view=e.target.closest("[data-view]");if(view){availabilityFilter="";const key=view.dataset.view;filters.date=key.slice(0,10);filters.day="";filters.hour=key.slice(-5);node.querySelector("#fq-date").value=filters.date;node.querySelector("#fq-day").value="";node.querySelector("#fq-hour").value=filters.hour;render();return;}
   const toggle=e.target.closest("[data-toggle]");if(toggle&&info?.canEdit){if(!confirm((toggle.dataset.open==="true"?"Cerrar":"Reabrir")+" sesión "+label(toggle.dataset.toggle)+"?"))return;await save({action:"setSlot",slot:toggle.dataset.toggle,open:toggle.dataset.open!=="true"});}
  };
  node.querySelector("#fq-rows").addEventListener("change",e=>{if(e.target.matches(".fq-status"))e.target.dataset.currentStatus=e.target.value;});
@@ -108,10 +115,12 @@ function setup(){
   const noteBtn=e.target.closest("[data-note]");if(noteBtn){openNotes(noteBtn.dataset.note);return;}
   const saveBtn=e.target.closest("[data-save]");if(!saveBtn)return;
   const tr=saveBtn.closest("tr"),row=info?.rows?.find(r=>r.id===saveBtn.dataset.save);
-   const assigned=tr.querySelector(".fq-assign").value;
+   const assigned=tr.querySelector(".fq-assign").value,status=tr.querySelector(".fq-status").value;
    const confirmLegacyMove=assigned===REPLACEMENT_SLOT&&row?.availability?.includes(OLD_SLOT)&&!row.availability.includes(REPLACEMENT_SLOT);
    if(confirmLegacyMove&&!confirm("Esta persona indicó disponibilidad para el horario anterior (sábado 28, 2:00 p. m.). ¿Confirmaste con ella que podrá asistir el domingo 29 a las 11:00 a. m.?"))return;
-   await save({action:"update",id:saveBtn.dataset.save,status:tr.querySelector(".fq-status").value,assigned,confirmLegacyMove});
+   const overrideIneligible=!eligible(row)&&(Boolean(assigned)||status==="Confirmado");
+   if(overrideIneligible&&!confirm("Esta persona sigue marcada como no elegible: "+(row.eligibilityReason||"requiere revisión")+". ¿Confirmas su asignación o participación manual? El motivo de no elegibilidad se mantendrá."))return;
+   await save({action:"update",id:saveBtn.dataset.save,status,assigned,confirmLegacyMove,overrideIneligible});
  };
 }
 let activeNoteId="",savingNote=false;
@@ -163,7 +172,7 @@ function visible(){return (info?.rows||[]).filter(r=>{
  if(filters.date&&!choices.some(q=>q.startsWith(filters.date)))return false;
  if(filters.day&&!choices.some(q=>q.startsWith(filters.day)))return false;
  if(filters.hour&&!choices.some(q=>q.endsWith(filters.hour)&&(filters.date?q.startsWith(filters.date):true)&&(filters.day?q.startsWith(filters.day):true)))return false;
- if(filters.status===EXTRA_STATUS?eligible(r):filters.status&&(!eligible(r)||r.status!==filters.status))return false;
+ if(filters.status===EXTRA_STATUS?eligible(r):filters.status&&r.status!==filters.status)return false;
  if(filters.q&&!((r.first+" "+r.last+" "+r.phone+" "+r.barrio).toLowerCase().includes(filters.q.toLowerCase())))return false;
  return true;
 });}
@@ -256,7 +265,6 @@ function dataCell(r,key){
  case "operator":return E((r.operator||"—")+(r.otherOperator?" · "+r.otherOperator:""));
  case "availability":return availabilityCell(r.availability);
  case "assigned":{
-  if(!eligible(r))return '<span class="fq-eligibility">No elegible</span>';
   const movedFromOld=r.availability.includes(OLD_SLOT)&&!r.availability.includes(REPLACEMENT_SLOT);
    const options='<option value="">Sin asignar</option>'+
     (r.assigned===OLD_SLOT?'<option value="'+OLD_SLOT+'" selected>Sáb 28 · 14:00 (anterior)</option>':'')+
@@ -265,7 +273,6 @@ function dataCell(r,key){
   return '<select class="fq-assign" '+(info.canEdit?"":"disabled")+'>'+options+'</select>';
  }
  case "status":{
-  if(!eligible(r))return '<span class="fq-eligibility">No elegible</span>';
   return '<select class="fq-status" data-current-status="'+E(r.status)+'" '+(info.canEdit?"":"disabled")+'>'+STATUSES.map(x=>'<option '+(r.status===x?"selected":"")+'>'+E(x)+'</option>').join("")+'</select>';
  }
  case "coordinates":return coordinates(r);
@@ -274,7 +281,7 @@ function dataCell(r,key){
   const count=Array.isArray(r.notes)?r.notes.length:0;
   return '<button type="button" class="fq-btn fq-note-trigger" data-note="'+E(r.id)+'">'+(count?"Ver notas ("+count+")":"Agregar nota")+'</button>';
  }
- case "actions":return !eligible(r)?'<span class="fq-eligibility">Revisión</span>':(info.canEdit?'<button class="fq-btn" data-save="'+E(r.id)+'">Guardar</button>':'Solo lectura');
+ case "actions":return info.canEdit?'<button class="fq-btn" data-save="'+E(r.id)+'">Guardar</button>':'Solo lectura';
  case "email":return E(r.email||"—");
  case "address":return E(r.address||"—");
  case "age":return E(r.age||"—");
@@ -303,9 +310,9 @@ function tableSortValue(r,key){
  case "phone":return displayPhone(r.phone);
  case "operator":return (r.operator||"")+(r.otherOperator?" · "+r.otherOperator:"");
  case "availability":return Array.isArray(r.availability)?[...r.availability].sort()[0]||"":"";
- case "assigned":return r.assigned||(!eligible(r)?"No elegible":"");
- case "status":return eligible(r)?r.status:"No elegible";
- case "actions":return eligible(r)?"Guardar":"Revisión";
+ case "assigned":return r.assigned||"";
+ case "status":return r.status;
+ case "actions":return "Guardar";
  case "observations":return Array.isArray(r.notes)?r.notes.length:0;
  case "coordinates":return r.geoStatus==="Autorizado"&&String(r.geoLat||"").trim()?String(r.geoLat)+","+String(r.geoLng||""):"";
  case "decision":return r.decision==="Decido"?"Decide":r.decision==="Compartimos"?"Comparte decisión":r.decision==="No"?"No, otra persona decide":r.decision;
@@ -329,14 +336,19 @@ function sortedTableRows(rows){
 }
 function renderTable(){
  if(!node||!info)return;
- const cols=displayColumns(),all=visible(),q=tableQuery.trim();
+ const cols=displayColumns(),all=visible().filter(r=>!availabilityFilter||(Array.isArray(r.availability)&&r.availability.includes(availabilityFilter))),q=tableQuery.trim();
  const filtered=q?all.filter(r=>([r.first,r.last,r.phone,r.barrio,r.stratum,r.operator,r.cedula,r.email,r.address,r.decision,r.geoLat,r.geoLng,r.status,r.source,r.telecomFamily,r.eligibilityReason,...(Array.isArray(r.notes)?r.notes.map(n=>n.text):[])].join(" ").toLocaleLowerCase("es").includes(q))):all;
  const rows=sortedTableRows(filtered);
  node.querySelector("#fq-count").textContent="Inscriptos ("+rows.length+")";
+ const availabilityOptions='<option value="">Todas las disponibilidades</option>'+OPTIONS.map(([id,desc])=>{
+  const slot=(info.slots||[]).find(s=>s.id===id);
+  return '<option value="'+E(id)+'" '+(availabilityFilter===id?"selected":"")+'>'+E(desc+(slot&&!slot.open?" · Cerrado":""))+'</option>';
+ }).join("")+'<option value="'+OLD_SLOT+'" '+(availabilityFilter===OLD_SLOT?"selected":"")+'>Sáb 28 · 14:00 (horario anterior)</option>';
  node.querySelector("#fq-table-head").innerHTML='<tr>'+cols.map(c=>{
   const active=tableSort.key===c[0],direction=active?tableSort.direction:"";
   const next=active&&direction==="asc"?"descendentemente":"ascendentemente";
-  return '<th scope="col" class="fq-col-'+E(c[0])+'" aria-sort="'+(active?(direction==="asc"?"ascending":"descending"):"none")+'"><button type="button" class="fq-sort-btn" data-fq-sort="'+E(c[0])+'" aria-label="'+E("Ordenar "+c[1]+" "+next)+'" title="'+E("Ordenar "+c[1]+" "+next)+'"><span>'+E(c[1])+'</span><span class="fq-sort-icon" aria-hidden="true">'+(active?(direction==="asc"?"▲":"▼"):"↕")+'</span></button></th>';
+  const filter=c[0]==="availability"?'<select id="fq-avail-filter" aria-label="Filtrar inscriptos por disponibilidad de sesión" title="Incluye quienes indicaron este horario y también otros" style="display:block;width:100%;margin-top:6px;padding:5px 6px;background:#101016;color:#fff;border:1px solid #61596d;border-radius:6px;font-size:11px">'+availabilityOptions+'</select>':"";
+  return '<th scope="col" class="fq-col-'+E(c[0])+'" aria-sort="'+(active?(direction==="asc"?"ascending":"descending"):"none")+'"><button type="button" class="fq-sort-btn" data-fq-sort="'+E(c[0])+'" aria-label="'+E("Ordenar "+c[1]+" "+next)+'" title="'+E("Ordenar "+c[1]+" "+next)+'"><span>'+E(c[1])+'</span><span class="fq-sort-icon" aria-hidden="true">'+(active?(direction==="asc"?"▲":"▼"):"↕")+'</span></button>'+filter+'</th>';
  }).join("")+'</tr>';
  const slice=rows.slice(0,rowLimit);
  node.querySelector("#fq-rows").innerHTML=slice.length?slice.map(r=>'<tr data-id="'+E(r.id)+'">'+cols.map(c=>'<td class="fq-col-'+E(c[0])+'">'+dataCell(r,c[0])+'</td>').join("")+'</tr>').join(""):'<tr><td colspan="'+cols.length+'" style="padding:24px">No hay inscriptos que coincidan con los filtros.</td></tr>';
@@ -352,7 +364,7 @@ function showSuggestions(){
  const button=panel.querySelector("#fq-apply");if(button)button.onclick=async()=>{if(!confirm("¿Aplicar "+proposals.length+" asignaciones propuestas?"))return;panel.hidden=true;await save({action:"applySuggestions",assignments:proposals.map(p=>({id:p.id,assigned:p.assigned}))});};
 }
 function exportCsv(){
- const rows=visible(),arr=[["ID","Nombre","Apellido","Celular","Barrio","Disponibilidad","Sesión asignada","Estado"],...rows.map(r=>[r.id,r.first,r.last,r.phone,r.barrio,r.availability.map(label).join("; "),label(r.assigned),r.status])];
+ const rows=visible().filter(r=>!availabilityFilter||r.availability.includes(availabilityFilter)),arr=[["ID","Nombre","Apellido","Celular","Barrio","Disponibilidad","Sesión asignada","Estado"],...rows.map(r=>[r.id,r.first,r.last,r.phone,r.barrio,r.availability.map(label).join("; "),label(r.assigned),r.status])];
  const csv="\ufeff"+arr.map(a=>a.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(";")).join("\r\n");
  const link=document.createElement("a"),file=globalThis.URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));link.href=file;link.download="focus-group-estratos-2-y-3.csv";link.click();setTimeout(()=>globalThis.URL.revokeObjectURL(file),800);
 }

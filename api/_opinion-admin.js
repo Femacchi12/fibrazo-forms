@@ -83,9 +83,9 @@ function summaryData(rs,slots){
  const visible=rs.map(r=>({...r,availability:[...r.availability]}));
  return {campaigns:[{id:"ESTUDIO_OPINION_2026",name:CAMPAIGN,dates:EVENT}],campaign:"ESTUDIO_OPINION_2026",statusOptions:STATUSES,slots:slots.map(slot=>{
   const available=visible.filter(r=>r.eligible&&r.status!=="No asistirá"&&(r.availability.includes(slot.id)||(slot.id===REPLACEMENT_SLOT&&r.assigned===slot.id&&r.availability.includes(OLD_SLOT))));
-  const assigned=visible.filter(r=>r.eligible&&r.status!=="No asistirá"&&r.assigned===slot.id);
+  const assigned=visible.filter(r=>r.status!=="No asistirá"&&r.assigned===slot.id); // Manually assigned ineligible participants occupy seats.
   const confirmed=assigned.filter(r=>r.status==="Confirmado");
-  return {...slot,available:available.length,assigned:assigned.length,confirmed:confirmed.length,contacted:assigned.filter(r=>r.status==="Contactado a confirmar").length,pending:assigned.filter(r=>r.status==="Preinscrito").length,notAttending:visible.filter(r=>r.eligible&&r.assigned===slot.id&&r.status==="No asistirá").length};
+  return {...slot,available:available.length,assigned:assigned.length,confirmed:confirmed.length,contacted:assigned.filter(r=>r.status==="Contactado a confirmar").length,pending:assigned.filter(r=>r.status==="Preinscrito").length,notAttending:visible.filter(r=>r.assigned===slot.id&&r.status==="No asistirá").length};
  }),rows:visible,total:visible.filter(r=>r.eligible).length,ineligible:visible.filter(r=>!r.eligible).length};
 }
 function suggest(rs,slots){
@@ -94,6 +94,10 @@ function suggest(rs,slots){
  const active=rs.filter(r=>r.eligible&&r.status!=="No asistirá");
  const buckets=Object.fromEntries(SLOTS.map(s=>[s.id,[]]));
  const fixed=new Set();
+ // Never auto-redistribute ineligible people; reserve any manually occupied seat.
+ for(const r of rs.filter(r=>!r.eligible&&r.status!=="No asistirá"&&r.assigned&&buckets[r.assigned])){
+  buckets[r.assigned].push(r);fixed.add(r.id);
+ }
  for(const r of active.filter(r=>r.status==="Confirmado"&&r.assigned&&buckets[r.assigned])){
   buckets[r.assigned].push(r);fixed.add(r.id);
  }
@@ -173,7 +177,7 @@ async function handle(req,res){
    if(!r)return res.status(404).json({error:"Inscripción no encontrada"});
    const status=x(payload.status),assigned=x(payload.assigned);
    if(!STATUSES.includes(status)||assigned&&!SLOTS.some(z=>z.id===assigned)&&!(assigned===OLD_SLOT&&r.assigned===OLD_SLOT))return res.status(400).json({error:"Estado o sesión inválidos"});
-   if(!r.eligible)return res.status(409).json({error:"No elegible: "+(r.eligibilityReason||"no cumple los requisitos de selección")+". No se puede asignar ni confirmar."});
+   if(!r.eligible&&(assigned||status==="Confirmado")&&payload.overrideIneligible!==true)return res.status(409).json({error:"Esta persona continúa como no elegible. Confirma explícitamente la asignación o participación manual."});
     const confirmedLegacyMove=assigned===REPLACEMENT_SLOT&&r.availability.includes(OLD_SLOT)&&payload.confirmLegacyMove===true;
     if(assigned&&!r.availability.includes(assigned)&&!confirmedLegacyMove)return res.status(400).json({error:"Esta persona no indicó disponibilidad en esa sesión; confirma el cambio de horario con la persona antes de reubicarla."});
    if(status==="Confirmado"&&!assigned)return res.status(400).json({error:"Asigná una sesión antes de confirmar"});
