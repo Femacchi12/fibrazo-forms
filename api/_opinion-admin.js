@@ -4,10 +4,11 @@ const {gauth,verifyUser,isBaseAdmin,SHEET_ID,DEFAULT_DOMAIN}=require("./_core");
 const TAB="RESP_ESTUDIO_OPINION_2026",CFG="CONFIG_ESTUDIO_OPINION_2026",NOTES_TAB="OBS_ESTUDIO_OPINION_2026";
 const NOTE_HEADERS=["Creado el","ID inscripción","Autor","Observación"];
 const CAMPAIGN="Focus Group · Estratos 2 y 3+",EVENT="2026-11-28/2026-11-29";
+const OLD_SLOT="2026-11-28@14:00",REPLACEMENT_SLOT="2026-11-29@11:00";
 const SLOTS=[
  {id:"2026-11-28@09:00",day:"Sábado 28",date:"2026-11-28",time:"09:00"},
- {id:"2026-11-28@14:00",day:"Sábado 28",date:"2026-11-28",time:"14:00"},
  {id:"2026-11-29@09:00",day:"Domingo 29",date:"2026-11-29",time:"09:00"},
+ {id:"2026-11-29@11:00",day:"Domingo 29",date:"2026-11-29",time:"11:00"},
  {id:"2026-11-29@14:00",day:"Domingo 29",date:"2026-11-29",time:"14:00"}
 ];
 const STATUSES=["Preinscrito","Contactado a confirmar","Confirmado","No asistirá"];
@@ -49,11 +50,11 @@ async function states(s){
  return SLOTS.map((slot,i)=>({...slot,open:x(rows[i]?.[3]??"TRUE").toUpperCase()!=="FALSE"}));
 }
 function prefs(row){
- const exact=x(row[32]).split(",").map(x).filter(y=>SLOTS.some(s=>s.id===y));
+ const exact=x(row[32]).split(",").map(x).filter(y=>SLOTS.some(s=>s.id===y)||y===OLD_SLOT); // Preserve historical choices; do not convert them into availability for the replacement.
  if(exact.length)return [...new Set(exact)];
  const day=x(row[14]),t=x(row[27]);
  const days=day==="Ambos días"?["Sábado 28","Domingo 29"]:day?[day]:[];
- const times=t==="Cualquiera"?["09:00","14:00"]:t.split(",").map(x);
+ const times=t==="Cualquiera"?["09:00","11:00","14:00"]:t.split(",").map(x);
  return SLOTS.filter(slot=>days.includes(slot.day)&&times.includes(slot.time)).map(q=>q.id);
 }
 function record(row,index,adminAccess=false){
@@ -170,9 +171,10 @@ async function handle(req,res){
    const r=byId.get(x(payload.id));
    if(!r)return res.status(404).json({error:"Inscripción no encontrada"});
    const status=x(payload.status),assigned=x(payload.assigned);
-   if(!STATUSES.includes(status)||assigned&&!SLOTS.some(z=>z.id===assigned))return res.status(400).json({error:"Estado o sesión inválidos"});
+   if(!STATUSES.includes(status)||assigned&&!SLOTS.some(z=>z.id===assigned)&&!(assigned===OLD_SLOT&&r.assigned===OLD_SLOT))return res.status(400).json({error:"Estado o sesión inválidos"});
    if(!r.eligible)return res.status(409).json({error:"No elegible: "+(r.eligibilityReason||"no cumple los requisitos de selección")+". No se puede asignar ni confirmar."});
-    if(assigned&&!r.availability.includes(assigned))return res.status(400).json({error:"Esta persona no indicó disponibilidad en esa sesión"});
+    const confirmedLegacyMove=assigned===REPLACEMENT_SLOT&&r.availability.includes(OLD_SLOT)&&payload.confirmLegacyMove===true;
+    if(assigned&&!r.availability.includes(assigned)&&!confirmedLegacyMove)return res.status(400).json({error:"Esta persona no indicó disponibilidad en esa sesión; confirma el cambio de horario con la persona antes de reubicarla."});
    if(status==="Confirmado"&&!assigned)return res.status(400).json({error:"Asigná una sesión antes de confirmar"});
    await s.spreadsheets.values.batchUpdate({spreadsheetId:SHEET_ID,requestBody:{valueInputOption:"RAW",data:[
     {range:"'"+TAB+"'!R"+r.row,values:[[status]]},

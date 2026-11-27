@@ -2,11 +2,12 @@
 (()=>{
 "use strict";
 const API="/api/estudio-opinion?summary=1", SHARE=location.origin+"/?resumen=focus-group";
-const OPTIONS=[["2026-11-28@09:00","Sáb 28 · 9:00"],["2026-11-28@14:00","Sáb 28 · 14:00"],["2026-11-29@09:00","Dom 29 · 9:00"],["2026-11-29@14:00","Dom 29 · 14:00"]];
+const OLD_SLOT="2026-11-28@14:00",REPLACEMENT_SLOT="2026-11-29@11:00";
+const OPTIONS=[["2026-11-28@09:00","Sáb 28 · 9:00"],["2026-11-29@09:00","Dom 29 · 9:00"],["2026-11-29@11:00","Dom 29 · 11:00"],["2026-11-29@14:00","Dom 29 · 14:00"]];
 const STATUSES=["Preinscrito","Contactado a confirmar","Confirmado","No asistirá"];
 const CALENDAR_ICON='<svg class="fq-calendar-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M8 2v4M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>';
 const E=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const label=id=>OPTIONS.find(o=>o[0]===id)?.[1]||"Sin asignar";
+const label=id=>id===OLD_SLOT?"Sáb 28 · 14:00 (horario anterior)":OPTIONS.find(o=>o[0]===id)?.[1]||"Sin asignar";
 const hint=s=>'<span class="fq-tip" tabindex="0" role="note" data-tip="'+E(s)+'" aria-label="'+E(s)+'">?</span>';
 const level=n=>n>=15?"strong-red":n>=13?"red":n>=12?"orange":n>=8?"yellow":n>=3?"green":"white";
 let node=null,info=null,waiting=false;
@@ -60,11 +61,11 @@ function setup(){
  '<label>Encuesta<select id="fq-campaign"><option value="">Todas las encuestas</option></select></label>'+
  '<label>Fecha evento<select id="fq-date"><option value="">Ambos días</option><option value="2026-11-28">28/11/2026</option><option value="2026-11-29">29/11/2026</option></select></label>'+
  '<label>Día<select id="fq-day"><option value="">Todos</option><option value="2026-11-28">Sábado</option><option value="2026-11-29">Domingo</option></select></label>'+
- '<label>Horario<select id="fq-hour"><option value="">Todos</option><option value="09:00">9:00 a. m.</option><option value="14:00">2:00 p. m.</option></select></label>'+
+ '<label>Horario<select id="fq-hour"><option value="">Todos</option><option value="09:00">9:00 a. m.</option><option value="11:00">11:00 a. m.</option><option value="14:00">2:00 p. m.</option></select></label>'+
  '<label>Estado<select id="fq-status"><option value="">Todos</option>'+STATUSES.map(v=>'<option>'+E(v)+'</option>').join("")+'<option>'+EXTRA_STATUS+'</option></select></label>'+
  '<label>Nombre o celular<input type="search" id="fq-q" placeholder="Buscar participante"></label></div>'+
  '<div id="fq-kpis" class="fq-kpis"></div><div class="fq-tools"><h2>Sesiones</h2><div class="fq-suggestion-action"><button id="fq-suggest" class="fq-btn" disabled>Sugerir distribución</button> '+hint("Propone repartir a los preinscritos entre los horarios disponibles. No aplica cambios hasta que lo confirmes.")+'</div><span class="fq-muted">Solo se cierran manualmente.</span></div>'+
- '<div id="fq-slots" class="fq-slots"></div><div id="fq-preview" hidden></div><section class="fq-table-panel"><div class="fq-table-toolbar"><h2 id="fq-count">Inscriptos</h2><input class="fq-table-search" id="fq-table-q" type="search" placeholder="Buscar en la tabla" aria-label="Buscar en la tabla"><div class="fq-table-actions"><button class="fq-btn" id="fq-export">Exportar CSV</button><div class="fq-column-anchor"><button class="fq-btn" id="fq-columns" type="button" aria-expanded="false" aria-controls="fq-columns-panel">Ver más columnas ▾</button><div id="fq-columns-panel" class="fq-column-popover" hidden></div></div></div></div>'+
+ '<div id="fq-slots" class="fq-slots"></div><div id="fq-legacy-banner" class="fq-muted" style="margin:4px 0 12px;color:#ffdc99" hidden></div><div id="fq-preview" hidden></div><section class="fq-table-panel"><div class="fq-table-toolbar"><h2 id="fq-count">Inscriptos</h2><input class="fq-table-search" id="fq-table-q" type="search" placeholder="Buscar en la tabla" aria-label="Buscar en la tabla"><div class="fq-table-actions"><button class="fq-btn" id="fq-export">Exportar CSV</button><div class="fq-column-anchor"><button class="fq-btn" id="fq-columns" type="button" aria-expanded="false" aria-controls="fq-columns-panel">Ver más columnas ▾</button><div id="fq-columns-panel" class="fq-column-popover" hidden></div></div></div></div>'+
  '<div class="fq-tablebox" id="fq-tablebox" role="region" aria-label="Tabla de inscritos desplazable" tabindex="0"><table class="fq-table"><thead id="fq-table-head"></thead><tbody id="fq-rows"></tbody></table></div><div class="fq-table-bottom"><button class="fq-btn" type="button" id="fq-more" hidden>Ver más</button><div class="fq-table-note">Desplázate para consultar más filas y columnas. La columna Participante permanece fija.</div></div></section></div>';
  document.body.appendChild(node);
  node.insertAdjacentHTML("beforeend","<div class=\"fq-note-overlay\" id=\"fq-note-modal\" hidden><section class=\"fq-note-dialog\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"fq-note-title\"><div class=\"fq-note-heading\"><div><h3 id=\"fq-note-title\">Observaciones</h3><p class=\"fq-note-participant\" id=\"fq-note-participant\"></p></div><button type=\"button\" id=\"fq-note-close\" class=\"fq-btn\" aria-label=\"Cerrar observaciones\">Cerrar</button></div><div class=\"fq-note-history\" id=\"fq-note-history\" aria-live=\"polite\"></div><label for=\"fq-note-input\">Nueva observación</label><textarea id=\"fq-note-input\" rows=\"4\" maxlength=\"1500\" placeholder=\"Anota aquí lo que comentaron o lo que necesites recordar de este participante.\"></textarea><div class=\"fq-note-footer\"><span id=\"fq-note-counter\">0 / 1500</span><span class=\"fq-note-error\" id=\"fq-note-error\" role=\"alert\"></span></div><div class=\"fq-note-actions\"><button type=\"button\" class=\"fq-btn\" id=\"fq-note-cancel\">Cancelar</button><button type=\"button\" class=\"fq-btn green\" id=\"fq-note-save\">Guardar observación</button></div></section></div>");
@@ -106,7 +107,11 @@ function setup(){
  node.querySelector("#fq-rows").onclick=async e=>{
   const noteBtn=e.target.closest("[data-note]");if(noteBtn){openNotes(noteBtn.dataset.note);return;}
   const saveBtn=e.target.closest("[data-save]");if(!saveBtn)return;
-  const tr=saveBtn.closest("tr");await save({action:"update",id:saveBtn.dataset.save,status:tr.querySelector(".fq-status").value,assigned:tr.querySelector(".fq-assign").value});
+  const tr=saveBtn.closest("tr"),row=info?.rows?.find(r=>r.id===saveBtn.dataset.save);
+   const assigned=tr.querySelector(".fq-assign").value;
+   const confirmLegacyMove=assigned===REPLACEMENT_SLOT&&row?.availability?.includes(OLD_SLOT)&&!row.availability.includes(REPLACEMENT_SLOT);
+   if(confirmLegacyMove&&!confirm("Esta persona indicó disponibilidad para el horario anterior (sábado 28, 2:00 p. m.). ¿Confirmaste con ella que podrá asistir el domingo 29 a las 11:00 a. m.?"))return;
+   await save({action:"update",id:saveBtn.dataset.save,status:tr.querySelector(".fq-status").value,assigned,confirmLegacyMove});
  };
 }
 let activeNoteId="",savingNote=false;
@@ -181,6 +186,10 @@ function render(){
   lines.map((a,i)=>'<div class="fq-metric fq-metric-'+i+'"><span>'+E(a[0])+' '+hint(a[2])+'</span><b>'+a[1]+'</b></div>').join("")+
   '<button class="fq-btn" data-view="'+E(s.id)+'">Ver inscriptos</button> '+(info.canEdit?'<button class="fq-btn" data-toggle="'+E(s.id)+'" data-open="'+s.open+'">'+(s.open?"Cerrar":"Reabrir")+'</button>':'')+'<div class="fq-muted">'+(s.open?"Abierto":"Cerrado manualmente")+'</div></article>';
  }).join("");
+ const affected=(info.rows||[]).filter(r=>Array.isArray(r.availability)&&r.availability.includes(OLD_SLOT));
+ const banner=node.querySelector("#fq-legacy-banner");
+ banner.hidden=!affected.length;
+ if(affected.length)banner.textContent=affected.length+" inscripto(s) habían elegido el sábado 28 a las 2:00 p. m. Se conservaron sus respuestas originales y no fueron trasladados automáticamente. Para ubicarlos: filtra sábado y 2:00 p. m.; confirma la nueva disponibilidad antes de asignarlos.";
  renderTable();
 }
 function displayColumns(){
@@ -221,12 +230,13 @@ function availabilityCell(availability){
  if(!ids.length)return "Sin disponibilidad";
  const days=[["2026-11-28","Sáb 28"],["2026-11-29","Dom 29"]];
  const lines=days.map(([day,title])=>{
-  const hours=OPTIONS.filter(([id])=>id.startsWith(day+"@")&&ids.includes(id)).map(([id])=>id.endsWith("@09:00")?"9:00":"14:00");
+  const hours=OPTIONS.filter(([id])=>id.startsWith(day+"@")&&ids.includes(id)).map(([id])=>id.endsWith("@09:00")?"9:00":id.endsWith("@11:00")?"11:00":"14:00");
   return hours.length?'<div class="fq-availability-line"><strong>'+E(title)+':</strong> '+E(hours.join(" · "))+'</div>':"";
  }).filter(Boolean);
  // Existing or historical identifiers that do not belong to the four configured
  // sessions are preserved in the display rather than discarded silently.
- const other=ids.filter(id=>!OPTIONS.some(([known])=>known===id));
+ if(ids.includes(OLD_SLOT))lines.unshift('<div class="fq-availability-line"><strong>Sáb 28:</strong> 14:00 (horario anterior, por reubicar)</div>');
+ const other=ids.filter(id=>id!==OLD_SLOT&&!OPTIONS.some(([known])=>known===id));
  if(other.length)lines.push('<div class="fq-availability-line">'+E(other.join(" · "))+'</div>');
  return '<div class="fq-availability">'+lines.join("")+'</div>';
 }
@@ -247,7 +257,11 @@ function dataCell(r,key){
  case "availability":return availabilityCell(r.availability);
  case "assigned":{
   if(!eligible(r))return '<span class="fq-eligibility">No elegible</span>';
-  const options='<option value="">Sin asignar</option>'+OPTIONS.filter(x=>r.availability.includes(x[0])).map(x=>'<option value="'+E(x[0])+'" '+(r.assigned===x[0]?"selected":"")+'>'+E(x[1])+'</option>').join("");
+  const movedFromOld=r.availability.includes(OLD_SLOT)&&!r.availability.includes(REPLACEMENT_SLOT);
+   const options='<option value="">Sin asignar</option>'+
+    (r.assigned===OLD_SLOT?'<option value="'+OLD_SLOT+'" selected>Sáb 28 · 14:00 (anterior)</option>':'')+
+    OPTIONS.filter(x=>r.availability.includes(x[0])||(info?.canEdit&&movedFromOld&&x[0]===REPLACEMENT_SLOT))
+     .map(x=>'<option value="'+E(x[0])+'" '+(r.assigned===x[0]?"selected":"")+'>'+E(x[1]+(movedFromOld&&x[0]===REPLACEMENT_SLOT?" (confirmar)":""))+'</option>').join("");
   return '<select class="fq-assign" '+(info.canEdit?"":"disabled")+'>'+options+'</select>';
  }
  case "status":{
