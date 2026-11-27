@@ -82,7 +82,7 @@ async function records(s,adminAccess=false){
 function summaryData(rs,slots){
  const visible=rs.map(r=>({...r,availability:[...r.availability]}));
  return {campaigns:[{id:"ESTUDIO_OPINION_2026",name:CAMPAIGN,dates:EVENT}],campaign:"ESTUDIO_OPINION_2026",statusOptions:STATUSES,slots:slots.map(slot=>{
-  const available=visible.filter(r=>r.eligible&&r.status!=="No asistirá"&&r.availability.includes(slot.id));
+  const available=visible.filter(r=>r.eligible&&r.status!=="No asistirá"&&(r.availability.includes(slot.id)||(slot.id===REPLACEMENT_SLOT&&r.assigned===slot.id&&r.availability.includes(OLD_SLOT))));
   const assigned=visible.filter(r=>r.eligible&&r.status!=="No asistirá"&&r.assigned===slot.id);
   const confirmed=assigned.filter(r=>r.status==="Confirmado");
   return {...slot,available:available.length,assigned:assigned.length,confirmed:confirmed.length,contacted:assigned.filter(r=>r.status==="Contactado a confirmar").length,pending:assigned.filter(r=>r.status==="Preinscrito").length,notAttending:visible.filter(r=>r.eligible&&r.assigned===slot.id&&r.status==="No asistirá").length};
@@ -101,7 +101,8 @@ function suggest(rs,slots){
    a.availability.length-b.availability.length || Number(!!b.assigned)-Number(!!a.assigned) || a.registered.localeCompare(b.registered));
  const assignedById=new Map();
  function place(r,visited=new Set()){
-  const choices=r.availability.filter(id=>buckets[id]&&!visited.has(id)).sort((a,b)=>
+  const effective=r.assigned===REPLACEMENT_SLOT&&r.availability.includes(OLD_SLOT)?[...r.availability,REPLACEMENT_SLOT]:r.availability;
+   const choices=[...new Set(effective)].filter(id=>buckets[id]&&!visited.has(id)).sort((a,b)=>
     buckets[a].length-buckets[b].length || Number(b===r.assigned)-Number(a===r.assigned) || a.localeCompare(b));
   for(const key of choices){
    visited.add(key);
