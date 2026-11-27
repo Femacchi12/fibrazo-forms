@@ -7,7 +7,7 @@ const OPTIONS=[["2026-11-28@09:00","Sáb 28 · 9:00"],["2026-11-29@09:00","Dom 2
 const STATUSES=["Preinscrito","Contactado a confirmar","Confirmado","No asistirá"];
 const CALENDAR_ICON='<svg class="fq-calendar-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M8 2v4M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>';
 const E=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const label=id=>id===OLD_SLOT?"Sáb 28 · 14:00 (horario anterior)":OPTIONS.find(o=>o[0]===id)?.[1]||"Sin asignar";
+const label=id=>id===OLD_SLOT?"Sáb 28 · 14:00 (horario a reubicar)":OPTIONS.find(o=>o[0]===id)?.[1]||"Sin asignar";
 const hint=s=>'<span class="fq-tip" tabindex="0" role="note" data-tip="'+E(s)+'" aria-label="'+E(s)+'">?</span>';
 const level=n=>n>=15?"strong-red":n>=13?"red":n>=12?"orange":n>=8?"yellow":n>=3?"green":"white";
 let node=null,info=null,waiting=false;
@@ -116,11 +116,14 @@ function setup(){
   const saveBtn=e.target.closest("[data-save]");if(!saveBtn)return;
   const tr=saveBtn.closest("tr"),row=info?.rows?.find(r=>r.id===saveBtn.dataset.save);
    const assigned=tr.querySelector(".fq-assign").value,status=tr.querySelector(".fq-status").value;
-   const confirmLegacyMove=assigned===REPLACEMENT_SLOT&&row?.availability?.includes(OLD_SLOT)&&!row.availability.includes(REPLACEMENT_SLOT);
+   const changedSession=assigned!==(row?.assigned||"");
+   const confirmLegacyMove=changedSession&&assigned===REPLACEMENT_SLOT&&row?.availability?.includes(OLD_SLOT)&&!row.availability.includes(REPLACEMENT_SLOT);
    if(confirmLegacyMove&&!confirm("Esta persona indicó disponibilidad para el horario anterior (sábado 28, 2:00 p. m.). ¿Confirmaste con ella que podrá asistir el domingo 29 a las 11:00 a. m.?"))return;
+   const confirmDifferentAvailability=Boolean(assigned)&&changedSession&&!confirmLegacyMove&&!row?.availability?.includes(assigned);
+   if(confirmDifferentAvailability&&!confirm("Esta persona no había indicado "+label(assigned)+" como horario disponible. ¿Confirmaste por teléfono que puede asistir en esa sesión?"))return;
    const overrideIneligible=!eligible(row)&&(Boolean(assigned)||status==="Confirmado");
    if(overrideIneligible&&!confirm("Esta persona sigue marcada como no elegible: "+(row.eligibilityReason||"requiere revisión")+". ¿Confirmas su asignación o participación manual? El motivo de no elegibilidad se mantendrá."))return;
-   await save({action:"update",id:saveBtn.dataset.save,status,assigned,confirmLegacyMove,overrideIneligible});
+   await save({action:"update",id:saveBtn.dataset.save,status,assigned,confirmLegacyMove,confirmDifferentAvailability,overrideIneligible});
  };
 }
 let activeNoteId="",savingNote=false;
@@ -244,7 +247,7 @@ function availabilityCell(availability){
  }).filter(Boolean);
  // Existing or historical identifiers that do not belong to the four configured
  // sessions are preserved in the display rather than discarded silently.
- if(ids.includes(OLD_SLOT))lines.unshift('<div class="fq-availability-line" title="Horario anterior: sábado 28, 2:00 p. m."><strong>Horario por reubicar</strong></div>');
+ if(ids.includes(OLD_SLOT))lines.unshift('<div class="fq-availability-line" title="Sábado 28 de noviembre, 2:00 p. m. (sesión sustituida)"><strong>Sáb 28 · 14:00</strong> (horario a reubicar)</div>');
  const other=ids.filter(id=>id!==OLD_SLOT&&!OPTIONS.some(([known])=>known===id));
  if(other.length)lines.push('<div class="fq-availability-line">'+E(other.join(" · "))+'</div>');
  return '<div class="fq-availability">'+lines.join("")+'</div>';
@@ -265,11 +268,16 @@ function dataCell(r,key){
  case "operator":return E((r.operator||"—")+(r.otherOperator?" · "+r.otherOperator:""));
  case "availability":return availabilityCell(r.availability);
  case "assigned":{
-  const movedFromOld=r.availability.includes(OLD_SLOT)&&!r.availability.includes(REPLACEMENT_SLOT);
-   const options='<option value="">Sin asignar</option>'+
-    (r.assigned===OLD_SLOT?'<option value="'+OLD_SLOT+'" selected>Sáb 28 · 14:00 (anterior)</option>':'')+
-    OPTIONS.filter(x=>r.availability.includes(x[0])||(info?.canEdit&&movedFromOld&&x[0]===REPLACEMENT_SLOT))
-     .map(x=>'<option value="'+E(x[0])+'" '+(r.assigned===x[0]?"selected":"")+'>'+E(x[1]+(movedFromOld&&x[0]===REPLACEMENT_SLOT?" (confirmar)":""))+'</option>').join("");
+  // Let administrators select any of the four scheduled sessions, even when
+  // the original form listed a different availability.
+  const options='<option value="">Sin asignar</option>'+
+   (r.assigned===OLD_SLOT?'<option value="'+OLD_SLOT+'" selected>Sáb 28 · 14:00 (anterior)</option>':'')+
+   OPTIONS.map(([id,name])=>{
+    const slot=(info?.slots||[]).find(s=>s.id===id);
+    const needsConfirmation=!r.availability.includes(id)&&r.assigned!==id;
+    const suffix=needsConfirmation?" (confirmar)":slot&&!slot.open?" (inscripción cerrada)":"";
+    return '<option value="'+E(id)+'" '+(r.assigned===id?"selected":"")+'>'+E(name+suffix)+'</option>';
+   }).join("");
   return '<select class="fq-assign" '+(info.canEdit?"":"disabled")+'>'+options+'</select>';
  }
  case "status":{
@@ -343,7 +351,7 @@ function renderTable(){
  const availabilityOptions='<option value="">Todas las disponibilidades</option>'+OPTIONS.map(([id,desc])=>{
   const slot=(info.slots||[]).find(s=>s.id===id);
   return '<option value="'+E(id)+'" '+(availabilityFilter===id?"selected":"")+'>'+E(desc+(slot&&!slot.open?" · Cerrado":""))+'</option>';
- }).join("")+'<option value="'+OLD_SLOT+'" '+(availabilityFilter===OLD_SLOT?"selected":"")+'>Sáb 28 · 14:00 (horario anterior)</option>';
+ }).join("")+'<option value="'+OLD_SLOT+'" '+(availabilityFilter===OLD_SLOT?"selected":"")+'>Sáb 28 · 14:00 (horario a reubicar)</option>';
  node.querySelector("#fq-table-head").innerHTML='<tr>'+cols.map(c=>{
   const active=tableSort.key===c[0],direction=active?tableSort.direction:"";
   const next=active&&direction==="asc"?"descendentemente":"ascendentemente";
