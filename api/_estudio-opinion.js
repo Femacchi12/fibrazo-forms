@@ -8,6 +8,8 @@ const cell=(v,max)=>str(v,max);
 const phone=v=>{const t=String(v||"").replace(/[\s().-]/g,"");return t.startsWith("+57")?t.slice(3):t.startsWith("57")&&t.length===12?t.slice(2):t;};
 const validMail=v=>!v||(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)&&v.length<=180);
 let setupPromise=null;
+// FO-CHG-180: avoid repeated Google Sheets reads on the public status endpoint.
+let publicConfigCache=null,publicConfigPromise=null;
 async function ensureTab(auth){
  const s=google.sheets({version:"v4",auth});
  if(!setupPromise)setupPromise=(async()=>{
@@ -31,12 +33,37 @@ async function ensureTab(auth){
 }
 const POLICY_RANGE="'"+TAB+"'!Y1:Y2";
 async function readPublication(auth){
- await ensureTab(auth); // First public visit creates its isolated responses sheet.
+ // Production response sheet exists; avoid schema initialization on every public read.
  const sheets=google.sheets({version:"v4",auth});
  const response=await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:POLICY_RANGE});
  const rows=response.data.values||[];
  // First release is public until an administrator explicitly closes the invitation.
  return String(rows[1]?.[0]??"TRUE").trim().toUpperCase()!=="FALSE";
+}
+const SESSIONS_RANGE="'CONFIG_ESTUDIO_OPINION_2026'!A2:E5";
+async function readPublicConfig(){
+ if(publicConfigCache&&Date.now()-publicConfigCache.at<45000)return publicConfigCache.data;
+ if(publicConfigPromise)return publicConfigPromise;
+ publicConfigPromise=(async()=>{
+  const sheets=google.sheets({version:"v4",auth:gauth()});
+  const response=await sheets.spreadsheets.values.batchGet({
+   spreadsheetId:SHEET_ID,ranges:[POLICY_RANGE,SESSIONS_RANGE]
+  });
+  const [policy,session]=response.data.valueRanges||[];
+  const byId=new Map((session?.values||[]).map(row=>[String(row[0]||"").trim(),row]));
+  if(management.SLOTS.some(slot=>!byId.has(slot.id)))throw Error("OPINION_SESSION_CONFIG_MISSING");
+  const enabled=String(policy?.values?.[1]?.[0]??"TRUE").trim().toUpperCase()!=="FALSE";
+  const slots=management.SLOTS.map(slot=>({...slot,open:String(byId.get(slot.id)[3]??"TRUE").trim().toUpperCase()!=="FALSE"}));
+  const data={publicEnabled:enabled,form:"ESTUDIO_OPINION_2026",slots};
+  publicConfigCache={at:Date.now(),data};
+  return data;
+ })().catch(error=>{
+  // Brief 429 errors may reuse the last verified response; POST still checks live.
+  const code=Number(error?.code||error?.response?.status);
+  if((code===429||/quota exceeded/i.test(error?.message||""))&&publicConfigCache&&Date.now()-publicConfigCache.at<180000)return publicConfigCache.data;
+  throw error;
+ }).finally(()=>{publicConfigPromise=null;});
+ return publicConfigPromise;
 }
 async function writePublication(auth,enabled){
  const sheets=await ensureTab(auth);
@@ -44,6 +71,7 @@ async function writePublication(auth,enabled){
   spreadsheetId:SHEET_ID,range:POLICY_RANGE,valueInputOption:"RAW",
   requestBody:{values:[["PUBLIC_ENABLED"],[enabled?"TRUE":"FALSE"]]}
  });
+ publicConfigCache=null;
  return enabled;
 }
 module.exports=async(req,res)=>{
@@ -53,8 +81,9 @@ module.exports=async(req,res)=>{
   if(!SHEET_ID)throw new Error("STORAGE_NOT_CONFIGURED");
   if(req.query?.summary==="1")return management.handle(req,res);
   if(req.method==="GET"&&req.query?.config==="1"){
-   const [enabled,slots]=await Promise.all([readPublication(gauth()),management.availability()]);
-   return res.status(200).json({publicEnabled:enabled,form:"ESTUDIO_OPINION_2026",slots});
+   const data=await readPublicConfig();
+   res.setHeader("Cache-Control","public, max-age=20, s-maxage=60, stale-while-revalidate=180");
+   return res.status(200).json(data);
   }
   if(req.method==="POST"&&req.query?.check==="1"){
    if(!String(req.headers["content-type"]||"").includes("application/json"))return res.status(415).json({error:"Formato no permitido"});

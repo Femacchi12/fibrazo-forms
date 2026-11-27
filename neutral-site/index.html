@@ -22,7 +22,7 @@ const form=document.getElementById("form"),steps=Array.from(document.querySelect
 (async()=>{
   const panel=document.getElementById("formCard"),closed=document.getElementById("focusClosed");
   try{
-    const response=await fetch("/api/estudio-opinion?config=1",{cache:"no-store"});
+    const response=await fetch("/api/estudio-opinion?config=1");
     if(!response.ok)throw Error("No se pudo verificar el estado de la convocatoria.");
     const result=await response.json();
     if(result.publicEnabled===true && Array.isArray(result.slots) && result.slots.some(x=>x.open)){
